@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, Course } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Input } from '@/components/ui/input';
 
 const Dashboard = () => {
   const { currentUser, userProfile, logout } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,8 +397,8 @@ const Dashboard = () => {
               <h3 className="text-2xl font-bold">
                 {userProfile?.role === 'student' ? 'My Enrollments' : 'My Courses'}
               </h3>
-              {userProfile?.role === 'teacher' && (
-                <Button>
+              {(userProfile?.role === 'teacher' || userProfile?.role === 'admin') && (
+                <Button onClick={() => navigate('/create-course')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create New Course
                 </Button>
@@ -444,8 +446,8 @@ const Dashboard = () => {
                     : 'Create your first course to start teaching'
                   }
                 </p>
-                {userProfile?.role === 'teacher' && (
-                  <Button>
+                {(userProfile?.role === 'teacher' || userProfile?.role === 'admin') && (
+                  <Button onClick={() => navigate('/create-course')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Course
                   </Button>

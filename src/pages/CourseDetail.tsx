@@ -114,7 +114,7 @@ const CourseDetail = () => {
     }
     
     if (userProfile?.role !== 'student') {
-      return { message: 'Only students can enroll', variant: 'secondary' as const };
+      return { message: 'Only students can enroll', variant: 'default' as const };
     }
     
     if (isEnrolled) {

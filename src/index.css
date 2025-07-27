@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* St. Raguel Church School Design System - Educational Excellence */
+
+@layer base {
+  :root {
+    /* Core Educational Palette */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Academic Blue - Trust & Knowledge */
+    --primary: 213 94% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 94% 55%;
+
+    /* Warm Secondary - Approachable & Friendly */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 215 25% 15%;
+
+    /* Soft Neutrals */
+    --muted: 210 20% 95%;
+    --muted-foreground: 215 15% 45%;
+
+    /* Success Green - Achievement */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-glow: 142 70% 45%;
+
+    /* Warning Orange - Attention */
+    --warning: 32 95% 44%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Academic Accent - School Pride */
+    --accent: 265 85% 47%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 265 75% 60%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 88%;
+    --input: 214 20% 94%;
+    --ring: 213 94% 45%;
+
+    --radius: 0.75rem;
+
+    /* Educational Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+
+    /* Academic Shadows */
+    --shadow-soft: 0 2px 10px -2px hsl(var(--primary) / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(var(--primary) / 0.15);
+    --shadow-strong: 0 20px 40px -10px hsl(var(--primary) / 0.2);
+    --shadow-glow: 0 0 30px hsl(var(--primary-glow) / 0.3);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Academic Theme */
+    --background: 215 28% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 215 25% 10%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 215 25% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 213 94% 55%;
+    --primary-foreground: 215 28% 8%;
+    --primary-glow: 213 85% 65%;
+
+    --secondary: 215 20% 15%;
+    --secondary-foreground: 210 20% 90%;
+
+    --muted: 215 20% 12%;
+    --muted-foreground: 215 15% 65%;
+
+    --success: 142 70% 45%;
+    --success-foreground: 215 28% 8%;
+    --success-glow: 142 65% 55%;
+
+    --warning: 32 90% 55%;
+    --warning-foreground: 215 28% 8%;
+
+    --accent: 265 75% 60%;
+    --accent-foreground: 215 28% 8%;
+    --accent-glow: 265 70% 70%;
+
+    --destructive: 0 75% 65%;
+    --destructive-foreground: 215 28% 8%;
+
+    --border: 215 20% 18%;
+    --input: 215 20% 15%;
+    --ring: 213 94% 55%;
+
+    /* Dark Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+
+    --sidebar-background: 215 25% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 213 94% 55%;
+    --sidebar-primary-foreground: 215 28% 8%;
+    --sidebar-accent: 215 20% 15%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 215 20% 18%;
+    --sidebar-ring: 213 94% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Educational Component Styles */
+  .btn-hero {
+    @apply bg-gradient-primary text-primary-foreground hover:shadow-glow transition-all duration-300 ease-out;
+  }
+
+  .btn-success {
+    @apply bg-gradient-success text-success-foreground hover:shadow-medium transition-all duration-300 ease-out;
+  }
+
+  .btn-accent {
+    @apply bg-gradient-accent text-accent-foreground hover:shadow-medium transition-all duration-300 ease-out;
+  }
+
+  .card-academic {
+    @apply bg-gradient-card shadow-soft hover:shadow-medium border border-border/50 transition-all duration-300 ease-out;
+  }
+
+  .glass-effect {
+    @apply bg-background/80 backdrop-blur-sm border border-border/30;
+  }
+
+  .text-gradient-primary {
+    @apply bg-gradient-primary bg-clip-text text-transparent;
+  }
+
+  .text-gradient-hero {
+    @apply bg-gradient-hero bg-clip-text text-transparent;
+  }
+}

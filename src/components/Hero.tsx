@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Users, Award, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-school.jpg";
 
 const Hero = () => {
@@ -34,11 +35,13 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button variant="glass" size="lg" className="group">
-              <BookOpen className="h-5 w-5" />
-              Explore Courses
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <Link to="/courses">
+              <Button variant="glass" size="lg" className="group">
+                <BookOpen className="h-5 w-5" />
+                Explore Courses
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
             <Button variant="outline" size="lg" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
               <Users className="h-5 w-5" />
               Join Our Community

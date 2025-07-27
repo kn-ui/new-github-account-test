@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
+import CreateCourse from "./pages/CreateCourse";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,11 +27,21 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create-course" 
+              element={
+                <ProtectedRoute>
+                  <CreateCourse />
                 </ProtectedRoute>
               } 
             />

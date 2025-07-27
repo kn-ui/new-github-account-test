@@ -22,8 +22,8 @@ class CourseService {
       lessons: [],
       assignments: [],
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       syllabus: 'Basic math concepts and operations'
     },
     {
@@ -39,8 +39,8 @@ class CourseService {
       lessons: [],
       assignments: [],
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       syllabus: 'Study of various literary works'
     },
     {
@@ -56,8 +56,8 @@ class CourseService {
       lessons: [],
       assignments: [],
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       syllabus: 'Comprehensive Bible study program'
     }
   ];
@@ -73,8 +73,8 @@ class CourseService {
         lessons: [],
         assignments: [],
         isActive: courseData.isActive !== undefined ? courseData.isActive : true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       // Use test mode if Firestore is not available

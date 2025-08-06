@@ -37,10 +37,11 @@ const Header = () => {
           <Link to="/" className="text-foreground hover:text-primary transition-all duration-300 ease-out font-medium">
             Home
           </Link>
-          <a href="#courses" className="text-foreground hover:text-primary transition-all duration-300 ease-out font-medium flex items-center space-x-1">
+          
+          <Link to="/courses" className="text-foreground hover:text-primary transition-all duration-300 ease-out font-medium flex items-center space-x-1">
             <BookOpen className="h-4 w-4" />
             <span>Courses</span>
-          </a>
+          </Link>
           <a href="#about" className="text-foreground hover:text-primary transition-all duration-300 ease-out font-medium flex items-center space-x-1">
             <Users className="h-4 w-4" />
             <span>About</span>

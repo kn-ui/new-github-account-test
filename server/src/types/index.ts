@@ -211,3 +211,67 @@ export interface AdminDashboardStats {
   totalEnrollments: number;
   activeUsers: number;
 }
+
+// Blog types
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  category: string;
+  readTime?: string;
+  image?: string;
+  tags?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Event types
+export interface EventItem {
+  id: string;
+  title: string;
+  date: string; // ISO date YYYY-MM-DD
+  time: string; // HH:mm or '00:00'
+  type: 'academic' | 'religious' | 'social' | 'examination' | 'holiday';
+  location: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Forum thread types
+export interface ForumThread {
+  id: string;
+  title: string;
+  category: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  lastActivityAt: Date;
+  pinned?: boolean;
+  tags?: string[];
+}
+
+export interface ForumThreadPost {
+  id: string;
+  threadId: string;
+  body: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+}
+
+// Support ticket
+export interface SupportTicket {
+  id: string;
+  userId?: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'in_progress' | 'closed';
+  createdAt: Date;
+  updatedAt: Date;
+}

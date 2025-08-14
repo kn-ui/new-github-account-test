@@ -34,12 +34,11 @@ export interface Course {
   thumbnail?: string;
   duration: number; // in weeks
   maxStudents: number;
-  enrolledStudents: string[]; // Array of student UIDs
-  lessons: Lesson[];
-  assignments: Assignment[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Derived, not stored: number of active enrollments
+  currentEnrollmentCount?: number;
 }
 
 // Lesson interface

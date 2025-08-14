@@ -51,9 +51,15 @@ const CourseDetail = () => {
       if (response.success && response.data) {
         setCourse(response.data);
         
-        // Check if user is enrolled
-        if (currentUser && response.data.enrolledStudents) {
-          setIsEnrolled(response.data.enrolledStudents.includes(currentUser.uid));
+        // Check if user is enrolled via enrollments endpoint
+        if (currentUser) {
+          try {
+            const enrollmentsRes = await api.getMyEnrollments();
+            if (enrollmentsRes.success && Array.isArray(enrollmentsRes.data)) {
+              const enrolled = enrollmentsRes.data.some((e: any) => e.course?.id === courseId || e.courseId === courseId);
+              setIsEnrolled(enrolled);
+            }
+          } catch {}
         }
       } else {
         toast.error('Course not found');
@@ -103,8 +109,8 @@ const CourseDetail = () => {
     if (isEnrolled) return false;
     if (!course.isActive) return false;
     
-    const enrolledCount = course.enrolledStudents?.length || 0;
-    return enrolledCount < course.maxStudents;
+    // Capacity enforced on backend; allow attempt
+    return true;
   };
 
   const getEnrollmentStatus = () => {
@@ -126,10 +132,8 @@ const CourseDetail = () => {
       return { message: 'This course is not currently available', variant: 'destructive' as const };
     }
     
-    const enrolledCount = course.enrolledStudents?.length || 0;
-    if (enrolledCount >= course.maxStudents) {
-      return { message: 'Course is full', variant: 'destructive' as const };
-    }
+      // Capacity enforced at enrollment; UI does not precompute counts
+  // You may compute a live count via an aggregate if needed
     
     return null;
   };
@@ -189,8 +193,7 @@ const CourseDetail = () => {
     );
   }
 
-  const enrolledCount = course.enrolledStudents?.length || 0;
-  const enrollmentPercentage = (enrolledCount / course.maxStudents) * 100;
+  const enrollmentPercentage = 0;
   const status = getEnrollmentStatus();
 
   return (

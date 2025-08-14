@@ -105,7 +105,7 @@ const Courses = () => {
             
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
-              <span>{course.enrolledStudents?.length || 0}/{course.maxStudents}</span>
+              <span>{course.currentEnrollmentCount ?? 0}/{course.maxStudents}</span>
             </div>
           </div>
         </div>

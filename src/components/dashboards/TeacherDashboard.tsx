@@ -108,9 +108,9 @@ export default function TeacherDashboard() {
   const coursesToDisplay = myCourses.length ? myCourses.map((c: any) => ({
     id: c.id,
     title: c.title,
-    students: c.enrolledStudents?.length || 0,
+    students: c.currentEnrollmentCount ?? 0,
     completion: 0,
-    assignments: c.assignments?.length || 0,
+    assignments: (c as any).assignments?.length || 0,
     status: c.isActive ? 'active' : 'completed',
   })) : demoCourses;
 

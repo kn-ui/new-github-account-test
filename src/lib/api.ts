@@ -24,7 +24,8 @@ export interface Course {
   category: string;
   duration: number;
   maxStudents: number;
-  enrolledStudents: string[];
+  // derived count via enrollments
+  currentEnrollmentCount?: number;
   lessons: any[];
   assignments: any[];
   isActive: boolean;

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn, BookOpen, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -21,7 +23,7 @@ const Login = () => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error('Please fill in all fields');
+      toast.error(t('auth.login_required') || 'Please fill in all fields');
       return;
     }
 
@@ -48,10 +50,10 @@ const Login = () => {
               </div>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Welcome Back
+              {t('auth.welcomeBack') || 'Welcome Back'}
               </h2>
             <p className="text-gray-600 mt-2">
-              Sign in to your St. Raguel Church account
+              {t('auth.signInSubtitle') || 'Sign in to your St. Raguel Church account'}
             </p>
           </div>
 
@@ -60,7 +62,7 @@ const Login = () => {
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                {t('auth.email') || 'Email Address'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -74,7 +76,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.email_placeholder') || 'Enter your email'}
                 />
               </div>
             </div>
@@ -82,7 +84,7 @@ const Login = () => {
             {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+                {t('auth.password') || 'Password'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -96,7 +98,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.password_placeholder') || 'Enter your password'}
                 />
                 <button
                   type="button"
@@ -124,11 +126,11 @@ const Login = () => {
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
+                  {t('auth.rememberMe') || 'Remember me'}
                 </label>
               </div>
               <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                Forgot password?
+                {t('auth.forgotPassword') || 'Forgot password?'}
               </a>
             </div>
 
@@ -141,12 +143,12 @@ const Login = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Signing In...</span>
+                  <span>{t('auth.signingIn') || 'Signing In...'}</span>
                 </>
               ) : (
                 <>
                   <LogIn className="h-5 w-5" />
-                  <span>Sign In</span>
+                  <span>{t('auth.signIn') || 'Sign In'}</span>
                 </>
               )}
             </button>
@@ -159,7 +161,7 @@ const Login = () => {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">New to our platform?</span>
+                <span className="px-2 bg-white text-gray-500">{t('auth.newHere') || 'New to our platform?'}</span>
               </div>
             </div>
           </div>
@@ -168,7 +170,7 @@ const Login = () => {
           <div className="mt-6 text-center">
             <Link to="/signup" className="block">
               <button className="w-full bg-transparent border-2 border-blue-700 text-blue-700 py-3 px-4 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300 font-medium">
-                Create New Account
+                {t('auth.createAccount') || 'Create New Account'}
               </button>
             </Link>
           </div>

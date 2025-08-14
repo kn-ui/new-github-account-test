@@ -24,7 +24,8 @@ export interface Course {
   category: string;
   duration: number;
   maxStudents: number;
-  enrolledStudents: string[];
+  // derived count via enrollments
+  currentEnrollmentCount?: number;
   lessons: any[];
   assignments: any[];
   isActive: boolean;
@@ -44,12 +45,45 @@ export interface User {
   updatedAt: string;
 }
 
-// Auth types
-export interface AuthUser {
-  uid: string;
-  email: string;
-  displayName: string;
-  accessToken: string;
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  authorName: string;
+  category: string;
+  readTime?: string;
+  image?: string;
+  tags?: string[];
+  createdAt: string;
+}
+
+export interface EventItem {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  type: string;
+  location: string;
+  description?: string;
+}
+
+export interface ForumThread {
+  id: string;
+  title: string;
+  category: string;
+  createdByName: string;
+  createdAt: string;
+  lastActivityAt: string;
+  pinned?: boolean;
+}
+
+export interface ForumThreadPost {
+  id: string;
+  threadId: string;
+  body: string;
+  createdByName: string;
+  createdAt: string;
 }
 
 class ApiClient {
@@ -197,6 +231,11 @@ class ApiClient {
     return this.request<Course[]>(`/api/courses/instructor/my-courses${query}`);
   }
 
+  // Course enrollments (for instructors/admin)
+  async getCourseEnrollments(courseId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/api/courses/${courseId}/enrollments`);
+  }
+
   // Admin stats
   async getAdminUserStats(): Promise<ApiResponse<any>> {
     return this.request<any>('/api/users/admin/stats');
@@ -204,6 +243,64 @@ class ApiClient {
 
   async getAdminCourseStats(): Promise<ApiResponse<any>> {
     return this.request<any>('/api/courses/admin/stats');
+  }
+
+  // Content APIs
+  async getBlogPosts(params?: { page?: number; limit?: number; q?: string; category?: string; }): Promise<ApiResponse<BlogPost[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.q) sp.append('q', params.q);
+    if (params?.category) sp.append('category', params.category);
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<BlogPost[]>(`/api/content/blog${query}`);
+  }
+
+  async getEvents(params?: { page?: number; limit?: number; type?: string; month?: string; }): Promise<ApiResponse<EventItem[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.type) sp.append('type', params.type);
+    if (params?.month) sp.append('month', params.month);
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<EventItem[]>(`/api/content/events${query}`);
+  }
+
+  async getForumThreads(params?: { page?: number; limit?: number; category?: string; }): Promise<ApiResponse<ForumThread[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.category) sp.append('category', params.category);
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<ForumThread[]>(`/api/content/forum/threads${query}`);
+  }
+
+  async getForumPosts(threadId: string, params?: { page?: number; limit?: number; }): Promise<ApiResponse<ForumThreadPost[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<ForumThreadPost[]>(`/api/content/forum/threads/${threadId}/posts${query}`);
+  }
+
+  async createForumThread(payload: { title: string; category: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/forum/threads`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async createForumPost(threadId: string, payload: { body: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/forum/threads/${threadId}/posts`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async createSupportTicket(payload: { name: string; email: string; subject: string; message: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/support/tickets`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async getMySupportTickets(params?: { page?: number; limit?: number; }): Promise<ApiResponse<any[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<any[]>(`/api/content/support/my-tickets${query}`);
   }
 }
 

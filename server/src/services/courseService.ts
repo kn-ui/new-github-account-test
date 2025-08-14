@@ -4,8 +4,9 @@ import { Course, Lesson, Assignment, Enrollment, UserRole } from '../types';
 class CourseService {
   private coursesCollection = firestore?.collection('courses');
   private enrollmentsCollection = firestore?.collection('enrollments');
-  private lessonsCollection = firestore?.collection('lessons');
-  private assignmentsCollection = firestore?.collection('assignments');
+  // Lessons and assignments will be subcollections under courses/{courseId}
+  // Submissions remain a top-level collection
+  private submissionsCollection = firestore?.collection('submissions');
 
   // Create a new course
   async createCourse(courseData: Partial<Course>, instructorId: string, instructorName: string): Promise<Course> {
@@ -14,9 +15,6 @@ class CourseService {
         ...courseData,
         instructor: instructorId,
         instructorName,
-        enrolledStudents: [],
-        lessons: [],
-        assignments: [],
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -73,9 +71,6 @@ class CourseService {
             category: 'Mathematics',
             duration: 8,
             maxStudents: 30,
-            enrolledStudents: [],
-            lessons: [],
-            assignments: [],
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -90,9 +85,6 @@ class CourseService {
             category: 'Literature',
             duration: 12,
             maxStudents: 25,
-            enrolledStudents: [],
-            lessons: [],
-            assignments: [],
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -107,9 +99,6 @@ class CourseService {
             category: 'Theology',
             duration: 16,
             maxStudents: 40,
-            enrolledStudents: [],
-            lessons: [],
-            assignments: [],
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -288,15 +277,26 @@ class CourseService {
         throw new Error('Course is not active');
       }
 
-      if (course.enrolledStudents.includes(studentId)) {
+      // Check for existing enrollment
+      const existing = await this.enrollmentsCollection
+        .where('courseId', '==', courseId)
+        .where('studentId', '==', studentId)
+        .limit(1)
+        .get();
+      if (!existing.empty) {
         throw new Error('Student already enrolled in this course');
       }
 
-      if (course.enrolledStudents.length >= course.maxStudents) {
+      // Check capacity (count active enrollments)
+      const activeCountSnap = await this.enrollmentsCollection
+        .where('courseId', '==', courseId)
+        .where('status', '==', 'active')
+        .get();
+      if (activeCountSnap.size >= course.maxStudents) {
         throw new Error('Course is full');
       }
 
-      // Create enrollment record
+      // Create enrollment record with deterministic id courseId_uid
       const enrollmentData = {
         studentId,
         courseId,
@@ -307,15 +307,10 @@ class CourseService {
         status: 'active' as const
       };
 
-      const enrollmentRef = await this.enrollmentsCollection.add(enrollmentData);
+      const enrollmentId = `${courseId}_${studentId}`;
+      await this.enrollmentsCollection.doc(enrollmentId).set(enrollmentData);
 
-      // Update course with new student
-      await this.coursesCollection.doc(courseId).update({
-        enrolledStudents: [...course.enrolledStudents, studentId],
-        updatedAt: new Date()
-      });
-
-      return { id: enrollmentRef.id, ...enrollmentData };
+      return { id: enrollmentId, ...enrollmentData };
     } catch (error) {
       console.error('Error enrolling student:', error);
       throw new Error('Failed to enroll student');
@@ -381,8 +376,8 @@ class CourseService {
         throw new Error('Course not found');
       }
 
-      const totalLessons = course.lessons.length;
-      const progress = totalLessons > 0 ? (completedLessons.length / totalLessons) * 100 : 0;
+      const totalLessons = 0; // moved to subcollection; compute elsewhere if needed
+      const progress = totalLessons > 0 ? (completedLessons.length / totalLessons) * 100 : enrollmentData.progress || 0;
 
       const updateData = {
         completedLessons,
@@ -407,6 +402,7 @@ class CourseService {
     activeCourses: number;
     totalEnrollments: number;
     totalStudents: number;
+    completionRate: number;
   }> {
     try {
       let coursesQuery = this.coursesCollection;
@@ -425,11 +421,18 @@ class CourseService {
       ]);
 
       // Count unique students
-      const uniqueStudents = new Set();
+      const uniqueStudents = new Set<string>();
+      let totalProgress = 0;
+      let progressCount = 0;
       enrollmentsSnapshot.docs.forEach(doc => {
-        const enrollment = doc.data();
+        const enrollment = doc.data() as any;
+        // Only include enrollments for the instructor when requested
         if (!instructorId) {
           uniqueStudents.add(enrollment.studentId);
+          if (typeof enrollment.progress === 'number') {
+            totalProgress += enrollment.progress;
+            progressCount += 1;
+          }
         } else {
           // Check if enrollment belongs to instructor's course
           const courseId = enrollment.courseId;
@@ -438,15 +441,22 @@ class CourseService {
           );
           if (course) {
             uniqueStudents.add(enrollment.studentId);
+            if (typeof enrollment.progress === 'number') {
+              totalProgress += enrollment.progress;
+              progressCount += 1;
+            }
           }
         }
       });
+
+      const completionRate = progressCount > 0 ? Math.round(totalProgress / progressCount) : 0;
 
       return {
         totalCourses: allCoursesSnapshot.size,
         activeCourses: activeCoursesSnapshot.size,
         totalEnrollments: enrollmentsSnapshot.size,
-        totalStudents: uniqueStudents.size
+        totalStudents: uniqueStudents.size,
+        completionRate
       };
     } catch (error) {
       console.error('Error getting course stats:', error);

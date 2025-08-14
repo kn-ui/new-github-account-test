@@ -9,42 +9,47 @@ export default function ContactPage() {
     subject: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const lang = (typeof localStorage !== 'undefined' && (localStorage.getItem('lang') || 'en')) as 'en' | 'am';
+  const isAm = lang === 'am';
 
   const departments = [
-    { value: '', label: 'Select Department' },
-    { value: 'admissions', label: 'Admissions Office' },
-    { value: 'academic', label: 'Academic Affairs' },
-    { value: 'student-affairs', label: 'Student Affairs' },
-    { value: 'finance', label: 'Finance Office' },
-    { value: 'library', label: 'Library Services' },
-    { value: 'it-support', label: 'IT Support' },
-    { value: 'general', label: 'General Inquiry' }
+    { value: '', label: isAm ? 'ክፍል ይምረጡ' : 'Select Department' },
+    { value: 'admissions', label: isAm ? 'የመግቢያ ጽ/ቤት' : 'Admissions Office' },
+    { value: 'academic', label: isAm ? 'አካዳሚክ ጉዳዮች' : 'Academic Affairs' },
+    { value: 'student-affairs', label: isAm ? 'የተማሪ ጉዳዮች' : 'Student Affairs' },
+    { value: 'finance', label: isAm ? 'የገንዘብ ጽ/ቤት' : 'Finance Office' },
+    { value: 'library', label: isAm ? 'የቤተ መፃህፍት አገልግሎት' : 'Library Services' },
+    { value: 'it-support', label: isAm ? 'የቴክኒክ ድጋፍ' : 'IT Support' },
+    { value: 'general', label: isAm ? 'አጠቃላይ ጥያቄ' : 'General Inquiry' }
   ];
 
   const contactInfo = [
     {
       icon: Phone,
-      title: 'Phone',
+      title: isAm ? 'ስልክ' : 'Phone',
       details: ['+251-11-123-4567', '+251-11-123-4568'],
-      description: 'Monday - Friday, 8:00 AM - 5:00 PM'
+      description: isAm ? 'ሰኞ - አርብ, 2:00 - 11:00' : 'Monday - Friday, 8:00 AM - 5:00 PM'
     },
     {
       icon: Mail,
-      title: 'Email',
+      title: isAm ? 'ኢመይል' : 'Email',
       details: ['info@straguel.edu.et', 'admissions@straguel.edu.et'],
-      description: 'We respond within 24 hours'
+      description: isAm ? 'በ24 ሰዓታት ውስጥ እንመልሳለን' : 'We respond within 24 hours'
     },
     {
       icon: MapPin,
-      title: 'Address',
+      title: isAm ? 'አድራሻ' : 'Address',
       details: ['St. Raguel Church Spiritual School', 'Addis Ababa, Ethiopia'],
-      description: 'Main Campus Location'
+      description: isAm ? 'ዋና ካምፓስ አካባቢ' : 'Main Campus Location'
     },
     {
       icon: Clock,
-      title: 'Office Hours',
-      details: ['Monday - Friday: 8:00 AM - 5:00 PM', 'Saturday: 9:00 AM - 1:00 PM'],
-      description: 'Closed on Sundays and holidays'
+      title: isAm ? 'የቢሮ ሰዓት' : 'Office Hours',
+      details: [isAm ? 'ሰኞ - አርብ: 2:00 - 11:00' : 'Monday - Friday: 8:00 AM - 5:00 PM', isAm ? 'ቅዳሜ: 3:00 - 7:00' : 'Saturday: 9:00 AM - 1:00 PM'],
+      description: isAm ? 'እሁድ እና በበዓላት መዘግየት' : 'Closed on Sundays and holidays'
     }
   ];
 
@@ -55,18 +60,33 @@ export default function ContactPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      department: '',
-      subject: '',
-      message: ''
-    });
+    setNotice(null);
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const resp = await fetch('/api/content/support/tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: `${formData.department ? '[' + formData.department + '] ' : ''}${formData.message}`,
+        })
+      });
+      if (!resp.ok) throw new Error('Failed');
+      setNotice(isAm ? 'መልዕክትዎ ተልኳል።' : 'Your message was sent successfully.');
+      setFormData({ name: '', email: '', department: '', subject: '', message: '' });
+    } catch (err) {
+      setNotice(isAm ? 'መልዕክት መላክ አልተሳካም። እባክዎ ደግመው ይሞክሩ።' : 'Failed to send message. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -76,9 +96,9 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">Contact Us</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">{isAm ? 'አግኙን' : 'Contact Us'}</h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">
-              We're here to help and answer any questions you may have
+              {isAm ? 'ማንኛውንም ጥያቄ ለመመለስ እና ለመርዳት እዚህ ነን' : "We're here to help and answer any questions you may have"}
             </p>
           </div>
         </div>
@@ -113,17 +133,21 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="bg-white rounded-xl shadow-lg p-8">
               <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">Send us a Message</h2>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">{isAm ? 'መልዕክት ይላኩልን' : 'Send us a Message'}</h2>
                 <p className="text-gray-600">
-                  Fill out the form below and we'll get back to you as soon as possible.
+                  {isAm ? 'በታች ያለውን ቅጽ ይሙሉ እና በተቻለ ፍጥነት እንመልሳለን።' : "Fill out the form below and we'll get back to you as soon as possible."}
                 </p>
               </div>
+
+              {notice && (
+                <div className="mb-4 text-sm text-center text-gray-700">{notice}</div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name Field */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
+                    {isAm ? 'ሙሉ ስም *' : 'Full Name *'}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -137,7 +161,7 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your full name"
+                      placeholder={isAm ? 'ሙሉ ስምዎን ያስገቡ' : 'Enter your full name'}
                     />
                   </div>
                 </div>
@@ -145,7 +169,7 @@ export default function ContactPage() {
                 {/* Email Field */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
+                    {isAm ? 'ኢሜይል *' : 'Email Address *'}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -159,7 +183,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your email address"
+                      placeholder={isAm ? 'ኢሜይል ያስገቡ' : 'Enter your email address'}
                     />
                   </div>
                 </div>
@@ -167,7 +191,7 @@ export default function ContactPage() {
                 {/* Department Field */}
                 <div>
                   <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
+                    {isAm ? 'ክፍል' : 'Department'}
                   </label>
                   <select
                     id="department"
@@ -187,7 +211,7 @@ export default function ContactPage() {
                 {/* Subject Field */}
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject *
+                    {isAm ? 'ርዕስ *' : 'Subject *'}
                   </label>
                   <input
                     type="text"
@@ -197,14 +221,14 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleInputChange}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter the subject of your message"
+                    placeholder={isAm ? 'የመልዕክትዎ ርዕስ' : 'Enter the subject of your message'}
                   />
                 </div>
 
                 {/* Message Field */}
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
+                    {isAm ? 'መልዕክት *' : 'Message *'}
                   </label>
                   <div className="relative">
                     <div className="absolute top-3 left-3 pointer-events-none">
@@ -218,7 +242,7 @@ export default function ContactPage() {
                       value={formData.message}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      placeholder="Enter your message here..."
+                      placeholder={isAm ? 'መልዕክትዎን እዚህ ያስገቡ...' : 'Enter your message here...'}
                     />
                   </div>
                 </div>
@@ -226,10 +250,11 @@ export default function ContactPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2"
+                  disabled={submitting}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2 disabled:opacity-60"
                 >
                   <Send className="h-5 w-5" />
-                  <span>Send Message</span>
+                  <span>{submitting ? (isAm ? 'በመላክ ላይ...' : 'Sending...') : (isAm ? 'መልዕክት ላክ' : 'Send Message')}</span>
                 </button>
               </form>
             </div>
@@ -241,38 +266,38 @@ export default function ContactPage() {
                 <div className="h-64 bg-gray-200 flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <MapPin className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-lg font-medium">Interactive Map</p>
-                    <p className="text-sm">Google Maps integration would go here</p>
+                    <p className="text-lg font-medium">{isAm ? 'የካርታ ቅርጸ ተንቀሳቃሽ' : 'Interactive Map'}</p>
+                    <p className="text-sm">{isAm ? 'የጉግል ካርታ ማገናኘት እዚህ ይሆናል' : 'Google Maps integration would go here'}</p>
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Visit Our Campus</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{isAm ? 'ካምፓሱን ይመልከቱ' : 'Visit Our Campus'}</h3>
                   <p className="text-gray-600 mb-4">
-                    Our main campus is located in the heart of Addis Ababa, easily accessible by public transportation.
+                    {isAm ? 'ዋና ካምፓሳችን በአዲስ አበባ ልብ ክፍል ውስጥ ይገኛል፣ በህዝብ መጓጓዣ በቀላሉ ይደርሳሉ።' : 'Our main campus is located in the heart of Addis Ababa, easily accessible by public transportation.'}
                   </p>
                   <div className="space-y-2 text-sm text-gray-600">
-                    <p><strong>Address:</strong> St. Raguel Church Spiritual School</p>
-                    <p><strong>City:</strong> Addis Ababa, Ethiopia</p>
-                    <p><strong>Postal Code:</strong> 1000</p>
+                    <p><strong>{isAm ? 'አድራሻ:' : 'Address:'}</strong> St. Raguel Church Spiritual School</p>
+                    <p><strong>{isAm ? 'ከተማ:' : 'City:'}</strong> Addis Ababa, Ethiopia</p>
+                    <p><strong>{isAm ? 'ፖስታ ኮድ:' : 'Postal Code:'}</strong> 1000</p>
                   </div>
                 </div>
               </div>
 
               {/* Quick Contact */}
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Contact</h3>
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">{isAm ? 'ፈጣን አግኙን' : 'Quick Contact'}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-blue-600" />
                     <div>
-                      <p className="font-medium text-blue-900">Emergency Contact</p>
+                      <p className="font-medium text-blue-900">{isAm ? 'የአስቸኳይ እቃት' : 'Emergency Contact'}</p>
                       <p className="text-sm text-blue-700">+251-11-123-4569</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-blue-600" />
                     <div>
-                      <p className="font-medium text-blue-900">Student Support</p>
+                      <p className="font-medium text-blue-900">{isAm ? 'የተማሪ ድጋፍ' : 'Student Support'}</p>
                       <p className="text-sm text-blue-700">support@straguel.edu.et</p>
                     </div>
                   </div>
@@ -281,12 +306,12 @@ export default function ContactPage() {
 
               {/* FAQ Link */}
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{isAm ? 'የተደጋጋሚ ጥያቄዎች' : 'Frequently Asked Questions'}</h3>
                 <p className="text-gray-600 mb-4">
-                  Before contacting us, you might find the answer to your question in our FAQ section.
+                  {isAm ? 'ከማንኛውም አግኙን በፊት ምናልባት መልስ እዚህ ይገኛል።' : 'Before contacting us, you might find the answer to your question in our FAQ section.'}
                 </p>
                 <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                  View FAQ
+                  {isAm ? 'FAQ ይመልከቱ' : 'View FAQ'}
                 </button>
               </div>
             </div>

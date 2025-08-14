@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface EnrolledCourse {
   id: string | number;
@@ -14,6 +17,9 @@ interface EnrolledCourse {
 export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { t } = useI18n();
 
   const demoCourses: EnrolledCourse[] = [
     {
@@ -53,7 +59,7 @@ export default function StudentDashboard() {
             return {
               id: course.id,
               title: course.title,
-              progress: enrollment.progress || 0,
+              progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : undefined,
               instructor: course.instructorName || course.instructor,
               nextLesson: 'Next lesson',
               dueDate: undefined,
@@ -132,6 +138,14 @@ export default function StudentDashboard() {
     }
   };
 
+  const displayCourses = enrolledCourses.length ? enrolledCourses : demoCourses;
+  const averageProgress = useMemo(() => {
+    const withProgress = displayCourses.filter(c => typeof c.progress === 'number') as Array<Required<Pick<EnrolledCourse,'progress'>>> & EnrolledCourse[];
+    if (!withProgress.length) return 0;
+    const total = withProgress.reduce((sum, c: any) => sum + (c.progress || 0), 0);
+    return Math.round(total / withProgress.length);
+  }, [displayCourses]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -145,8 +159,18 @@ export default function StudentDashboard() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Continue your spiritual learning journey.</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{t('student.title')}</h1>
+              <p className="text-gray-600">{t('student.subtitle')}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.home')}</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.courses')}</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.forum')}</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('auth.logout')}</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -159,8 +183,8 @@ export default function StudentDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{enrolledCourses.length || 3}</p>
-                <p className="text-sm text-gray-600">Enrolled Courses</p>
+                <p className="text-2xl font-semibold text-gray-900">{displayCourses.length}</p>
+                <p className="text-sm text-gray-600">{t('student.stats.enrolledCourses')}</p>
               </div>
             </div>
           </div>
@@ -171,8 +195,8 @@ export default function StudentDashboard() {
                 <TrendingUp className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">67%</p>
-                <p className="text-sm text-gray-600">Average Progress</p>
+                <p className="text-2xl font-semibold text-gray-900">{averageProgress}%</p>
+                <p className="text-sm text-gray-600">{t('student.stats.averageProgress')}</p>
               </div>
             </div>
           </div>
@@ -184,7 +208,7 @@ export default function StudentDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">3</p>
-                <p className="text-sm text-gray-600">Pending Assignments</p>
+                <p className="text-sm text-gray-600">{t('student.stats.pendingAssignments')}</p>
               </div>
             </div>
           </div>
@@ -196,7 +220,7 @@ export default function StudentDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">2</p>
-                <p className="text-sm text-gray-600">Certificates Earned</p>
+                <p className="text-sm text-gray-600">{t('student.stats.certificates')}</p>
               </div>
             </div>
           </div>
@@ -208,11 +232,11 @@ export default function StudentDashboard() {
             {/* Enrolled Courses */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">My Courses</h2>
-                <p className="text-gray-600">Continue your learning journey</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('student.myCourses.title')}</h2>
+                <p className="text-gray-600">{t('student.myCourses.subtitle')}</p>
               </div>
               <div className="p-6 space-y-6">
-                {(enrolledCourses.length ? enrolledCourses : demoCourses).map((course) => (
+                {displayCourses.map((course) => (
                   <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -239,15 +263,18 @@ export default function StudentDashboard() {
                     <div className="flex justify-between items-center">
                       <div>
                         {course.nextLesson && (
-                          <p className="text-sm text-gray-600">Next: {course.nextLesson}</p>
+                          <p className="text-sm text-gray-600">{t('student.next')}: {course.nextLesson}</p>
                         )}
                         {course.dueDate && (
-                          <p className="text-xs text-gray-500">Due: {course.dueDate}</p>
+                          <p className="text-xs text-gray-500">{t('student.due')}: {course.dueDate}</p>
                         )}
                       </div>
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                      <button
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      >
                         <Play className="h-4 w-4" />
-                        <span>Continue</span>
+                        <span>{t('student.continue')}</span>
                       </button>
                     </div>
                   </div>
@@ -258,8 +285,8 @@ export default function StudentDashboard() {
             {/* Upcoming Assignments */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Upcoming Assignments</h2>
-                <p className="text-gray-600">Stay on track with your coursework</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('student.upcomingAssignments.title')}</h2>
+                <p className="text-gray-600">{t('student.upcomingAssignments.subtitle')}</p>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
@@ -272,7 +299,7 @@ export default function StudentDashboard() {
                         <div>
                           <h3 className="font-medium text-gray-900">{assignment.title}</h3>
                           <p className="text-sm text-gray-600">{assignment.course}</p>
-                          <p className="text-xs text-gray-500">Due: {assignment.dueDate}</p>
+                          <p className="text-xs text-gray-500">{t('student.due')}: {assignment.dueDate}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -280,7 +307,7 @@ export default function StudentDashboard() {
                           {assignment.status.replace('-', ' ')}
                         </span>
                         <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                          View
+                          {t('student.upcomingAssignments.view')}
                         </button>
                       </div>
                     </div>
@@ -297,7 +324,7 @@ export default function StudentDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <Bell className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Announcements</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('student.announcements')}</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
@@ -314,20 +341,20 @@ export default function StudentDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('student.quickActions.title')}</h2>
               </div>
               <div className="p-6 space-y-3">
                 <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                   <Calendar className="h-4 w-4" />
-                  <span>View Schedule</span>
+                  <span>{t('student.quickActions.viewSchedule')}</span>
                 </button>
                 <button className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
                   <BookOpen className="h-4 w-4" />
-                  <span>Browse Courses</span>
+                  <span>{t('student.quickActions.browseCourses')}</span>
                 </button>
                 <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
                   <Award className="h-4 w-4" />
-                  <span>My Certificates</span>
+                  <span>{t('student.quickActions.myCertificates')}</span>
                 </button>
               </div>
             </div>

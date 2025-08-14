@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle } from 'lucide-react';
 import { api, Course } from '@/lib/api';
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   const demoCourses = [
@@ -40,6 +41,22 @@ export default function TeacherDashboard() {
         const res = await api.getMyCourses({ page: 1, limit: 50 });
         if (res.success && Array.isArray(res.data)) {
           setMyCourses(res.data);
+          // Fetch enrollments per course in parallel
+          const entries = await Promise.all(
+            res.data.map(async (c) => {
+              try {
+                const er = await api.getCourseEnrollments(c.id);
+                if (er.success && Array.isArray(er.data)) {
+                  const active = er.data.filter((e: any) => e.status === 'active').length;
+                  return [c.id, active] as const;
+                }
+              } catch {}
+              return [c.id, 0] as const;
+            })
+          );
+          const map: Record<string, number> = {};
+          entries.forEach(([id, count]) => { map[id] = count; });
+          setEnrollmentCounts(map);
         } else {
           setMyCourses([]);
         }
@@ -54,30 +71,9 @@ export default function TeacherDashboard() {
   }, []);
 
   const recentSubmissions = [
-    {
-      id: 1,
-      student: 'John Smith',
-      assignment: 'Biblical Interpretation Essay',
-      course: 'Introduction to Biblical Studies',
-      submittedAt: '2 hours ago',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      student: 'Mary Johnson',
-      assignment: 'Theology Research Paper',
-      course: 'Advanced Theology Concepts',
-      submittedAt: '4 hours ago',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      student: 'David Wilson',
-      assignment: 'Leadership Case Study',
-      course: 'Christian Leadership Principles',
-      submittedAt: '1 day ago',
-      status: 'graded'
-    }
+    { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
+    { id: 2, student: 'Mary Johnson', assignment: 'Theology Research Paper', course: 'Advanced Theology Concepts', submittedAt: '4 hours ago', status: 'pending' },
+    { id: 3, student: 'David Wilson', assignment: 'Leadership Case Study', course: 'Christian Leadership Principles', submittedAt: '1 day ago', status: 'graded' }
   ];
 
   const studentProgress = [
@@ -97,6 +93,20 @@ export default function TeacherDashboard() {
     }
   };
 
+  const coursesToDisplay = useMemo(() => {
+    if (!myCourses.length) return demoCourses;
+    return myCourses.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      students: enrollmentCounts[c.id] ?? c.currentEnrollmentCount ?? 0,
+      completion: 0,
+      assignments: (c as any).assignments?.length || 0,
+      status: c.isActive ? 'active' : 'completed',
+    }));
+  }, [myCourses, enrollmentCounts]);
+
+  const totalStudents = coursesToDisplay.reduce((sum, c: any) => sum + (c.students || 0), 0);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -104,15 +114,6 @@ export default function TeacherDashboard() {
       </div>
     );
   }
-
-  const coursesToDisplay = myCourses.length ? myCourses.map((c: any) => ({
-    id: c.id,
-    title: c.title,
-    students: c.currentEnrollmentCount ?? 0,
-    completion: 0,
-    assignments: (c as any).assignments?.length || 0,
-    status: c.isActive ? 'active' : 'completed',
-  })) : demoCourses;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,7 +154,7 @@ export default function TeacherDashboard() {
                 <Users className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.reduce((sum, c: any) => sum + (c.students || 0), 0)}</p>
+                <p className="text-2xl font-semibold text-gray-900">{totalStudents}</p>
                 <p className="text-sm text-gray-600">Total Students</p>
               </div>
             </div>
@@ -251,7 +252,7 @@ export default function TeacherDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   {recentSubmissions.map((submission) => (
-                    <div key={submission.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                    <div key={submission.id} className="flex items-center justify_between p-4 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
                         <div className="bg-gray-100 p-2 rounded-full">
                           {submission.status === 'graded' ? (
@@ -287,7 +288,7 @@ export default function TeacherDashboard() {
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-gray-600" />
+                  <BarChart3 className="h-5 w-5 text_gray-600" />
                   <h2 className="text-lg font-semibold text-gray-900">Top Students</h2>
                 </div>
               </div>

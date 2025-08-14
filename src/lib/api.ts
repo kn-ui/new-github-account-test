@@ -198,6 +198,11 @@ class ApiClient {
     return this.request<Course[]>(`/api/courses/instructor/my-courses${query}`);
   }
 
+  // Course enrollments (for instructors/admin)
+  async getCourseEnrollments(courseId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/api/courses/${courseId}/enrollments`);
+  }
+
   // Admin stats
   async getAdminUserStats(): Promise<ApiResponse<any>> {
     return this.request<any>('/api/users/admin/stats');

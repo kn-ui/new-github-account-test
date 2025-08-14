@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface EnrolledCourse {
   id: string | number;
@@ -14,6 +15,7 @@ interface EnrolledCourse {
 export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   const demoCourses: EnrolledCourse[] = [
     {
@@ -53,7 +55,7 @@ export default function StudentDashboard() {
             return {
               id: course.id,
               title: course.title,
-              progress: enrollment.progress || 0,
+              progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : undefined,
               instructor: course.instructorName || course.instructor,
               nextLesson: 'Next lesson',
               dueDate: undefined,
@@ -132,6 +134,14 @@ export default function StudentDashboard() {
     }
   };
 
+  const displayCourses = enrolledCourses.length ? enrolledCourses : demoCourses;
+  const averageProgress = useMemo(() => {
+    const withProgress = displayCourses.filter(c => typeof c.progress === 'number') as Array<Required<Pick<EnrolledCourse,'progress'>>> & EnrolledCourse[];
+    if (!withProgress.length) return 0;
+    const total = withProgress.reduce((sum, c: any) => sum + (c.progress || 0), 0);
+    return Math.round(total / withProgress.length);
+  }, [displayCourses]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -159,7 +169,7 @@ export default function StudentDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{enrolledCourses.length || 3}</p>
+                <p className="text-2xl font-semibold text-gray-900">{displayCourses.length}</p>
                 <p className="text-sm text-gray-600">Enrolled Courses</p>
               </div>
             </div>
@@ -171,14 +181,14 @@ export default function StudentDashboard() {
                 <TrendingUp className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">67%</p>
+                <p className="text-2xl font-semibold text-gray-900">{averageProgress}%</p>
                 <p className="text-sm text-gray-600">Average Progress</p>
               </div>
             </div>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
+            <div className="flex items_center">
               <div className="bg-yellow-100 p-3 rounded-full">
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
@@ -212,7 +222,7 @@ export default function StudentDashboard() {
                 <p className="text-gray-600">Continue your learning journey</p>
               </div>
               <div className="p-6 space-y-6">
-                {(enrolledCourses.length ? enrolledCourses : demoCourses).map((course) => (
+                {displayCourses.map((course) => (
                   <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -245,7 +255,10 @@ export default function StudentDashboard() {
                           <p className="text-xs text-gray-500">Due: {course.dueDate}</p>
                         )}
                       </div>
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                      <button
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      >
                         <Play className="h-4 w-4" />
                         <span>Continue</span>
                       </button>

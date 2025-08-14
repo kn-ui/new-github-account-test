@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle } from 'lucide-react';
+import { api, Course } from '@/lib/api';
 
 export default function TeacherDashboard() {
-  const myCourses = [
+  const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const demoCourses = [
     {
-      id: 1,
+      id: '1',
       title: 'Introduction to Biblical Studies',
       students: 245,
       completion: 78,
@@ -12,7 +16,7 @@ export default function TeacherDashboard() {
       status: 'active'
     },
     {
-      id: 2,
+      id: '2',
       title: 'Advanced Theology Concepts',
       students: 89,
       completion: 65,
@@ -20,14 +24,34 @@ export default function TeacherDashboard() {
       status: 'active'
     },
     {
-      id: 3,
+      id: '3',
       title: 'Christian Leadership Principles',
       students: 156,
       completion: 92,
       assignments: 8,
       status: 'completed'
     }
-  ];
+  ] as any[];
+
+  useEffect(() => {
+    const loadMyCourses = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getMyCourses({ page: 1, limit: 50 });
+        if (res.success && Array.isArray(res.data)) {
+          setMyCourses(res.data);
+        } else {
+          setMyCourses([]);
+        }
+      } catch (_e) {
+        setMyCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMyCourses();
+  }, []);
 
   const recentSubmissions = [
     {
@@ -73,6 +97,23 @@ export default function TeacherDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading your dashboard...</div>
+      </div>
+    );
+  }
+
+  const coursesToDisplay = myCourses.length ? myCourses.map((c: any) => ({
+    id: c.id,
+    title: c.title,
+    students: c.enrolledStudents?.length || 0,
+    completion: 0,
+    assignments: c.assignments?.length || 0,
+    status: c.isActive ? 'active' : 'completed',
+  })) : demoCourses;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -100,7 +141,7 @@ export default function TeacherDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">3</p>
+                <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.length}</p>
                 <p className="text-sm text-gray-600">Active Courses</p>
               </div>
             </div>
@@ -112,7 +153,7 @@ export default function TeacherDashboard() {
                 <Users className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">490</p>
+                <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.reduce((sum, c: any) => sum + (c.students || 0), 0)}</p>
                 <p className="text-sm text-gray-600">Total Students</p>
               </div>
             </div>
@@ -153,7 +194,7 @@ export default function TeacherDashboard() {
                 <p className="text-gray-600">Manage and monitor your courses</p>
               </div>
               <div className="p-6 space-y-6">
-                {myCourses.map((course) => (
+                {coursesToDisplay.map((course: any) => (
                   <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>

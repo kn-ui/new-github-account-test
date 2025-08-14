@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText } from 'lucide-react';
+import { api } from '@/lib/api';
+
+interface EnrolledCourse {
+  id: string | number;
+  title: string;
+  progress?: number;
+  nextLesson?: string;
+  dueDate?: string;
+  instructor?: string;
+}
 
 export default function StudentDashboard() {
-  const enrolledCourses = [
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const demoCourses: EnrolledCourse[] = [
     {
       id: 1,
       title: 'Introduction to Biblical Studies',
@@ -28,6 +41,37 @@ export default function StudentDashboard() {
       instructor: 'Prof. David Chen'
     }
   ];
+
+  useEffect(() => {
+    const loadEnrollments = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getMyEnrollments();
+        if (res.success && Array.isArray(res.data)) {
+          const normalized: EnrolledCourse[] = res.data.map((enrollment: any) => {
+            const course = enrollment.course || enrollment;
+            return {
+              id: course.id,
+              title: course.title,
+              progress: enrollment.progress || 0,
+              instructor: course.instructorName || course.instructor,
+              nextLesson: 'Next lesson',
+              dueDate: undefined,
+            };
+          });
+          setEnrolledCourses(normalized);
+        } else {
+          setEnrolledCourses(demoCourses);
+        }
+      } catch (_e) {
+        setEnrolledCourses(demoCourses);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEnrollments();
+  }, []);
 
   const upcomingAssignments = [
     {
@@ -88,6 +132,14 @@ export default function StudentDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading your dashboard...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -107,7 +159,7 @@ export default function StudentDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">3</p>
+                <p className="text-2xl font-semibold text-gray-900">{enrolledCourses.length || 3}</p>
                 <p className="text-sm text-gray-600">Enrolled Courses</p>
               </div>
             </div>
@@ -160,28 +212,38 @@ export default function StudentDashboard() {
                 <p className="text-gray-600">Continue your learning journey</p>
               </div>
               <div className="p-6 space-y-6">
-                {enrolledCourses.map((course) => (
+                {(enrolledCourses.length ? enrolledCourses : demoCourses).map((course) => (
                   <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-1">{course.title}</h3>
-                        <p className="text-sm text-gray-600">by {course.instructor}</p>
+                        {course.instructor && (
+                          <p className="text-sm text-gray-600">by {course.instructor}</p>
+                        )}
                       </div>
-                      <span className="text-sm font-medium text-blue-600">{course.progress}%</span>
+                      {typeof course.progress === 'number' && (
+                        <span className="text-sm font-medium text-blue-600">{course.progress}%</span>
+                      )}
                     </div>
                     
                     {/* Progress Bar */}
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
+                    {typeof course.progress === 'number' && (
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${course.progress}%` }}
+                        />
+                      </div>
+                    )}
                     
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-gray-600">Next: {course.nextLesson}</p>
-                        <p className="text-xs text-gray-500">Due: {course.dueDate}</p>
+                        {course.nextLesson && (
+                          <p className="text-sm text-gray-600">Next: {course.nextLesson}</p>
+                        )}
+                        {course.dueDate && (
+                          <p className="text-xs text-gray-500">Due: {course.dueDate}</p>
+                        )}
                       </div>
                       <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                         <Play className="h-4 w-4" />

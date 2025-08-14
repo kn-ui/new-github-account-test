@@ -196,6 +196,15 @@ class ApiClient {
     const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
     return this.request<Course[]>(`/api/courses/instructor/my-courses${query}`);
   }
+
+  // Admin stats
+  async getAdminUserStats(): Promise<ApiResponse<any>> {
+    return this.request<any>('/api/users/admin/stats');
+  }
+
+  async getAdminCourseStats(): Promise<ApiResponse<any>> {
+    return this.request<any>('/api/courses/admin/stats');
+  }
 }
 
 // Create and export API client instance

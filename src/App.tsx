@@ -21,7 +21,7 @@ import Rules from "./pages/Rules";
 import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
-import Catalog from "./pages/Catalog";
+// import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +44,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
-            <Route path="/catalog" element={<Catalog />} />
+            {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route 

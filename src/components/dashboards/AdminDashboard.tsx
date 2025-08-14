@@ -1,13 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<{ totalUsers?: number; totalStudents?: number; activeCourses?: number; completionRate?: number; systemHealth?: number; } | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
   const systemStats = [
-    { label: 'Total Users', value: '1,247', change: '+12%', icon: Users, color: 'blue' },
-    { label: 'Active Courses', value: '45', change: '+5%', icon: BookOpen, color: 'teal' },
-    { label: 'Completion Rate', value: '78%', change: '+3%', icon: TrendingUp, color: 'green' },
-    { label: 'System Health', value: '99.9%', change: '+0.1%', icon: Shield, color: 'purple' },
-  ];
+    { label: 'Total Users', key: 'totalUsers', value: '1,247', change: '+12%', icon: Users, color: 'blue' },
+    { label: 'Active Courses', key: 'activeCourses', value: '45', change: '+5%', icon: BookOpen, color: 'teal' },
+    { label: 'Completion Rate', key: 'completionRate', value: '78%', change: '+3%', icon: TrendingUp, color: 'green' },
+    { label: 'System Health', key: 'systemHealth', value: '99.9%', change: '+0.1%', icon: Shield, color: 'purple' },
+  ] as const;
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const [userStats, courseStats] = await Promise.all([
+          api.getAdminUserStats().catch(() => ({ success: false } as any)),
+          api.getAdminCourseStats().catch(() => ({ success: false } as any)),
+        ]);
+        if (userStats.success || courseStats.success) {
+          setStats({
+            totalUsers: userStats?.data?.totalUsers,
+            totalStudents: userStats?.data?.totalStudents,
+            activeCourses: courseStats?.data?.activeCourses,
+            completionRate: courseStats?.data?.completionRate,
+            systemHealth: 99.9,
+          });
+        } else {
+          setStats(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
+  }, []);
 
   const recentUsers = [
     { name: 'John Smith', email: 'john@email.com', role: 'Student', joinDate: '2025-01-15', status: 'active' },
@@ -65,6 +95,14 @@ export default function AdminDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading admin overview...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -92,20 +130,29 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {systemStats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full ${getColorClasses(stat.color)}`}>
-                  <stat.icon className="h-6 w-6" />
+          {systemStats.map((stat, index) => {
+            const valueOverride = stats && stat.key in (stats || {})
+              ? stat.key === 'completionRate'
+                ? `${stats.completionRate}%`
+                : stat.key === 'systemHealth'
+                  ? `${stats.systemHealth}%`
+                  : String((stats as any)[stat.key])
+              : stat.value;
+            return (
+              <div key={index} className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-full ${getColorClasses(stat.color)}`}>
+                    <stat.icon className="h-6 w-6" />
+                  </div>
+                  <span className="text-sm font-medium text-green-600">{stat.change}</span>
                 </div>
-                <span className="text-sm font-medium text-green-600">{stat.change}</span>
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{valueOverride}</p>
+                  <p className="text-sm text-gray-600">{stat.label}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">

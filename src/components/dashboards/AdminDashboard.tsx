@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download } from 'lucide-react';
 import { api } from '@/lib/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RecentUserRow {
   name: string;
@@ -14,6 +16,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<{ totalUsers?: number; totalStudents?: number; activeCourses?: number; completionRate?: number; systemHealth?: number; } | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const systemStats = [
     { label: 'Total Users', key: 'totalUsers', value: '1,247', change: '+12%', icon: Users, color: 'blue' },
@@ -122,7 +126,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header + Navigation */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
@@ -130,15 +134,11 @@ export default function AdminDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600">System overview and management</p>
             </div>
-            <div className="flex space-x-3">
-              <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </button>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                <UserPlus className="h-4 w-4" />
-                <span>Add User</span>
-              </button>
+            <div className="flex items-center space-x-2">
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Home</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Courses</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Forum</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">Logout</button>
             </div>
           </div>
         </div>

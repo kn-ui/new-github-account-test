@@ -1,11 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle } from 'lucide-react';
 import { api, Course } from '@/lib/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const demoCourses = [
     {
@@ -125,10 +129,12 @@ export default function TeacherDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
               <p className="text-gray-600">Manage your courses and track student progress</p>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Course</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Home</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Courses</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Forum</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">Logout</button>
+            </div>
           </div>
         </div>
       </div>
@@ -252,7 +258,7 @@ export default function TeacherDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   {recentSubmissions.map((submission) => (
-                    <div key={submission.id} className="flex items-center justify_between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                    <div key={submission.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
                         <div className="bg-gray-100 p-2 rounded-full">
                           {submission.status === 'graded' ? (
@@ -288,7 +294,7 @@ export default function TeacherDashboard() {
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text_gray-600" />
+                  <BarChart3 className="h-5 w-5 text-gray-600" />
                   <h2 className="text-lg font-semibold text-gray-900">Top Students</h2>
                 </div>
               </div>

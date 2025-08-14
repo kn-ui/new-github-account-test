@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EnrolledCourse {
   id: string | number;
@@ -16,6 +17,7 @@ export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const demoCourses: EnrolledCourse[] = [
     {
@@ -155,8 +157,18 @@ export default function StudentDashboard() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Continue your spiritual learning journey.</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+              <p className="text-gray-600">Welcome back! Continue your spiritual learning journey.</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Home</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Courses</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Forum</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">Logout</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -188,7 +200,7 @@ export default function StudentDashboard() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items_center">
+            <div className="flex items-center">
               <div className="bg-yellow-100 p-3 rounded-full">
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>

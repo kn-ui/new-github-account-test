@@ -13,6 +13,15 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import Academic from "./pages/Academic";
+import Admissions from "./pages/Admissions";
+import Calendar from "./pages/Calendar";
+import Rules from "./pages/Rules";
+import Blog from "./pages/Blog";
+import Contact from "./pages/Contact";
+import Forum from "./pages/Forum";
+import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +36,15 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/academic" element={<Academic />} />
+            <Route path="/admissions" element={<Admissions />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/rules" element={<Rules />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/forum" element={<Forum />} />
+            <Route path="/catalog" element={<Catalog />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route 

@@ -283,6 +283,14 @@ class ApiClient {
     return this.request<ForumThreadPost[]>(`/api/content/forum/threads/${threadId}/posts${query}`);
   }
 
+  async createForumThread(payload: { title: string; category: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/forum/threads`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async createForumPost(threadId: string, payload: { body: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/forum/threads/${threadId}/posts`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
   async createSupportTicket(payload: { name: string; email: string; subject: string; message: string; }): Promise<ApiResponse<any>> {
     return this.request(`/api/content/support/tickets`, { method: 'POST', body: JSON.stringify(payload) });
   }

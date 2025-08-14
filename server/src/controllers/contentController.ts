@@ -57,6 +57,33 @@ export class ContentController {
     }
   }
 
+  async createThread(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { title, category } = req.body;
+      if (!title || !category) return sendError(res, 'Missing fields');
+      const createdBy = req.user!.uid;
+      const createdByName = req.user!.email || 'User';
+      const th = await forumService.createThread({ title, category, createdBy, createdByName });
+      sendCreated(res, 'Thread created', th);
+    } catch (e) {
+      sendServerError(res, 'Failed to create thread');
+    }
+  }
+
+  async createPost(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { threadId } = req.params;
+      const { body } = req.body;
+      if (!threadId || !body) return sendError(res, 'Missing fields');
+      const createdBy = req.user!.uid;
+      const createdByName = req.user!.email || 'User';
+      const post = await forumService.createPost({ threadId, body, createdBy, createdByName });
+      sendCreated(res, 'Post created', post);
+    } catch (e) {
+      sendServerError(res, 'Failed to create post');
+    }
+  }
+
   async createTicket(req: AuthenticatedRequest, res: Response) {
     try {
       const { name, email, subject, message } = req.body;

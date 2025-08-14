@@ -8,6 +8,8 @@ const Forum = () => {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
   const [q, setQ] = useState('');
+  const [newThreadTitle, setNewThreadTitle] = useState('');
+  const [newThreadCategory, setNewThreadCategory] = useState('theology');
 
   const categories = [
     { value: 'all', label: 'All Topics' },
@@ -18,21 +20,30 @@ const Forum = () => {
     { value: 'announcements', label: 'Announcements' }
   ];
 
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const resp = await api.getForumThreads({ category: category === 'all' ? undefined : category, page: 1, limit: 20 });
+      let data = resp.success && Array.isArray(resp.data) ? resp.data : [];
+      if (q) data = data.filter(t => t.title.toLowerCase().includes(q.toLowerCase()));
+      setThreads(data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const resp = await api.getForumThreads({ category: category === 'all' ? undefined : category, page: 1, limit: 20 });
-        let data = resp.success && Array.isArray(resp.data) ? resp.data : [];
-        if (q) data = data.filter(t => t.title.toLowerCase().includes(q.toLowerCase()));
-        setThreads(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const id = setTimeout(load, 200);
+    const id = setTimeout(reload, 200);
     return () => clearTimeout(id);
   }, [category, q]);
+
+  const onCreateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newThreadTitle.trim()) return;
+    await api.createForumThread({ title: newThreadTitle.trim(), category: newThreadCategory });
+    setNewThreadTitle('');
+    await reload();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,6 +75,24 @@ const Forum = () => {
               </select>
             </div>
           </div>
+        </div>
+
+        {/* Create Thread */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <form onSubmit={onCreateThread} className="grid md:grid-cols-6 gap-3">
+            <input
+              className="md:col-span-3 border rounded px-3 py-2"
+              placeholder="Thread title"
+              value={newThreadTitle}
+              onChange={(e) => setNewThreadTitle(e.target.value)}
+            />
+            <select className="md:col-span-2 border rounded px-3 py-2" value={newThreadCategory} onChange={(e) => setNewThreadCategory(e.target.value)}>
+              {categories.filter(c=>c.value!=='all').map(c => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+            <button className="md:col-span-1 bg-blue-600 text-white rounded px-4 py-2">Post</button>
+          </form>
         </div>
 
         {loading ? (

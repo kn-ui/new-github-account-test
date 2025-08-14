@@ -28,6 +28,55 @@ class ForumService {
     const posts: ForumThreadPost[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
     return { posts, total };
   }
+
+  async createThread(params: { title: string; category: string; createdBy: string; createdByName: string; }): Promise<ForumThread> {
+    if (isTestMode || !this.threads) {
+      return {
+        id: 'test',
+        title: params.title,
+        category: params.category,
+        createdBy: params.createdBy,
+        createdByName: params.createdByName,
+        createdAt: new Date(),
+        lastActivityAt: new Date(),
+        pinned: false,
+      } as ForumThread;
+    }
+    const doc = {
+      title: params.title,
+      category: params.category,
+      createdBy: params.createdBy,
+      createdByName: params.createdByName,
+      createdAt: new Date(),
+      lastActivityAt: new Date(),
+      pinned: false,
+    };
+    const ref = await this.threads.add(doc as any);
+    return { id: ref.id, ...(doc as any) };
+  }
+
+  async createPost(params: { threadId: string; body: string; createdBy: string; createdByName: string; }): Promise<ForumThreadPost> {
+    if (isTestMode || !this.posts || !this.threads) {
+      return {
+        id: 'test',
+        threadId: params.threadId,
+        body: params.body,
+        createdBy: params.createdBy,
+        createdByName: params.createdByName,
+        createdAt: new Date(),
+      } as ForumThreadPost;
+    }
+    const doc = {
+      threadId: params.threadId,
+      body: params.body,
+      createdBy: params.createdBy,
+      createdByName: params.createdByName,
+      createdAt: new Date(),
+    };
+    const ref = await this.posts.add(doc as any);
+    await this.threads.doc(params.threadId).update({ lastActivityAt: new Date() });
+    return { id: ref.id, ...(doc as any) };
+  }
 }
 
 export default new ForumService();

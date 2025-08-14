@@ -2,6 +2,7 @@ import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
 import { api, ForumThread } from '@/lib/api';
 import { Search } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Forum = () => {
   const [threads, setThreads] = useState<ForumThread[]>([]);
@@ -10,14 +11,15 @@ const Forum = () => {
   const [q, setQ] = useState('');
   const [newThreadTitle, setNewThreadTitle] = useState('');
   const [newThreadCategory, setNewThreadCategory] = useState('theology');
+  const { t } = useI18n();
 
   const categories = [
-    { value: 'all', label: 'All Topics' },
-    { value: 'theology', label: 'Theology' },
-    { value: 'spirituality', label: 'Spirituality' },
-    { value: 'academic', label: 'Academic Help' },
-    { value: 'community', label: 'Community' },
-    { value: 'announcements', label: 'Announcements' }
+    { value: 'all', label: t('forum.categories.all') },
+    { value: 'theology', label: t('forum.categories.theology') },
+    { value: 'spirituality', label: t('forum.categories.spirituality') },
+    { value: 'academic', label: t('forum.categories.academic') },
+    { value: 'community', label: t('forum.categories.community') },
+    { value: 'announcements', label: t('forum.categories.announcements') }
   ];
 
   const reload = async () => {
@@ -25,7 +27,7 @@ const Forum = () => {
     try {
       const resp = await api.getForumThreads({ category: category === 'all' ? undefined : category, page: 1, limit: 20 });
       let data = resp.success && Array.isArray(resp.data) ? resp.data : [];
-      if (q) data = data.filter(t => t.title.toLowerCase().includes(q.toLowerCase()));
+      if (q) data = data.filter(ti => ti.title.toLowerCase().includes(q.toLowerCase()));
       setThreads(data);
     } finally {
       setLoading(false);
@@ -57,7 +59,7 @@ const Forum = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search topics..."
+                placeholder={t('forum.searchPlaceholder')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -82,7 +84,7 @@ const Forum = () => {
           <form onSubmit={onCreateThread} className="grid md:grid-cols-6 gap-3">
             <input
               className="md:col-span-3 border rounded px-3 py-2"
-              placeholder="Thread title"
+              placeholder={t('forum.create.titlePlaceholder')}
               value={newThreadTitle}
               onChange={(e) => setNewThreadTitle(e.target.value)}
             />
@@ -91,33 +93,33 @@ const Forum = () => {
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
-            <button className="md:col-span-1 bg-blue-600 text-white rounded px-4 py-2">Post</button>
+            <button className="md:col-span-1 bg-blue-600 text-white rounded px-4 py-2">{t('forum.create.post')}</button>
           </form>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-500">Loading...</div>
+          <div className="text-center text-gray-500">{t('forum.loading')}</div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <div className="divide-y divide-gray-200">
-              {threads.map(t => (
-                <div key={t.id} className="p-6 hover:bg-gray-50 transition-colors">
+              {threads.map(ti => (
+                <div key={ti.id} className="p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        {t.pinned && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">Pinned</span>
+                        {ti.pinned && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">{t('forum.pinned')}</span>
                         )}
-                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize">{t.category}</span>
+                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize">{t(`forum.categories.${ti.category}`)}</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">{t.title}</h3>
-                      <p className="text-xs text-gray-500 mt-1">By {t.createdByName} • {new Date(t.createdAt).toLocaleString()}</p>
+                      <h3 className="text-lg font-semibold text-gray-900">{ti.title}</h3>
+                      <p className="text-xs text-gray-500 mt-1">{t('forum.by')} {ti.createdByName} • {new Date(ti.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
               ))}
               {!threads.length && (
-                <div className="text-center text-gray-500 py-12">No topics found</div>
+                <div className="text-center text-gray-500 py-12">{t('forum.noTopics')}</div>
               )}
             </div>
           </div>

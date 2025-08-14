@@ -2,20 +2,22 @@ import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
 import { api, BlogPost } from '@/lib/api';
 import { Search } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
+  const { t } = useI18n();
 
   const categories = [
-    { value: 'all', label: 'All Posts' },
-    { value: 'theology', label: 'Theology' },
-    { value: 'spirituality', label: 'Spirituality' },
-    { value: 'community', label: 'Community' },
-    { value: 'education', label: 'Education' },
-    { value: 'events', label: 'Events' }
+    { value: 'all', label: t('blog.categories.all') },
+    { value: 'theology', label: t('blog.categories.theology') },
+    { value: 'spirituality', label: t('blog.categories.spirituality') },
+    { value: 'community', label: t('blog.categories.community') },
+    { value: 'education', label: t('blog.categories.education') },
+    { value: 'events', label: t('blog.categories.events') }
   ];
 
   useEffect(() => {
@@ -45,7 +47,7 @@ const Blog = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search posts..."
+                placeholder={t('blog.searchPlaceholder')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -67,7 +69,7 @@ const Blog = () => {
 
         <section className="py-8">
           {loading ? (
-            <div className="text-center text-gray-500">Loading...</div>
+            <div className="text-center text-gray-500">{t('blog.loading')}</div>
           ) : posts.length ? (
             <div className="grid lg:grid-cols-2 gap-8">
               {posts.map(post => (
@@ -87,7 +89,7 @@ const Blog = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-500 py-12">No posts found</div>
+            <div className="text-center text-gray-500 py-12">{t('blog.noPosts')}</div>
           )}
         </section>
       </div>

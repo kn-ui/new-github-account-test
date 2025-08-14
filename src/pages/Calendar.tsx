@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { api, EventItem } from '@/lib/api';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Calendar = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -10,6 +11,7 @@ const Calendar = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+  const { t } = useI18n();
 
   useEffect(() => {
     const load = async () => {
@@ -40,6 +42,8 @@ const Calendar = () => {
     return map;
   }, [events, daysInMonth]);
 
+  const weekdays = t('calendar.weekdays') as unknown as string[];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -47,29 +51,29 @@ const Calendar = () => {
         <div className="bg-white shadow-sm border-b p-6 rounded mb-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600">Month</label>
+              <label className="text-sm text-gray-600">{t('calendar.month')}</label>
               <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="border rounded px-3 py-2" />
             </div>
             <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600">Type</label>
+              <label className="text-sm text-gray-600">{t('calendar.type')}</label>
               <select value={type} onChange={(e) => setType(e.target.value)} className="border rounded px-3 py-2">
-                <option value="all">All Events</option>
-                <option value="academic">Academic</option>
-                <option value="religious">Religious</option>
-                <option value="social">Social</option>
-                <option value="examination">Examinations</option>
-                <option value="holiday">Holidays</option>
+                <option value="all">{t('calendar.types.all')}</option>
+                <option value="academic">{t('calendar.types.academic')}</option>
+                <option value="religious">{t('calendar.types.religious')}</option>
+                <option value="social">{t('calendar.types.social')}</option>
+                <option value="examination">{t('calendar.types.examination')}</option>
+                <option value="holiday">{t('calendar.types.holiday')}</option>
               </select>
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-500">Loading events...</div>
+          <div className="text-center text-gray-500">{t('calendar.loading')}</div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="grid grid-cols-7 gap-1 p-4">
-              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+              {weekdays.map((d) => (
                 <div key={d} className="p-2 text-center font-semibold text-gray-600 bg-gray-50 rounded">{d}</div>
               ))}
             </div>
@@ -84,7 +88,7 @@ const Calendar = () => {
                       </div>
                     ))}
                     {(eventsByDay[day] || []).length > 3 && (
-                      <div className="text-xs text-gray-500">+{(eventsByDay[day] || []).length - 3} more</div>
+                      <div className="text-xs text-gray-500">{t('calendar.more', { count: (eventsByDay[day] || []).length - 3 as any })}</div>
                     )}
                   </div>
                 </div>

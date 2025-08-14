@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, BookOpen, User, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
+  const { t, lang, setLang } = useI18n();
 
   const handleLogout = async () => {
     try {
@@ -17,36 +19,36 @@ const Header = () => {
     }
   };
 
-  const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || 'User';
+  const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || t('auth.user');
   const userRole = userProfile?.role as 'student' | 'teacher' | 'admin' | undefined;
 
   const publicNavItems = [
-    { label: 'Home', to: '/' },
-    { label: 'About', to: '/about' },
-    { label: 'Academic', to: '/academic' },
-    { label: 'Admissions', to: '/admissions' },
-    { label: 'Blog', to: '/blog' },
-    { label: 'Contact', to: '/contact' },
+    { label: t('nav.home'), to: '/' },
+    { label: t('nav.about'), to: '/about' },
+    { label: t('nav.academic'), to: '/academic' },
+    { label: t('nav.admissions'), to: '/admissions' },
+    { label: t('nav.blog'), to: '/blog' },
+    { label: t('nav.contact'), to: '/contact' },
   ];
 
   const privateNavItems: Record<string, Array<{ label: string; to: string }>> = {
     student: [
-      { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Courses', to: '/courses' },
-      { label: 'Forum', to: '/forum' },
-      { label: 'Calendar', to: '/calendar' },
+      { label: t('nav.dashboard'), to: '/dashboard' },
+      { label: t('nav.courses'), to: '/courses' },
+      { label: t('nav.forum'), to: '/forum' },
+      { label: t('nav.calendar'), to: '/calendar' },
     ],
     teacher: [
-      { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Courses', to: '/courses' },
-      { label: 'Forum', to: '/forum' },
-      { label: 'Calendar', to: '/calendar' },
+      { label: t('nav.dashboard'), to: '/dashboard' },
+      { label: t('nav.courses'), to: '/courses' },
+      { label: t('nav.forum'), to: '/forum' },
+      { label: t('nav.calendar'), to: '/calendar' },
     ],
     admin: [
-      { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Academic', to: '/academic' },
-      { label: 'Forum', to: '/forum' },
-      { label: 'Calendar', to: '/calendar' },
+      { label: t('nav.dashboard'), to: '/dashboard' },
+      { label: t('nav.academic'), to: '/academic' },
+      { label: t('nav.forum'), to: '/forum' },
+      { label: t('nav.calendar'), to: '/calendar' },
     ],
   };
 
@@ -84,6 +86,15 @@ const Header = () => {
 
           {/* User Section */}
           <div className="hidden md:flex items-center space-x-4">
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as any)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+              aria-label="Language selector"
+            >
+              <option value="en">English</option>
+              <option value="am">አማርኛ</option>
+            </select>
             {currentUser ? (
               <div className="flex items-center space-x-3">
                 <Link to="/dashboard" className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
@@ -96,20 +107,20 @@ const Header = () => {
                   )}
                 </Link>
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">
-                  Logout
+                  {t('auth.logout')}
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link to="/login" className="text-gray-700 hover:text-blue-700 transition-colors font-medium">
-                  Login
+                  {t('auth.login')}
                 </Link>
                 <Link 
                   to="/signup"
                   className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors font-medium flex items-center space-x-2"
                 >
                   <LogIn className="h-4 w-4" />
-                  <span>Get Started</span>
+                  <span>{t('auth.getStarted')}</span>
                 </Link>
               </div>
             )}
@@ -127,6 +138,18 @@ const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <div />
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as any)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+                aria-label="Language selector"
+              >
+                <option value="en">English</option>
+                <option value="am">አማርኛ</option>
+              </select>
+            </div>
             <nav className="flex flex-col space-y-3">
               {navItems.map((item) => (
                 item.to.startsWith('/#') ? (
@@ -156,14 +179,14 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className="text-left text-gray-700 hover:text-blue-700 transition-colors font-medium py-2"
                   >
-                    Login
+                    {t('auth.login')}
                   </Link>
                   <Link 
                     to="/signup"
                     onClick={() => setIsMenuOpen(false)}
                     className="bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium text-left"
                   >
-                    Get Started
+                    {t('auth.getStarted')}
                   </Link>
                 </div>
               )}
@@ -172,7 +195,7 @@ const Header = () => {
                   onClick={() => { setIsMenuOpen(false); handleLogout(); }}
                   className="text-left text-gray-700 hover:text-gray-900 transition-colors font-medium py-2"
                 >
-                  Logout
+                  {t('auth.logout')}
                 </button>
               )}
             </nav>

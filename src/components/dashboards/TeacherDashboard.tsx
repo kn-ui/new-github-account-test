@@ -3,6 +3,7 @@ import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Cloc
 import { api, Course } from '@/lib/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<Course[]>([]);
@@ -10,6 +11,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { t } = useI18n();
 
   const demoCourses = [
     {
@@ -126,14 +128,14 @@ export default function TeacherDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
-              <p className="text-gray-600">Manage your courses and track student progress</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('teacher.title')}</h1>
+              <p className="text-gray-600">{t('teacher.subtitle')}</p>
             </div>
             <div className="flex items-center space-x-2">
-              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Home</Link>
-              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Courses</Link>
-              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Forum</Link>
-              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">Logout</button>
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.home')}</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.courses')}</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.forum')}</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('auth.logout')}</button>
             </div>
           </div>
         </div>
@@ -149,7 +151,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.length}</p>
-                <p className="text-sm text-gray-600">Active Courses</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.activeCourses')}</p>
               </div>
             </div>
           </div>
@@ -161,7 +163,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{totalStudents}</p>
-                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.totalStudents')}</p>
               </div>
             </div>
           </div>
@@ -173,7 +175,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">12</p>
-                <p className="text-sm text-gray-600">Pending Reviews</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.pendingReviews')}</p>
               </div>
             </div>
           </div>
@@ -185,7 +187,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">4.8</p>
-                <p className="text-sm text-gray-600">Avg Rating</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.avgRating')}</p>
               </div>
             </div>
           </div>
@@ -197,8 +199,8 @@ export default function TeacherDashboard() {
             {/* My Courses */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">My Courses</h2>
-                <p className="text-gray-600">Manage and monitor your courses</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('teacher.myCourses.title')}</h2>
+                <p className="text-gray-600">{t('teacher.myCourses.subtitle')}</p>
               </div>
               <div className="p-6 space-y-6">
                 {coursesToDisplay.map((course: any) => (
@@ -211,7 +213,7 @@ export default function TeacherDashboard() {
                         </span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{course.completion}% Complete</p>
+                        <p className="text-sm font-medium text-gray-900">{course.completion}% {t('teacher.myCourses.complete')}</p>
                         <div className="w-24 bg-gray-200 rounded-full h-2 mt-1">
                           <div 
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
@@ -224,24 +226,24 @@ export default function TeacherDashboard() {
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">{course.students}</p>
-                        <p className="text-xs text-gray-600">Students</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.students')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">{course.assignments}</p>
-                        <p className="text-xs text-gray-600">Assignments</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.assignments')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">4.7</p>
-                        <p className="text-xs text-gray-600">Rating</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.rating')}</p>
                       </div>
                     </div>
                     
                     <div className="flex space-x-3">
                       <button className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        Manage Course
+                        {t('teacher.myCourses.manageCourse')}
                       </button>
                       <button className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                        View Analytics
+                        {t('teacher.myCourses.viewAnalytics')}
                       </button>
                     </div>
                   </div>
@@ -252,8 +254,8 @@ export default function TeacherDashboard() {
             {/* Recent Submissions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Submissions</h2>
-                <p className="text-gray-600">Review and grade student work</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('teacher.recentSubmissions.title')}</h2>
+                <p className="text-gray-600">{t('teacher.recentSubmissions.subtitle')}</p>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
@@ -269,7 +271,7 @@ export default function TeacherDashboard() {
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900">{submission.assignment}</h3>
-                          <p className="text-sm text-gray-600">by {submission.student}</p>
+                          <p className="text-sm text-gray-600">{t('teacher.recentSubmissions.by')} {submission.student}</p>
                           <p className="text-xs text-gray-500">{submission.course} • {submission.submittedAt}</p>
                         </div>
                       </div>
@@ -278,7 +280,7 @@ export default function TeacherDashboard() {
                           {submission.status}
                         </span>
                         <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                          Review
+                          {t('teacher.recentSubmissions.review')}
                         </button>
                       </div>
                     </div>
@@ -295,7 +297,7 @@ export default function TeacherDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Top Students</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('teacher.topStudents')}</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
@@ -322,20 +324,20 @@ export default function TeacherDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('teacher.quickActions.title')}</h2>
               </div>
               <div className="p-6 space-y-3">
                 <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                   <PlusCircle className="h-4 w-4" />
-                  <span>Create Assignment</span>
+                  <span>{t('teacher.quickActions.createAssignment')}</span>
                 </button>
                 <button className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
                   <MessageSquare className="h-4 w-4" />
-                  <span>Message Students</span>
+                  <span>{t('teacher.quickActions.messageStudents')}</span>
                 </button>
                 <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span>View Reports</span>
+                  <span>{t('teacher.quickActions.viewReports')}</span>
                 </button>
               </div>
             </div>
@@ -345,7 +347,7 @@ export default function TeacherDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('teacher.messages')}</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">

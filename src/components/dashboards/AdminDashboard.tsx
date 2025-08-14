@@ -2,8 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download } from 'lucide-react';
 import { api } from '@/lib/api';
 
+interface RecentUserRow {
+  name: string;
+  email: string;
+  role: string;
+  joinDate: string;
+  status: 'active' | 'pending' | 'inactive';
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<{ totalUsers?: number; totalStudents?: number; activeCourses?: number; completionRate?: number; systemHealth?: number; } | null>(null);
+  const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const systemStats = [
@@ -14,13 +23,15 @@ export default function AdminDashboard() {
   ] as const;
 
   useEffect(() => {
-    const loadStats = async () => {
+    const load = async () => {
       try {
         setLoading(true);
-        const [userStats, courseStats] = await Promise.all([
+        const [userStats, courseStats, usersPage] = await Promise.all([
           api.getAdminUserStats().catch(() => ({ success: false } as any)),
           api.getAdminCourseStats().catch(() => ({ success: false } as any)),
+          api.getUsers({ page: 1, limit: 10 }).catch(() => ({ success: false } as any)),
         ]);
+
         if (userStats.success || courseStats.success) {
           setStats({
             totalUsers: userStats?.data?.totalUsers,
@@ -32,19 +43,25 @@ export default function AdminDashboard() {
         } else {
           setStats(null);
         }
+
+        if (usersPage.success && Array.isArray(usersPage.data)) {
+          const rows: RecentUserRow[] = usersPage.data.map((u: any) => ({
+            name: u.displayName || '—',
+            email: u.email || '—',
+            role: u.role || 'student',
+            joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '—',
+            status: u.isActive ? 'active' : 'inactive',
+          }));
+          setRecentUsers(rows);
+        } else {
+          setRecentUsers([]);
+        }
       } finally {
         setLoading(false);
       }
     };
-    loadStats();
+    load();
   }, []);
-
-  const recentUsers = [
-    { name: 'John Smith', email: 'john@email.com', role: 'Student', joinDate: '2025-01-15', status: 'active' },
-    { name: 'Dr. Sarah Wilson', email: 'sarah@email.com', role: 'Teacher', joinDate: '2025-01-14', status: 'pending' },
-    { name: 'Michael Brown', email: 'michael@email.com', role: 'Student', joinDate: '2025-01-13', status: 'active' },
-    { name: 'Rev. David Johnson', email: 'david@email.com', role: 'Teacher', joinDate: '2025-01-12', status: 'active' },
-  ];
 
   const pendingApprovals = [
     { type: 'Course', name: 'Advanced Biblical Interpretation', author: 'Dr. Sarah Wilson', date: '2025-01-15' },
@@ -183,7 +200,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {recentUsers.map((user, index) => (
+                    {(recentUsers.length ? recentUsers : []).map((user, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -192,7 +209,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{user.role}</span>
+                          <span className="text-sm text-gray-900 capitalize">{user.role}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {user.joinDate}
@@ -207,6 +224,11 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
+                    {recentUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No users found</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

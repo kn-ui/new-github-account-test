@@ -376,8 +376,8 @@ class CourseService {
         throw new Error('Course not found');
       }
 
-      const totalLessons = course.lessons.length;
-      const progress = totalLessons > 0 ? (completedLessons.length / totalLessons) * 100 : 0;
+      const totalLessons = 0; // moved to subcollection; compute elsewhere if needed
+      const progress = totalLessons > 0 ? (completedLessons.length / totalLessons) * 100 : enrollmentData.progress || 0;
 
       const updateData = {
         completedLessons,
@@ -402,6 +402,7 @@ class CourseService {
     activeCourses: number;
     totalEnrollments: number;
     totalStudents: number;
+    completionRate: number;
   }> {
     try {
       let coursesQuery = this.coursesCollection;
@@ -420,11 +421,18 @@ class CourseService {
       ]);
 
       // Count unique students
-      const uniqueStudents = new Set();
+      const uniqueStudents = new Set<string>();
+      let totalProgress = 0;
+      let progressCount = 0;
       enrollmentsSnapshot.docs.forEach(doc => {
-        const enrollment = doc.data();
+        const enrollment = doc.data() as any;
+        // Only include enrollments for the instructor when requested
         if (!instructorId) {
           uniqueStudents.add(enrollment.studentId);
+          if (typeof enrollment.progress === 'number') {
+            totalProgress += enrollment.progress;
+            progressCount += 1;
+          }
         } else {
           // Check if enrollment belongs to instructor's course
           const courseId = enrollment.courseId;
@@ -433,15 +441,22 @@ class CourseService {
           );
           if (course) {
             uniqueStudents.add(enrollment.studentId);
+            if (typeof enrollment.progress === 'number') {
+              totalProgress += enrollment.progress;
+              progressCount += 1;
+            }
           }
         }
       });
+
+      const completionRate = progressCount > 0 ? Math.round(totalProgress / progressCount) : 0;
 
       return {
         totalCourses: allCoursesSnapshot.size,
         activeCourses: activeCoursesSnapshot.size,
         totalEnrollments: enrollmentsSnapshot.size,
-        totalStudents: uniqueStudents.size
+        totalStudents: uniqueStudents.size,
+        completionRate
       };
     } catch (error) {
       console.error('Error getting course stats:', error);

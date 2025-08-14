@@ -21,6 +21,7 @@ import Rules from "./pages/Rules";
 import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
+import ForumThread from "./pages/ForumThread";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
+            <Route path="/forum/:threadId" element={<ForumThread />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />

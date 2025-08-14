@@ -15,7 +15,20 @@
     "login": "መግባት",
     "logout": "መውጣት",
     "getStarted": "ጀምር",
-    "user": "ተጠቃሚ"
+    "user": "ተጠቃሚ",
+    "welcomeBack": "እንኳን በደህና መጣችሁ",
+    "signInSubtitle": "ወደ ስት. ራጉኤል ቻርች መለያዎ ይግቡ",
+    "email": "ኢሜይል አድራሻ",
+    "email_placeholder": "ኢሜይልዎን ያስገቡ",
+    "password": "የይለፍ ቃል",
+    "password_placeholder": "የይለፍ ቃልዎን ያስገቡ",
+    "rememberMe": "አስታውሰኝ",
+    "forgotPassword": "የይለፍ ቃል ረሳሁ?",
+    "signIn": "ግባ",
+    "signingIn": "በመግባት ላይ...",
+    "newHere": "አዲስ ነዎት?",
+    "createAccount": "አዲስ መለያ ፍጠር",
+    "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ"
   },
   "student": {
     "title": "የተማሪ ዳሽቦርድ",

@@ -15,7 +15,20 @@
     "login": "Login",
     "logout": "Logout",
     "getStarted": "Get Started",
-    "user": "User"
+    "user": "User",
+    "welcomeBack": "Welcome Back",
+    "signInSubtitle": "Sign in to your St. Raguel Church account",
+    "email": "Email Address",
+    "email_placeholder": "Enter your email",
+    "password": "Password",
+    "password_placeholder": "Enter your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign In",
+    "signingIn": "Signing In...",
+    "newHere": "New to our platform?",
+    "createAccount": "Create New Account",
+    "login_required": "Please fill in all fields"
   },
   "student": {
     "title": "Student Dashboard",

@@ -103,7 +103,7 @@ const Forum = () => {
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <div className="divide-y divide-gray-200">
               {threads.map(ti => (
-                <div key={ti.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <a key={ti.id} href={`/forum/${ti.id}`} className="block p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
@@ -116,7 +116,7 @@ const Forum = () => {
                       <p className="text-xs text-gray-500 mt-1">{t('forum.by')} {ti.createdByName} • {new Date(ti.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
               {!threads.length && (
                 <div className="text-center text-gray-500 py-12">{t('forum.noTopics')}</div>

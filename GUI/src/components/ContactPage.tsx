@@ -9,6 +9,8 @@ export default function ContactPage() {
     subject: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const departments = [
     { value: '', label: 'Select Department' },
@@ -55,18 +57,33 @@ export default function ContactPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      department: '',
-      subject: '',
-      message: ''
-    });
+    setNotice(null);
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const resp = await fetch('/api/content/support/tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: `${formData.department ? '[' + formData.department + '] ' : ''}${formData.message}`,
+        })
+      });
+      if (!resp.ok) throw new Error('Failed');
+      setNotice('Your message was sent successfully.');
+      setFormData({ name: '', email: '', department: '', subject: '', message: '' });
+    } catch (err) {
+      setNotice('Failed to send message. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -118,6 +135,10 @@ export default function ContactPage() {
                   Fill out the form below and we'll get back to you as soon as possible.
                 </p>
               </div>
+
+              {notice && (
+                <div className="mb-4 text-sm text-center text-gray-700">{notice}</div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name Field */}
@@ -226,10 +247,11 @@ export default function ContactPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2"
+                  disabled={submitting}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2 disabled:opacity-60"
                 >
                   <Send className="h-5 w-5" />
-                  <span>Send Message</span>
+                  <span>{submitting ? 'Sending...' : 'Send Message'}</span>
                 </button>
               </form>
             </div>

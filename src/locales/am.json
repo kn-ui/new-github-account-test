@@ -1,0 +1,188 @@
+{
+  "nav": {
+    "home": "ሆም",
+    "about": "ስለ እኛ",
+    "academic": "አካዳሚክ",
+    "admissions": "መግቢያ",
+    "blog": "ብሎግ",
+    "contact": "አግኙን",
+    "dashboard": "ዳሽቦርድ",
+    "courses": "ኮርሶች",
+    "forum": "ፎረም",
+    "calendar": "የቀን መቁጠሪያ"
+  },
+  "auth": {
+    "login": "መግባት",
+    "logout": "መውጣት",
+    "getStarted": "ጀምር",
+    "user": "ተጠቃሚ",
+    "welcomeBack": "እንኳን በደህና መጣችሁ",
+    "signInSubtitle": "ወደ ስት. ራጉኤል ቻርች መለያዎ ይግቡ",
+    "email": "ኢሜይል አድራሻ",
+    "email_placeholder": "ኢሜይልዎን ያስገቡ",
+    "password": "የይለፍ ቃል",
+    "password_placeholder": "የይለፍ ቃልዎን ያስገቡ",
+    "rememberMe": "አስታውሰኝ",
+    "forgotPassword": "የይለፍ ቃል ረሳሁ?",
+    "signIn": "ግባ",
+    "signingIn": "በመግባት ላይ...",
+    "newHere": "አዲስ ነዎት?",
+    "createAccount": "አዲስ መለያ ፍጠር",
+    "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ"
+  },
+  "student": {
+    "title": "የተማሪ ዳሽቦርድ",
+    "subtitle": "እንኳን በደህና መጣችሁ! መንፈሳዊ ትምህርትዎን ቀጥሉ.",
+    "stats": {
+      "enrolledCourses": "የተመዘገቡ ኮርሶች",
+      "averageProgress": "አማካይ እድገት",
+      "pendingAssignments": "የሚጠብቁ ተግባራት",
+      "certificates": "የተከፈሉ ማረጋገጫዎች"
+    },
+    "myCourses": {
+      "title": "የእኔ ኮርሶች",
+      "subtitle": "የመማር ጉዞዎን ቀጥሉ"
+    },
+    "next": "ቀጣይ",
+    "due": "ማብቂያ",
+    "continue": "ቀጥል",
+    "upcomingAssignments": {
+      "title": "የሚመጡ ተግባራት",
+      "subtitle": "ከትምህርቶችዎ ጋር ተከታትሉ",
+      "view": "ተመልከት"
+    },
+    "announcements": "ማስታወቂያዎች",
+    "quickActions": {
+      "title": "ፈጣን እርምጃዎች",
+      "viewSchedule": "መርሃ ግብር ይመልከቱ",
+      "browseCourses": "ኮርሶች ይመልከቱ",
+      "myCertificates": "የእኔ ማረጋገጫዎች"
+    }
+  },
+  "teacher": {
+    "title": "የአስተማሪ ዳሽቦርድ",
+    "subtitle": "ኮርሶችዎን ያስተዳድሩ እና የተማሪዎችን እድገት ይከታተሉ",
+    "stats": {
+      "activeCourses": "ንቁ ኮርሶች",
+      "totalStudents": "ጠቅላላ ተማሪዎች",
+      "pendingReviews": "የሚጠብቁ ግምገማዎች",
+      "avgRating": "አማካይ ደረጃ"
+    },
+    "myCourses": {
+      "title": "የእኔ ኮርሶች",
+      "subtitle": "ኮርሶችዎን አስተዳድሩ እና እንቅስቃሴን ተከታትሉ",
+      "students": "ተማሪዎች",
+      "assignments": "ተግባራት",
+      "rating": "ደረጃ",
+      "manageCourse": "ኮርሱን አስተዳድር",
+      "viewAnalytics": "ትንታኔ ይመልከቱ",
+      "complete": "ተጠናቀቀ"
+    },
+    "recentSubmissions": {
+      "title": "የቅርብ ጊዜ ስብስቦች",
+      "subtitle": "የተማሪዎችን ሥራ ይገመግሙ",
+      "by": "በ",
+      "review": "ክለም"
+    },
+    "topStudents": "ከፍተኛ ተማሪዎች",
+    "quickActions": {
+      "title": "ፈጣን እርምጃዎች",
+      "createAssignment": "ተግባር ፍጠር",
+      "messageStudents": "መልዕክት ላክ ለተማሪዎች",
+      "viewReports": "ሪፖርቶች ይመልከቱ"
+    },
+    "messages": "የቅርብ ጊዜ መልዕክቶች"
+  },
+  "admin": {
+    "title": "የአስተዳዳሪ ዳሽቦርድ",
+    "subtitle": "የስርዓት እይታ እና አስተዳደር",
+    "systemStats": {
+      "totalUsers": "ጠቅላላ ተጠቃሚዎች",
+      "activeCourses": "ንቁ ኮርሶች",
+      "completionRate": "የመጨረሻ መጠን",
+      "systemHealth": "የስርዓት ጤና"
+    },
+    "recentUsers": {
+      "title": "የቅርብ ጊዜ ተጠቃሚዎች",
+      "subtitle": "የተጠቃሚ መለያዎችን እና ፈቃዶችን ያስተዳድሩ",
+      "viewAll": "ሁሉንም ይመልከቱ",
+      "table": {
+        "user": "ተጠቃሚ",
+        "role": "ሚና",
+        "joinDate": "የተቀላቀለበት ቀን",
+        "status": "ሁኔታ",
+        "actions": "እርምጃዎች"
+      },
+      "noUsers": "ተጠቃሚ አልተገኘም",
+      "edit": "አርትዕ"
+    },
+    "analytics": {
+      "title": "የስርዓት ትንታኔ",
+      "subtitle": "የተጠቃሚ እንቅስቃሴ እና የኮርስ መመዝገብ",
+      "export": "ገንብት",
+      "placeholder": "የትንታኔ ገጽታ ቦታ",
+      "realtime": "በእውነተኛ ጊዜ ዳታ"
+    },
+    "pendingApprovals": "የሚጠብቁ ማጽደቃዎች",
+    "systemAlerts": "የስርዓት ማንቂያዎች",
+    "quickActions": {
+      "title": "ፈጣን እርምጃዎች",
+      "addUser": "አዲስ ተጠቃሚ አክል",
+      "createCourse": "ኮርስ ፍጠር",
+      "generateReport": "ሪፖርት መፍጠር",
+      "systemSettings": "የስርዓት ቅንብር"
+    },
+    "common": {
+      "approve": "አጽድቅ",
+      "reject": "ተቃውም",
+      "by": "በ"
+    }
+  },
+  "blog": {
+    "searchPlaceholder": "ፖስቶች አስስ...",
+    "categories": {
+      "all": "ሁሉም ፖስቶች",
+      "theology": "እምነት ሳይንስ",
+      "spirituality": "መንፈሳዊነት",
+      "community": "ማህበረሰብ",
+      "education": "ትምህርት",
+      "events": "ክስተቶች"
+    },
+    "loading": "በመጫን ላይ...",
+    "noPosts": "ፖስት አልተገኘም"
+  },
+  "calendar": {
+    "month": "ወር",
+    "type": "አይነት",
+    "types": {
+      "all": "ሁሉም ክስተቶች",
+      "academic": "አካዳሚክ",
+      "religious": "ሀይማኖታዊ",
+      "social": "ማህበራዊ",
+      "examination": "ፈተናዎች",
+      "holiday": "ዕረፍት ቀኖች"
+    },
+    "weekdays": ["እሑድ","ሰኞ","ማክሰኞ","ረቡዕ","ሐሙስ","ዓርብ","ቅዳሜ"],
+    "loading": "ክስተቶች በመጫን ላይ...",
+    "more": "+{count} ተጨማሪ"
+  },
+  "forum": {
+    "searchPlaceholder": "ጉዳዮች ፈልግ...",
+    "categories": {
+      "all": "ሁሉም ጉዳዮች",
+      "theology": "እምነት ሳይንስ",
+      "spirituality": "መንፈሳዊነት",
+      "academic": "አካዳሚክ እገዛ",
+      "community": "ማህበረሰብ",
+      "announcements": "ማስታወቂያዎች"
+    },
+    "create": {
+      "titlePlaceholder": "የጉዳይ ርዕስ",
+      "post": "ለጥፍ"
+    },
+    "loading": "በመጫን ላይ...",
+    "noTopics": "ጉዳይ አልተገኘም",
+    "pinned": "ተሰናክሏል",
+    "by": "በ"
+  }
+}

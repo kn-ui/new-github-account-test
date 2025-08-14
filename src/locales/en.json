@@ -1,0 +1,188 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "academic": "Academic",
+    "admissions": "Admissions",
+    "blog": "Blog",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "forum": "Forum",
+    "calendar": "Calendar"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "getStarted": "Get Started",
+    "user": "User",
+    "welcomeBack": "Welcome Back",
+    "signInSubtitle": "Sign in to your St. Raguel Church account",
+    "email": "Email Address",
+    "email_placeholder": "Enter your email",
+    "password": "Password",
+    "password_placeholder": "Enter your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign In",
+    "signingIn": "Signing In...",
+    "newHere": "New to our platform?",
+    "createAccount": "Create New Account",
+    "login_required": "Please fill in all fields"
+  },
+  "student": {
+    "title": "Student Dashboard",
+    "subtitle": "Welcome back! Continue your spiritual learning journey.",
+    "stats": {
+      "enrolledCourses": "Enrolled Courses",
+      "averageProgress": "Average Progress",
+      "pendingAssignments": "Pending Assignments",
+      "certificates": "Certificates Earned"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "subtitle": "Continue your learning journey"
+    },
+    "next": "Next",
+    "due": "Due",
+    "continue": "Continue",
+    "upcomingAssignments": {
+      "title": "Upcoming Assignments",
+      "subtitle": "Stay on track with your coursework",
+      "view": "View"
+    },
+    "announcements": "Announcements",
+    "quickActions": {
+      "title": "Quick Actions",
+      "viewSchedule": "View Schedule",
+      "browseCourses": "Browse Courses",
+      "myCertificates": "My Certificates"
+    }
+  },
+  "teacher": {
+    "title": "Teacher Dashboard",
+    "subtitle": "Manage your courses and track student progress",
+    "stats": {
+      "activeCourses": "Active Courses",
+      "totalStudents": "Total Students",
+      "pendingReviews": "Pending Reviews",
+      "avgRating": "Avg Rating"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "subtitle": "Manage and monitor your courses",
+      "students": "Students",
+      "assignments": "Assignments",
+      "rating": "Rating",
+      "manageCourse": "Manage Course",
+      "viewAnalytics": "View Analytics",
+      "complete": "Complete"
+    },
+    "recentSubmissions": {
+      "title": "Recent Submissions",
+      "subtitle": "Review and grade student work",
+      "by": "by",
+      "review": "Review"
+    },
+    "topStudents": "Top Students",
+    "quickActions": {
+      "title": "Quick Actions",
+      "createAssignment": "Create Assignment",
+      "messageStudents": "Message Students",
+      "viewReports": "View Reports"
+    },
+    "messages": "Recent Messages"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "System overview and management",
+    "systemStats": {
+      "totalUsers": "Total Users",
+      "activeCourses": "Active Courses",
+      "completionRate": "Completion Rate",
+      "systemHealth": "System Health"
+    },
+    "recentUsers": {
+      "title": "Recent Users",
+      "subtitle": "Manage user accounts and permissions",
+      "viewAll": "View All",
+      "table": {
+        "user": "User",
+        "role": "Role",
+        "joinDate": "Join Date",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "noUsers": "No users found",
+      "edit": "Edit"
+    },
+    "analytics": {
+      "title": "System Analytics",
+      "subtitle": "User activity and course enrollment trends",
+      "export": "Export",
+      "placeholder": "Analytics Chart Placeholder",
+      "realtime": "Real-time data visualization"
+    },
+    "pendingApprovals": "Pending Approvals",
+    "systemAlerts": "System Alerts",
+    "quickActions": {
+      "title": "Quick Actions",
+      "addUser": "Add New User",
+      "createCourse": "Create Course",
+      "generateReport": "Generate Report",
+      "systemSettings": "System Settings"
+    },
+    "common": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "by": "by"
+    }
+  },
+  "blog": {
+    "searchPlaceholder": "Search posts...",
+    "categories": {
+      "all": "All Posts",
+      "theology": "Theology",
+      "spirituality": "Spirituality",
+      "community": "Community",
+      "education": "Education",
+      "events": "Events"
+    },
+    "loading": "Loading...",
+    "noPosts": "No posts found"
+  },
+  "calendar": {
+    "month": "Month",
+    "type": "Type",
+    "types": {
+      "all": "All Events",
+      "academic": "Academic",
+      "religious": "Religious",
+      "social": "Social",
+      "examination": "Examinations",
+      "holiday": "Holidays"
+    },
+    "weekdays": ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+    "loading": "Loading events...",
+    "more": "+{count} more"
+  },
+  "forum": {
+    "searchPlaceholder": "Search topics...",
+    "categories": {
+      "all": "All Topics",
+      "theology": "Theology",
+      "spirituality": "Spirituality",
+      "academic": "Academic Help",
+      "community": "Community",
+      "announcements": "Announcements"
+    },
+    "create": {
+      "titlePlaceholder": "Thread title",
+      "post": "Post"
+    },
+    "loading": "Loading...",
+    "noTopics": "No topics found",
+    "pinned": "Pinned",
+    "by": "By"
+  }
+}

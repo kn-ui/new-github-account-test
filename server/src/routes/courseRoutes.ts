@@ -19,7 +19,6 @@ router.get('/test', (req, res) => {
         category: 'Mathematics',
         duration: 8,
         maxStudents: 30,
-        enrolledStudents: [],
         isActive: true,
         createdAt: new Date().toISOString()
       },
@@ -31,7 +30,6 @@ router.get('/test', (req, res) => {
         category: 'Literature',
         duration: 12,
         maxStudents: 25,
-        enrolledStudents: [],
         isActive: true,
         createdAt: new Date().toISOString()
       }

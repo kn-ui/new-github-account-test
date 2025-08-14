@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle } from 'lucide-react';
 import { api, Course } from '@/lib/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { t } = useI18n();
 
   const demoCourses = [
     {
@@ -40,6 +47,22 @@ export default function TeacherDashboard() {
         const res = await api.getMyCourses({ page: 1, limit: 50 });
         if (res.success && Array.isArray(res.data)) {
           setMyCourses(res.data);
+          // Fetch enrollments per course in parallel
+          const entries = await Promise.all(
+            res.data.map(async (c) => {
+              try {
+                const er = await api.getCourseEnrollments(c.id);
+                if (er.success && Array.isArray(er.data)) {
+                  const active = er.data.filter((e: any) => e.status === 'active').length;
+                  return [c.id, active] as const;
+                }
+              } catch {}
+              return [c.id, 0] as const;
+            })
+          );
+          const map: Record<string, number> = {};
+          entries.forEach(([id, count]) => { map[id] = count; });
+          setEnrollmentCounts(map);
         } else {
           setMyCourses([]);
         }
@@ -54,30 +77,9 @@ export default function TeacherDashboard() {
   }, []);
 
   const recentSubmissions = [
-    {
-      id: 1,
-      student: 'John Smith',
-      assignment: 'Biblical Interpretation Essay',
-      course: 'Introduction to Biblical Studies',
-      submittedAt: '2 hours ago',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      student: 'Mary Johnson',
-      assignment: 'Theology Research Paper',
-      course: 'Advanced Theology Concepts',
-      submittedAt: '4 hours ago',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      student: 'David Wilson',
-      assignment: 'Leadership Case Study',
-      course: 'Christian Leadership Principles',
-      submittedAt: '1 day ago',
-      status: 'graded'
-    }
+    { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
+    { id: 2, student: 'Mary Johnson', assignment: 'Theology Research Paper', course: 'Advanced Theology Concepts', submittedAt: '4 hours ago', status: 'pending' },
+    { id: 3, student: 'David Wilson', assignment: 'Leadership Case Study', course: 'Christian Leadership Principles', submittedAt: '1 day ago', status: 'graded' }
   ];
 
   const studentProgress = [
@@ -97,6 +99,20 @@ export default function TeacherDashboard() {
     }
   };
 
+  const coursesToDisplay = useMemo(() => {
+    if (!myCourses.length) return demoCourses;
+    return myCourses.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      students: enrollmentCounts[c.id] ?? c.currentEnrollmentCount ?? 0,
+      completion: 0,
+      assignments: (c as any).assignments?.length || 0,
+      status: c.isActive ? 'active' : 'completed',
+    }));
+  }, [myCourses, enrollmentCounts]);
+
+  const totalStudents = coursesToDisplay.reduce((sum, c: any) => sum + (c.students || 0), 0);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -105,15 +121,6 @@ export default function TeacherDashboard() {
     );
   }
 
-  const coursesToDisplay = myCourses.length ? myCourses.map((c: any) => ({
-    id: c.id,
-    title: c.title,
-    students: c.enrolledStudents?.length || 0,
-    completion: 0,
-    assignments: c.assignments?.length || 0,
-    status: c.isActive ? 'active' : 'completed',
-  })) : demoCourses;
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -121,13 +128,15 @@ export default function TeacherDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
-              <p className="text-gray-600">Manage your courses and track student progress</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('teacher.title')}</h1>
+              <p className="text-gray-600">{t('teacher.subtitle')}</p>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Course</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.home')}</Link>
+              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.courses')}</Link>
+              <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.forum')}</Link>
+              <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('auth.logout')}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,7 +151,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.length}</p>
-                <p className="text-sm text-gray-600">Active Courses</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.activeCourses')}</p>
               </div>
             </div>
           </div>
@@ -153,8 +162,8 @@ export default function TeacherDashboard() {
                 <Users className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.reduce((sum, c: any) => sum + (c.students || 0), 0)}</p>
-                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-2xl font-semibold text-gray-900">{totalStudents}</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.totalStudents')}</p>
               </div>
             </div>
           </div>
@@ -166,7 +175,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">12</p>
-                <p className="text-sm text-gray-600">Pending Reviews</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.pendingReviews')}</p>
               </div>
             </div>
           </div>
@@ -178,7 +187,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">4.8</p>
-                <p className="text-sm text-gray-600">Avg Rating</p>
+                <p className="text-sm text-gray-600">{t('teacher.stats.avgRating')}</p>
               </div>
             </div>
           </div>
@@ -190,8 +199,8 @@ export default function TeacherDashboard() {
             {/* My Courses */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">My Courses</h2>
-                <p className="text-gray-600">Manage and monitor your courses</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('teacher.myCourses.title')}</h2>
+                <p className="text-gray-600">{t('teacher.myCourses.subtitle')}</p>
               </div>
               <div className="p-6 space-y-6">
                 {coursesToDisplay.map((course: any) => (
@@ -204,7 +213,7 @@ export default function TeacherDashboard() {
                         </span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{course.completion}% Complete</p>
+                        <p className="text-sm font-medium text-gray-900">{course.completion}% {t('teacher.myCourses.complete')}</p>
                         <div className="w-24 bg-gray-200 rounded-full h-2 mt-1">
                           <div 
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
@@ -217,24 +226,24 @@ export default function TeacherDashboard() {
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">{course.students}</p>
-                        <p className="text-xs text-gray-600">Students</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.students')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">{course.assignments}</p>
-                        <p className="text-xs text-gray-600">Assignments</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.assignments')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-semibold text-gray-900">4.7</p>
-                        <p className="text-xs text-gray-600">Rating</p>
+                        <p className="text-xs text-gray-600">{t('teacher.myCourses.rating')}</p>
                       </div>
                     </div>
                     
                     <div className="flex space-x-3">
                       <button className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        Manage Course
+                        {t('teacher.myCourses.manageCourse')}
                       </button>
                       <button className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                        View Analytics
+                        {t('teacher.myCourses.viewAnalytics')}
                       </button>
                     </div>
                   </div>
@@ -245,8 +254,8 @@ export default function TeacherDashboard() {
             {/* Recent Submissions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Submissions</h2>
-                <p className="text-gray-600">Review and grade student work</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t('teacher.recentSubmissions.title')}</h2>
+                <p className="text-gray-600">{t('teacher.recentSubmissions.subtitle')}</p>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
@@ -262,7 +271,7 @@ export default function TeacherDashboard() {
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900">{submission.assignment}</h3>
-                          <p className="text-sm text-gray-600">by {submission.student}</p>
+                          <p className="text-sm text-gray-600">{t('teacher.recentSubmissions.by')} {submission.student}</p>
                           <p className="text-xs text-gray-500">{submission.course} • {submission.submittedAt}</p>
                         </div>
                       </div>
@@ -271,7 +280,7 @@ export default function TeacherDashboard() {
                           {submission.status}
                         </span>
                         <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                          Review
+                          {t('teacher.recentSubmissions.review')}
                         </button>
                       </div>
                     </div>
@@ -288,7 +297,7 @@ export default function TeacherDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Top Students</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('teacher.topStudents')}</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
@@ -315,20 +324,20 @@ export default function TeacherDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('teacher.quickActions.title')}</h2>
               </div>
               <div className="p-6 space-y-3">
                 <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                   <PlusCircle className="h-4 w-4" />
-                  <span>Create Assignment</span>
+                  <span>{t('teacher.quickActions.createAssignment')}</span>
                 </button>
                 <button className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
                   <MessageSquare className="h-4 w-4" />
-                  <span>Message Students</span>
+                  <span>{t('teacher.quickActions.messageStudents')}</span>
                 </button>
                 <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span>View Reports</span>
+                  <span>{t('teacher.quickActions.viewReports')}</span>
                 </button>
               </div>
             </div>
@@ -338,7 +347,7 @@ export default function TeacherDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('teacher.messages')}</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">

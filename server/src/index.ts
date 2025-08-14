@@ -12,6 +12,7 @@ import morgan from 'morgan';
 // Import routes
 import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
+import contentRoutes from './routes/contentRoutes';
 
 
 const app = express();
@@ -65,6 +66,7 @@ app.get('/health', (req, res) => {
 try {
   app.use('/api/users', userRoutes);
   app.use('/api/courses', courseRoutes);
+  app.use('/api/content', contentRoutes);
   console.log('✅ Routes loaded successfully');
 } catch (error) {
   console.error('❌ Error loading routes:', error);

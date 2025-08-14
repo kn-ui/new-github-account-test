@@ -22,31 +22,31 @@ const Header = () => {
 
   const publicNavItems = [
     { label: 'Home', to: '/' },
-    { label: 'About', to: '/#about' },
-    { label: 'Academic', to: '/#academic' },
-    { label: 'Admissions', to: '/#admissions' },
-    { label: 'Blog', to: '/#blog' },
-    { label: 'Contact', to: '/#contact' },
+    { label: 'About', to: '/about' },
+    { label: 'Academic', to: '/academic' },
+    { label: 'Admissions', to: '/admissions' },
+    { label: 'Blog', to: '/blog' },
+    { label: 'Contact', to: '/contact' },
   ];
 
   const privateNavItems: Record<string, Array<{ label: string; to: string }>> = {
     student: [
       { label: 'Dashboard', to: '/dashboard' },
       { label: 'Courses', to: '/courses' },
-      { label: 'Forum', to: '/#forum' },
-      { label: 'Calendar', to: '/#calendar' },
+      { label: 'Forum', to: '/forum' },
+      { label: 'Calendar', to: '/calendar' },
     ],
     teacher: [
       { label: 'Dashboard', to: '/dashboard' },
       { label: 'Courses', to: '/courses' },
-      { label: 'Forum', to: '/#forum' },
-      { label: 'Calendar', to: '/#calendar' },
+      { label: 'Forum', to: '/forum' },
+      { label: 'Calendar', to: '/calendar' },
     ],
     admin: [
       { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Academic', to: '/#academic' },
-      { label: 'Forum', to: '/#forum' },
-      { label: 'Calendar', to: '/#calendar' },
+      { label: 'Academic', to: '/academic' },
+      { label: 'Forum', to: '/forum' },
+      { label: 'Calendar', to: '/calendar' },
     ],
   };
 

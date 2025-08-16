@@ -1,11 +1,14 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell, Eye, FileText, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
@@ -88,21 +91,22 @@ export default function TeacherDashboard() {
     loadDashboardData();
   }, [user?.uid]);
 
-/*   const recentSubmissions = [
-    { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
-    { id: 2, student: 'Mary Johnson', assignment: 'Theology Research Paper', course: 'Advanced Theology Concepts', submittedAt: '4 hours ago', status: 'pending' },
-    { id: 3, student: 'David Wilson', assignment: 'Leadership Case Study', course: 'Christian Leadership Principles', submittedAt: '1 day ago', status: 'graded' }
-  ]; */
+  const handleCreateAnnouncement = async () => {
+    try {
+      if (!newAnnouncement.title || !newAnnouncement.body) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
 
       await announcementService.createAnnouncement({
         title: newAnnouncement.title,
         body: newAnnouncement.body,
         courseId: newAnnouncement.courseId || undefined,
-        authorId: currentUser.uid
+        authorId: user?.uid || ''
       });
 
       toast.success('Announcement created successfully!');
-      setShowAnnouncementDialog(false);
+      setShowAnnouncementModal(false);
       setNewAnnouncement({ title: '', body: '', courseId: '' });
     } catch (error: any) {
       toast.error('Failed to create announcement: ' + error.message);
@@ -196,8 +200,8 @@ export default function TeacherDashboard() {
                 <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 4.8}</p>
                 <p className="text-sm text-gray-600">Average Rating</p>
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">

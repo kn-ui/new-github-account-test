@@ -26,6 +26,7 @@ import DatabaseSeeder from "./components/DatabaseSeeder";
 import AuthUserSeeder from "./components/AuthUserSeeder";
 import TestAuthUIDs from "./components/TestAuthUIDs";
 import UIDMapper from "./components/UIDMapper";
+import SimpleTest from "./components/SimpleTest";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/seed-auth-users" element={<AuthUserSeeder />} />
             <Route path="/test-auth-uids" element={<TestAuthUIDs />} />
             <Route path="/uid-mapper" element={<UIDMapper />} />
+            <Route path="/simple-test" element={<SimpleTest />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />

@@ -132,6 +132,12 @@ const Header = () => {
                     >
                       🔄 UID Mapper
                     </Link>
+                    <Link 
+                      to="/simple-test" 
+                      className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200 transition-colors"
+                    >
+                      🧪 Simple Test
+                    </Link>
                   </>
                 )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">

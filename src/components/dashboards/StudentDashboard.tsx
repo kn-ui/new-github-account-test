@@ -33,12 +33,18 @@ export default function StudentDashboard() {
         setLoading(true);
         
         if (user?.uid) {
+          console.log('👤 Loading dashboard for user:', user.uid);
+          
           // Load student stats
           const studentStats = await analyticsService.getStudentStats(user.uid);
+          console.log('📊 Student stats:', studentStats);
           setStats(studentStats);
 
           // Load enrollments with course data
+          console.log('🔄 Loading enrollments for student:', user.uid);
           const enrollments = await enrollmentService.getEnrollmentsByStudent(user.uid);
+          console.log('📚 Enrollments loaded:', enrollments);
+          
           const normalized: EnrolledCourse[] = enrollments.map((enrollment: any) => ({
             id: enrollment.courseId,
             title: enrollment.course?.title || 'Course Title',
@@ -47,6 +53,7 @@ export default function StudentDashboard() {
             nextLesson: 'Next lesson',
             dueDate: undefined,
           }));
+          console.log('🎯 Normalized courses:', normalized);
           setEnrolledCourses(normalized);
 
           // Load upcoming assignments

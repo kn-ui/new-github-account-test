@@ -10,17 +10,18 @@ import {
   UserCredential
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { api, setAuthToken, removeAuthToken, User } from '../lib/api';
+import { userService, FirestoreUser } from '../lib/firestore';
 import { toast } from 'sonner';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
-  userProfile: User | null;
+  userProfile: FirestoreUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<UserCredential>;
   signup: (email: string, password: string, displayName: string, role?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
-  updateUserProfile: (data: Partial<User>) => Promise<void>;
+  updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
+  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,21 +40,19 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Login function
   const login = async (email: string, password: string): Promise<UserCredential> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      const token = await result.user.getIdToken();
-      setAuthToken(token);
       
-      // Fetch user profile from backend
+      // Fetch user profile from Firestore
       try {
-        const profileResponse = await api.getUserProfile();
-        if (profileResponse.success && profileResponse.data) {
-          setUserProfile(profileResponse.data);
+        const profile = await userService.getUserById(result.user.uid);
+        if (profile) {
+          setUserProfile(profile);
         }
       } catch (error) {
         console.log('Profile not found, user may need to complete setup');
@@ -67,50 +66,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Signup function
+  // Signup function - DISABLED for public use
   const signup = async (
     email: string, 
     password: string, 
     displayName: string,
     role: string = 'student'
   ): Promise<UserCredential> => {
+    // Public signup is disabled - only admins can create users
+    throw new Error('Public signup is disabled. Please contact an administrator to create your account.');
+  };
+
+  // Create user function - for admin use only
+  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Update Firebase profile
-      await updateProfile(result.user, { displayName });
-      
-      const token = await result.user.getIdToken();
-      setAuthToken(token);
-
-      // Create user profile in backend
-      try {
-        const profileData = {
-          uid: result.user.uid,
-          email: result.user.email!,
-          displayName,
-          role: role as 'student' | 'teacher' | 'admin',
-          isActive: true
-        };
-
-        console.log('Creating user profile with data:', profileData);
-        const profileResponse = await api.createUserProfile(profileData);
-        if (profileResponse.success && profileResponse.data) {
-          setUserProfile(profileResponse.data);
-          console.log('User profile created successfully:', profileResponse.data);
-        } else {
-          console.error('Profile creation failed:', profileResponse);
-        }
-      } catch (error) {
-        console.error('Failed to create user profile:', error);
-        // Even if profile creation fails, we still have a Firebase user
-        toast.error('Profile setup incomplete. You can complete it later.');
-      }
-      
-      toast.success('Account created successfully!');
-      return result;
+      const userId = await userService.createUser(userData);
+      toast.success('User created successfully!');
+      return userId;
     } catch (error: any) {
-      toast.error(error.message || 'Signup failed');
+      toast.error('Failed to create user: ' + error.message);
       throw error;
     }
   };
@@ -119,58 +93,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
-      removeAuthToken();
       setUserProfile(null);
       toast.success('Successfully logged out!');
     } catch (error: any) {
-      toast.error(error.message || 'Logout failed');
+      toast.error('Logout failed: ' + error.message);
       throw error;
     }
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<User>): Promise<void> => {
+  const updateUserProfile = async (data: Partial<FirestoreUser>): Promise<void> => {
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+
     try {
-      const response = await api.updateUserProfile(data);
-      if (response.success && response.data) {
-        setUserProfile(response.data);
-        toast.success('Profile updated successfully!');
+      await userService.updateUser(currentUser.uid, data);
+      
+      // Update local state
+      if (userProfile) {
+        setUserProfile({ ...userProfile, ...data });
       }
+      
+      toast.success('Profile updated successfully!');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+      toast.error('Failed to update profile: ' + error.message);
       throw error;
     }
   };
 
-  // Listen for authentication state changes
+  // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       
       if (user) {
         try {
-          const token = await user.getIdToken();
-          setAuthToken(token);
-          
-          // Small delay to ensure token is set
-          setTimeout(async () => {
-            // Fetch user profile
-            try {
-              const profileResponse = await api.getUserProfile();
-              if (profileResponse.success && profileResponse.data) {
-                setUserProfile(profileResponse.data);
-              }
-            } catch (error) {
-              console.log('Profile not found, user may need to complete setup');
-              // If profile not found, user might need to complete profile setup
-              setUserProfile(null);
-            }
-          }, 100);
+          // Fetch user profile from Firestore
+          const profile = await userService.getUserById(user.uid);
+          setUserProfile(profile);
         } catch (error) {
-          console.error('Failed to get token:', error);
+          console.log('Profile not found for user:', user.uid);
         }
       } else {
-        removeAuthToken();
         setUserProfile(null);
       }
       
@@ -180,19 +145,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const value: AuthContextType = {
+  const value = {
     currentUser,
     userProfile,
     loading,
     login,
     signup,
     logout,
-    updateUserProfile
+    updateUserProfile,
+    createUser
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

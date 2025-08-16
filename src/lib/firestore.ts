@@ -31,6 +31,7 @@ export interface FirestoreUser {
 }
 
 export interface FirestoreCourse {
+
   id: string;
   title: string;
   description: string;
@@ -45,6 +46,7 @@ export interface FirestoreCourse {
   updatedAt: Timestamp;
 }
 
+
 export interface FirestoreEnrollment {
   id: string;
   courseId: string;
@@ -57,6 +59,7 @@ export interface FirestoreEnrollment {
 }
 
 export interface FirestoreSubmission {
+
   id: string;
   courseId: string;
   assignmentId: string;
@@ -68,17 +71,20 @@ export interface FirestoreSubmission {
 }
 
 export interface FirestoreSupportTicket {
+
   id: string;
   userId?: string;
   name: string;
   email: string;
   subject: string;
   message: string;
+
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
   createdAt: Timestamp;
 }
 
 export interface FirestoreBlog {
+
   id: string;
   title: string;
   content: string;
@@ -89,6 +95,7 @@ export interface FirestoreBlog {
 }
 
 export interface FirestoreAnnouncement {
+
   id: string;
   courseId?: string;
   title: string;
@@ -98,6 +105,7 @@ export interface FirestoreAnnouncement {
 }
 
 export interface FirestoreEvent {
+
   id: string;
   title: string;
   date: Timestamp;
@@ -106,6 +114,7 @@ export interface FirestoreEvent {
 }
 
 export interface FirestoreForumThread {
+
   id: string;
   title: string;
   body: string;
@@ -116,12 +125,14 @@ export interface FirestoreForumThread {
 }
 
 export interface FirestoreForumPost {
+
   id: string;
   body: string;
   authorId: string;
   authorName: string;
   createdAt: Timestamp;
 }
+
 
 // Collection references
 const collections = {
@@ -158,6 +169,7 @@ export const userService = {
     return null;
   },
 
+
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.users(), {
@@ -187,6 +199,7 @@ export const courseService = {
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
@@ -198,6 +211,7 @@ export const courseService = {
     }
     return null;
   },
+
 
   async getCoursesByInstructor(instructorId: string): Promise<FirestoreCourse[]> {
     const q = query(
@@ -230,6 +244,7 @@ export const courseService = {
 
 // Enrollment operations
 export const enrollmentService = {
+
   async getEnrollmentsByStudent(studentId: string): Promise<FirestoreEnrollment[]> {
     const q = query(
       collections.enrollments(),
@@ -237,16 +252,19 @@ export const enrollmentService = {
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
   },
 
   async getEnrollmentsByCourse(courseId: string): Promise<FirestoreEnrollment[]> {
     const q = query(
+
       collections.enrollments(),
       where('courseId', '==', courseId),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
   },
 
@@ -279,16 +297,19 @@ export const submissionService = {
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
   async getSubmissionsByAssignment(assignmentId: string): Promise<FirestoreSubmission[]> {
     const q = query(
+
       collections.submissions(),
       where('assignmentId', '==', assignmentId),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
@@ -313,6 +334,7 @@ export const submissionService = {
 
 // Support ticket operations
 export const supportTicketService = {
+
   async createTicket(ticketData: Omit<FirestoreSupportTicket, 'id' | 'createdAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.supportTickets(), {
@@ -325,11 +347,13 @@ export const supportTicketService = {
 
   async getTicketsByUser(userId: string): Promise<FirestoreSupportTicket[]> {
     const q = query(
+
       collections.supportTickets(),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
   },
 
@@ -341,6 +365,7 @@ export const supportTicketService = {
 
 // Blog operations
 export const blogService = {
+
   async getBlogPosts(limitCount = 10): Promise<FirestoreBlog[]> {
     const q = query(
       collections.blogs(),
@@ -348,6 +373,7 @@ export const blogService = {
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreBlog));
   },
 
@@ -424,6 +450,7 @@ export const eventService = {
 
 // Forum operations
 export const forumService = {
+
   async getForumThreads(limitCount = 10): Promise<FirestoreForumThread[]> {
     const q = query(
       collections.forumThreads(),
@@ -471,6 +498,7 @@ export const forumService = {
 
 // Analytics and statistics
 export const analyticsService = {
+
   async getAdminStats() {
     const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
       getDocs(collections.users()),
@@ -481,6 +509,7 @@ export const analyticsService = {
     const totalUsers = usersSnapshot.size;
     const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
+
     
     // Calculate completion rate from enrollments
     const totalEnrollments = enrollmentsSnapshot.size;
@@ -491,6 +520,7 @@ export const analyticsService = {
       totalUsers,
       totalStudents,
       activeCourses,
+
       completionRate,
       systemHealth: 99.9, // Placeholder
     };
@@ -498,6 +528,7 @@ export const analyticsService = {
 
   async getTeacherStats(teacherId: string) {
     const [coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
+
       getDocs(query(collections.courses(), where('instructor', '==', teacherId))),
       getDocs(collections.enrollments()),
     ]);
@@ -525,6 +556,7 @@ export const analyticsService = {
 
   async getStudentStats(studentId: string) {
     const [enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([
+
       getDocs(query(collections.enrollments(), where('studentId', '==', studentId))),
       getDocs(query(collections.submissions(), where('studentId', '==', studentId))),
     ]);

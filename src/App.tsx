@@ -29,6 +29,7 @@ import UIDMapper from "./components/UIDMapper";
 import SimpleTest from "./components/SimpleTest";
 import QuickUIDFix from "./components/QuickUIDFix";
 import AuthDebugger from "./components/AuthDebugger";
+import CorrectUIDFixer from "./components/CorrectUIDFixer";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/simple-test" element={<SimpleTest />} />
             <Route path="/quick-uid-fix" element={<QuickUIDFix />} />
             <Route path="/auth-debugger" element={<AuthDebugger />} />
+            <Route path="/correct-uid-fixer" element={<CorrectUIDFixer />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />

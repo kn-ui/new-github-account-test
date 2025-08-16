@@ -63,11 +63,11 @@ export default function QuickUIDFix() {
       console.log('🔧 Fixing UID for user:', userProfile.id);
       console.log('Current Firebase Auth UID:', currentUser.uid);
       
-      // Update the user document with the correct UID
-      const userDocRef = doc(db, 'users', userProfile.id);
-      await updateDoc(userDocRef, {
-        uid: currentUser.uid
-      });
+                // Update the user document with the correct UID
+          const userDocRef = doc(db, 'users', userProfile.id);
+          await updateDoc(userDocRef, {
+            uid: currentUser.uid // This should be the actual Firebase Auth UID
+          });
 
       setStatus('success');
       setMessage(`✅ Successfully updated user ${userProfile.displayName} with UID: ${currentUser.uid}`);

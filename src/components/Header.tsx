@@ -150,6 +150,12 @@ const Header = () => {
                     >
                       🐛 Auth Debugger
                     </Link>
+                    <Link 
+                      to="/correct-uid-fixer" 
+                      className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded hover:bg-emerald-200 transition-colors"
+                    >
+                      ✅ Correct UID Fixer
+                    </Link>
                   </>
                 )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">

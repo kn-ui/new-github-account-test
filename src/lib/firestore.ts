@@ -161,10 +161,24 @@ export const userService = {
   },
 
   async getUserById(uid: string): Promise<FirestoreUser | null> {
+    // First try to get user by UID
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() } as FirestoreUser;
+    }
+    return null;
+  },
+
+  async getUserByEmail(email: string): Promise<FirestoreUser | null> {
+    const q = query(
+      collections.users(),
+      where('email', '==', email),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.docs.length > 0) {
+      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as FirestoreUser;
     }
     return null;
   },

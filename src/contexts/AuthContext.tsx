@@ -50,9 +50,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Fetch user profile from Firestore
       try {
-        const profile = await userService.getUserById(result.user.uid);
+        let profile = await userService.getUserById(result.user.uid);
+        
+        // If not found by UID, try to find by email (for seeded users)
+        if (!profile && result.user.email) {
+          profile = await userService.getUserByEmail(result.user.email);
+        }
+        
         if (profile) {
           setUserProfile(profile);
+        } else {
+          console.log('Profile not found, user may need to complete setup');
         }
       } catch (error) {
         console.log('Profile not found, user may need to complete setup');
@@ -129,11 +137,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (user) {
         try {
-          // Fetch user profile from Firestore
-          const profile = await userService.getUserById(user.uid);
-          setUserProfile(profile);
+          // First try to get user profile by UID
+          let profile = await userService.getUserById(user.uid);
+          
+          // If not found by UID, try to find by email (for seeded users)
+          if (!profile && user.email) {
+            profile = await userService.getUserByEmail(user.email);
+          }
+          
+          if (profile) {
+            setUserProfile(profile);
+          } else {
+            console.log('Profile not found for user:', user.uid, 'or email:', user.email);
+          }
         } catch (error) {
-          console.log('Profile not found for user:', user.uid);
+          console.log('Error fetching profile for user:', user.uid, error);
         }
       } else {
         setUserProfile(null);

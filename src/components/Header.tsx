@@ -106,6 +106,14 @@ const Header = () => {
                     </span>
                   )}
                 </Link>
+                {process.env.NODE_ENV === 'development' && (
+                  <Link 
+                    to="/seed-database" 
+                    className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-colors"
+                  >
+                    🗄️ Seed DB
+                  </Link>
+                )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">
                   {t('auth.logout')}
                 </button>

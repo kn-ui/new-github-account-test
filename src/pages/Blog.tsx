@@ -24,7 +24,9 @@ const Blog = () => {
     const load = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Loading blog posts...');
         const allPosts = await blogService.getBlogPosts(20);
+        console.log('📖 Blog posts loaded:', allPosts);
         
         // Filter posts based on search query and category
         let filteredPosts = allPosts;
@@ -41,9 +43,10 @@ const Blog = () => {
           // For now, just show all posts
         }
         
+        console.log('🔍 Filtered posts:', filteredPosts);
         setPosts(filteredPosts);
       } catch (error) {
-        console.error('Failed to load blog posts:', error);
+        console.error('❌ Failed to load blog posts:', error);
         setPosts([]);
       } finally {
         setLoading(false);

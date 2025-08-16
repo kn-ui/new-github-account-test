@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -105,7 +106,7 @@ export default function StudentDashboard() {
     loadDashboardData();
   }, [user?.uid]);
 
-  const upcomingAssignments = [
+/*   const upcomingAssignments = [
     {
       id: 1,
       title: 'Biblical Interpretation Essay',
@@ -127,7 +128,7 @@ export default function StudentDashboard() {
       dueDate: '2025-01-28',
       status: 'not-started'
     }
-  ];
+  ]; */
 
   const recentAnnouncements = [
     {

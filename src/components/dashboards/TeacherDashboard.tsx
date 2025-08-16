@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -105,11 +106,11 @@ export default function TeacherDashboard() {
     loadDashboardData();
   }, [user?.uid]);
 
-  const recentSubmissions = [
+/*   const recentSubmissions = [
     { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
     { id: 2, student: 'Mary Johnson', assignment: 'Theology Research Paper', course: 'Advanced Theology Concepts', submittedAt: '4 hours ago', status: 'pending' },
     { id: 3, student: 'David Wilson', assignment: 'Leadership Case Study', course: 'Christian Leadership Principles', submittedAt: '1 day ago', status: 'graded' }
-  ];
+  ]; */
 
   const studentProgress = [
     { name: 'John Smith', progress: 85, lastActive: '2 hours ago' },

@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import ContactPage from '../../GUI/src/components/ContactPage';
+import ContactPage from '../components/static/ContactPage';
 
 const Contact = () => {
   return (

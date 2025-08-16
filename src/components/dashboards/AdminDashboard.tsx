@@ -40,6 +40,12 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+  const [chartData, setChartData] = useState({
+    enrollmentTrends: [],
+    courseCompletion: [],
+    userActivity: [],
+    roleDistribution: []
+  });
   const [newUserData, setNewUserData] = useState({
     displayName: '',
     email: '',
@@ -90,6 +96,31 @@ export default function AdminDashboard() {
           status: u.isActive ? 'active' : 'inactive',
         }));
         setRecentUsers(rows);
+
+        // Initialize chart data
+        setChartData({
+          enrollmentTrends: [
+            { name: 'Jan', value: 45 },
+            { name: 'Feb', value: 52 },
+            { name: 'Mar', value: 48 },
+            { name: 'Apr', value: 61 },
+            { name: 'May', value: 55 },
+            { name: 'Jun', value: 67 }
+          ],
+          courseCompletion: [
+            { name: 'Completed', value: systemStatsData.completionRate || 0 },
+            { name: 'In Progress', value: 100 - (systemStatsData.completionRate || 0) }
+          ],
+          userActivity: [
+            { name: 'Students', value: systemStatsData.totalStudents || 0 },
+            { name: 'Teachers', value: (systemStatsData.totalUsers || 0) - (systemStatsData.totalStudents || 0) }
+          ],
+          roleDistribution: [
+            { name: 'Students', value: systemStatsData.totalStudents || 0 },
+            { name: 'Teachers', value: usersData.filter(u => u.role === 'teacher').length },
+            { name: 'Admins', value: usersData.filter(u => u.role === 'admin').length }
+          ]
+        });
 
       } catch (error) {
         console.error('Error loading dashboard data:', error);

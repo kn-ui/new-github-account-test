@@ -62,8 +62,23 @@ export default function TeacherDashboard() {
           setEnrollmentCounts(map);
 
           // Load recent submissions for my courses
-          const submissions = await submissionService.getSubmissionsByStudent('all'); // This needs to be updated
-          setRecentSubmissions(submissions.slice(0, 5));
+          const allSubmissions = await Promise.all(
+            courses.map(async (course) => {
+              try {
+                const submissions = await submissionService.getSubmissionsByAssignment(course.id);
+                return submissions.map((submission: any) => ({
+                  ...submission,
+                  courseTitle: course.title,
+                }));
+              } catch {
+                return [];
+              }
+            })
+          );
+          const flatSubmissions = allSubmissions.flat().sort((a: any, b: any) => 
+            b.submittedAt.toDate() - a.submittedAt.toDate()
+          );
+          setRecentSubmissions(flatSubmissions.slice(0, 5));
 
           // Load announcements for my courses
           const courseAnnouncements = await Promise.all(

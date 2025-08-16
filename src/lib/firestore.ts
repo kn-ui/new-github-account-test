@@ -308,6 +308,31 @@ export const enrollmentService = {
     return docRef.id;
   },
 
+  async getAllEnrollments(): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
+    const q = query(
+      collections.enrollments(),
+      orderBy('enrolledAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+
+    const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    
+    // Fetch course data for each enrollment
+    const enrollmentsWithCourses = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        try {
+          const course = await courseService.getCourseById(enrollment.courseId);
+          return { ...enrollment, course };
+        } catch (error) {
+          console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
+          return { ...enrollment, course: undefined };
+        }
+      })
+    );
+
+    return enrollmentsWithCourses;
+  },
+
   async updateEnrollmentProgress(enrollmentId: string, progress: number, completedLessons: string[]): Promise<void> {
     const docRef = doc(db, 'enrollments', enrollmentId);
     await updateDoc(docRef, {

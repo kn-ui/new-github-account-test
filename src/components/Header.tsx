@@ -107,12 +107,20 @@ const Header = () => {
                   )}
                 </Link>
                 {process.env.NODE_ENV === 'development' && (
-                  <Link 
-                    to="/seed-database" 
-                    className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-colors"
-                  >
-                    🗄️ Seed DB
-                  </Link>
+                  <>
+                    <Link 
+                      to="/seed-database" 
+                      className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-colors"
+                    >
+                      🗄️ Seed DB
+                    </Link>
+                    <Link 
+                      to="/seed-auth-users" 
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      🔐 Auth Users
+                    </Link>
+                  </>
                 )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">
                   {t('auth.logout')}

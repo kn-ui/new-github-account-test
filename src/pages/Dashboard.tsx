@@ -9,9 +9,11 @@ const Dashboard = () => {
   // Debug logging
   console.log('Dashboard Debug:', {
     currentUser: currentUser?.uid,
+    currentUserEmail: currentUser?.email,
     userProfile: userProfile,
     userRole: userProfile?.role,
-    loading
+    loading,
+    hasUserProfile: !!userProfile
   });
 
   if (loading) {

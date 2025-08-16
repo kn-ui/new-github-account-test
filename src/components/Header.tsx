@@ -120,6 +120,12 @@ const Header = () => {
                     >
                       🔐 Auth Users
                     </Link>
+                    <Link 
+                      to="/test-auth-uids" 
+                      className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition-colors"
+                    >
+                      🧪 Test UIDs
+                    </Link>
                   </>
                 )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">

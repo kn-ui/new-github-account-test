@@ -138,6 +138,12 @@ const Header = () => {
                     >
                       🧪 Simple Test
                     </Link>
+                    <Link 
+                      to="/quick-uid-fix" 
+                      className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200 transition-colors"
+                    >
+                      🔧 Quick UID Fix
+                    </Link>
                   </>
                 )}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">

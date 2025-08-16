@@ -6,6 +6,14 @@ import AdminDashboard from '@/components/dashboards/AdminDashboard';
 const Dashboard = () => {
   const { currentUser, userProfile, loading } = useAuth();
 
+  // Debug logging
+  console.log('Dashboard Debug:', {
+    currentUser: currentUser?.uid,
+    userProfile: userProfile,
+    userRole: userProfile?.role,
+    loading
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -21,7 +29,19 @@ const Dashboard = () => {
     return null;
   }
 
-  switch (userProfile?.role) {
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">User profile not found. Please contact support.</p>
+          <p className="text-sm text-gray-500 mt-2">User ID: {currentUser.uid}</p>
+          <p className="text-sm text-gray-500">Email: {currentUser.email}</p>
+        </div>
+      </div>
+    );
+  }
+
+  switch (userProfile.role) {
     case 'teacher':
       return <TeacherDashboard />;
     case 'admin':

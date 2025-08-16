@@ -1,11 +1,11 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { api, BlogPost } from '@/lib/api';
+import { blogService, FirestoreBlog } from '@/lib/firestore';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 
 const Blog = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [posts, setPosts] = useState<FirestoreBlog[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
@@ -24,9 +24,27 @@ const Blog = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const resp = await api.getBlogPosts({ q, category: category === 'all' ? undefined : category, page: 1, limit: 10 });
-        if (resp.success && Array.isArray(resp.data)) setPosts(resp.data);
-        else setPosts([]);
+        const allPosts = await blogService.getBlogPosts(20);
+        
+        // Filter posts based on search query and category
+        let filteredPosts = allPosts;
+        
+        if (q) {
+          filteredPosts = filteredPosts.filter(post => 
+            post.title.toLowerCase().includes(q.toLowerCase()) ||
+            post.content.toLowerCase().includes(q.toLowerCase())
+          );
+        }
+        
+        if (category !== 'all') {
+          // Note: We'll need to add category field to blog posts later
+          // For now, just show all posts
+        }
+        
+        setPosts(filteredPosts);
+      } catch (error) {
+        console.error('Failed to load blog posts:', error);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -74,15 +92,15 @@ const Blog = () => {
             <div className="grid lg:grid-cols-2 gap-8">
               {posts.map(post => (
                 <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
-                  {post.image && (
-                    <img src={post.image} alt={post.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  )}
                   <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">{post.title}</h2>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{post.content.substring(0, 150)}...</p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span>{post.authorName}</span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span>{post.createdAt.toDate().toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-sm text-gray-500">❤️ {post.likes} likes</span>
                     </div>
                   </div>
                 </article>

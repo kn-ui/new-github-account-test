@@ -245,7 +245,7 @@ export const courseService = {
 // Enrollment operations
 export const enrollmentService = {
 
-  async getEnrollmentsByStudent(studentId: string): Promise<FirestoreEnrollment[]> {
+  async getEnrollmentsByStudent(studentId: string): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
     const q = query(
       collections.enrollments(),
       where('studentId', '==', studentId),
@@ -253,7 +253,22 @@ export const enrollmentService = {
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    
+    // Fetch course data for each enrollment
+    const enrollmentsWithCourses = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        try {
+          const course = await courseService.getCourseById(enrollment.courseId);
+          return { ...enrollment, course };
+        } catch (error) {
+          console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
+          return { ...enrollment, course: undefined };
+        }
+      })
+    );
+
+    return enrollmentsWithCourses;
   },
 
   async getEnrollmentsByCourse(courseId: string): Promise<FirestoreEnrollment[]> {
@@ -425,6 +440,16 @@ export const announcementService = {
         limit(limitCount)
       );
     }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+  },
+
+  async getAllAnnouncements(limitCount = 20): Promise<FirestoreAnnouncement[]> {
+    const q = query(
+      collections.announcements(),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
   },

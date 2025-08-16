@@ -25,32 +25,7 @@ export default function StudentDashboard() {
   const { logout, user } = useAuth();
   const { t } = useI18n();
 
-  const demoCourses: EnrolledCourse[] = [
-    {
-      id: 1,
-      title: 'Introduction to Biblical Studies',
-      progress: 75,
-      nextLesson: 'Understanding Parables',
-      dueDate: '2025-01-20',
-      instructor: 'Rev. Michael Thompson'
-    },
-    {
-      id: 2,
-      title: 'Christian Ethics and Moral Theology',
-      progress: 45,
-      nextLesson: 'Social Justice in Christianity',
-      dueDate: '2025-01-25',
-      instructor: 'Dr. Sarah Williams'
-    },
-    {
-      id: 3,
-      title: 'Church History and Traditions',
-      progress: 20,
-      nextLesson: 'The Early Church Fathers',
-      dueDate: '2025-01-30',
-      instructor: 'Prof. David Chen'
-    }
-  ];
+
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -62,7 +37,7 @@ export default function StudentDashboard() {
           const studentStats = await analyticsService.getStudentStats(user.uid);
           setStats(studentStats);
 
-          // Load enrollments
+          // Load enrollments with course data
           const enrollments = await enrollmentService.getEnrollmentsByStudent(user.uid);
           const normalized: EnrolledCourse[] = enrollments.map((enrollment: any) => ({
             id: enrollment.courseId,
@@ -78,26 +53,42 @@ export default function StudentDashboard() {
           const submissions = await submissionService.getSubmissionsByStudent(user.uid);
           setUpcomingAssignments(submissions.slice(0, 5));
 
-          // Load announcements for enrolled courses
-          const courseAnnouncements = await Promise.all(
-            enrollments.map(async (enrollment) => {
-              const courseAnnouncements = await announcementService.getAnnouncements(enrollment.courseId, 3);
-              return courseAnnouncements.map((announcement: any) => ({
-                ...announcement,
-                courseTitle: enrollment.course?.title || 'Course',
-              }));
-            })
-          );
-          const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
-            b.createdAt.toDate() - a.createdAt.toDate()
-          );
-          setAnnouncements(allAnnouncements.slice(0, 5));
+          // Load announcements for enrolled courses and general announcements
+          const [courseAnnouncements, generalAnnouncements] = await Promise.all([
+            Promise.all(
+              enrollments.map(async (enrollment) => {
+                const courseAnnouncements = await announcementService.getAnnouncements(enrollment.courseId, 3);
+                return courseAnnouncements.map((announcement: any) => ({
+                  ...announcement,
+                  courseTitle: enrollment.course?.title || 'Course',
+                }));
+              })
+            ),
+            announcementService.getAllAnnouncements(5)
+          ]);
+          
+          const allAnnouncements = [...courseAnnouncements.flat(), ...generalAnnouncements]
+            .sort((a: any, b: any) => b.createdAt.toDate() - a.createdAt.toDate())
+            .slice(0, 5);
+          setAnnouncements(allAnnouncements);
         } else {
-          setEnrolledCourses(demoCourses);
+          // If no user, show empty state instead of demo data
+          setEnrolledCourses([]);
+          setStats(null);
+          setUpcomingAssignments([]);
+          setAnnouncements([]);
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
-        setEnrolledCourses(demoCourses);
+        // Show empty state on error instead of demo data
+        setEnrolledCourses([]);
+        setStats(null);
+        setUpcomingAssignments([]);
+        setAnnouncements([]);
+      } finally {
+        setLoading(false);
+      }
+    };
       } finally {
         setLoading(false);
       }

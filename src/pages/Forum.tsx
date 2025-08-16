@@ -1,11 +1,11 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { api, ForumThread } from '@/lib/api';
+import { forumService, FirestoreForumThread } from '@/lib/firestore';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 
 const Forum = () => {
-  const [threads, setThreads] = useState<ForumThread[]>([]);
+  const [threads, setThreads] = useState<FirestoreForumThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
   const [q, setQ] = useState('');
@@ -25,10 +25,13 @@ const Forum = () => {
   const reload = async () => {
     setLoading(true);
     try {
-      const resp = await api.getForumThreads({ category: category === 'all' ? undefined : category, page: 1, limit: 20 });
-      let data = resp.success && Array.isArray(resp.data) ? resp.data : [];
+      const allThreads = await forumService.getForumThreads(20);
+      let data = allThreads;
       if (q) data = data.filter(ti => ti.title.toLowerCase().includes(q.toLowerCase()));
       setThreads(data);
+    } catch (error) {
+      console.error('Failed to load forum threads:', error);
+      setThreads([]);
     } finally {
       setLoading(false);
     }
@@ -42,9 +45,18 @@ const Forum = () => {
   const onCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newThreadTitle.trim()) return;
-    await api.createForumThread({ title: newThreadTitle.trim(), category: newThreadCategory });
-    setNewThreadTitle('');
-    await reload();
+    try {
+      await forumService.createForumThread({ 
+        title: newThreadTitle.trim(), 
+        body: newThreadTitle.trim(), // Using title as body for now
+        authorId: 'current-user', // This should come from auth context
+        authorName: 'Current User' // This should come from auth context
+      });
+      setNewThreadTitle('');
+      await reload();
+    } catch (error) {
+      console.error('Failed to create forum thread:', error);
+    }
   };
 
   return (
@@ -106,14 +118,9 @@ const Forum = () => {
                 <a key={ti.id} href={`/forum/${ti.id}`} className="block p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        {ti.pinned && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">{t('forum.pinned')}</span>
-                        )}
-                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize">{t(`forum.categories.${ti.category}`)}</span>
-                      </div>
                       <h3 className="text-lg font-semibold text-gray-900">{ti.title}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{t('forum.by')} {ti.createdByName} • {new Date(ti.createdAt).toLocaleString()}</p>
+                      <p className="text-gray-600 mt-2 line-clamp-2">{ti.body}</p>
+                      <p className="text-xs text-gray-500 mt-2">{t('forum.by')} {ti.authorName} • {ti.createdAt.toDate().toLocaleString()}</p>
                     </div>
                   </div>
                 </a>

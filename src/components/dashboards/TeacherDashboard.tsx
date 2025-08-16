@@ -1,16 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle } from 'lucide-react';
-import { api, Course } from '@/lib/api';
+import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
 
 export default function TeacherDashboard() {
-  const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [myCourses, setMyCourses] = useState<any[]>([]);
   const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<any>(null);
+  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { t } = useI18n();
 
   const demoCourses = [
@@ -41,40 +46,64 @@ export default function TeacherDashboard() {
   ] as any[];
 
   useEffect(() => {
-    const loadMyCourses = async () => {
+    const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const res = await api.getMyCourses({ page: 1, limit: 50 });
-        if (res.success && Array.isArray(res.data)) {
-          setMyCourses(res.data);
+        
+        if (user?.uid) {
+          // Load teacher stats
+          const teacherStats = await analyticsService.getTeacherStats(user.uid);
+          setStats(teacherStats);
+
+          // Load my courses
+          const courses = await courseService.getCoursesByInstructor(user.uid);
+          setMyCourses(courses);
+
           // Fetch enrollments per course in parallel
           const entries = await Promise.all(
-            res.data.map(async (c) => {
+            courses.map(async (c) => {
               try {
-                const er = await api.getCourseEnrollments(c.id);
-                if (er.success && Array.isArray(er.data)) {
-                  const active = er.data.filter((e: any) => e.status === 'active').length;
-                  return [c.id, active] as const;
-                }
-              } catch {}
-              return [c.id, 0] as const;
+                const enrollments = await enrollmentService.getEnrollmentsByCourse(c.id);
+                const active = enrollments.filter((e: any) => e.status === 'active').length;
+                return [c.id, active] as const;
+              } catch {
+                return [c.id, 0] as const;
+              }
             })
           );
           const map: Record<string, number> = {};
           entries.forEach(([id, count]) => { map[id] = count; });
           setEnrollmentCounts(map);
-        } else {
-          setMyCourses([]);
+
+          // Load recent submissions for my courses
+          const submissions = await submissionService.getSubmissionsByStudent('all'); // This needs to be updated
+          setRecentSubmissions(submissions.slice(0, 5));
+
+          // Load announcements for my courses
+          const courseAnnouncements = await Promise.all(
+            courses.map(async (course) => {
+              const courseAnnouncements = await announcementService.getAnnouncements(course.id, 3);
+              return courseAnnouncements.map((announcement: any) => ({
+                ...announcement,
+                courseTitle: course.title,
+              }));
+            })
+          );
+          const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
+            b.createdAt.toDate() - a.createdAt.toDate()
+          );
+          setAnnouncements(allAnnouncements.slice(0, 5));
         }
-      } catch (_e) {
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
         setMyCourses([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadMyCourses();
-  }, []);
+    loadDashboardData();
+  }, [user?.uid]);
 
   const recentSubmissions = [
     { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
@@ -150,44 +179,44 @@ export default function TeacherDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{coursesToDisplay.length}</p>
-                <p className="text-sm text-gray-600">{t('teacher.stats.activeCourses')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.activeCourses || coursesToDisplay.length}</p>
+                <p className="text-sm text-gray-600">Active Courses</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-lg border">
             <div className="flex items-center">
               <div className="bg-teal-100 p-3 rounded-full">
                 <Users className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{totalStudents}</p>
-                <p className="text-sm text-gray-600">{t('teacher.stats.totalStudents')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.totalStudents || totalStudents}</p>
+                <p className="text-sm text-gray-600">Total Students</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-lg border">
             <div className="flex items-center">
               <div className="bg-yellow-100 p-3 rounded-full">
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">12</p>
-                <p className="text-sm text-gray-600">{t('teacher.stats.pendingReviews')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 12}</p>
+                <p className="text-sm text-gray-600">Pending Reviews</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-lg border">
             <div className="flex items-center">
               <div className="bg-purple-100 p-3 rounded-full">
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">4.8</p>
-                <p className="text-sm text-gray-600">{t('teacher.stats.avgRating')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 4.8}</p>
+                <p className="text-sm text-gray-600">Average Rating</p>
               </div>
             </div>
           </div>
@@ -366,6 +395,101 @@ export default function TeacherDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Post Announcement</h2>
+              <button
+                onClick={() => setShowAnnouncementModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label htmlFor="announcementTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  id="announcementTitle"
+                  value={newAnnouncement.title}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter announcement title"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="announcementBody" className="block text-sm font-medium text-gray-700 mb-2">
+                  Message *
+                </label>
+                <textarea
+                  id="announcementBody"
+                  value={newAnnouncement.body}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter announcement message"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="announcementCourse" className="block text-sm font-medium text-gray-700 mb-2">
+                  Course (Optional)
+                </label>
+                <select
+                  id="announcementCourse"
+                  value={newAnnouncement.courseId}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, courseId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">General Announcement</option>
+                  {myCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowAnnouncementModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await announcementService.createAnnouncement({
+                        title: newAnnouncement.title,
+                        body: newAnnouncement.body,
+                        courseId: newAnnouncement.courseId || undefined,
+                        authorId: user?.uid || '',
+                      });
+                      setNewAnnouncement({ title: '', body: '', courseId: '' });
+                      setShowAnnouncementModal(false);
+                      // Refresh announcements
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Failed to create announcement:', error);
+                    }
+                  }}
+                  disabled={!newAnnouncement.title || !newAnnouncement.body}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Post Announcement
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

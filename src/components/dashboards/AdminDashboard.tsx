@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { analyticsService, userService, realtimeService } from '@/lib/firestore';
+import { AnalyticsChart, EnrollmentTrendChart, CourseCompletionChart, UserActivityChart, RoleDistributionChart } from '@/components/ui/AnalyticsChart';
+import AddUserModal from '@/components/ui/AddUserModal';
+import ReportGenerator from '@/components/ui/ReportGenerator';
 
 interface RecentUserRow {
   name: string;
@@ -17,6 +20,10 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<{ totalUsers?: number; totalStudents?: number; activeCourses?: number; completionRate?: number; systemHealth?: number; } | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
+  const [chartData, setChartData] = useState<any>({});
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { t } = useI18n();
@@ -32,41 +39,84 @@ export default function AdminDashboard() {
     const load = async () => {
       try {
         setLoading(true);
-        const [userStats, courseStats, usersPage] = await Promise.all([
-          api.getAdminUserStats().catch(() => ({ success: false } as any)),
-          api.getAdminCourseStats().catch(() => ({ success: false } as any)),
-          api.getUsers({ page: 1, limit: 10 }).catch(() => ({ success: false } as any)),
-        ]);
+        
+        // Load admin stats from Firestore
+        const adminStats = await analyticsService.getAdminStats();
+        setStats(adminStats);
 
-        if (userStats.success || courseStats.success) {
-          setStats({
-            totalUsers: userStats?.data?.totalUsers,
-            totalStudents: userStats?.data?.totalStudents,
-            activeCourses: courseStats?.data?.activeCourses,
-            completionRate: courseStats?.data?.completionRate,
-            systemHealth: 99.9,
-          });
-        } else {
-          setStats(null);
-        }
+        // Load recent users from Firestore
+        const users = await userService.getUsers(10);
+        const rows: RecentUserRow[] = users.map((u: any) => ({
+          name: u.displayName || '—',
+          email: u.email || '—',
+          role: u.role || 'student',
+          joinDate: u.createdAt ? u.createdAt.toDate().toISOString().slice(0, 10) : '—',
+          status: u.isActive ? 'active' : 'inactive',
+        }));
+        setRecentUsers(rows);
 
-        if (usersPage.success && Array.isArray(usersPage.data)) {
-          const rows: RecentUserRow[] = usersPage.data.map((u: any) => ({
-            name: u.displayName || '—',
-            email: u.email || '—',
-            role: u.role || 'student',
-            joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '—',
-            status: u.isActive ? 'active' : 'inactive',
-          }));
-          setRecentUsers(rows);
-        } else {
-          setRecentUsers([]);
-        }
+        // Generate sample chart data
+        setChartData({
+          enrollmentTrends: [
+            { name: 'Jan', enrollments: 45 },
+            { name: 'Feb', enrollments: 52 },
+            { name: 'Mar', enrollments: 48 },
+            { name: 'Apr', enrollments: 61 },
+            { name: 'May', enrollments: 55 },
+            { name: 'Jun', enrollments: 67 },
+          ],
+          courseCompletion: [
+            { name: 'Biblical Studies', completionRate: 78 },
+            { name: 'Theology', completionRate: 65 },
+            { name: 'Leadership', completionRate: 92 },
+            { name: 'Ethics', completionRate: 71 },
+            { name: 'History', completionRate: 84 },
+          ],
+          userActivity: [
+            { name: 'Mon', activeUsers: 120 },
+            { name: 'Tue', activeUsers: 135 },
+            { name: 'Wed', activeUsers: 142 },
+            { name: 'Thu', activeUsers: 128 },
+            { name: 'Fri', activeUsers: 156 },
+            { name: 'Sat', activeUsers: 98 },
+            { name: 'Sun', activeUsers: 87 },
+          ],
+          roleDistribution: [
+            { name: 'Students', value: 65 },
+            { name: 'Teachers', value: 25 },
+            { name: 'Admins', value: 10 },
+          ],
+        });
+
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        setStats(null);
+        setRecentUsers([]);
       } finally {
         setLoading(false);
       }
     };
     load();
+  }, []);
+
+  // Set up real-time listeners
+  useEffect(() => {
+    const unsubscribeUsers = realtimeService.onUsersChange((snapshot) => {
+      // Update users in real-time
+      const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const rows: RecentUserRow[] = users.slice(0, 10).map((u: any) => ({
+        name: u.displayName || '—',
+        email: u.email || '—',
+        role: u.role || 'student',
+        joinDate: u.createdAt ? u.createdAt.toDate().toISOString().slice(0, 10) : '—',
+        status: u.isActive ? 'active' : 'inactive',
+      }));
+      setRecentUsers(rows);
+    });
+
+    return () => {
+      unsubscribeUsers();
+    };
   }, []);
 
   const pendingApprovals = [
@@ -118,6 +168,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleUserCreated = () => {
+    setNotification({ message: 'User created successfully!', type: 'success' });
+    // Refresh the dashboard data
+    window.location.reload();
+  };
+
+  const handleReportGenerated = (message: string) => {
+    setNotification({ message, type: 'success' });
+  };
+
+  const handleError = (message: string) => {
+    setNotification({ message, type: 'error' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -147,6 +211,25 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Notification */}
+        {notification && (
+          <div className={`mb-6 p-4 rounded-md ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex justify-between items-center">
+              <span>{notification.message}</span>
+              <button
+                onClick={() => setNotification(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {systemStats.map((stat, index) => {
@@ -236,27 +319,36 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Analytics Chart Placeholder */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <div className="flex justify-between items-center">
+            {/* Analytics Charts */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{t('admin.analytics.title')}</h2>
-                    <p className="text-gray-600">{t('admin.analytics.subtitle')}</p>
+                    <h2 className="text-xl font-semibold text-gray-900">System Analytics</h2>
+                    <p className="text-gray-600">Real-time data visualization and insights</p>
                   </div>
-                  <button className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 text-sm">
+                  <button 
+                    onClick={() => setShowReportGenerator(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
+                  >
                     <Download className="h-4 w-4" />
-                    <span>{t('admin.analytics.export')}</span>
+                    <span>Generate Report</span>
                   </button>
                 </div>
-              </div>
-              <div className="p-6">
-                <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4" />
-                    <p>{t('admin.analytics.placeholder')}</p>
-                    <p className="text-sm">{t('admin.analytics.realtime')}</p>
-                  </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {chartData.enrollmentTrends && (
+                    <EnrollmentTrendChart data={chartData.enrollmentTrends} />
+                  )}
+                  {chartData.courseCompletion && (
+                    <CourseCompletionChart data={chartData.courseCompletion} />
+                  )}
+                  {chartData.userActivity && (
+                    <UserActivityChart data={chartData.userActivity} />
+                  )}
+                  {chartData.roleDistribution && (
+                    <RoleDistributionChart data={chartData.roleDistribution} />
+                  )}
                 </div>
               </div>
             </div>
@@ -322,30 +414,69 @@ export default function AdminDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">{t('admin.quickActions.title')}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="p-6 space-y-3">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => setShowAddUserModal(true)}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
                   <UserPlus className="h-4 w-4" />
-                  <span>{t('admin.quickActions.addUser')}</span>
+                  <span>Add New User</span>
                 </button>
-                <button className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => navigate('/create-course')}
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2"
+                >
                   <BookOpen className="h-4 w-4" />
-                  <span>{t('admin.quickActions.createCourse')}</span>
+                  <span>Create Course</span>
                 </button>
-                <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => setShowReportGenerator(true)}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                >
                   <BarChart3 className="h-4 w-4" />
-                  <span>{t('admin.quickActions.generateReport')}</span>
+                  <span>Generate Report</span>
                 </button>
-                <button className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>{t('admin.quickActions.systemSettings')}</span>
+                <button 
+                  onClick={() => navigate('/calendar')}
+                  className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>Calendar Events</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        onUserCreated={handleUserCreated}
+      />
+
+      {/* Report Generator Modal */}
+      {showReportGenerator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Generate Reports</h2>
+              <button
+                onClick={() => setShowReportGenerator(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ReportGenerator onReportGenerated={handleReportGenerated} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

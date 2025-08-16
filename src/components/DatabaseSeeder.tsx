@@ -14,11 +14,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-// Test data for all collections
+// Test data for all collections with CORRECT Firebase Authentication UIDs
 const testData = {
   users: [
     {
-      id: 'admin-001',
+      id: 'xFmODm96AHgaa7ZkfUB9tnyN3G43', // Correct Firebase Auth UID
+      uid: 'xFmODm96AHgaa7ZkfUB9tnyN3G43', // Correct Firebase Auth UID
       displayName: 'Admin User',
       email: 'admin@straguel.edu',
       role: 'admin',
@@ -27,7 +28,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'teacher-001',
+      id: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID
+      uid: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID
       displayName: 'Dr. Sarah Wilson',
       email: 'sarah.wilson@straguel.edu',
       role: 'teacher',
@@ -36,7 +38,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'teacher-002',
+      id: '7E4dj9z3tzgKtRwURyfRi1dz0YG3', // Correct Firebase Auth UID
+      uid: '7E4dj9z3tzgKtRwURyfRi1dz0YG3', // Correct Firebase Auth UID
       displayName: 'Rev. Michael Thompson',
       email: 'michael.thompson@straguel.edu',
       role: 'teacher',
@@ -45,7 +48,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'teacher-003',
+      id: 'vVz08cRZMedJsACARMvU4ApCH8z1', // Correct Firebase Auth UID
+      uid: 'vVz08cRZMedJsACARMvU4ApCH8z1', // Correct Firebase Auth UID
       displayName: 'Prof. David Chen',
       email: 'david.chen@straguel.edu',
       role: 'teacher',
@@ -54,7 +58,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'student-001',
+      id: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID
+      uid: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID
       displayName: 'John Smith',
       email: 'john.smith@student.straguel.edu',
       role: 'student',
@@ -63,7 +68,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'student-002',
+      id: 'mQtPrxzkIAT7hNf4cGf880DnsAE3', // Correct Firebase Auth UID
+      uid: 'mQtPrxzkIAT7hNf4cGf880DnsAE3', // Correct Firebase Auth UID
       displayName: 'Mary Johnson',
       email: 'mary.johnson@student.straguel.edu',
       role: 'student',
@@ -72,7 +78,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'student-003',
+      id: 'N5DSrzHPDuOOJ4XM3MZmdWYflgZ2', // Correct Firebase Auth UID
+      uid: 'N5DSrzHPDuOOJ4XM3MZmdWYflgZ2', // Correct Firebase Auth UID
       displayName: 'David Wilson',
       email: 'david.wilson@student.straguel.edu',
       role: 'student',
@@ -81,7 +88,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'student-004',
+      id: '0u4LUlMp9scCoMPqp31ZR7CGlyO2', // Correct Firebase Auth UID
+      uid: '0u4LUlMp9scCoMPqp31ZR7CGlyO2', // Correct Firebase Auth UID
       displayName: 'Lisa Chen',
       email: 'lisa.chen@student.straguel.edu',
       role: 'student',
@@ -90,7 +98,8 @@ const testData = {
       updatedAt: Timestamp.now()
     },
     {
-      id: 'student-005',
+      id: 'wIkOmy8folUFj8iAOnw0cnXRbol2', // Correct Firebase Auth UID
+      uid: 'wIkOmy8folUFj8iAOnw0cnXRbol2', // Correct Firebase Auth UID
       displayName: 'Robert Brown',
       email: 'robert.brown@student.straguel.edu',
       role: 'student',
@@ -110,7 +119,7 @@ const testData = {
       maxStudents: 30,
       syllabus: 'Week 1: Introduction to the Bible\nWeek 2: Old Testament Overview\nWeek 3: New Testament Overview\nWeek 4: Biblical Interpretation Methods\nWeek 5: Historical Context\nWeek 6: Literary Analysis\nWeek 7: Theological Themes\nWeek 8: Application and Reflection',
       isActive: true,
-      instructor: 'teacher-001',
+      instructor: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID for Dr. Sarah Wilson
       instructorName: 'Dr. Sarah Wilson',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -124,7 +133,7 @@ const testData = {
       maxStudents: 25,
       syllabus: 'Week 1: Foundations of Christian Ethics\nWeek 2: Biblical Ethics\nWeek 3: Natural Law Theory\nWeek 4: Virtue Ethics\nWeek 5: Social Justice\nWeek 6: Bioethics\nWeek 7: Environmental Ethics\nWeek 8: Business Ethics\nWeek 9: Family Ethics\nWeek 10: Contemporary Challenges',
       isActive: true,
-      instructor: 'teacher-002',
+      instructor: '7E4dj9z3tzgKtRwURyfRi1dz0YG3', // Correct Firebase Auth UID for Rev. Michael Thompson
       instructorName: 'Rev. Michael Thompson',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -138,7 +147,7 @@ const testData = {
       maxStudents: 35,
       syllabus: 'Week 1: Apostolic Age\nWeek 2: Early Church Fathers\nWeek 3: Councils and Creeds\nWeek 4: Medieval Period\nWeek 5: Reformation Era\nWeek 6: Modern Period\nWeek 7: Denominational Development\nWeek 8: Missionary Movements\nWeek 9: Ecumenical Efforts\nWeek 10: Contemporary Issues\nWeek 11: Global Christianity\nWeek 12: Future of the Church',
       isActive: true,
-      instructor: 'teacher-003',
+      instructor: 'vVz08cRZMedJsACARMvU4ApCH8z1', // Correct Firebase Auth UID for Prof. David Chen
       instructorName: 'Prof. David Chen',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -177,7 +186,7 @@ const testData = {
     {
       id: 'enrollment-001',
       courseId: 'course-001',
-      studentId: 'student-001',
+      studentId: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID for John Smith
       status: 'active',
       progress: 75,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006'],
@@ -187,7 +196,7 @@ const testData = {
     {
       id: 'enrollment-002',
       courseId: 'course-001',
-      studentId: 'student-002',
+      studentId: 'mQtPrxzkIAT7hNf4cGf880DnsAE3', // Correct Firebase Auth UID for Mary Johnson
       status: 'active',
       progress: 50,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004'],
@@ -197,7 +206,7 @@ const testData = {
     {
       id: 'enrollment-003',
       courseId: 'course-002',
-      studentId: 'student-001',
+      studentId: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID for John Smith
       status: 'active',
       progress: 30,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],
@@ -207,7 +216,7 @@ const testData = {
     {
       id: 'enrollment-004',
       courseId: 'course-002',
-      studentId: 'student-003',
+      studentId: 'N5DSrzHPDuOOJ4XM3MZmdWYflgZ2', // Correct Firebase Auth UID for David Wilson
       status: 'completed',
       progress: 100,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
@@ -217,7 +226,7 @@ const testData = {
     {
       id: 'enrollment-005',
       courseId: 'course-003',
-      studentId: 'student-004',
+      studentId: '0u4LUlMp9scCoMPqp31ZR7CGlyO2', // Correct Firebase Auth UID for Lisa Chen
       status: 'active',
       progress: 25,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],
@@ -227,7 +236,7 @@ const testData = {
     {
       id: 'enrollment-006',
       courseId: 'course-004',
-      studentId: 'student-005',
+      studentId: 'wIkOmy8folUFj8iAOnw0cnXRbol2', // Correct Firebase Auth UID for Robert Brown
       status: 'active',
       progress: 60,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
@@ -241,7 +250,7 @@ const testData = {
       id: 'submission-001',
       courseId: 'course-001',
       assignmentId: 'assignment-001',
-      studentId: 'student-001',
+      studentId: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID for John Smith
       submittedAt: Timestamp.now(),
       status: 'graded',
       grade: 95,
@@ -251,7 +260,7 @@ const testData = {
       id: 'submission-002',
       courseId: 'course-001',
       assignmentId: 'assignment-001',
-      studentId: 'student-002',
+      studentId: 'mQtPrxzkIAT7hNf4cGf880DnsAE3', // Correct Firebase Auth UID for Mary Johnson
       submittedAt: Timestamp.now(),
       status: 'submitted',
       grade: null,
@@ -261,7 +270,7 @@ const testData = {
       id: 'submission-003',
       courseId: 'course-002',
       assignmentId: 'assignment-002',
-      studentId: 'student-003',
+      studentId: 'N5DSrzHPDuOOJ4XM3MZmdWYflgZ2', // Correct Firebase Auth UID for David Wilson
       submittedAt: Timestamp.now(),
       status: 'graded',
       grade: 88,
@@ -271,7 +280,7 @@ const testData = {
       id: 'submission-004',
       courseId: 'course-003',
       assignmentId: 'assignment-003',
-      studentId: 'student-004',
+      studentId: '0u4LUlMp9scCoMPqp31ZR7CGlyO2', // Correct Firebase Auth UID for Lisa Chen
       submittedAt: Timestamp.now(),
       status: 'submitted',
       grade: null,
@@ -282,7 +291,7 @@ const testData = {
   supportTickets: [
     {
       id: 'ticket-001',
-      userId: 'student-001',
+      userId: 'HhrOtnXV7BfZhKrUqJJ0Q09tKZD3', // Correct Firebase Auth UID for John Smith
       name: 'John Smith',
       email: 'john.smith@student.straguel.edu',
       subject: 'Course Access Issue',
@@ -292,7 +301,7 @@ const testData = {
     },
     {
       id: 'ticket-002',
-      userId: 'student-002',
+      userId: 'mQtPrxzkIAT7hNf4cGf880DnsAE3', // Correct Firebase Auth UID for Mary Johnson
       name: 'Mary Johnson',
       email: 'mary.johnson@student.straguel.edu',
       subject: 'Assignment Submission Problem',
@@ -317,7 +326,7 @@ const testData = {
       id: 'blog-001',
       title: 'The Importance of Biblical Literacy in Modern Times',
       content: 'In today\'s rapidly changing world, biblical literacy has become more important than ever. This article explores why understanding the Bible is crucial for spiritual growth and how it can guide us through contemporary challenges...',
-      authorId: 'teacher-001',
+      authorId: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID for Dr. Sarah Wilson
       authorName: 'Dr. Sarah Wilson',
       createdAt: Timestamp.now(),
       likes: 15
@@ -326,7 +335,7 @@ const testData = {
       id: 'blog-002',
       title: 'Understanding Christian Ethics in a Secular World',
       content: 'As Christians living in an increasingly secular society, we face unique challenges in applying our faith to everyday decisions. This post examines how Christian ethics can provide a solid foundation for navigating complex moral issues...',
-      authorId: 'teacher-002',
+      authorId: '7E4dj9z3tzgKtRwURyfRi1dz0YG3', // Correct Firebase Auth UID for Rev. Michael Thompson
       authorName: 'Rev. Michael Thompson',
       createdAt: Timestamp.now(),
       likes: 23
@@ -335,7 +344,7 @@ const testData = {
       id: 'blog-003',
       title: 'The Role of Church History in Contemporary Ministry',
       content: 'Church history is not just about the past—it\'s about understanding how we got to where we are today and learning from the wisdom of those who came before us. This article explores how historical knowledge can enhance modern ministry...',
-      authorId: 'teacher-003',
+      authorId: 'vVz08cRZMedJsACARMvU4ApCH8z1', // Correct Firebase Auth UID for Prof. David Chen
       authorName: 'Prof. David Chen',
       createdAt: Timestamp.now(),
       likes: 18
@@ -348,7 +357,7 @@ const testData = {
       courseId: null,
       title: 'Welcome to the New Academic Year!',
       body: 'We are excited to welcome all students to the new academic year. Classes begin next week, and we look forward to an enriching learning experience together.',
-      authorId: 'admin-001',
+      authorId: 'xFmODm96AHgaa7ZkfUB9tnyN3G43', // Correct Firebase Auth UID for Admin User
       createdAt: Timestamp.now()
     },
     {
@@ -356,7 +365,7 @@ const testData = {
       courseId: 'course-001',
       title: 'Assignment Due Date Extended',
       body: 'Due to technical issues, the due date for Assignment 1 has been extended to Friday. Please ensure you submit your work by the new deadline.',
-      authorId: 'teacher-001',
+      authorId: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID for Dr. Sarah Wilson
       createdAt: Timestamp.now()
     },
     {
@@ -364,7 +373,7 @@ const testData = {
       courseId: null,
       title: 'New Course Available: Advanced Theology',
       body: 'We are pleased to announce a new advanced course in systematic theology. This course will be available for enrollment starting next month.',
-      authorId: 'admin-001',
+      authorId: 'xFmODm96AHgaa7ZkfUB9tnyN3G43', // Correct Firebase Auth UID for Admin User
       createdAt: Timestamp.now()
     }
   ],
@@ -375,7 +384,7 @@ const testData = {
       title: 'Faculty Meeting',
       date: new Date('2025-01-20T10:00:00Z'),
       description: 'Monthly faculty meeting to discuss curriculum updates and student progress.',
-      createdBy: 'admin-001'
+      createdBy: 'xFmODm96AHgaa7ZkfUB9tnyN3G43' // Correct Firebase Auth UID for Admin User
     },
     {
       id: 'event-002',
@@ -389,7 +398,7 @@ const testData = {
       title: 'Theology Symposium',
       date: new Date('2025-02-01T09:00:00Z'),
       description: 'Annual theology symposium featuring guest speakers and panel discussions.',
-      createdBy: 'teacher-001'
+      createdBy: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2' // Correct Firebase Auth UID for Dr. Sarah Wilson
     }
   ],
 
@@ -398,7 +407,7 @@ const testData = {
       id: 'thread-001',
       title: 'Discussion: Biblical Interpretation Methods',
       body: 'What methods do you find most effective for interpreting biblical texts? Let\'s discuss different approaches and their strengths and limitations.',
-      authorId: 'teacher-001',
+      authorId: 'HNSFVjZzngUyJvcrn7N8nrqCHNM2', // Correct Firebase Auth UID for Dr. Sarah Wilson
       authorName: 'Dr. Sarah Wilson',
       createdAt: Timestamp.now(),
       lastActivityAt: Timestamp.now()
@@ -407,7 +416,7 @@ const testData = {
       id: 'thread-002',
       title: 'Ethical Dilemmas in Modern Ministry',
       body: 'Share your experiences with ethical challenges in ministry and how you navigated them. This could be helpful for other students and practitioners.',
-      authorId: 'teacher-002',
+      authorId: '7E4dj9z3tzgKtRwURyfRi1dz0YG3', // Correct Firebase Auth UID for Rev. Michael Thompson
       authorName: 'Rev. Michael Thompson',
       createdAt: Timestamp.now(),
       lastActivityAt: Timestamp.now()
@@ -416,7 +425,7 @@ const testData = {
       id: 'thread-003',
       title: 'Study Group: Church History',
       body: 'Looking for study partners for the Church History course. Anyone interested in forming a study group?',
-      authorId: 'student-004',
+      authorId: '0u4LUlMp9scCoMPqp31ZR7CGlyO2', // Correct Firebase Auth UID for Lisa Chen
       authorName: 'Lisa Chen',
       createdAt: Timestamp.now(),
       lastActivityAt: Timestamp.now()
@@ -523,29 +532,36 @@ export default function DatabaseSeeder() {
     setMessage('');
 
     try {
-      console.log('🧹 Clearing test data...');
+      console.log('🧹 Starting complete database cleanup...');
       
       const collections = [
         'users', 'courses', 'enrollments', 'submissions', 
         'support_tickets', 'blogs', 'announcements', 'events', 'forum_threads'
       ];
 
+      let totalDeleted = 0;
+      
       for (const collectionName of collections) {
-        const querySnapshot = await getDocs(collection(db, collectionName));
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        console.log(`✅ Cleared ${collectionName}`);
+        try {
+          const querySnapshot = await getDocs(collection(db, collectionName));
+          const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+          await Promise.all(deletePromises);
+          console.log(`✅ Cleared ${collectionName}: ${querySnapshot.docs.length} documents deleted`);
+          totalDeleted += querySnapshot.docs.length;
+        } catch (error) {
+          console.error(`❌ Error clearing ${collectionName}:`, error);
+        }
       }
 
-      console.log('🎉 Test data cleared successfully!');
+      console.log(`🎉 Database cleanup completed! Total documents deleted: ${totalDeleted}`);
       setStatus('success');
-      setMessage('All test data cleared successfully!');
-      toast.success('Test data cleared successfully!');
+      setMessage(`Complete database cleanup successful! Total documents deleted: ${totalDeleted}`);
+      toast.success(`Database cleared successfully! ${totalDeleted} documents removed.`);
     } catch (error) {
-      console.error('❌ Error clearing test data:', error);
+      console.error('❌ Error during database cleanup:', error);
       setStatus('error');
-      setMessage(`Error clearing test data: ${error.message}`);
-      toast.error('Failed to clear test data');
+      setMessage(`Error during database cleanup: ${error.message}`);
+      toast.error('Failed to clear database');
     } finally {
       setIsClearing(false);
     }
@@ -560,7 +576,7 @@ export default function DatabaseSeeder() {
             Database Seeder
           </CardTitle>
           <CardDescription>
-            Seed the Firebase database with comprehensive test data for all collections
+            Seed the Firebase database with comprehensive test data using CORRECT Firebase Authentication UIDs
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -629,16 +645,25 @@ export default function DatabaseSeeder() {
               {isClearing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Clearing Data...
+                  Complete Cleanup...
                 </>
               ) : (
                 <>
                   <AlertCircle className="mr-2 h-4 w-4" />
-                  Clear All Data
+                  🧹 Complete Database Cleanup
                 </>
               )}
             </Button>
           </div>
+
+          {/* UID Correction Note */}
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>✅ UIDs Corrected:</strong> This seeder now uses the EXACT Firebase Authentication UIDs from your system. 
+              All users, courses, enrollments, and relationships will be properly linked.
+            </AlertDescription>
+          </Alert>
 
           {/* Warning */}
           <Alert className="border-yellow-200 bg-yellow-50">

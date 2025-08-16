@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText } from 'lucide-react';
-import { api } from '@/lib/api';
+import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { analyticsService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
 
 interface EnrolledCourse {
   id: string | number;
@@ -17,8 +17,11 @@ interface EnrolledCourse {
 export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<any>(null);
+  const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { t } = useI18n();
 
   const demoCourses: EnrolledCourse[] = [
@@ -49,35 +52,58 @@ export default function StudentDashboard() {
   ];
 
   useEffect(() => {
-    const loadEnrollments = async () => {
+    const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const res = await api.getMyEnrollments();
-        if (res.success && Array.isArray(res.data)) {
-          const normalized: EnrolledCourse[] = res.data.map((enrollment: any) => {
-            const course = enrollment.course || enrollment;
-            return {
-              id: course.id,
-              title: course.title,
-              progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : undefined,
-              instructor: course.instructorName || course.instructor,
-              nextLesson: 'Next lesson',
-              dueDate: undefined,
-            };
-          });
+        
+        if (user?.uid) {
+          // Load student stats
+          const studentStats = await analyticsService.getStudentStats(user.uid);
+          setStats(studentStats);
+
+          // Load enrollments
+          const enrollments = await enrollmentService.getEnrollmentsByStudent(user.uid);
+          const normalized: EnrolledCourse[] = enrollments.map((enrollment: any) => ({
+            id: enrollment.courseId,
+            title: enrollment.course?.title || 'Course Title',
+            progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : undefined,
+            instructor: enrollment.course?.instructorName || 'Instructor',
+            nextLesson: 'Next lesson',
+            dueDate: undefined,
+          }));
           setEnrolledCourses(normalized);
+
+          // Load upcoming assignments
+          const submissions = await submissionService.getSubmissionsByStudent(user.uid);
+          setUpcomingAssignments(submissions.slice(0, 5));
+
+          // Load announcements for enrolled courses
+          const courseAnnouncements = await Promise.all(
+            enrollments.map(async (enrollment) => {
+              const courseAnnouncements = await announcementService.getAnnouncements(enrollment.courseId, 3);
+              return courseAnnouncements.map((announcement: any) => ({
+                ...announcement,
+                courseTitle: enrollment.course?.title || 'Course',
+              }));
+            })
+          );
+          const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
+            b.createdAt.toDate() - a.createdAt.toDate()
+          );
+          setAnnouncements(allAnnouncements.slice(0, 5));
         } else {
           setEnrolledCourses(demoCourses);
         }
-      } catch (_e) {
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
         setEnrolledCourses(demoCourses);
       } finally {
         setLoading(false);
       }
     };
 
-    loadEnrollments();
-  }, []);
+    loadDashboardData();
+  }, [user?.uid]);
 
   const upcomingAssignments = [
     {
@@ -183,8 +209,8 @@ export default function StudentDashboard() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{displayCourses.length}</p>
-                <p className="text-sm text-gray-600">{t('student.stats.enrolledCourses')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.enrolledCourses || displayCourses.length}</p>
+                <p className="text-sm text-gray-600">Enrolled Courses</p>
               </div>
             </div>
           </div>
@@ -195,8 +221,8 @@ export default function StudentDashboard() {
                 <TrendingUp className="h-6 w-6 text-teal-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{averageProgress}%</p>
-                <p className="text-sm text-gray-600">{t('student.stats.averageProgress')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.averageProgress || averageProgress}%</p>
+                <p className="text-sm text-gray-600">Average Progress</p>
               </div>
             </div>
           </div>
@@ -207,8 +233,8 @@ export default function StudentDashboard() {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">3</p>
-                <p className="text-sm text-gray-600">{t('student.stats.pendingAssignments')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingAssignments || 3}</p>
+                <p className="text-sm text-gray-600">Pending Assignments</p>
               </div>
             </div>
           </div>
@@ -219,8 +245,8 @@ export default function StudentDashboard() {
                 <Award className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">2</p>
-                <p className="text-sm text-gray-600">{t('student.stats.certificates')}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.certificates || 2}</p>
+                <p className="text-sm text-gray-600">Certificates</p>
               </div>
             </div>
           </div>
@@ -285,33 +311,41 @@ export default function StudentDashboard() {
             {/* Upcoming Assignments */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">{t('student.upcomingAssignments.title')}</h2>
-                <p className="text-gray-600">{t('student.upcomingAssignments.subtitle')}</p>
+                <h2 className="text-xl font-semibold text-gray-900">Upcoming Assignments</h2>
+                <p className="text-gray-600">Track your pending assignments and deadlines</p>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {upcomingAssignments.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-gray-100 p-2 rounded-full">
-                          <FileText className="h-4 w-4 text-gray-600" />
+                  {upcomingAssignments.length > 0 ? (
+                    upcomingAssignments.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-gray-100 p-2 rounded-full">
+                            <FileText className="h-4 w-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">{assignment.title || 'Assignment'}</h3>
+                            <p className="text-sm text-gray-600">{assignment.courseTitle || 'Course'}</p>
+                            <p className="text-xs text-gray-500">Due: {assignment.dueDate || 'No due date'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">{assignment.title}</h3>
-                          <p className="text-sm text-gray-600">{assignment.course}</p>
-                          <p className="text-xs text-gray-500">{t('student.due')}: {assignment.dueDate}</p>
+                        <div className="flex items-center space-x-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status || 'pending')}`}>
+                            {(assignment.status || 'pending').replace('-', ' ')}
+                          </span>
+                          <button className="text-blue-600 hover:text-blue-800 transition-colors">
+                            View
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                          {assignment.status.replace('-', ' ')}
-                        </span>
-                        <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                          {t('student.upcomingAssignments.view')}
-                        </button>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No upcoming assignments</p>
+                      <p className="text-sm">You're all caught up!</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -324,37 +358,57 @@ export default function StudentDashboard() {
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
                   <Bell className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">{t('student.announcements')}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Announcements</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                {recentAnnouncements.map((announcement) => (
-                  <div key={announcement.id} className={`${getAnnouncementColor(announcement.type)} p-4 rounded-lg`}>
-                    <h3 className="font-medium text-gray-900 mb-2">{announcement.title}</h3>
-                    <p className="text-sm text-gray-700 mb-2">{announcement.message}</p>
-                    <p className="text-xs text-gray-500">{announcement.date}</p>
+                {announcements.length > 0 ? (
+                  announcements.map((announcement) => (
+                    <div key={announcement.id} className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-gray-900 mb-2">{announcement.title}</h3>
+                      <p className="text-sm text-gray-700 mb-2">{announcement.body}</p>
+                      <div className="flex justify-between items-center text-xs text-gray-500">
+                        <span>{announcement.courseTitle || 'General'}</span>
+                        <span>{announcement.createdAt ? announcement.createdAt.toDate().toLocaleDateString() : 'Recent'}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No announcements</p>
+                    <p className="text-sm">Check back later for updates</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">{t('student.quickActions.title')}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="p-6 space-y-3">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => navigate('/calendar')}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
                   <Calendar className="h-4 w-4" />
-                  <span>{t('student.quickActions.viewSchedule')}</span>
+                  <span>View Schedule</span>
                 </button>
-                <button className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => navigate('/courses')}
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2"
+                >
                   <BookOpen className="h-4 w-4" />
-                  <span>{t('student.quickActions.browseCourses')}</span>
+                  <span>Browse Courses</span>
                 </button>
-                <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => navigate('/certificates')}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                >
                   <Award className="h-4 w-4" />
-                  <span>{t('student.quickActions.myCertificates')}</span>
+                  <span>My Certificates</span>
                 </button>
               </div>
             </div>

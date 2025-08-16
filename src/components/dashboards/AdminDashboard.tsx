@@ -57,6 +57,10 @@ export default function AdminDashboard() {
     date: '',
     description: ''
   });
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   
 
   const navigate = useNavigate();

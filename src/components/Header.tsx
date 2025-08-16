@@ -132,7 +132,7 @@ const Header = () => {
                   {t('auth.login')}
                 </Link>
                 <Link 
-                  to="/signup"
+                  to="/login"
                   className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors font-medium flex items-center space-x-2"
                 >
                   <LogIn className="h-4 w-4" />

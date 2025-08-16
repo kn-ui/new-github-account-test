@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { api, Course } from '@/lib/api';
+import { courseService, enrollmentService, FirestoreCourse, FirestoreEnrollment } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,10 +32,11 @@ const CourseDetail = () => {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<FirestoreCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollment, setEnrollment] = useState<FirestoreEnrollment | null>(null);
 
   useEffect(() => {
     if (courseId) {
@@ -46,20 +47,31 @@ const CourseDetail = () => {
   const loadCourseDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.getCourseById(courseId!);
       
-      if (response.success && response.data) {
-        setCourse(response.data);
+      if (!courseId) {
+        toast.error('Course ID is required');
+        navigate('/courses');
+        return;
+      }
+
+      const courseData = await courseService.getCourseById(courseId);
+      
+      if (courseData) {
+        setCourse(courseData);
         
-        // Check if user is enrolled via enrollments endpoint
-        if (currentUser) {
+        // Check if user is enrolled
+        if (currentUser && userProfile?.role === 'student') {
           try {
-            const enrollmentsRes = await api.getMyEnrollments();
-            if (enrollmentsRes.success && Array.isArray(enrollmentsRes.data)) {
-              const enrolled = enrollmentsRes.data.some((e: any) => e.course?.id === courseId || e.courseId === courseId);
-              setIsEnrolled(enrolled);
+            const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+            const userEnrollment = enrollments.find(e => e.courseId === courseId);
+            
+            if (userEnrollment) {
+              setIsEnrolled(true);
+              setEnrollment(userEnrollment);
             }
-          } catch {}
+          } catch (error) {
+            console.log('No enrollment found for this course');
+          }
         }
       } else {
         toast.error('Course not found');
@@ -75,7 +87,7 @@ const CourseDetail = () => {
   };
 
   const handleEnrollment = async () => {
-    if (!currentUser) {
+    if (!currentUser || !courseId) {
       navigate('/login');
       return;
     }
@@ -87,14 +99,27 @@ const CourseDetail = () => {
 
     try {
       setEnrolling(true);
-      const response = await api.enrollInCourse(courseId!);
       
-      if (response.success) {
-        toast.success('Successfully enrolled in course!');
-        setIsEnrolled(true);
-        // Refresh course data to get updated enrollment count
-        loadCourseDetails();
-      }
+      const enrollmentData = {
+        courseId,
+        studentId: currentUser.uid,
+        status: 'active' as const,
+        progress: 0,
+        completedLessons: []
+      };
+
+      const enrollmentId = await enrollmentService.createEnrollment(enrollmentData);
+      
+      // Update local state
+      setIsEnrolled(true);
+      setEnrollment({
+        id: enrollmentId,
+        ...enrollmentData,
+        enrolledAt: new Date() as any, // Will be set by Firestore
+        lastAccessedAt: new Date() as any
+      });
+      
+      toast.success('Successfully enrolled in course!');
     } catch (error) {
       console.error('Enrollment error:', error);
       toast.error('Failed to enroll in course');
@@ -109,7 +134,6 @@ const CourseDetail = () => {
     if (isEnrolled) return false;
     if (!course.isActive) return false;
     
-    // Capacity enforced on backend; allow attempt
     return true;
   };
 
@@ -131,9 +155,6 @@ const CourseDetail = () => {
     if (!course.isActive) {
       return { message: 'This course is not currently available', variant: 'destructive' as const };
     }
-    
-      // Capacity enforced at enrollment; UI does not precompute counts
-  // You may compute a live count via an aggregate if needed
     
     return null;
   };
@@ -193,24 +214,21 @@ const CourseDetail = () => {
     );
   }
 
-  const enrollmentPercentage = 0;
+  const enrollmentPercentage = enrollment?.progress || 0;
   const status = getEnrollmentStatus();
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Breadcrumb */}
-          <div className="mb-6">
-            <Link 
-              to="/courses" 
-              className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Courses
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Link to="/courses" className="hover:text-foreground transition-colors">
+              Courses
             </Link>
+            <span>/</span>
+            <span className="text-foreground">{course.title}</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -220,114 +238,84 @@ const CourseDetail = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-2xl mb-2">{course.title}</CardTitle>
-                      <CardDescription className="text-base">
+                    <div>
+                      <CardTitle className="text-2xl">{course.title}</CardTitle>
+                      <CardDescription className="text-base mt-2">
                         {course.description}
                       </CardDescription>
                     </div>
-                    <Badge variant="secondary" className="ml-4 shrink-0">
-                      {course.category}
+                    <Badge variant={course.isActive ? "default" : "secondary"}>
+                      {course.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                 </CardHeader>
-              </Card>
-
-              {/* Course Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Info className="h-5 w-5 mr-2" />
-                    Course Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-3">
-                      <User className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Instructor</p>
-                        <p className="text-sm text-muted-foreground">{course.instructorName}</p>
-                      </div>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{course.duration} weeks</span>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <Clock className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Duration</p>
-                        <p className="text-sm text-muted-foreground">{course.duration} weeks</p>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Max {course.maxStudents} students</span>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Created</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(course.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{course.instructorName}</span>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Class Size</p>
-                        <p className="text-sm text-muted-foreground">
-                          {enrolledCount}/{course.maxStudents} students
-                        </p>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span>{course.category}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Syllabus */}
-              {course.syllabus && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5" />
+                    <span>Course Syllabus</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    <p className="whitespace-pre-wrap">{course.syllabus}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Enrollment Status */}
+              {status && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>{status.message}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Progress (if enrolled) */}
+              {isEnrolled && enrollment && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <FileText className="h-5 w-5 mr-2" />
-                      Course Syllabus
-                    </CardTitle>
+                    <CardTitle>Your Progress</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="prose prose-sm max-w-none">
-                      <p className="whitespace-pre-wrap">{course.syllabus}</p>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Overall Progress</span>
+                          <span>{enrollmentPercentage}%</span>
+                        </div>
+                        <Progress value={enrollmentPercentage} className="h-2" />
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {enrollment.completedLessons.length} lessons completed
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
-
-              {/* Course Content Preview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BookMarked className="h-5 w-5 mr-2" />
-                    What You'll Learn
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {course.lessons && course.lessons.length > 0 ? (
-                      course.lessons.slice(0, 3).map((lesson: any, index: number) => (
-                        <div key={index} className="flex items-start space-x-3">
-                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="font-medium">{lesson.title}</p>
-                            <p className="text-sm text-muted-foreground">{lesson.description}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Course content will be available after enrollment</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Sidebar */}
@@ -335,104 +323,63 @@ const CourseDetail = () => {
               {/* Enrollment Card */}
               <Card>
                 <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {/* Enrollment Progress */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Enrollment</span>
-                        <span className="text-sm text-muted-foreground">
-                          {enrolledCount}/{course.maxStudents}
-                        </span>
-                      </div>
-                      <Progress value={enrollmentPercentage} className="h-2" />
-                    </div>
-
-                    <Separator />
-
-                    {/* Status Alert */}
-                    {status && (
-                      <Alert variant={status.variant}>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>{status.message}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    {/* Enrollment Button */}
-                    {currentUser ? (
-                      isEnrolled ? (
-                        <Button disabled className="w-full">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Enrolled
+                  <div className="text-center space-y-4">
+                    {isEnrolled ? (
+                      <div className="space-y-3">
+                        <CheckCircle className="h-12 w-12 text-green-600 mx-auto" />
+                        <h3 className="font-semibold text-lg">Enrolled</h3>
+                        <p className="text-sm text-muted-foreground">
+                          You're successfully enrolled in this course
+                        </p>
+                        <Button className="w-full" variant="outline">
+                          Continue Learning
                         </Button>
-                      ) : (
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <BookMarked className="h-12 w-12 text-blue-600 mx-auto" />
+                        <h3 className="font-semibold text-lg">Ready to Start?</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Join this course and start your learning journey
+                        </p>
                         <Button 
+                          className="w-full" 
                           onClick={handleEnrollment}
                           disabled={!canEnroll() || enrolling}
-                          className="w-full"
                         >
-                          {enrolling ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Enrolling...
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              Enroll Now
-                            </>
-                          )}
+                          {enrolling ? 'Enrolling...' : 'Enroll Now'}
                         </Button>
-                      )
-                    ) : (
-                      <Link to="/login" className="block">
-                        <Button className="w-full">
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Login to Enroll
-                        </Button>
-                      </Link>
+                      </div>
                     )}
-
-                    {/* Course Status */}
-                    <div className="text-center pt-2">
-                      <Badge 
-                        variant={course.isActive ? 'default' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {course.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Course Stats */}
+              {/* Course Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Course Stats</CardTitle>
+                  <CardTitle className="text-lg">Course Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Total Lessons</span>
-                    <span className="font-medium">{course.lessons?.length || 0}</span>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Instructor:</span>
+                    <span>{course.instructorName}</span>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Assignments</span>
-                    <span className="font-medium">{course.assignments?.length || 0}</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category:</span>
+                    <span>{course.category}</span>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Enrolled Students</span>
-                    <span className="font-medium">{enrolledCount}</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Duration:</span>
+                    <span>{course.duration} weeks</span>
                   </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Available Spots</span>
-                    <span className="font-medium text-green-600">
-                      {course.maxStudents - enrolledCount}
-                    </span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Max Students:</span>
+                    <span>{course.maxStudents}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Created:</span>
+                    <span>{course.createdAt.toDate().toLocaleDateString()}</span>
                   </div>
                 </CardContent>
               </Card>

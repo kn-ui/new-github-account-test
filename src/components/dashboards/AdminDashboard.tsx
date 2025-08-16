@@ -9,6 +9,7 @@ import {
   analyticsService, 
   supportTicketService,
   eventService,
+  realtimeService,
   FirestoreUser,
   FirestoreCourse,
   FirestoreSupportTicket,
@@ -70,7 +71,7 @@ export default function AdminDashboard() {
         
         // Load all data in parallel
         const [systemStatsData, usersData, ticketsData, eventsData] = await Promise.all([
-          analyticsService.getSystemStats(),
+          analyticsService.getAdminStats(),
           userService.getUsers(10),
           supportTicketService.getAllTickets(),
           eventService.getEvents()
@@ -128,6 +129,13 @@ export default function AdminDashboard() {
     { type: 'User', name: 'New Teacher Application', author: 'Rev. Mark Stevens', date: '2025-01-14' },
     { type: 'Course', name: 'Modern Christian Ethics', author: 'Prof. Lisa Chen', date: '2025-01-13' },
   ];
+
+  const handleCreateUser = async () => {
+    try {
+      if (!newUserData.displayName || !newUserData.email || !newUserData.password) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
 
       // Create user in Firebase Auth first
       const { createUserWithEmailAndPassword } = await import('firebase/auth');

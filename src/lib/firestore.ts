@@ -361,6 +361,15 @@ export const supportTicketService = {
     const docRef = doc(db, 'support_tickets', ticketId);
     await updateDoc(docRef, { status });
   },
+
+  async getAllTickets(): Promise<FirestoreSupportTicket[]> {
+    const q = query(
+      collections.supportTickets(),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
+  },
 };
 
 // Blog operations

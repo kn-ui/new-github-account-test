@@ -24,6 +24,7 @@ import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
 import DatabaseSeeder from "./components/DatabaseSeeder";
 import AuthUserSeeder from "./components/AuthUserSeeder";
+import TestAuthUIDs from "./components/TestAuthUIDs";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/forum/:threadId" element={<ForumThread />} />
             <Route path="/seed-database" element={<DatabaseSeeder />} />
             <Route path="/seed-auth-users" element={<AuthUserSeeder />} />
+            <Route path="/test-auth-uids" element={<TestAuthUIDs />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />

@@ -21,7 +21,8 @@ import { db } from './firebase';
 
 // Types for Firestore documents
 export interface FirestoreUser {
-  uid: string;
+  uid?: string; // Optional for backward compatibility
+  id?: string;  // Document ID
   displayName: string;
   email: string;
   role: 'student' | 'teacher' | 'admin';

@@ -31,7 +31,8 @@ export interface FirestoreUser {
 }
 
 export interface FirestoreCourse {
-  id?: string;
+
+  id: string;
   title: string;
   description: string;
   category: string;
@@ -45,26 +46,9 @@ export interface FirestoreCourse {
   updatedAt: Timestamp;
 }
 
-export interface FirestoreLesson {
-  id?: string;
-  order: number;
-  title: string;
-  content: string;
-  duration: number;
-  createdAt: Timestamp;
-}
-
-export interface FirestoreAssignment {
-  id?: string;
-  title: string;
-  description: string;
-  dueDate: Timestamp;
-  maxPoints: number;
-  createdAt: Timestamp;
-}
 
 export interface FirestoreEnrollment {
-  id?: string;
+  id: string;
   courseId: string;
   studentId: string;
   status: 'active' | 'completed';
@@ -75,7 +59,8 @@ export interface FirestoreEnrollment {
 }
 
 export interface FirestoreSubmission {
-  id?: string;
+
+  id: string;
   courseId: string;
   assignmentId: string;
   studentId: string;
@@ -86,18 +71,21 @@ export interface FirestoreSubmission {
 }
 
 export interface FirestoreSupportTicket {
-  id?: string;
+
+  id: string;
   userId?: string;
   name: string;
   email: string;
   subject: string;
   message: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
   createdAt: Timestamp;
 }
 
 export interface FirestoreBlog {
-  id?: string;
+
+  id: string;
   title: string;
   content: string;
   authorId: string;
@@ -107,7 +95,8 @@ export interface FirestoreBlog {
 }
 
 export interface FirestoreAnnouncement {
-  id?: string;
+
+  id: string;
   courseId?: string;
   title: string;
   body: string;
@@ -116,7 +105,8 @@ export interface FirestoreAnnouncement {
 }
 
 export interface FirestoreEvent {
-  id?: string;
+
+  id: string;
   title: string;
   date: Timestamp;
   description: string;
@@ -124,7 +114,8 @@ export interface FirestoreEvent {
 }
 
 export interface FirestoreForumThread {
-  id?: string;
+
+  id: string;
   title: string;
   body: string;
   authorId: string;
@@ -134,449 +125,487 @@ export interface FirestoreForumThread {
 }
 
 export interface FirestoreForumPost {
-  id?: string;
+
+  id: string;
   body: string;
   authorId: string;
   authorName: string;
   createdAt: Timestamp;
 }
 
-// Utility functions
-const timestampToDate = (timestamp: Timestamp) => timestamp.toDate();
-const dateToTimestamp = (date: Date) => Timestamp.fromDate(date);
+
+// Collection references
+const collections = {
+  users: () => collection(db, 'users'),
+  courses: () => collection(db, 'courses'),
+  enrollments: () => collection(db, 'enrollments'),
+  submissions: () => collection(db, 'submissions'),
+  supportTickets: () => collection(db, 'support_tickets'),
+  blogs: () => collection(db, 'blogs'),
+  announcements: () => collection(db, 'announcements'),
+  events: () => collection(db, 'events'),
+  forumThreads: () => collection(db, 'forum_threads'),
+  forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
+};
 
 // User operations
 export const userService = {
-  async createUser(userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const userRef = await addDoc(collection(db, 'users'), {
-      ...userData,
-      createdAt: now,
-      updatedAt: now
-    });
-    return userRef.id;
-  },
-
-  async getUserById(uid: string): Promise<FirestoreUser | null> {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() } as FirestoreUser;
-    }
-    return null;
-  },
-
-  async updateUser(uid: string, updates: Partial<FirestoreUser>): Promise<void> {
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, {
-      ...updates,
-      updatedAt: Timestamp.now()
-    });
-  },
-
-  async getUsers(limitCount: number = 50): Promise<FirestoreUser[]> {
+  async getUsers(limitCount = 10): Promise<FirestoreUser[]> {
     const q = query(
-      collection(db, 'users'),
+      collections.users(),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreUser);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 
-  async getUsersByRole(role: string): Promise<FirestoreUser[]> {
-    const q = query(
-      collection(db, 'users'),
-      where('role', '==', role),
-      where('isActive', '==', true)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreUser);
-  }
+  async getUserById(uid: string): Promise<FirestoreUser | null> {
+    const docRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as FirestoreUser;
+    }
+    return null;
+  },
+
+
+  async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.users(), {
+      ...userData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async updateUser(uid: string, updates: Partial<FirestoreUser>): Promise<void> {
+    const docRef = doc(db, 'users', uid);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
 };
 
 // Course operations
 export const courseService = {
-  async createCourse(courseData: Omit<FirestoreCourse, 'createdAt' | 'updatedAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const courseRef = await addDoc(collection(db, 'courses'), {
-      ...courseData,
-      createdAt: now,
-      updatedAt: now
-    });
-    return courseRef.id;
+  async getCourses(limitCount = 10): Promise<FirestoreCourse[]> {
+    const q = query(
+      collections.courses(),
+      where('isActive', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
   async getCourseById(courseId: string): Promise<FirestoreCourse | null> {
-    const courseDoc = await getDoc(doc(db, 'courses', courseId));
-    if (courseDoc.exists()) {
-      return { id: courseDoc.id, ...courseDoc.data() } as FirestoreCourse;
+    const docRef = doc(db, 'courses', courseId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as FirestoreCourse;
     }
     return null;
   },
 
-  async getCourses(limitCount: number = 50): Promise<FirestoreCourse[]> {
-    const q = query(
-      collection(db, 'courses'),
-      where('isActive', '==', true),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreCourse);
-  },
 
   async getCoursesByInstructor(instructorId: string): Promise<FirestoreCourse[]> {
     const q = query(
-      collection(db, 'courses'),
+      collections.courses(),
       where('instructor', '==', instructorId),
-      where('isActive', '==', true),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreCourse);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+  },
+
+  async createCourse(courseData: Omit<FirestoreCourse, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.courses(), {
+      ...courseData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
   },
 
   async updateCourse(courseId: string, updates: Partial<FirestoreCourse>): Promise<void> {
-    const courseRef = doc(db, 'courses', courseId);
-    await updateDoc(courseRef, {
+    const docRef = doc(db, 'courses', courseId);
+    await updateDoc(docRef, {
       ...updates,
-      updatedAt: Timestamp.now()
+      updatedAt: Timestamp.now(),
     });
   },
-
-  async deleteCourse(courseId: string): Promise<void> {
-    await deleteDoc(doc(db, 'courses', courseId));
-  }
 };
 
 // Enrollment operations
 export const enrollmentService = {
-  async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'enrolledAt' | 'lastAccessedAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const enrollmentRef = await addDoc(collection(db, 'enrollments'), {
-      ...enrollmentData,
-      enrolledAt: now,
-      lastAccessedAt: now
-    });
-    return enrollmentRef.id;
-  },
 
   async getEnrollmentsByStudent(studentId: string): Promise<FirestoreEnrollment[]> {
     const q = query(
-      collection(db, 'enrollments'),
+      collections.enrollments(),
       where('studentId', '==', studentId),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreEnrollment);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
   },
 
   async getEnrollmentsByCourse(courseId: string): Promise<FirestoreEnrollment[]> {
     const q = query(
-      collection(db, 'enrollments'),
+
+      collections.enrollments(),
       where('courseId', '==', courseId),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreEnrollment);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
   },
 
-  async updateEnrollment(enrollmentId: string, updates: Partial<FirestoreEnrollment>): Promise<void> {
-    const enrollmentRef = doc(db, 'enrollments', enrollmentId);
-    await updateDoc(enrollmentRef, {
-      ...updates,
-      lastAccessedAt: Timestamp.now()
-    });
-  }
-};
-
-// Assignment and submission operations
-export const assignmentService = {
-  async createAssignment(courseId: string, assignmentData: Omit<FirestoreAssignment, 'createdAt'>): Promise<string> {
+  async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt'>): Promise<string> {
     const now = Timestamp.now();
-    const assignmentRef = await addDoc(collection(db, `courses/${courseId}/assignments`), {
-      ...assignmentData,
-      createdAt: now
+    const docRef = await addDoc(collections.enrollments(), {
+      ...enrollmentData,
+      enrolledAt: now,
+      lastAccessedAt: now,
     });
-    return assignmentRef.id;
+    return docRef.id;
   },
 
-  async getAssignmentsByCourse(courseId: string): Promise<FirestoreAssignment[]> {
-    const q = query(
-      collection(db, `courses/${courseId}/assignments`),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreAssignment);
-  }
+  async updateEnrollmentProgress(enrollmentId: string, progress: number, completedLessons: string[]): Promise<void> {
+    const docRef = doc(db, 'enrollments', enrollmentId);
+    await updateDoc(docRef, {
+      progress,
+      completedLessons,
+      lastAccessedAt: Timestamp.now(),
+    });
+  },
 };
 
+// Submission operations
 export const submissionService = {
-  async createSubmission(submissionData: Omit<FirestoreSubmission, 'submittedAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const submissionRef = await addDoc(collection(db, 'submissions'), {
-      ...submissionData,
-      submittedAt: now
-    });
-    return submissionRef.id;
-  },
-
   async getSubmissionsByStudent(studentId: string): Promise<FirestoreSubmission[]> {
     const q = query(
-      collection(db, 'submissions'),
+      collections.submissions(),
       where('studentId', '==', studentId),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreSubmission);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
   async getSubmissionsByAssignment(assignmentId: string): Promise<FirestoreSubmission[]> {
     const q = query(
-      collection(db, 'submissions'),
+
+      collections.submissions(),
       where('assignmentId', '==', assignmentId),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreSubmission);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
-  async updateSubmission(submissionId: string, updates: Partial<FirestoreSubmission>): Promise<void> {
-    const submissionRef = doc(db, 'submissions', submissionId);
-    await updateDoc(submissionRef, updates);
-  }
+  async createSubmission(submissionData: Omit<FirestoreSubmission, 'id' | 'submittedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.submissions(), {
+      ...submissionData,
+      submittedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async gradeSubmission(submissionId: string, grade: number, feedback: string): Promise<void> {
+    const docRef = doc(db, 'submissions', submissionId);
+    await updateDoc(docRef, {
+      grade,
+      feedback,
+      status: 'graded',
+    });
+  },
 };
 
 // Support ticket operations
 export const supportTicketService = {
-  async createTicket(ticketData: Omit<FirestoreSupportTicket, 'createdAt'>): Promise<string> {
+
+  async createTicket(ticketData: Omit<FirestoreSupportTicket, 'id' | 'createdAt'>): Promise<string> {
     const now = Timestamp.now();
-    const ticketRef = await addDoc(collection(db, 'support_tickets'), {
+    const docRef = await addDoc(collections.supportTickets(), {
       ...ticketData,
-      createdAt: now
+      status: 'open',
+      createdAt: now,
     });
-    return ticketRef.id;
+    return docRef.id;
   },
 
   async getTicketsByUser(userId: string): Promise<FirestoreSupportTicket[]> {
     const q = query(
-      collection(db, 'support_tickets'),
+
+      collections.supportTickets(),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreSupportTicket);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
   },
 
-  async getAllTickets(): Promise<FirestoreSupportTicket[]> {
-    const q = query(
-      collection(db, 'support_tickets'),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreSupportTicket);
-  }
+  async updateTicketStatus(ticketId: string, status: FirestoreSupportTicket['status']): Promise<void> {
+    const docRef = doc(db, 'support_tickets', ticketId);
+    await updateDoc(docRef, { status });
+  },
 };
 
 // Blog operations
 export const blogService = {
-  async createBlogPost(blogData: Omit<FirestoreBlog, 'createdAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const blogRef = await addDoc(collection(db, 'blogs'), {
-      ...blogData,
-      createdAt: now
-    });
-    return blogRef.id;
-  },
 
-  async getBlogPosts(limitCount: number = 50): Promise<FirestoreBlog[]> {
+  async getBlogPosts(limitCount = 10): Promise<FirestoreBlog[]> {
     const q = query(
-      collection(db, 'blogs'),
+      collections.blogs(),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreBlog);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreBlog));
   },
 
-  async updateBlogLikes(blogId: string, newLikeCount: number): Promise<void> {
-    const blogRef = doc(db, 'blogs', blogId);
-    await updateDoc(blogRef, { likes: newLikeCount });
-  }
+  async createBlogPost(blogData: Omit<FirestoreBlog, 'id' | 'createdAt' | 'likes'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.blogs(), {
+      ...blogData,
+      likes: 0,
+      createdAt: now,
+    });
+    return docRef.id;
+  },
+
+  async likeBlogPost(blogId: string): Promise<void> {
+    const docRef = doc(db, 'blogs', blogId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const currentLikes = docSnap.data().likes || 0;
+      await updateDoc(docRef, { likes: currentLikes + 1 });
+    }
+  },
 };
 
 // Announcement operations
 export const announcementService = {
-  async createAnnouncement(announcementData: Omit<FirestoreAnnouncement, 'createdAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const announcementRef = await addDoc(collection(db, 'announcements'), {
-      ...announcementData,
-      createdAt: now
-    });
-    return announcementRef.id;
-  },
-
-  async getAnnouncements(courseId?: string): Promise<FirestoreAnnouncement[]> {
+  async getAnnouncements(courseId?: string, limitCount = 10): Promise<FirestoreAnnouncement[]> {
     let q;
     if (courseId) {
       q = query(
-        collection(db, 'announcements'),
+        collections.announcements(),
         where('courseId', '==', courseId),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
       );
     } else {
       q = query(
-        collection(db, 'announcements'),
-        orderBy('createdAt', 'desc')
+        collections.announcements(),
+        where('courseId', '==', null),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
       );
     }
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreAnnouncement);
-  }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+  },
+
+  async createAnnouncement(announcementData: Omit<FirestoreAnnouncement, 'id' | 'createdAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.announcements(), {
+      ...announcementData,
+      createdAt: now,
+    });
+    return docRef.id;
+  },
 };
 
 // Event operations
 export const eventService = {
-  async createEvent(eventData: Omit<FirestoreEvent, 'createdAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const eventRef = await addDoc(collection(db, 'events'), {
-      ...eventData,
-      createdAt: now
-    });
-    return eventRef.id;
-  },
-
-  async getEvents(): Promise<FirestoreEvent[]> {
+  async getEvents(limitCount = 10): Promise<FirestoreEvent[]> {
     const q = query(
-      collection(db, 'events'),
-      orderBy('date', 'asc')
+      collections.events(),
+      orderBy('date', 'asc'),
+      limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreEvent);
-  }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));
+  },
+
+  async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
+    const docRef = await addDoc(collections.events(), eventData);
+    return docRef.id;
+  },
 };
 
 // Forum operations
 export const forumService = {
-  async createThread(threadData: Omit<FirestoreForumThread, 'createdAt' | 'lastActivityAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const threadRef = await addDoc(collection(db, 'forum_threads'), {
-      ...threadData,
-      createdAt: now,
-      lastActivityAt: now
-    });
-    return threadRef.id;
-  },
 
-  async getThreads(): Promise<FirestoreForumThread[]> {
+  async getForumThreads(limitCount = 10): Promise<FirestoreForumThread[]> {
     const q = query(
-      collection(db, 'forum_threads'),
-      orderBy('lastActivityAt', 'desc')
+      collections.forumThreads(),
+      orderBy('lastActivityAt', 'desc'),
+      limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreForumThread);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreForumThread));
   },
 
-  async createPost(threadId: string, postData: Omit<FirestoreForumPost, 'createdAt'>): Promise<string> {
+  async createForumThread(threadData: Omit<FirestoreForumThread, 'id' | 'createdAt' | 'lastActivityAt'>): Promise<string> {
     const now = Timestamp.now();
-    const postRef = await addDoc(collection(db, `forum_threads/${threadId}/posts`), {
-      ...postData,
-      createdAt: now
+    const docRef = await addDoc(collections.forumThreads(), {
+      ...threadData,
+      createdAt: now,
+      lastActivityAt: now,
     });
+    return docRef.id;
+  },
 
+  async getForumPosts(threadId: string, limitCount = 10): Promise<FirestoreForumPost[]> {
+    const q = query(
+      collections.forumPosts(threadId),
+      orderBy('createdAt', 'asc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreForumPost));
+  },
+
+  async createForumPost(threadId: string, postData: Omit<FirestoreForumPost, 'id' | 'createdAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.forumPosts(threadId), {
+      ...postData,
+      createdAt: now,
+    });
+    
     // Update thread's lastActivityAt
     const threadRef = doc(db, 'forum_threads', threadId);
     await updateDoc(threadRef, { lastActivityAt: now });
-
-    return postRef.id;
+    
+    return docRef.id;
   },
-
-  async getPosts(threadId: string): Promise<FirestoreForumPost[]> {
-    const q = query(
-      collection(db, `forum_threads/${threadId}/posts`),
-      orderBy('createdAt', 'asc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as FirestoreForumPost);
-  }
 };
 
 // Analytics and statistics
 export const analyticsService = {
-  async getSystemStats() {
+
+  async getAdminStats() {
     const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
-      getDocs(collection(db, 'users')),
-      getDocs(collection(db, 'courses')),
-      getDocs(collection(db, 'enrollments'))
+      getDocs(collections.users()),
+      getDocs(collections.courses()),
+      getDocs(collections.enrollments()),
     ]);
 
     const totalUsers = usersSnapshot.size;
     const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
-    const totalEnrollments = enrollmentsSnapshot.size;
 
-    // Calculate completion rate (simplified)
+    
+    // Calculate completion rate from enrollments
+    const totalEnrollments = enrollmentsSnapshot.size;
     const completedEnrollments = enrollmentsSnapshot.docs.filter(doc => doc.data().status === 'completed').length;
-    const completionRate = totalEnrollments > 0 ? (completedEnrollments / totalEnrollments) * 100 : 0;
+    const completionRate = totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
 
     return {
       totalUsers,
       totalStudents,
       activeCourses,
-      totalEnrollments,
-      completionRate: Math.round(completionRate)
+
+      completionRate,
+      systemHealth: 99.9, // Placeholder
     };
   },
 
   async getTeacherStats(teacherId: string) {
     const [coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
-      getDocs(query(collection(db, 'courses'), where('instructor', '==', teacherId))),
-      getDocs(collection(db, 'enrollments'))
+
+      getDocs(query(collections.courses(), where('instructor', '==', teacherId))),
+      getDocs(collections.enrollments()),
     ]);
 
-    const myCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive);
+    const myCourses = coursesSnapshot.size;
     const totalStudents = enrollmentsSnapshot.docs.filter(doc => 
-      myCourses.some(course => course.id === doc.data().courseId)
+      coursesSnapshot.docs.some(course => course.id === doc.data().courseId)
     ).length;
 
-    // Calculate average rating (placeholder)
-    const averageRating = 4.5;
+    // Calculate pending reviews (submissions that need grading)
+    const submissionsSnapshot = await getDocs(
+      query(collections.submissions(), where('status', '==', 'submitted'))
+    );
+    const pendingReviews = submissionsSnapshot.docs.filter(doc => 
+      coursesSnapshot.docs.some(course => course.id === doc.data().courseId)
+    ).length;
 
     return {
-      activeCourses: myCourses.length,
+      activeCourses: myCourses,
       totalStudents,
-      averageRating
+      pendingReviews,
+      avgRating: 4.8, // Placeholder
     };
   },
 
   async getStudentStats(studentId: string) {
     const [enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([
-      getDocs(query(collection(db, 'enrollments'), where('studentId', '==', studentId))),
-      getDocs(query(collection(db, 'submissions'), where('studentId', '==', studentId)))
+
+      getDocs(query(collections.enrollments(), where('studentId', '==', studentId))),
+      getDocs(query(collections.submissions(), where('studentId', '==', studentId))),
     ]);
 
-    const enrolledCourses = enrollmentsSnapshot.docs.length;
-    const totalProgress = enrollmentsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().progress || 0), 0);
-    const averageProgress = enrolledCourses > 0 ? totalProgress / enrolledCourses : 0;
+    const enrolledCourses = enrollmentsSnapshot.size;
     const pendingAssignments = submissionsSnapshot.docs.filter(doc => doc.data().status === 'submitted').length;
+    
+    // Calculate average progress
+    const progressSum = enrollmentsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().progress || 0), 0);
+    const averageProgress = enrolledCourses > 0 ? Math.round(progressSum / enrolledCourses) : 0;
 
     return {
       enrolledCourses,
-      averageProgress: Math.round(averageProgress),
-      pendingAssignments
+      averageProgress,
+      pendingAssignments,
+      certificates: 2, // Placeholder
     };
-  }
+  },
 };
 
 // Real-time listeners
-export const createRealtimeListener = <T>(
-  collectionPath: string,
-  callback: (data: T[]) => void,
-  queryConstraints: any[] = []
-) => {
-  const q = query(collection(db, collectionPath), ...queryConstraints);
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
-    callback(data);
-  });
+export const realtimeService = {
+  onUsersChange(callback: (snapshot: QuerySnapshot<DocumentData>) => void) {
+    return onSnapshot(collections.users(), callback);
+  },
+
+  onCoursesChange(callback: (snapshot: QuerySnapshot<DocumentData>) => void) {
+    return onSnapshot(collections.courses(), callback);
+  },
+
+  onEnrollmentsChange(callback: (snapshot: QuerySnapshot<DocumentData>) => void) {
+    return onSnapshot(collections.enrollments(), callback);
+  },
+
+  onSubmissionsChange(callback: (snapshot: QuerySnapshot<DocumentData>) => void) {
+    return onSnapshot(collections.submissions(), callback);
+  },
+};
+
+export default {
+  userService,
+  courseService,
+  enrollmentService,
+  submissionService,
+  supportTicketService,
+  blogService,
+  announcementService,
+  eventService,
+  forumService,
+  analyticsService,
+  realtimeService,
 };

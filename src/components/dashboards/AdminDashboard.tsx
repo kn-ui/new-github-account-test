@@ -1,12 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar, FileText } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, userService, realtimeService } from '@/lib/firestore';
-import { AnalyticsChart, EnrollmentTrendChart, CourseCompletionChart, UserActivityChart, RoleDistributionChart } from '@/components/ui/AnalyticsChart';
-import AddUserModal from '@/components/ui/AddUserModal';
-import ReportGenerator from '@/components/ui/ReportGenerator';
+import { 
+  userService, 
+  courseService, 
+  analyticsService, 
+  supportTicketService,
+  eventService,
+  FirestoreUser,
+  FirestoreCourse,
+  FirestoreSupportTicket,
+  FirestoreEvent
+} from '@/lib/firestore';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface RecentUserRow {
   name: string;
@@ -17,87 +32,76 @@ interface RecentUserRow {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<{ totalUsers?: number; totalStudents?: number; activeCourses?: number; completionRate?: number; systemHealth?: number; } | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
+  const [supportTickets, setSupportTickets] = useState<FirestoreSupportTicket[]>([]);
+  const [events, setEvents] = useState<FirestoreEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showReportGenerator, setShowReportGenerator] = useState(false);
-  const [chartData, setChartData] = useState<any>({});
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    displayName: '',
+    email: '',
+    role: 'student' as 'student' | 'teacher' | 'admin',
+    password: ''
+  });
+  const [newEventData, setNewEventData] = useState({
+    title: '',
+    date: '',
+    description: ''
+  });
+  
+
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, createUser } = useAuth();
   const { t } = useI18n();
 
   const systemStats = [
-    { label: t('admin.systemStats.totalUsers'), key: 'totalUsers', value: '1,247', change: '+12%', icon: Users, color: 'blue' },
-    { label: t('admin.systemStats.activeCourses'), key: 'activeCourses', value: '45', change: '+5%', icon: BookOpen, color: 'teal' },
-    { label: t('admin.systemStats.completionRate'), key: 'completionRate', value: '78%', change: '+3%', icon: TrendingUp, color: 'green' },
+    { label: t('admin.systemStats.totalUsers'), key: 'totalUsers', value: '0', change: '+0%', icon: Users, color: 'blue' },
+    { label: t('admin.systemStats.activeCourses'), key: 'activeCourses', value: '0', change: '+0%', icon: BookOpen, color: 'teal' },
+    { label: t('admin.systemStats.completionRate'), key: 'completionRate', value: '0%', change: '+0%', icon: TrendingUp, color: 'green' },
     { label: t('admin.systemStats.systemHealth'), key: 'systemHealth', value: '99.9%', change: '+0.1%', icon: Shield, color: 'purple' },
   ] as const;
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
         
-        // Load admin stats from Firestore
-        const adminStats = await analyticsService.getAdminStats();
-        setStats(adminStats);
+        // Load all data in parallel
+        const [systemStatsData, usersData, ticketsData, eventsData] = await Promise.all([
+          analyticsService.getSystemStats(),
+          userService.getUsers(10),
+          supportTicketService.getAllTickets(),
+          eventService.getEvents()
+        ]);
 
-        // Load recent users from Firestore
-        const users = await userService.getUsers(10);
-        const rows: RecentUserRow[] = users.map((u: any) => ({
+        setStats(systemStatsData);
+        setSupportTickets(ticketsData);
+        setEvents(eventsData);
+
+        // Transform users data
+        const rows: RecentUserRow[] = usersData.map((u: FirestoreUser) => ({
           name: u.displayName || '—',
           email: u.email || '—',
           role: u.role || 'student',
-          joinDate: u.createdAt ? u.createdAt.toDate().toISOString().slice(0, 10) : '—',
+          joinDate: u.createdAt.toDate().toISOString().slice(0, 10),
           status: u.isActive ? 'active' : 'inactive',
         }));
         setRecentUsers(rows);
 
-        // Generate sample chart data
-        setChartData({
-          enrollmentTrends: [
-            { name: 'Jan', enrollments: 45 },
-            { name: 'Feb', enrollments: 52 },
-            { name: 'Mar', enrollments: 48 },
-            { name: 'Apr', enrollments: 61 },
-            { name: 'May', enrollments: 55 },
-            { name: 'Jun', enrollments: 67 },
-          ],
-          courseCompletion: [
-            { name: 'Biblical Studies', completionRate: 78 },
-            { name: 'Theology', completionRate: 65 },
-            { name: 'Leadership', completionRate: 92 },
-            { name: 'Ethics', completionRate: 71 },
-            { name: 'History', completionRate: 84 },
-          ],
-          userActivity: [
-            { name: 'Mon', activeUsers: 120 },
-            { name: 'Tue', activeUsers: 135 },
-            { name: 'Wed', activeUsers: 142 },
-            { name: 'Thu', activeUsers: 128 },
-            { name: 'Fri', activeUsers: 156 },
-            { name: 'Sat', activeUsers: 98 },
-            { name: 'Sun', activeUsers: 87 },
-          ],
-          roleDistribution: [
-            { name: 'Students', value: 65 },
-            { name: 'Teachers', value: 25 },
-            { name: 'Admins', value: 10 },
-          ],
-        });
-
       } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-        setStats(null);
-        setRecentUsers([]);
+        console.error('Error loading dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+
       } finally {
         setLoading(false);
       }
     };
-    load();
+
+    loadData();
   }, []);
+
 
   // Set up real-time listeners
   useEffect(() => {
@@ -125,11 +129,62 @@ export default function AdminDashboard() {
     { type: 'Course', name: 'Modern Christian Ethics', author: 'Prof. Lisa Chen', date: '2025-01-13' },
   ];
 
-  const systemAlerts = [
-    { type: 'warning', message: 'Server storage at 85% capacity', time: '2 hours ago' },
-    { type: 'info', message: 'Scheduled maintenance on January 20th', time: '1 day ago' },
-    { type: 'success', message: 'Database backup completed successfully', time: '2 days ago' },
-  ];
+      // Create user in Firebase Auth first
+      const { createUserWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase');
+      
+      const userCredential = await createUserWithEmailAndPassword(
+        auth, 
+        newUserData.email, 
+        newUserData.password
+      );
+
+      // Create user profile in Firestore
+      await createUser({
+        uid: userCredential.user.uid,
+        displayName: newUserData.displayName,
+        email: newUserData.email,
+        role: newUserData.role,
+        isActive: true
+      });
+
+      toast.success('User created successfully!');
+      setShowAddUserDialog(false);
+      setNewUserData({ displayName: '', email: '', role: 'student', password: '' });
+      
+      // Refresh data
+      window.location.reload();
+    } catch (error: any) {
+      toast.error('Failed to create user: ' + error.message);
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    try {
+      if (!newEventData.title || !newEventData.date || !newEventData.description) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const { currentUser } = useAuth();
+      await eventService.createEvent({
+        title: newEventData.title,
+        date: new Date(newEventData.date) as any,
+        description: newEventData.description,
+        createdBy: currentUser?.uid || 'admin'
+      });
+
+      toast.success('Event created successfully!');
+      setShowAddEventDialog(false);
+      setNewEventData({ title: '', date: '', description: '' });
+      
+      // Refresh events
+      const eventsData = await eventService.getEvents();
+      setEvents(eventsData);
+    } catch (error: any) {
+      toast.error('Failed to create event: ' + error.message);
+    }
+  };
 
   const getColorClasses = (color: string) => {
     const colors = {
@@ -146,6 +201,16 @@ export default function AdminDashboard() {
       case 'active': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'inactive': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTicketStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-red-100 text-red-800';
+      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -167,6 +232,7 @@ export default function AdminDashboard() {
       default: return <AlertCircle className="h-4 w-4" />;
     }
   };
+
 
   const handleUserCreated = () => {
     setNotification({ message: 'User created successfully!', type: 'success' });
@@ -233,7 +299,7 @@ export default function AdminDashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {systemStats.map((stat, index) => {
-            const valueOverride = stats && stat.key in (stats || {})
+            const valueOverride = stats && stat.key in stats
               ? stat.key === 'completionRate'
                 ? `${stats.completionRate}%`
                 : stat.key === 'systemHealth'
@@ -268,9 +334,66 @@ export default function AdminDashboard() {
                     <h2 className="text-xl font-semibold text-gray-900">{t('admin.recentUsers.title')}</h2>
                     <p className="text-gray-600">{t('admin.recentUsers.subtitle')}</p>
                   </div>
-                  <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                    {t('admin.recentUsers.viewAll')}
-                  </button>
+                  <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add User
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New User</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="displayName">Full Name</Label>
+                          <Input
+                            id="displayName"
+                            value={newUserData.displayName}
+                            onChange={(e) => setNewUserData({...newUserData, displayName: e.target.value})}
+                            placeholder="Enter full name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newUserData.email}
+                            onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
+                            placeholder="Enter email address"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="role">Role</Label>
+                          <Select value={newUserData.role} onValueChange={(value: any) => setNewUserData({...newUserData, role: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="student">Student</SelectItem>
+                              <SelectItem value="teacher">Teacher</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={newUserData.password}
+                            onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
+                            placeholder="Enter password"
+                          />
+                        </div>
+                        <Button onClick={handleCreateUser} className="w-full">
+                          Create User
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -320,6 +443,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Analytics Charts */}
+
             <div className="space-y-6">
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -327,6 +451,7 @@ export default function AdminDashboard() {
                     <h2 className="text-xl font-semibold text-gray-900">System Analytics</h2>
                     <p className="text-gray-600">Real-time data visualization and insights</p>
                   </div>
+
                   <button 
                     onClick={() => setShowReportGenerator(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
@@ -356,58 +481,108 @@ export default function AdminDashboard() {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            {/* Pending Approvals */}
+            {/* Support Tickets */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">{t('admin.pendingApprovals')}</h2>
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Support Tickets</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                {pendingApprovals.map((item, index) => (
+                {supportTickets.slice(0, 5).map((ticket, index) => (
                   <div key={index} className="p-3 border rounded-lg">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                        {item.type}
+                      <span className={`text-xs font-medium px-2 py-1 rounded ${getTicketStatusColor(ticket.status)}`}>
+                        {ticket.status.replace('_', ' ')}
                       </span>
-                      <span className="text-xs text-gray-500">{item.date}</span>
+                      <span className="text-xs text-gray-500">
+                        {ticket.createdAt.toDate().toLocaleDateString()}
+                      </span>
                     </div>
-                    <h3 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h3>
-                    <p className="text-xs text-gray-600">{t('admin.common.by')} {item.author}</p>
-                    <div className="flex space-x-2 mt-3">
-                      <button className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors">
-                        {t('admin.common.approve')}
-                      </button>
-                      <button className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors">
-                        {t('admin.common.reject')}
-                      </button>
-                    </div>
+                    <h3 className="font-medium text-gray-900 text-sm mb-1">{ticket.subject}</h3>
+                    <p className="text-xs text-gray-600">{ticket.name} ({ticket.email})</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{ticket.message}</p>
                   </div>
                 ))}
+                {supportTickets.length === 0 && (
+                  <p className="text-center text-gray-500 text-sm py-4">No support tickets</p>
+                )}
               </div>
             </div>
 
-            {/* System Alerts */}
+            {/* System Calendar */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-gray-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">{t('admin.systemAlerts')}</h2>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">System Calendar</h2>
+                  </div>
+                  <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Event</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="eventTitle">Event Title</Label>
+                          <Input
+                            id="eventTitle"
+                            value={newEventData.title}
+                            onChange={(e) => setNewEventData({...newEventData, title: e.target.value})}
+                            placeholder="Enter event title"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="eventDate">Event Date</Label>
+                          <Input
+                            id="eventDate"
+                            type="date"
+                            value={newEventData.date}
+                            onChange={(e) => setNewEventData({...newEventData, date: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="eventDescription">Description</Label>
+                          <Textarea
+                            id="eventDescription"
+                            value={newEventData.description}
+                            onChange={(e) => setNewEventData({...newEventData, description: e.target.value})}
+                            placeholder="Enter event description"
+                          />
+                        </div>
+                        <Button onClick={handleCreateEvent} className="w-full">
+                          Create Event
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                {systemAlerts.map((alert, index) => (
-                  <div key={index} className={`p-3 rounded-lg border ${getAlertColor(alert.type)}`}>
-                    <div className="flex items-start space-x-2">
-                      {getAlertIcon(alert.type)}
-                      <div className="flex-1">
-                        <p className="text-sm">{alert.message}</p>
-                        <p className="text-xs opacity-75 mt-1">{alert.time}</p>
-                      </div>
+                {events.slice(0, 5).map((event, index) => (
+                  <div key={index} className="p-3 border rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        Event
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {event.date.toDate().toLocaleDateString()}
+                      </span>
                     </div>
+                    <h3 className="font-medium text-gray-900 text-sm mb-1">{event.title}</h3>
+                    <p className="text-xs text-gray-600 line-clamp-2">{event.description}</p>
                   </div>
                 ))}
+                {events.length === 0 && (
+                  <p className="text-center text-gray-500 text-sm py-4">No upcoming events</p>
+                )}
               </div>
             </div>
 
@@ -417,6 +592,7 @@ export default function AdminDashboard() {
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="p-6 space-y-3">
+
                 <button 
                   onClick={() => setShowAddUserModal(true)}
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"

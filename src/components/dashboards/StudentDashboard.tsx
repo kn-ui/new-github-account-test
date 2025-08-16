@@ -89,10 +89,6 @@ export default function StudentDashboard() {
         setLoading(false);
       }
     };
-      } finally {
-        setLoading(false);
-      }
-    };
 
     loadDashboardData();
   }, [user?.uid]);
@@ -156,7 +152,7 @@ export default function StudentDashboard() {
     }
   };
 
-  const displayCourses = enrolledCourses.length ? enrolledCourses : demoCourses;
+  const displayCourses = enrolledCourses;
   const averageProgress = useMemo(() => {
     const withProgress = displayCourses.filter(c => typeof c.progress === 'number') as Array<Required<Pick<EnrolledCourse,'progress'>>> & EnrolledCourse[];
     if (!withProgress.length) return 0;

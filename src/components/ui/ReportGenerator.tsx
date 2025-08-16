@@ -72,9 +72,17 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
           break;
 
         case 'enrollment-records':
-          // Get all enrollments (this would need to be implemented in the service)
-          const enrollments = await enrollmentService.getEnrollmentsByStudent('all'); // Placeholder
-          data = enrollments || [];
+          const enrollments = await enrollmentService.getAllEnrollments();
+          data = enrollments.map(enrollment => ({
+            id: enrollment.id,
+            courseId: enrollment.courseId,
+            courseTitle: enrollment.course?.title || 'Unknown Course',
+            studentId: enrollment.studentId,
+            status: enrollment.status,
+            progress: enrollment.progress,
+            enrolledAt: enrollment.enrolledAt.toDate().toISOString(),
+            lastAccessedAt: enrollment.lastAccessedAt.toDate().toISOString(),
+          }));
           filename = `enrollment-records-${new Date().toISOString().split('T')[0]}`;
           break;
 

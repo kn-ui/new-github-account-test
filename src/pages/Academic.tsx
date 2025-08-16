@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import AcademicPage from '../../GUI/src/components/AcademicPage';
+import AcademicPage from '../components/static/AcademicPage';
 
 const Academic = () => {
   return (

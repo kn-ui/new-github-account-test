@@ -51,6 +51,7 @@ export default function AdminDashboard() {
     description: ''
   });
   
+
   const navigate = useNavigate();
   const { logout, createUser } = useAuth();
   const { t } = useI18n();
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         toast.error('Failed to load dashboard data');
+
       } finally {
         setLoading(false);
       }
@@ -100,12 +102,32 @@ export default function AdminDashboard() {
     loadData();
   }, []);
 
-  const handleCreateUser = async () => {
-    try {
-      if (!newUserData.displayName || !newUserData.email || !newUserData.password) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
+
+  // Set up real-time listeners
+  useEffect(() => {
+    const unsubscribeUsers = realtimeService.onUsersChange((snapshot) => {
+      // Update users in real-time
+      const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const rows: RecentUserRow[] = users.slice(0, 10).map((u: any) => ({
+        name: u.displayName || '—',
+        email: u.email || '—',
+        role: u.role || 'student',
+        joinDate: u.createdAt ? u.createdAt.toDate().toISOString().slice(0, 10) : '—',
+        status: u.isActive ? 'active' : 'inactive',
+      }));
+      setRecentUsers(rows);
+    });
+
+    return () => {
+      unsubscribeUsers();
+    };
+  }, []);
+
+  const pendingApprovals = [
+    { type: 'Course', name: 'Advanced Biblical Interpretation', author: 'Dr. Sarah Wilson', date: '2025-01-15' },
+    { type: 'User', name: 'New Teacher Application', author: 'Rev. Mark Stevens', date: '2025-01-14' },
+    { type: 'Course', name: 'Modern Christian Ethics', author: 'Prof. Lisa Chen', date: '2025-01-13' },
+  ];
 
       // Create user in Firebase Auth first
       const { createUserWithEmailAndPassword } = await import('firebase/auth');
@@ -211,22 +233,20 @@ export default function AdminDashboard() {
     }
   };
 
-  // Sample analytics data
-  const enrollmentData = [
-    { month: 'Jan', enrollments: 65 },
-    { month: 'Feb', enrollments: 78 },
-    { month: 'Mar', enrollments: 90 },
-    { month: 'Apr', enrollments: 85 },
-    { month: 'May', enrollments: 95 },
-    { month: 'Jun', enrollments: 110 },
-  ];
 
-  const courseCompletionData = [
-    { course: 'Biblical Studies', completion: 85 },
-    { course: 'Theology', completion: 78 },
-    { course: 'Church History', completion: 92 },
-    { course: 'Pastoral Care', completion: 88 },
-  ];
+  const handleUserCreated = () => {
+    setNotification({ message: 'User created successfully!', type: 'success' });
+    // Refresh the dashboard data
+    window.location.reload();
+  };
+
+  const handleReportGenerated = (message: string) => {
+    setNotification({ message, type: 'success' });
+  };
+
+  const handleError = (message: string) => {
+    setNotification({ message, type: 'error' });
+  };
 
   if (loading) {
     return (
@@ -257,6 +277,25 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Notification */}
+        {notification && (
+          <div className={`mb-6 p-4 rounded-md ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex justify-between items-center">
+              <span>{notification.message}</span>
+              <button
+                onClick={() => setNotification(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {systemStats.map((stat, index) => {
@@ -404,46 +443,37 @@ export default function AdminDashboard() {
             </div>
 
             {/* Analytics Charts */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{t('admin.analytics.title')}</h2>
-                    <p className="text-gray-600">{t('admin.analytics.subtitle')}</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('admin.analytics.export')}
-                  </Button>
-                </div>
-              </div>
-              <div className="p-6 space-y-8">
-                {/* Enrollment Trends */}
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Enrollment Trends</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={enrollmentData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="enrollments" stroke="#3b82f6" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
 
-                {/* Course Completion Rates */}
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Course Completion Rates</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={courseCompletionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="course" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="completion" fill="#10b981" />
-                    </BarChart>
-                  </ResponsiveContainer>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">System Analytics</h2>
+                    <p className="text-gray-600">Real-time data visualization and insights</p>
+                  </div>
+
+                  <button 
+                    onClick={() => setShowReportGenerator(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Generate Report</span>
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {chartData.enrollmentTrends && (
+                    <EnrollmentTrendChart data={chartData.enrollmentTrends} />
+                  )}
+                  {chartData.courseCompletion && (
+                    <CourseCompletionChart data={chartData.courseCompletion} />
+                  )}
+                  {chartData.userActivity && (
+                    <UserActivityChart data={chartData.userActivity} />
+                  )}
+                  {chartData.roleDistribution && (
+                    <RoleDistributionChart data={chartData.roleDistribution} />
+                  )}
                 </div>
               </div>
             </div>
@@ -559,32 +589,70 @@ export default function AdminDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">{t('admin.quickActions.title')}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="p-6 space-y-3">
-                <Button className="w-full" onClick={() => setShowAddUserDialog(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  <span>{t('admin.quickActions.addUser')}</span>
-                </Button>
-                <Link to="/create-course" className="block">
-                  <Button className="w-full bg-teal-600 hover:bg-teal-700">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    <span>{t('admin.quickActions.createCourse')}</span>
-                  </Button>
-                </Link>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  <span>{t('admin.quickActions.generateReport')}</span>
-                </Button>
-                <Button className="w-full bg-gray-600 hover:bg-gray-700">
-                  <Settings className="h-4 w-4 mr-2" />
-                  <span>{t('admin.quickActions.systemSettings')}</span>
-                </Button>
+
+                <button 
+                  onClick={() => setShowAddUserModal(true)}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Add New User</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/create-course')}
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span>Create Course</span>
+                </button>
+                <button 
+                  onClick={() => setShowReportGenerator(true)}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Generate Report</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/calendar')}
+                  className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>Calendar Events</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        onUserCreated={handleUserCreated}
+      />
+
+      {/* Report Generator Modal */}
+      {showReportGenerator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Generate Reports</h2>
+              <button
+                onClick={() => setShowReportGenerator(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ReportGenerator onReportGenerated={handleReportGenerated} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

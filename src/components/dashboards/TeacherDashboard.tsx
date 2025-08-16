@@ -1,57 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Users, Star, MessageSquare, FileText, TrendingUp, Calendar, Plus, Eye, BarChart3, Send } from 'lucide-react';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useState } from 'react';
+import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { 
-  courseService, 
-  analyticsService, 
-  submissionService,
-  announcementService,
-  FirestoreCourse,
-  FirestoreSubmission
-} from '@/lib/firestore';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-
-interface TopStudent {
-  name: string;
-  course: string;
-  progress: number;
-  grade: number;
-}
-
-interface RecentMessage {
-  student: string;
-  course: string;
-  message: string;
-  time: string;
-}
+import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
 
 export default function TeacherDashboard() {
-  const [stats, setStats] = useState<any>(null);
-  const [myCourses, setMyCourses] = useState<FirestoreCourse[]>([]);
-  const [recentSubmissions, setRecentSubmissions] = useState<FirestoreSubmission[]>([]);
-  const [topStudents, setTopStudents] = useState<TopStudent[]>([]);
-  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  const [myCourses, setMyCourses] = useState<any[]>([]);
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
-  const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({
-    title: '',
-    body: '',
-    courseId: ''
-  });
-  
+  const [stats, setStats] = useState<any>(null);
+  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
   const navigate = useNavigate();
-  const { logout, currentUser } = useAuth();
+  const { logout, user } = useAuth();
   const { t } = useI18n();
 
   const teacherStats = [
@@ -62,60 +28,71 @@ export default function TeacherDashboard() {
   ] as const;
 
   useEffect(() => {
-    const loadData = async () => {
+
+    const loadDashboardData = async () => {
       try {
         setLoading(true);
         
-        if (!currentUser?.uid) return;
+        if (user?.uid) {
+          // Load teacher stats
+          const teacherStats = await analyticsService.getTeacherStats(user.uid);
+          setStats(teacherStats);
 
-        // Load all data in parallel
-        const [teacherStatsData, coursesData, submissionsData] = await Promise.all([
-          analyticsService.getTeacherStats(currentUser.uid),
-          courseService.getCoursesByInstructor(currentUser.uid),
-          submissionService.getSubmissionsByStudent(currentUser.uid) // This will be updated to get submissions for teacher's courses
-        ]);
+          // Load my courses
+          const courses = await courseService.getCoursesByInstructor(user.uid);
+          setMyCourses(courses);
 
-        setStats(teacherStatsData);
-        setMyCourses(coursesData);
+          // Fetch enrollments per course in parallel
+          const entries = await Promise.all(
+            courses.map(async (c) => {
+              try {
+                const enrollments = await enrollmentService.getEnrollmentsByCourse(c.id);
+                const active = enrollments.filter((e: any) => e.status === 'active').length;
+                return [c.id, active] as const;
+              } catch {
+                return [c.id, 0] as const;
+              }
+            })
+          );
+          const map: Record<string, number> = {};
+          entries.forEach(([id, count]) => { map[id] = count; });
+          setEnrollmentCounts(map);
 
-        // Transform submissions data
-        const recentSubs = submissionsData.slice(0, 5);
-        setRecentSubmissions(recentSubs);
+          // Load recent submissions for my courses
+          const submissions = await submissionService.getSubmissionsByStudent('all'); // This needs to be updated
+          setRecentSubmissions(submissions.slice(0, 5));
 
-        // Generate sample data for top students and messages (in real app, this would come from Firestore)
-        setTopStudents([
-          { name: 'John Doe', course: 'Biblical Studies', progress: 85, grade: 92 },
-          { name: 'Jane Smith', course: 'Theology', progress: 78, grade: 88 },
-          { name: 'Mike Johnson', course: 'Church History', progress: 92, grade: 95 },
-        ]);
-
-        setRecentMessages([
-          { student: 'John Doe', course: 'Biblical Studies', message: 'Question about assignment 3', time: '2 hours ago' },
-          { student: 'Jane Smith', course: 'Theology', message: 'Need clarification on chapter 5', time: '1 day ago' },
-        ]);
-
+          // Load announcements for my courses
+          const courseAnnouncements = await Promise.all(
+            courses.map(async (course) => {
+              const courseAnnouncements = await announcementService.getAnnouncements(course.id, 3);
+              return courseAnnouncements.map((announcement: any) => ({
+                ...announcement,
+                courseTitle: course.title,
+              }));
+            })
+          );
+          const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
+            b.createdAt.toDate() - a.createdAt.toDate()
+          );
+          setAnnouncements(allAnnouncements.slice(0, 5));
+        }
       } catch (error) {
-        console.error('Error loading teacher dashboard data:', error);
-        toast.error('Failed to load dashboard data');
+        console.error('Failed to load dashboard data:', error);
+        setMyCourses([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
-  }, [currentUser]);
+    loadDashboardData();
+  }, [user?.uid]);
 
-  const handleCreateAnnouncement = async () => {
-    try {
-      if (!newAnnouncement.title || !newAnnouncement.body) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
-
-      if (!currentUser?.uid) {
-        toast.error('User not authenticated');
-        return;
-      }
+/*   const recentSubmissions = [
+    { id: 1, student: 'John Smith', assignment: 'Biblical Interpretation Essay', course: 'Introduction to Biblical Studies', submittedAt: '2 hours ago', status: 'pending' },
+    { id: 2, student: 'Mary Johnson', assignment: 'Theology Research Paper', course: 'Advanced Theology Concepts', submittedAt: '4 hours ago', status: 'pending' },
+    { id: 3, student: 'David Wilson', assignment: 'Leadership Case Study', course: 'Christian Leadership Principles', submittedAt: '1 day ago', status: 'graded' }
+  ]; */
 
       await announcementService.createAnnouncement({
         title: newAnnouncement.title,
@@ -173,24 +150,51 @@ export default function TeacherDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {teacherStats.map((stat, index) => {
-            const valueOverride = stats && stat.key in stats
-              ? stat.key === 'averageRating'
-                ? stats.averageRating.toFixed(1)
-                : String((stats as any)[stat.key])
-              : stat.value;
-            return (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-full ${getColorClasses(stat.color)}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                  <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-gray-900">{valueOverride}</p>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-3 rounded-full">
+                <BookOpen className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-900">{stats?.activeCourses || coursesToDisplay.length}</p>
+                <p className="text-sm text-gray-600">Active Courses</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg border">
+            <div className="flex items-center">
+              <div className="bg-teal-100 p-3 rounded-full">
+                <Users className="h-6 w-6 text-teal-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-900">{stats?.totalStudents || totalStudents}</p>
+                <p className="text-sm text-gray-600">Total Students</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg border">
+            <div className="flex items-center">
+              <div className="bg-yellow-100 p-3 rounded-full">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 12}</p>
+                <p className="text-sm text-gray-600">Pending Reviews</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg border">
+            <div className="flex items-center">
+              <div className="bg-purple-100 p-3 rounded-full">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 4.8}</p>
+                <p className="text-sm text-gray-600">Average Rating</p>
               </div>
             );
           })}
@@ -384,54 +388,101 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* Announcement Dialog */}
-      <Dialog open={showAnnouncementDialog} onOpenChange={setShowAnnouncementDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Post Announcement</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="announcementTitle">Title</Label>
-              <Input
-                id="announcementTitle"
-                value={newAnnouncement.title}
-                onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
-                placeholder="Enter announcement title"
-              />
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Post Announcement</h2>
+              <button
+                onClick={() => setShowAnnouncementModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-            <div>
-              <Label htmlFor="announcementCourse">Course (Optional)</Label>
-              <Select value={newAnnouncement.courseId} onValueChange={(value) => setNewAnnouncement({...newAnnouncement, courseId: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select course (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Students</SelectItem>
+            <div className="p-6 space-y-4">
+              <div>
+                <label htmlFor="announcementTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  id="announcementTitle"
+                  value={newAnnouncement.title}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter announcement title"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="announcementBody" className="block text-sm font-medium text-gray-700 mb-2">
+                  Message *
+                </label>
+                <textarea
+                  id="announcementBody"
+                  value={newAnnouncement.body}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter announcement message"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="announcementCourse" className="block text-sm font-medium text-gray-700 mb-2">
+                  Course (Optional)
+                </label>
+                <select
+                  id="announcementCourse"
+                  value={newAnnouncement.courseId}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, courseId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">General Announcement</option>
                   {myCourses.map((course) => (
-                    <SelectItem key={course.id} value={course.id!}>
+                    <option key={course.id} value={course.id}>
                       {course.title}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowAnnouncementModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await announcementService.createAnnouncement({
+                        title: newAnnouncement.title,
+                        body: newAnnouncement.body,
+                        courseId: newAnnouncement.courseId || undefined,
+                        authorId: user?.uid || '',
+                      });
+                      setNewAnnouncement({ title: '', body: '', courseId: '' });
+                      setShowAnnouncementModal(false);
+                      // Refresh announcements
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Failed to create announcement:', error);
+                    }
+                  }}
+                  disabled={!newAnnouncement.title || !newAnnouncement.body}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Post Announcement
+                </button>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="announcementBody">Message</Label>
-              <Textarea
-                id="announcementBody"
-                value={newAnnouncement.body}
-                onChange={(e) => setNewAnnouncement({...newAnnouncement, body: e.target.value})}
-                placeholder="Enter announcement message"
-                rows={4}
-              />
-            </div>
-            <Button onClick={handleCreateAnnouncement} className="w-full">
-              Post Announcement
-            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

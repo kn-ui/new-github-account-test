@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import AdmissionsPage from '../../GUI/src/components/AdmissionsPage';
+import AdmissionsPage from '../components/static/AdmissionsPage';
 
 const Admissions = () => {
   return (

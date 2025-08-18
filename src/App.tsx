@@ -12,6 +12,8 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
+import UserManager from "./pages/UserManager";
+import CourseManager from "./pages/CourseManager";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Academic from "./pages/Academic";
@@ -78,6 +80,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CreateCourse />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/user-manager" 
+              element={
+                <ProtectedRoute>
+                  <UserManager />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/course-manager" 
+              element={
+                <ProtectedRoute>
+                  <CourseManager />
                 </ProtectedRoute>
               } 
             />

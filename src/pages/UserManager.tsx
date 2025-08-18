@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Edit, Trash2, ArrowLeft, Search, Filter } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useI18n } from '@/contexts/I18nContext';
+import { Users, Edit, ArrowLeft, Search } from 'lucide-react';
 import { userService, FirestoreUser } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
@@ -33,7 +31,6 @@ export default function UserManager() {
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const navigate = useNavigate();
-  const { t } = useI18n();
 
   useEffect(() => {
     loadUsers();

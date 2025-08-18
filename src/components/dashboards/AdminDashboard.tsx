@@ -311,10 +311,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const getTicketStatusColor = (status: string) => {
+const getTicketStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-red-100 text-red-800';
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
+      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'closed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -718,6 +719,11 @@ export default function AdminDashboard() {
                 {supportTickets.length === 0 && (
                   <p className="text-center text-gray-500 text-sm py-4">No support tickets</p>
                 )}
+                {supportTickets.length > 5 && (
+                  <Button variant="outline" className="w-full mt-2" onClick={() => navigate('/support-tickets')}>
+                    View All Support Tickets
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -729,6 +735,9 @@ export default function AdminDashboard() {
                     <Calendar className="h-5 w-5 text-blue-600" />
                     <h2 className="text-lg font-semibold text-gray-900">System Calendar</h2>
                   </div>
+                  <Button onClick={() => navigate('/events')} variant="outline">
+                    View All
+                  </Button>
                   <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
                     <DialogTrigger asChild>
                       <Button size="sm" variant="outline">
@@ -792,6 +801,11 @@ export default function AdminDashboard() {
                 ))}
                 {events.length === 0 && (
                   <p className="text-center text-gray-500 text-sm py-4">No upcoming events</p>
+                )}
+                {events.length > 5 && (
+                  <Button variant="outline" className="w-full mt-2" onClick={() => navigate('/events')}>
+                    View All Events
+                  </Button>
                 )}
               </div>
             </div>

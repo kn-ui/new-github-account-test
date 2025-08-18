@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
   collection, 
   doc, 
@@ -538,6 +539,15 @@ export const eventService = {
   async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
     const docRef = await addDoc(collections.events(), eventData);
     return docRef.id;
+  },
+    async updateEvent(eventId: string, updates: Partial<FirestoreEvent>): Promise<void> {
+    const docRef = doc(db, 'events', eventId);
+    await updateDoc(docRef, updates as any);
+  },
+
+  async deleteEvent(eventId: string): Promise<void> {
+    const docRef = doc(db, 'events', eventId);
+    await deleteDoc(docRef);
   },
 };
 

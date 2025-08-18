@@ -1,14 +1,15 @@
+import 'dotenv/config';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, Timestamp, getDocs, deleteDoc, collection } from 'firebase/firestore';
 
-// Firebase configuration for Node.js environment
+// Firebase configuration for Node.js environment (read from env)
 const firebaseConfig = {
-  apiKey: "AIzaSyBtIY1wVdePkWCJ84bSr7alOMcI2aihVqw",
-  authDomain: "school-management-system-67b85.firebaseapp.com",
-  projectId: "school-management-system-67b85",
-  storageBucket: "school-management-system-67b85.appspot.com",
-  messagingSenderId: "103441012203195276037",
-  appId: "1:103441012203195276037:web:abc123def456ghi789"
+  apiKey: process.env.VITE_FIREBASE_API_KEY as string,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID as string,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+  appId: process.env.VITE_FIREBASE_APP_ID as string,
 };
 
 // Initialize Firebase

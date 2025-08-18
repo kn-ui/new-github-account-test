@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import FeaturedCourses from "@/components/FeaturedCourses";
+import SiteFooter from "@/components/SiteFooter";
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
         <Hero />
         <FeaturedCourses />
       </main>
+      <SiteFooter />
     </div>
   );
 };

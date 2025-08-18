@@ -1,60 +1,35 @@
 import { BookOpen, Users, Award, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import schoolHero from '@/assets/hero-school.jpg';
 
 const Hero = () => {
   return (
-    <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+    <section className="relative bg-[#0e4fb9]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Welcome to
-            <span className="text-blue-700 block">St. Raguel Church</span>
-            <span className="text-2xl md:text-4xl text-gray-600 font-semibold">Spiritual School</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Deepen your faith and expand your spiritual knowledge through our comprehensive online learning platform. 
-            Join our community of learners on a journey of spiritual growth and biblical understanding.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup" className="inline-flex">
-              <button className="bg-blue-700 text-white px-8 py-4 rounded-lg hover:bg-blue-800 transition-all duration-300 font-semibold text-lg flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full">
-                <BookOpen className="h-5 w-5" />
-                <span>Start Learning</span>
-                <ArrowRight className="h-5 w-5" />
-              </button>
-            </Link>
-            <Link to="/courses" className="inline-flex">
-              <button className="border-2 border-blue-700 text-blue-700 px-8 py-4 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300 font-semibold text-lg w-full">
-                Explore Courses
-              </button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="h-8 w-8 text-blue-700" />
+        <div className="grid lg:grid-cols-2 gap-10 items-center py-20">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
+              Nurturing Faith,
+              <span className="block text-yellow-300">Building Character</span>
+            </h1>
+            <p className="mt-6 text-blue-50 text-lg max-w-xl">
+              St. Raguel Church Spiritual School provides comprehensive Orthodox education rooted in Ethiopian traditions and academic excellence.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <Link to="/signup" className="inline-flex">
+                <button className="bg-yellow-400 text-[#0e4fb9] px-6 py-3 rounded-md font-semibold hover:bg-yellow-300 transition-colors flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" /> Apply Now
+                </button>
+              </Link>
+              <Link to="/courses" className="inline-flex">
+                <button className="bg-white/10 border border-white/30 text-white px-6 py-3 rounded-md font-semibold hover:bg-white/20 transition-colors">
+                  Explore Programs
+                </button>
+              </Link>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">50+ Courses</h3>
-            <p className="text-gray-600">Comprehensive spiritual education programs</p>
           </div>
-          
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-            <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="h-8 w-8 text-teal-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">1,200+ Students</h3>
-            <p className="text-gray-600">Active learners in our community</p>
-          </div>
-          
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-            <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Award className="h-8 w-8 text-amber-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Certified</h3>
-            <p className="text-gray-600">Accredited spiritual education certificates</p>
+          <div className="relative rounded-xl overflow-hidden ring-4 ring-white/20">
+            <img src={schoolHero} alt="School" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>

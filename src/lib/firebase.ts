@@ -2,13 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
+// Use env vars; do not ship real keys in code. The fallbacks are non-functional placeholders.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBtIY1wVdePkWCJ84bSr7alOMcI2aihVqw",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "school-management-system-67b85.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "school-management-system-67b85",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "school-management-system-67b85.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "103441012203195276037",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:103441012203195276037:web:abc123def456ghi789"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "test-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "test-app.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "test-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "test-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "0000000000000",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:0000000000000:web:0000000000000000"
 };
 
 // Initialize Firebase

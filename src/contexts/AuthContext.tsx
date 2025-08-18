@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { userService, FirestoreUser } from '../lib/firestore';
+import { setAuthToken, removeAuthToken } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -66,6 +67,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Profile not found, user may need to complete setup');
       }
       
+      // Persist a short-lived ID token for backend requests in this session
+      try {
+        const token = await result.user.getIdToken();
+        setAuthToken(token);
+      } catch {}
+
       toast.success('Successfully logged in!');
       return result;
     } catch (error: any) {
@@ -101,6 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
+      removeAuthToken();
       setUserProfile(null);
       toast.success('Successfully logged out!');
     } catch (error: any) {
@@ -155,6 +163,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } else {
         setUserProfile(null);
+        removeAuthToken();
       }
       
       setLoading(false);

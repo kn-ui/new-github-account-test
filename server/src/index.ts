@@ -7,6 +7,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 
 
 // Import routes
@@ -20,6 +21,10 @@ const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
+
+// Basic rate limiting to mitigate abuse
+const limiter = rateLimit({ windowMs: 60 * 1000, max: 300 });
+app.use(limiter);
 
 // CORS configuration
 app.use(cors({

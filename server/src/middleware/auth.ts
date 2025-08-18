@@ -20,8 +20,8 @@ if (!token) {
   return;
 }
 
-// In development mode, allow bypass with a special test token ONLY
-if (process.env.NODE_ENV === 'development' && token === 'test-token') {
+// In development mode, allow bypass with a special test token ONLY (guarded)
+if (process.env.NODE_ENV === 'development' && process.env.ALLOW_TEST_TOKEN === 'true' && token === 'test-token') {
   console.log('⚠️  Development mode: Using test token');
   
   req.user = {

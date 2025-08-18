@@ -143,6 +143,8 @@ VITE_FIREBASE_APP_ID=your-app-id
 VITE_API_URL=http://localhost:5000/api
 ```
 
+Note: Add your real keys to `.env` (not committed). Example starter file: `.env.example`.
+
 ### 5. Database Setup
 
 #### Required Firestore Collections

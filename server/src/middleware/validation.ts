@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import xss from 'xss';
 import { UserRole } from '../types';
 
 // Validation helper functions
@@ -88,6 +89,25 @@ export const validateCourseCreation = (
     return;
   }
 
+  next();
+};
+
+// Basic XSS sanitization middleware for string fields
+export const sanitizeBodyStrings = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const sanitize = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    Object.keys(obj).forEach((k) => {
+      const v = (obj as any)[k];
+      if (typeof v === 'string') (obj as any)[k] = xss(v);
+      else if (typeof v === 'object') sanitize(v);
+    });
+    return obj;
+  };
+  req.body = sanitize(req.body);
   next();
 };
 

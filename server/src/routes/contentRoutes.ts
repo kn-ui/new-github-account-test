@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import contentController from '../controllers/contentController';
 import { authenticateToken } from '../middleware/auth';
-import { validatePagination } from '../middleware/validation';
+import { sanitizeBodyStrings, validatePagination } from '../middleware/validation';
 
 const router = Router();
 
@@ -13,9 +13,9 @@ router.get('/forum/threads/:threadId/posts', validatePagination, contentControll
 
 // Auth-required actions
 router.use(authenticateToken);
-router.post('/forum/threads', contentController.createThread);
-router.post('/forum/threads/:threadId/posts', contentController.createPost);
-router.post('/support/tickets', contentController.createTicket);
+router.post('/forum/threads', sanitizeBodyStrings, contentController.createThread);
+router.post('/forum/threads/:threadId/posts', sanitizeBodyStrings, contentController.createPost);
+router.post('/support/tickets', sanitizeBodyStrings, contentController.createTicket);
 router.get('/support/my-tickets', validatePagination, contentController.myTickets);
 
 export default router;

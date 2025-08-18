@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar, FileText, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -125,6 +126,8 @@ export default function AdminDashboard() {
     { label: t('admin.systemStats.completionRate'), key: 'completionRate', value: '0%', change: '+0%', icon: TrendingUp, color: 'green' },
     { label: t('admin.systemStats.systemHealth'), key: 'systemHealth', value: '99.9%', change: '+0.1%', icon: Shield, color: 'purple' },
   ] as const;
+
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const loadData = async () => {
@@ -261,8 +264,8 @@ export default function AdminDashboard() {
         return;
       }
 
-      const { currentUser } = useAuth();
-      await eventService.createEvent({
+/*       const { currentUser } = useAuth();
+ */      await eventService.createEvent({
         title: newEventData.title,
         date: new Date(newEventData.date) as any,
         description: newEventData.description,

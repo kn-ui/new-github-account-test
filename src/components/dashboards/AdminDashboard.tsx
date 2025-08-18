@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar, FileText } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, Shield, UserPlus, BarChart3, AlertCircle, CheckCircle, Settings, Download, Plus, Calendar, FileText, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import AddUserModal from '@/components/ui/AddUserModal';
+import ReportGenerator from '@/components/ui/ReportGenerator';
 
 interface RecentUserRow {
   name: string;
@@ -32,6 +34,54 @@ interface RecentUserRow {
   status: 'active' | 'pending' | 'inactive';
 }
 
+const EnrollmentTrendChart = ({ data }: { data: any[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <LineChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Line type="monotone" dataKey="value" stroke="#8884d8" />
+    </LineChart>
+  </ResponsiveContainer>
+);
+
+const CourseCompletionChart = ({ data }: { data: any[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Bar dataKey="value" fill="#82ca9d" />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+const UserActivityChart = ({ data }: { data: any[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Bar dataKey="value" fill="#8884d8" />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+const RoleDistributionChart = ({ data }: { data: any[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Bar dataKey="value" fill="#82ca9d" />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
@@ -40,6 +90,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
   const [chartData, setChartData] = useState({
     enrollmentTrends: [],
     courseCompletion: [],

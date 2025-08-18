@@ -24,7 +24,7 @@ export const db = getFirestore(app);
 if (import.meta.env.DEV) {
   // Only connect to emulators if not already connected
   try {
-    if (!auth.config.emulator) {
+    if (!auth.config) {
       // connectAuthEmulator(auth, "http://localhost:9099");
     }
     if (!(db as any)._delegate._databaseId.projectId.includes('demo-')) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, BookOpen, User, LogIn } from 'lucide-react';
@@ -106,7 +107,7 @@ const Header = () => {
                     </span>
                   )}
                 </Link>
-                {process.env.NODE_ENV === 'development' && (
+{/*                 {process.env.NODE_ENV === 'development' && (
                   <>
                     <Link 
                       to="/seed-database" 
@@ -157,7 +158,7 @@ const Header = () => {
                       ✅ Correct UID Fixer
                     </Link>
                   </>
-                )}
+                )} */}
                 <button onClick={handleLogout} className="text-gray-600 hover:text-gray-900 transition-colors">
                   {t('auth.logout')}
                 </button>

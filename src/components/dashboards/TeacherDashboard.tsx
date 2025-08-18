@@ -1,7 +1,6 @@
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell, Eye, FileText, Star } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell, Eye, FileText, Star, X, Send } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -9,6 +8,18 @@ import { analyticsService, courseService, enrollmentService, submissionService, 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Progress } from '@/components/ui/progress';
+
+const topStudents = [
+  { name: 'Emily Carter', course: 'Intro to Theology', progress: 92, grade: 95 },
+  { name: 'Michael Rodriguez', course: 'Biblical Greek', progress: 85, grade: 88 },
+  { name: 'Jessica Williams', course: 'Old Testament Survey', progress: 78, grade: 91 },
+];
+
+const recentMessages = [
+  { student: 'David Lee', course: 'New Testament Survey', message: 'I have a question about the upcoming exam...', time: '2h ago' },
+  { student: 'Laura Garcia', course: 'Systematic Theology', message: 'Can you clarify the reading for this week?', time: '1d ago' },
+];
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
@@ -20,8 +31,11 @@ export default function TeacherDashboard() {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, currentUser } = useAuth();
   const { t } = useI18n();
+
+  const coursesToDisplay = myCourses || [];
+  const totalStudents = Object.values(enrollmentCounts).reduce((a, b) => a + b, 0);
 
   const teacherStats = [
     { label: 'Active Courses', key: 'activeCourses', value: '0', change: '+0%', icon: BookOpen, color: 'blue' },
@@ -36,13 +50,13 @@ export default function TeacherDashboard() {
       try {
         setLoading(true);
         
-        if (user?.uid) {
+        if (currentUser?.uid) {
           // Load teacher stats
-          const teacherStats = await analyticsService.getTeacherStats(user.uid);
+          const teacherStats = await analyticsService.getTeacherStats(currentUser.uid);
           setStats(teacherStats);
 
           // Load my courses
-          const courses = await courseService.getCoursesByInstructor(user.uid);
+          const courses = await courseService.getCoursesByInstructor(currentUser.uid);
           setMyCourses(courses);
 
           // Fetch enrollments per course in parallel
@@ -104,7 +118,7 @@ export default function TeacherDashboard() {
     };
 
     loadDashboardData();
-  }, [user?.uid]);
+  }, [currentUser?.uid]);
 
   const handleCreateAnnouncement = async () => {
     try {
@@ -117,7 +131,7 @@ export default function TeacherDashboard() {
         title: newAnnouncement.title,
         body: newAnnouncement.body,
         courseId: newAnnouncement.courseId || undefined,
-        authorId: user?.uid || ''
+        authorId: currentUser?.uid || ''
       });
 
       toast.success('Announcement created successfully!');
@@ -383,7 +397,7 @@ export default function TeacherDashboard() {
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="p-6 space-y-3">
-                <Button className="w-full" onClick={() => setShowAnnouncementDialog(true)}>
+                <Button className="w-full" onClick={() => setShowAnnouncementModal(true)}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Post Announcement
                 </Button>
@@ -482,7 +496,7 @@ export default function TeacherDashboard() {
                         title: newAnnouncement.title,
                         body: newAnnouncement.body,
                         courseId: newAnnouncement.courseId || undefined,
-                        authorId: user?.uid || '',
+                        authorId: currentUser?.uid || '',
                       });
                       setNewAnnouncement({ title: '', body: '', courseId: '' });
                       setShowAnnouncementModal(false);

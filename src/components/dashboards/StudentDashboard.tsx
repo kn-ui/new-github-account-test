@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -22,7 +21,7 @@ export default function StudentDashboard() {
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, currentUser } = useAuth();
   const { t } = useI18n();
 
 
@@ -32,17 +31,17 @@ export default function StudentDashboard() {
       try {
         setLoading(true);
         
-        if (user?.uid) {
-          console.log('👤 Loading dashboard for user:', user.uid);
+        if (currentUser?.uid) {
+          console.log('👤 Loading dashboard for currentUser:', currentUser.uid);
           
           // Load student stats
-          const studentStats = await analyticsService.getStudentStats(user.uid);
+          const studentStats = await analyticsService.getStudentStats(currentUser.uid);
           console.log('📊 Student stats:', studentStats);
           setStats(studentStats);
 
           // Load enrollments with course data
-          console.log('🔄 Loading enrollments for student:', user.uid);
-          const enrollments = await enrollmentService.getEnrollmentsByStudent(user.uid);
+          console.log('🔄 Loading enrollments for student:', currentUser.uid);
+          const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
           console.log('📚 Enrollments loaded:', enrollments);
           
           const normalized: EnrolledCourse[] = enrollments.map((enrollment: any) => ({
@@ -57,7 +56,7 @@ export default function StudentDashboard() {
           setEnrolledCourses(normalized);
 
           // Load upcoming assignments
-          const submissions = await submissionService.getSubmissionsByStudent(user.uid);
+          const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
           setUpcomingAssignments(submissions.slice(0, 5));
 
           // Load announcements for enrolled courses and general announcements
@@ -79,7 +78,7 @@ export default function StudentDashboard() {
             .slice(0, 5);
           setAnnouncements(allAnnouncements);
         } else {
-          // If no user, show empty state instead of demo data
+          // If no currentUser, show empty state instead of demo data
           setEnrolledCourses([]);
           setStats(null);
           setUpcomingAssignments([]);
@@ -98,7 +97,7 @@ export default function StudentDashboard() {
     };
 
     loadDashboardData();
-  }, [user?.uid]);
+  }, [currentUser?.uid]);
 
 /*   const upcomingAssignments = [
     {

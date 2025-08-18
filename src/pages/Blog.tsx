@@ -25,7 +25,7 @@ const Blog = () => {
       try {
         setLoading(true);
         console.log('🔄 Loading blog posts...');
-        const allPosts = await blogService.getBlogPosts(20);
+        const allPosts = await blogService.getPosts(20);
         console.log('📖 Blog posts loaded:', allPosts);
         
         // Filter posts based on search query and category

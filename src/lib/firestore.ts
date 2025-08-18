@@ -242,6 +242,19 @@ export const courseService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
+  async getCoursesByTitle(title: string): Promise<FirestoreCourse | null> {
+    const q = query(
+      collections.courses(),
+      where('title', '==', title),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.docs.length > 0) {
+      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as FirestoreCourse;
+    }
+    return null;
+  },
+
   async createCourse(courseData: Omit<FirestoreCourse, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courses(), {
@@ -278,11 +291,12 @@ export const enrollmentService = {
     const enrollmentsWithCourses = await Promise.all(
       enrollments.map(async (enrollment) => {
         try {
+          console.log(enrollment);
           const course = await courseService.getCourseById(enrollment.courseId);
-          return { ...enrollment, course };
+          return Object.assign({}, enrollment, { course });
         } catch (error) {
           console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
-          return { ...enrollment, course: undefined };
+          return { ...(enrollment as any), course: undefined };
         }
       })
     );
@@ -325,11 +339,12 @@ export const enrollmentService = {
     const enrollmentsWithCourses = await Promise.all(
       enrollments.map(async (enrollment) => {
         try {
+          console.log(enrollment);
           const course = await courseService.getCourseById(enrollment.courseId);
-          return { ...enrollment, course };
+          return Object.assign({}, enrollment, { course });
         } catch (error) {
           console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
-          return { ...enrollment, course: undefined };
+          return { ...(enrollment as any), course: undefined };
         }
       })
     );

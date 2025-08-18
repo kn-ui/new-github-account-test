@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn, BookOpen, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
+import LoginHeroAside from '@/components/LoginHeroAside';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -39,9 +40,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white p-8 rounded-xl shadow-xl">
+    <div className="min-h-screen bg-gray-50 flex">
+      <LoginHeroAside />
+      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="bg-white p-8 rounded-xl shadow-xl">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
@@ -153,8 +156,7 @@ const Login = () => {
               )}
             </button>
           </form>
-
-
+          </div>
         </div>
       </div>
     </div>

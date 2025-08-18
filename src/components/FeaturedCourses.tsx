@@ -46,15 +46,18 @@ export default function FeaturedCourses() {
   };
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Featured Courses
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover our most popular courses designed to deepen your spiritual understanding and knowledge.
-          </p>
+        <div className="mb-10 flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Academic Departments</h2>
+            <p className="text-gray-600 mt-2">Comprehensive programs designed to provide both spiritual formation and academic excellence.</p>
+          </div>
+          <Link to="/courses" className="hidden md:inline-flex">
+            <button className="inline-flex items-center gap-2 bg-[#0e4fb9] text-white px-4 py-2 rounded-md hover:bg-[#0d43a0]">
+              Explore All Programs <ArrowRight className="h-4 w-4" />
+            </button>
+          </Link>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -103,7 +106,7 @@ export default function FeaturedCourses() {
                 </div>
                 
                 <Link to="/courses" className="block">
-                  <button className="w-full bg-blue-700 text-white py-3 px-4 rounded-lg hover:bg-blue-800 transition-colors duration-300 flex items-center justify-center space-x-2 font-medium">
+                  <button className="w-full bg-[#0e4fb9] text-white py-3 px-4 rounded-lg hover:bg-[#0d43a0] transition-colors duration-300 flex items-center justify-center space-x-2 font-medium">
                     <BookOpen className="h-4 w-4" />
                     <span>Enroll Now</span>
                     <ArrowRight className="h-4 w-4" />
@@ -113,12 +116,10 @@ export default function FeaturedCourses() {
             </div>
           ))}
         </div>
-        
-        <div className="text-center mt-12">
+        <div className="text-center mt-12 md:hidden">
           <Link to="/courses">
-            <button className="bg-transparent border-2 border-blue-700 text-blue-700 px-8 py-3 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300 font-semibold flex items-center space-x-2 mx-auto">
-              <span>View All Courses</span>
-              <ArrowRight className="h-5 w-5" />
+            <button className="inline-flex items-center gap-2 bg-[#0e4fb9] text-white px-6 py-3 rounded-md">
+              Explore All Programs <ArrowRight className="h-4 w-4" />
             </button>
           </Link>
         </div>

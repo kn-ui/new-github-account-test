@@ -61,7 +61,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-700 p-2 rounded-lg">
+            <div className="bg-[#0e4fb9] p-2 rounded-lg">
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <Link to="/" className="cursor-pointer">
@@ -170,7 +170,7 @@ const Header = () => {
                 </Link>
                 <Link 
                   to="/login"
-                  className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors font-medium flex items-center space-x-2"
+                  className="bg-[#0e4fb9] text-white px-4 py-2 rounded-lg hover:bg-[#0d43a0] transition-colors font-medium flex items-center space-x-2"
                 >
                   <LogIn className="h-4 w-4" />
                   <span>{t('auth.getStarted')}</span>
@@ -237,7 +237,7 @@ const Header = () => {
                   <Link 
                     to="/signup"
                     onClick={() => setIsMenuOpen(false)}
-                    className="bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium text-left"
+                    className="bg-[#0e4fb9] text-white px-4 py-3 rounded-lg hover:bg-[#0d43a0] transition-colors font-medium text-left"
                   >
                     {t('auth.getStarted')}
                   </Link>

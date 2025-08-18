@@ -93,6 +93,14 @@ export default function AdminDashboard() {
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showReportGenerator, setShowReportGenerator] = useState(false);
+  const [editingUser, setEditingUser] = useState<RecentUserRow | null>(null);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [editUserData, setEditUserData] = useState({
+    displayName: '',
+    email: '',
+    role: 'student' as 'student' | 'teacher' | 'admin',
+    isActive: true
+  });
   const [chartData, setChartData] = useState({
     enrollmentTrends: [],
     courseCompletion: [],
@@ -346,6 +354,57 @@ export default function AdminDashboard() {
     setNotification({ message, type: 'error' });
   };
 
+  const handleEditUser = (user: RecentUserRow) => {
+    setEditingUser(user);
+    setEditUserData({
+      displayName: user.name,
+      email: user.email,
+      role: user.role as 'student' | 'teacher' | 'admin',
+      isActive: user.status === 'active'
+    });
+    setShowEditUserDialog(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+
+    try {
+      // Find the user in recentUsers array to get the index
+      const userIndex = recentUsers.findIndex(u => u.email === editingUser.email);
+      if (userIndex !== -1) {
+        // Update the user in the local state
+        const updatedUsers = [...recentUsers];
+        updatedUsers[userIndex] = {
+          ...updatedUsers[userIndex],
+          name: editUserData.displayName,
+          email: editUserData.email,
+          role: editUserData.role,
+          status: editUserData.isActive ? 'active' : 'inactive'
+        };
+        setRecentUsers(updatedUsers);
+        
+        toast.success('User updated successfully');
+        setShowEditUserDialog(false);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast.error('Failed to update user');
+    }
+  };
+
+  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
+    try {
+      await supportTicketService.updateTicketStatus(ticketId, newStatus as any);
+      toast.success('Ticket status updated successfully');
+      // Refresh tickets
+      const ticketsData = await supportTicketService.getAllTickets();
+      setSupportTickets(ticketsData);
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+      toast.error('Failed to update ticket status');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -526,7 +585,12 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                          <button className="hover:text-blue-800 transition-colors">{t('admin.recentUsers.edit')}</button>
+                          <button 
+                            onClick={() => handleEditUser(user)}
+                            className="hover:text-blue-800 transition-colors"
+                          >
+                            {t('admin.recentUsers.edit')}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -537,6 +601,38 @@ export default function AdminDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+              <div className="p-6 border-t">
+                <Button 
+                  onClick={() => navigate('/user-manager')} 
+                  variant="outline" 
+                  className="w-full"
+                >
+                  View All Users
+                </Button>
+              </div>
+            </div>
+
+            {/* Recent Courses */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">Recent Courses</h2>
+                    <p className="text-gray-600">Recently added courses requiring approval</p>
+                  </div>
+                  <Button onClick={() => navigate('/course-manager')} variant="outline">
+                    Manage Courses
+                  </Button>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                {/* Placeholder for course list - will be populated when courses are available */}
+                <div className="text-center text-gray-500 py-8">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No pending courses for approval</p>
+                  <p className="text-sm">Courses submitted by teachers will appear here</p>
+                </div>
               </div>
             </div>
 
@@ -591,9 +687,25 @@ export default function AdminDashboard() {
                 {supportTickets.slice(0, 5).map((ticket, index) => (
                   <div key={index} className="p-3 border rounded-lg">
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${getTicketStatusColor(ticket.status)}`}>
-                        {ticket.status.replace('_', ' ')}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${getTicketStatusColor(ticket.status)}`}>
+                          {ticket.status.replace('_', ' ')}
+                        </span>
+                        <Select 
+                          value={ticket.status} 
+                          onValueChange={(value) => handleUpdateTicketStatus(ticket.id, value)}
+                        >
+                          <SelectTrigger className="h-6 w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <span className="text-xs text-gray-500">
                         {ticket.createdAt.toDate().toLocaleDateString()}
                       </span>
@@ -671,7 +783,7 @@ export default function AdminDashboard() {
                         Event
                       </span>
                       <span className="text-xs text-gray-500">
-                        {event.date.toDate().toLocaleDateString()}
+                        {event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}
                       </span>
                     </div>
                     <h3 className="font-medium text-gray-900 text-sm mb-1">{event.title}</h3>
@@ -731,6 +843,69 @@ export default function AdminDashboard() {
         onClose={() => setShowAddUserModal(false)}
         onUserCreated={handleUserCreated}
       />
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editDisplayName">Full Name</Label>
+              <Input
+                id="editDisplayName"
+                value={editUserData.displayName}
+                onChange={(e) => setEditUserData({...editUserData, displayName: e.target.value})}
+                placeholder="Enter full name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editEmail">Email</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editUserData.email}
+                onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editRole">Role</Label>
+              <Select value={editUserData.role} onValueChange={(value: any) => setEditUserData({...editUserData, role: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="editIsActive">Status</Label>
+              <Select value={editUserData.isActive.toString()} onValueChange={(value: string) => setEditUserData({...editUserData, isActive: value === 'true'})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleSaveUser} className="flex-1">
+                Save Changes
+              </Button>
+              <Button variant="outline" onClick={() => setShowEditUserDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Report Generator Modal */}
       {showReportGenerator && (

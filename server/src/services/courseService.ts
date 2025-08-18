@@ -1,17 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { firestore, isTestMode } from '../config/firebase';
-import { Course, Lesson, Assignment, Enrollment, UserRole } from '../types';
+import { Course, Enrollment, UserRole } from '../types';
 
 class CourseService {
   private coursesCollection = firestore?.collection('courses');
   private enrollmentsCollection = firestore?.collection('enrollments');
-  // Lessons and assignments will be subcollections under courses/{courseId}
-  // Submissions remain a top-level collection
   private submissionsCollection = firestore?.collection('submissions');
 
-  // Create a new course
+  /**
+   * Creates a new course in Firestore.
+   * @param courseData The course data from the request body.
+   * @param instructorId The ID of the instructor creating the course.
+   * @param instructorName The display name of the instructor.
+   * @returns The newly created course object.
+   */
   async createCourse(courseData: Partial<Course>, instructorId: string, instructorName: string): Promise<Course> {
     try {
-      const courseDoc = {
+      // Create a document object.
+      // This is the point where we need to ensure no fields are undefined.
+      const rawCourseDoc = {
         ...courseData,
         instructor: instructorId,
         instructorName,
@@ -20,6 +27,12 @@ class CourseService {
         updatedAt: new Date()
       };
 
+      // Filter out any undefined properties from the document before saving.
+      const courseDoc = Object.fromEntries(
+        Object.entries(rawCourseDoc).filter(([_, value]) => value !== undefined)
+      );
+
+      // Now, the 'thumbnail' field will only exist if it had a value.
       const docRef = await this.coursesCollection.add(courseDoc);
       
       return { id: docRef.id, ...courseDoc } as Course;
@@ -28,6 +41,8 @@ class CourseService {
       throw new Error('Failed to create course');
     }
   }
+
+  // Rest of your CourseService class methods...
 
   // Get course by ID
   async getCourseById(courseId: string): Promise<Course | null> {
@@ -59,7 +74,6 @@ class CourseService {
     totalPages: number;
   }> {
     try {
-      // Return mock data in test mode
       if (isTestMode || !this.coursesCollection) {
         const mockCourses: Course[] = [
           {
@@ -105,8 +119,6 @@ class CourseService {
             syllabus: 'Comprehensive Bible study program'
           }
         ];
-
-        // Apply filters
         let filteredCourses = mockCourses;
         if (category) {
           filteredCourses = filteredCourses.filter(course => course.category === category);

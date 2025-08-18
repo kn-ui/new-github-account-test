@@ -32,6 +32,8 @@ import SimpleTest from "./components/SimpleTest";
 import QuickUIDFix from "./components/QuickUIDFix";
 import AuthDebugger from "./components/AuthDebugger";
 import CorrectUIDFixer from "./components/CorrectUIDFixer";
+import SupportTickets from "./pages/SupportTickets";
+import Events from "./pages/Events";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -100,6 +102,23 @@ const App = () => (
               } 
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+            <Route 
+              path="/support-tickets" 
+              element={
+                <ProtectedRoute>
+                  <SupportTickets />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/events" 
+              element={
+                <ProtectedRoute>
+                  <Events />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

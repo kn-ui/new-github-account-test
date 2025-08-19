@@ -36,6 +36,7 @@ import SupportTickets from "./pages/SupportTickets";
 import Events from "./pages/Events";
 import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
+import TeacherReports from "./pages/TeacherReports";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -134,6 +135,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Submissions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/teacher-reports" 
+              element={
+                <ProtectedRoute>
+                  <TeacherReports />
                 </ProtectedRoute>
               } 
             />

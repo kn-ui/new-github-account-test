@@ -470,7 +470,7 @@ export default function TeacherDashboard() {
                   <BookOpen className="h-4 w-4 mr-2" />
                   Create Assignment
                 </Button>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => navigate('/dashboard?reports=teacher')}>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => navigate('/teacher-reports')}>
                   <BarChart3 className="h-4 w-4 mr-2" />
                   View Reports
                 </Button>

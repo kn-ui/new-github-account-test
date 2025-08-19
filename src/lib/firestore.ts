@@ -404,6 +404,16 @@ export const submissionService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
+  async getSubmissionsByCourse(courseId: string): Promise<FirestoreSubmission[]> {
+    const q = query(
+      collections.submissions(),
+      where('courseId', '==', courseId),
+      orderBy('submittedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
+  },
+
   async createSubmission(submissionData: Omit<FirestoreSubmission, 'id' | 'submittedAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.submissions(), {

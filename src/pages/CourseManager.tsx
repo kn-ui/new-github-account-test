@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search } from 'lucide-react';
+import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search, Trash2 } from 'lucide-react';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -31,16 +42,11 @@ export default function CourseManager() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const coursesData = await courseService.getCourses(1000); // Get all courses
-      
-      // Add approval status for teacher-submitted courses
-      const coursesWithApproval = coursesData.map(course => ({
-        ...course,
-        needsApproval: course.instructor !== 'admin', // Assume admin-created courses are pre-approved
-        approvalStatus: course.instructor !== 'admin' ? 'pending' : 'approved'
-      }));
-      
-      setCourses(coursesWithApproval);
+      const [activeCourses, pendingCourses] = await Promise.all([
+        courseService.getCourses(1000),
+        courseService.getPendingCourses(1000),
+      ]);
+      setCourses([...(activeCourses as CourseWithApproval[]), ...(pendingCourses as CourseWithApproval[])]);
     } catch (error) {
       console.error('Error loading courses:', error);
       toast.error('Failed to load courses');
@@ -71,6 +77,17 @@ export default function CourseManager() {
     }
   };
 
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      await courseService.deleteCourse(courseId);
+      toast.success('Course deleted');
+      loadCourses();
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      toast.error('Failed to delete course');
+    }
+  };
+
   const handleViewCourse = (course: CourseWithApproval) => {
     setSelectedCourse(course);
     setShowCourseDialog(true);
@@ -80,24 +97,18 @@ export default function CourseManager() {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'pending' && course.needsApproval && course.approvalStatus === 'pending') ||
+                         (statusFilter === 'pending' && !course.isActive) ||
                          (statusFilter === 'approved' && course.isActive) ||
                          (statusFilter === 'rejected' && !course.isActive);
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (course: CourseWithApproval) => {
-    if (course.needsApproval && course.approvalStatus === 'pending') {
-      return 'bg-yellow-100 text-yellow-800';
-    }
-    return course.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    return course.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
   };
 
   const getStatusText = (course: CourseWithApproval) => {
-    if (course.needsApproval && course.approvalStatus === 'pending') {
-      return 'Pending Approval';
-    }
-    return course.isActive ? 'Active' : 'Inactive';
+    return course.isActive ? 'Approved' : 'Pending Approval';
   };
 
   if (loading) {
@@ -217,7 +228,7 @@ export default function CourseManager() {
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        {course.needsApproval && course.approvalStatus === 'pending' && (
+                        {!course.isActive && (
                           <>
                             <Button
                               size="sm"
@@ -237,6 +248,27 @@ export default function CourseManager() {
                             </Button>
                           </>
                         )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="h-4 w-4 mr-1" /> Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this course?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently remove the course "{course.title}".
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDeleteCourse(course.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </td>
                   </tr>

@@ -5,22 +5,14 @@ import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Cloc
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService, announcementService, assignmentService, FirestoreEnrollment } from '@/lib/firestore';
+import CourseMaterialModal from '@/components/ui/CourseMaterialModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 
-const topStudents = [
-  { name: 'Emily Carter', course: 'Intro to Theology', progress: 92, grade: 95 },
-  { name: 'Michael Rodriguez', course: 'Biblical Greek', progress: 85, grade: 88 },
-  { name: 'Jessica Williams', course: 'Old Testament Survey', progress: 78, grade: 91 },
-];
-
-const recentMessages = [
-  { student: 'David Lee', course: 'New Testament Survey', message: 'I have a question about the upcoming exam...', time: '2h ago' },
-  { student: 'Laura Garcia', course: 'Systematic Theology', message: 'Can you clarify the reading for this week?', time: '1d ago' },
-];
+// All dynamic; no hardcoded placeholders
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
@@ -29,8 +21,12 @@ export default function TeacherDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [topStudents, setTopStudents] = useState<{ name: string; course: string; progress: number; grade?: number }[]>([]);
+  const [recentMessages, setRecentMessages] = useState<{ student: string; course: string; message: string; time: string }[]>([]);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
+  const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [selectedCourseForMaterial, setSelectedCourseForMaterial] = useState<any>(null);
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { t } = useI18n();
@@ -76,11 +72,11 @@ export default function TeacherDashboard() {
           entries.forEach(([id, count]) => { map[id] = count; });
           setEnrollmentCounts(map);
 
-          // Load recent submissions for my courses
+          // Load recent submissions for my courses (by course id)
           const allSubmissions = await Promise.all(
             courses.map(async (course) => {
               try {
-                const submissions = await submissionService.getSubmissionsByAssignment(course.id);
+                const submissions = await submissionService.getSubmissionsByCourse(course.id);
                 return submissions.map((submission: any) => ({
                   ...submission,
                   courseTitle: course.title,
@@ -109,6 +105,26 @@ export default function TeacherDashboard() {
             b.createdAt.toDate() - a.createdAt.toDate()
           );
           setAnnouncements(allAnnouncements.slice(0, 5));
+
+          // Derive top students from enrollments (highest progress across the teacher's courses)
+          try {
+            const allEnrollments = await Promise.all(
+              courses.map(async (course) => {
+                const list = await enrollmentService.getEnrollmentsByCourse(course.id);
+                return list.map((en: any) => ({ ...en, courseTitle: course.title }));
+              })
+            );
+            const flatEnrollments: (FirestoreEnrollment & { courseTitle: string })[] = allEnrollments.flat();
+            const sortedByProgress = flatEnrollments.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+            setTopStudents(sortedByProgress.slice(0, 3).map((en) => ({
+              name: en.studentId,
+              course: en.courseTitle,
+              progress: en.progress || 0,
+            })));
+          } catch {}
+
+          // Messages placeholder: if there is a support tickets per course/student, could surface here.
+          setRecentMessages([]);
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -215,7 +231,7 @@ export default function TeacherDashboard() {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 12}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 0}</p>
                 <p className="text-sm text-gray-600">Pending Reviews</p>
               </div>
             </div>
@@ -227,7 +243,7 @@ export default function TeacherDashboard() {
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 4.8}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 0}</p>
                 <p className="text-sm text-gray-600">Average Rating</p>
               </div>
             </div>
@@ -254,9 +270,36 @@ export default function TeacherDashboard() {
                 </div>
               </div>
               <div className="p-6">
+                <div className="flex flex-col md:flex-row gap-4 mb-4">
+                  <input
+                    placeholder="Search by title..."
+                    className="border rounded px-3 py-2 flex-1"
+                    onChange={(e) => {
+                      const q = e.target.value.toLowerCase();
+                      setMyCourses(prev => prev.map((c: any) => ({ ...c, __match: c.title.toLowerCase().includes(q) })) as any);
+                    }}
+                  />
+                  <select
+                    className="border rounded px-3 py-2 w-full md:w-48"
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setMyCourses(prev => {
+                        const next = [...prev];
+                        if (v === 'title-asc') next.sort((a, b) => a.title.localeCompare(b.title));
+                        if (v === 'title-desc') next.sort((a, b) => b.title.localeCompare(a.title));
+                        if (v === 'recent') next.sort((a: any, b: any) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                        return next;
+                      });
+                    }}
+                  >
+                    <option value="recent">Sort: Recent</option>
+                    <option value="title-asc">Title A→Z</option>
+                    <option value="title-desc">Title Z→A</option>
+                  </select>
+                </div>
                 {myCourses.length > 0 ? (
                   <div className="space-y-4">
-                    {myCourses.map((course) => (
+                    {myCourses.filter((c: any) => c.__match !== false).slice(0, 5).map((course) => (
                       <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{course.title}</h3>
@@ -276,9 +319,41 @@ export default function TeacherDashboard() {
                             <BarChart3 className="h-4 w-4 mr-2" />
                             Analytics
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/courses/${course.id}`)}>
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setSelectedCourseForMaterial(course);
+                              setShowMaterialModal(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Material
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={async () => {
+                            try {
+                              await courseService.updateCourse(course.id, { isActive: false });
+                              toast.success('Course deactivated');
+                              setMyCourses(prev => prev.filter((c: any) => c.id !== course.id));
+                            } catch {
+                              toast.error('Failed to update course');
+                            }
+                          }}>
+                            Delete
+                          </Button>
                         </div>
                       </div>
                     ))}
+                    {myCourses.filter((c: any) => c.__match !== false).length > 5 && (
+                      <div className="pt-2">
+                        <Button variant="outline" className="w-full" onClick={() => navigate('/courses')}>
+                          View All Courses
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
@@ -297,7 +372,7 @@ export default function TeacherDashboard() {
                     <h2 className="text-xl font-semibold text-gray-900">Recent Submissions</h2>
                     <p className="text-gray-600">Review and grade student work</p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => navigate('/submissions')}>
                     View All
                   </Button>
                 </div>
@@ -309,7 +384,7 @@ export default function TeacherDashboard() {
                       <div key={submission.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">Assignment Submission</h3>
-                          <p className="text-sm text-gray-600">Course: {submission.courseId}</p>
+                          <p className="text-sm text-gray-600">Course: {submission.courseTitle}</p>
                           <p className="text-sm text-gray-500">Student: {submission.studentId}</p>
                           <p className="text-xs text-gray-400">
                             Submitted: {submission.submittedAt.toDate().toLocaleDateString()}
@@ -361,11 +436,14 @@ export default function TeacherDashboard() {
                         <Progress value={student.progress} className="h-2" />
                       </div>
                       <div className="text-xs text-gray-600">
-                        Grade: {student.grade}%
+                        {student.grade !== undefined ? `Grade: ${student.grade}%` : '—'}
                       </div>
                     </div>
                   </div>
                 ))}
+                <Button variant="outline" className="w-full" onClick={() => navigate('/students')}>
+                  Manage Students
+                </Button>
               </div>
             </div>
 
@@ -402,13 +480,11 @@ export default function TeacherDashboard() {
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Post Announcement
                 </Button>
-                <Link to="/create-course" className="block">
-                  <Button className="w-full bg-teal-600 hover:bg-teal-700">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Create Assignment
-                  </Button>
-                </Link>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={() => setShowAssignmentModal(true)}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Create Assignment
+                </Button>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => navigate('/teacher-reports')}>
                   <BarChart3 className="h-4 w-4 mr-2" />
                   View Reports
                 </Button>
@@ -516,6 +592,114 @@ export default function TeacherDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {showAssignmentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Create Assignment</h2>
+              <button onClick={() => setShowAssignmentModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course *</label>
+                <select
+                  value={newAnnouncement.courseId}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, courseId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select course</option>
+                  {myCourses.map((course) => (
+                    <option key={course.id} value={course.id}>{course.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  value={(newAnnouncement as any).assignmentTitle || ''}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentTitle: e.target.value } as any) })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  rows={4}
+                  value={(newAnnouncement as any).assignmentDescription || ''}
+                  onChange={(e) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentDescription: e.target.value } as any) })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Due Date *</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    value={(newAnnouncement as any).assignmentDueDate || ''}
+                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentDueDate: e.target.value } as any) })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Max Points *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    value={(newAnnouncement as any).assignmentMaxPoints || 100}
+                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentMaxPoints: Number(e.target.value) } as any) })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button onClick={() => setShowAssignmentModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm bg-white">Cancel</button>
+                <button
+                  className="px-4 py-2 rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700"
+                  onClick={async () => {
+                    try {
+                      const payload = {
+                        courseId: newAnnouncement.courseId,
+                        title: (newAnnouncement as any).assignmentTitle,
+                        description: (newAnnouncement as any).assignmentDescription,
+                        dueDate: new Date((newAnnouncement as any).assignmentDueDate) as any,
+                        maxPoints: (newAnnouncement as any).assignmentMaxPoints || 100,
+                      } as any;
+                      await assignmentService.createAssignment(payload);
+                      toast.success('Assignment created');
+                      setShowAssignmentModal(false);
+                    } catch {
+                      toast.error('Failed to create assignment');
+                    }
+                  }}
+                >
+                  Create Assignment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Course Material Modal */}
+      {showMaterialModal && selectedCourseForMaterial && (
+        <CourseMaterialModal
+          isOpen={showMaterialModal}
+          onClose={() => {
+            setShowMaterialModal(false);
+            setSelectedCourseForMaterial(null);
+          }}
+          courseId={selectedCourseForMaterial.id}
+          courseTitle={selectedCourseForMaterial.title}
+          onMaterialAdded={() => {
+            // Refresh course data if needed
+            toast.success('Course material added successfully!');
+          }}
+        />
       )}
     </div>
   );

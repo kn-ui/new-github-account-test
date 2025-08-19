@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, UserRole } from '../types';
 import courseService from '../services/courseService';
 import userService from '../services/userService';
 import {
@@ -15,7 +15,7 @@ export class CourseController {
   // Create a new course (teacher/admin only)
   async createCourse(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { title, description, syllabus, category, duration, maxStudents, thumbnail } = req.body;
+      const { title, description, syllabus, category, duration, maxStudents, thumbnail, isActive } = req.body;
       const instructorId = req.user!.uid;
 
       // Get instructor name
@@ -25,6 +25,7 @@ export class CourseController {
         return;
       }
 
+      const isTeacher = req.user?.role === UserRole.TEACHER;
       const courseData = {
         title,
         description,
@@ -32,7 +33,10 @@ export class CourseController {
         category,
         duration: parseInt(duration) || 8,
         maxStudents: parseInt(maxStudents) || 50,
-        thumbnail
+        thumbnail,
+        // Teachers' courses should be pending approval by default
+        // Admins can choose, defaulting to true if unspecified
+        isActive: isTeacher ? false : (typeof isActive === 'boolean' ? isActive : true)
       };
 
       const newCourse = await courseService.createCourse(courseData, instructorId, instructor.displayName);

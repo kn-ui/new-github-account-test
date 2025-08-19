@@ -7,6 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const SupportTicketsPage = () => {
   const [tickets, setTickets] = useState<FirestoreSupportTicket[]>([]);
@@ -41,7 +52,6 @@ const SupportTicketsPage = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) return;
     try {
       await supportTicketService.deleteTicket(id);
       setTickets(prev => prev.filter(t => t.id !== id));
@@ -127,9 +137,27 @@ const SupportTicketsPage = () => {
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="destructive" size="sm" onClick={() => remove(ticket.id)}>
-                    <Trash2 className="h-4 w-4 mr-1" /> Delete
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this ticket?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently remove the support ticket "{ticket.subject}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => remove(ticket.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
               <div className="text-sm text-gray-700 mt-3">{ticket.message}</div>

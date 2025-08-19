@@ -22,7 +22,7 @@ class CourseService {
         ...courseData,
         instructor: instructorId,
         instructorName,
-        isActive: true,
+        isActive: courseData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date()
       };

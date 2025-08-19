@@ -5,22 +5,13 @@ import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Cloc
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService, announcementService, FirestoreEnrollment } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 
-const topStudents = [
-  { name: 'Emily Carter', course: 'Intro to Theology', progress: 92, grade: 95 },
-  { name: 'Michael Rodriguez', course: 'Biblical Greek', progress: 85, grade: 88 },
-  { name: 'Jessica Williams', course: 'Old Testament Survey', progress: 78, grade: 91 },
-];
-
-const recentMessages = [
-  { student: 'David Lee', course: 'New Testament Survey', message: 'I have a question about the upcoming exam...', time: '2h ago' },
-  { student: 'Laura Garcia', course: 'Systematic Theology', message: 'Can you clarify the reading for this week?', time: '1d ago' },
-];
+// All dynamic; no hardcoded placeholders
 
 export default function TeacherDashboard() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
@@ -29,6 +20,8 @@ export default function TeacherDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [topStudents, setTopStudents] = useState<{ name: string; course: string; progress: number; grade?: number }[]>([]);
+  const [recentMessages, setRecentMessages] = useState<{ student: string; course: string; message: string; time: string }[]>([]);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
   const navigate = useNavigate();
@@ -76,11 +69,11 @@ export default function TeacherDashboard() {
           entries.forEach(([id, count]) => { map[id] = count; });
           setEnrollmentCounts(map);
 
-          // Load recent submissions for my courses
+          // Load recent submissions for my courses (by course id)
           const allSubmissions = await Promise.all(
             courses.map(async (course) => {
               try {
-                const submissions = await submissionService.getSubmissionsByAssignment(course.id);
+                const submissions = await submissionService.getSubmissionsByCourse(course.id);
                 return submissions.map((submission: any) => ({
                   ...submission,
                   courseTitle: course.title,
@@ -109,6 +102,26 @@ export default function TeacherDashboard() {
             b.createdAt.toDate() - a.createdAt.toDate()
           );
           setAnnouncements(allAnnouncements.slice(0, 5));
+
+          // Derive top students from enrollments (highest progress across the teacher's courses)
+          try {
+            const allEnrollments = await Promise.all(
+              courses.map(async (course) => {
+                const list = await enrollmentService.getEnrollmentsByCourse(course.id);
+                return list.map((en: any) => ({ ...en, courseTitle: course.title }));
+              })
+            );
+            const flatEnrollments: (FirestoreEnrollment & { courseTitle: string })[] = allEnrollments.flat();
+            const sortedByProgress = flatEnrollments.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+            setTopStudents(sortedByProgress.slice(0, 3).map((en) => ({
+              name: en.studentId,
+              course: en.courseTitle,
+              progress: en.progress || 0,
+            })));
+          } catch {}
+
+          // Messages placeholder: if there is a support tickets per course/student, could surface here.
+          setRecentMessages([]);
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -215,7 +228,7 @@ export default function TeacherDashboard() {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 12}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.pendingReviews || 0}</p>
                 <p className="text-sm text-gray-600">Pending Reviews</p>
               </div>
             </div>
@@ -227,7 +240,7 @@ export default function TeacherDashboard() {
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 4.8}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats?.avgRating || 0}</p>
                 <p className="text-sm text-gray-600">Average Rating</p>
               </div>
             </div>
@@ -361,7 +374,7 @@ export default function TeacherDashboard() {
                         <Progress value={student.progress} className="h-2" />
                       </div>
                       <div className="text-xs text-gray-600">
-                        Grade: {student.grade}%
+                        {student.grade !== undefined ? `Grade: ${student.grade}%` : '—'}
                       </div>
                     </div>
                   </div>

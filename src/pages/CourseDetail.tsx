@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { courseService, enrollmentService, FirestoreCourse, FirestoreEnrollment } from '@/lib/firestore';
+import { courseService, enrollmentService, courseMaterialService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,8 @@ const CourseDetail = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollment, setEnrollment] = useState<FirestoreEnrollment | null>(null);
+  const [courseMaterials, setCourseMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -73,6 +75,9 @@ const CourseDetail = () => {
             console.log('No enrollment found for this course');
           }
         }
+
+        // Load course materials
+        await loadCourseMaterials();
       } else {
         toast.error('Course not found');
         navigate('/courses');
@@ -83,6 +88,20 @@ const CourseDetail = () => {
       navigate('/courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCourseMaterials = async () => {
+    if (!courseId) return;
+    
+    try {
+      setMaterialsLoading(true);
+      const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
+      setCourseMaterials(materials);
+    } catch (error) {
+      console.error('Error loading course materials:', error);
+    } finally {
+      setMaterialsLoading(false);
     }
   };
 
@@ -283,6 +302,74 @@ const CourseDetail = () => {
                   <div className="prose max-w-none">
                     <p className="whitespace-pre-wrap">{course.syllabus}</p>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Course Materials */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BookOpen className="h-5 w-5" />
+                    <span>Course Materials</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {materialsLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center space-x-3">
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+                            <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : courseMaterials.length > 0 ? (
+                    <div className="space-y-4">
+                      {courseMaterials.map((material) => (
+                        <div key={material.id} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex-shrink-0">
+                            {material.type === 'document' && <FileText className="h-5 w-5 text-blue-600" />}
+                            {material.type === 'video' && <div className="h-5 w-5 text-red-600">▶</div>}
+                            {material.type === 'link' && <div className="h-5 w-5 text-green-600">🔗</div>}
+                            {material.type === 'other' && <div className="h-5 w-5 text-gray-600">📎</div>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900 mb-1">{material.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              <span className="capitalize">{material.type}</span>
+                              <span>{material.createdAt.toDate().toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {material.fileUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  View
+                                </a>
+                              </Button>
+                            )}
+                            {material.externalLink && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={material.externalLink} target="_blank" rel="noopener noreferrer">
+                                  Visit Link
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No course materials available yet.</p>
+                      <p className="text-sm">Check back later for updates from your instructor.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, courseService, enrollmentService, submissionService, announcementService, assignmentService, FirestoreEnrollment } from '@/lib/firestore';
+import CourseMaterialModal from '@/components/ui/CourseMaterialModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -24,6 +25,8 @@ export default function TeacherDashboard() {
   const [recentMessages, setRecentMessages] = useState<{ student: string; course: string; message: string; time: string }[]>([]);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', courseId: '' });
+  const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [selectedCourseForMaterial, setSelectedCourseForMaterial] = useState<any>(null);
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { t } = useI18n();
@@ -318,6 +321,17 @@ export default function TeacherDashboard() {
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => navigate(`/courses/${course.id}`)}>
                             Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setSelectedCourseForMaterial(course);
+                              setShowMaterialModal(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Material
                           </Button>
                           <Button variant="destructive" size="sm" onClick={async () => {
                             try {
@@ -669,6 +683,23 @@ export default function TeacherDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Course Material Modal */}
+      {showMaterialModal && selectedCourseForMaterial && (
+        <CourseMaterialModal
+          isOpen={showMaterialModal}
+          onClose={() => {
+            setShowMaterialModal(false);
+            setSelectedCourseForMaterial(null);
+          }}
+          courseId={selectedCourseForMaterial.id}
+          courseTitle={selectedCourseForMaterial.title}
+          onMaterialAdded={() => {
+            // Refresh course data if needed
+            toast.success('Course material added successfully!');
+          }}
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import {
   getDocs, 
   getDoc, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -95,6 +96,15 @@ export interface FirestoreSupportTicket {
 
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
   createdAt: Timestamp;
+}
+
+export interface FirestoreCertificate {
+
+  id: string;
+  type: 'top-performer' | 'perfect-attendance' | 'homework-hero';
+  awardedAt: Timestamp;
+  period: { start: Timestamp; end: Timestamp };
+  details?: Record<string, any>;
 }
 
 export interface FirestoreBlog {
@@ -590,6 +600,51 @@ export const assignmentService = {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
   },
+  async getAssignmentsByIds(ids: string[]): Promise<Record<string, FirestoreAssignment | null>> {
+    const results: Record<string, FirestoreAssignment | null> = {};
+    await Promise.all(ids.map(async (id) => {
+      try {
+        const ref = doc(db, 'assignments', id);
+        const snap = await getDoc(ref);
+        results[id] = snap.exists() ? ({ id: snap.id, ...snap.data() } as any) : null;
+      } catch {
+        results[id] = null;
+      }
+    }));
+    return results;
+  },
+};
+
+// Certificates
+export const certificateService = {
+  async getCertificatesForUser(uid: string): Promise<FirestoreCertificate[]> {
+    const q = query(collection(db, `users/${uid}/certificates`), orderBy('awardedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCertificate));
+  },
+  async award(uid: string, cert: Omit<FirestoreCertificate, 'id'>): Promise<string> {
+    const ref = await addDoc(collection(db, `users/${uid}/certificates`), cert as any);
+    return ref.id;
+  },
+};
+
+// Activity logs (simple daily marker for attendance)
+export const activityLogService = {
+  async upsertToday(uid: string): Promise<void> {
+    const key = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const ref = doc(db, 'activity_logs', `${uid}_${key}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { userId: uid, dateKey: key, createdAt: Timestamp.now(), source: 'app-open' });
+    }
+  },
+  async countDays(uid: string, daysBack: number): Promise<number> {
+    const since = new Date(); since.setDate(since.getDate() - daysBack);
+    const q = query(collection(db, 'activity_logs'), where('userId','==',uid), orderBy('createdAt','desc'));
+    const snapshot = await getDocs(q);
+    const recent = snapshot.docs.map(d => d.data()).filter((d: any) => d.createdAt.toDate() >= since);
+    return new Set(recent.map((d: any) => d.dateKey)).size;
+  },
 };
 
 // Event operations
@@ -776,6 +831,8 @@ export default {
   blogService,
   announcementService,
   assignmentService,
+  certificateService,
+  activityLogService,
   eventService,
   forumService,
   analyticsService,

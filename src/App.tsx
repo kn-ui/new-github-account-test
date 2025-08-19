@@ -37,6 +37,7 @@ import Events from "./pages/Events";
 import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
 import TeacherReports from "./pages/TeacherReports";
+import Certificates from "./pages/Certificates";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -143,6 +144,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <TeacherReports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/certificates" 
+              element={
+                <ProtectedRoute>
+                  <Certificates />
                 </ProtectedRoute>
               } 
             />

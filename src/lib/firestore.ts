@@ -284,6 +284,11 @@ export const courseService = {
       updatedAt: Timestamp.now(),
     });
   },
+  
+  async deleteCourse(courseId: string): Promise<void> {
+    const docRef = doc(db, 'courses', courseId);
+    await deleteDoc(docRef);
+  },
 };
 
 // Enrollment operations

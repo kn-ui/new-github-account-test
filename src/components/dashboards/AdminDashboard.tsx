@@ -88,6 +88,7 @@ export default function AdminDashboard() {
   const [recentUsers, setRecentUsers] = useState<RecentUserRow[]>([]);
   const [supportTickets, setSupportTickets] = useState<FirestoreSupportTicket[]>([]);
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [pendingCourses, setPendingCourses] = useState<FirestoreCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
@@ -143,16 +144,18 @@ export default function AdminDashboard() {
         setLoading(true);
         
         // Load all data in parallel
-        const [systemStatsData, usersData, ticketsData, eventsData] = await Promise.all([
+        const [systemStatsData, usersData, ticketsData, eventsData, pendingCoursesData] = await Promise.all([
           analyticsService.getAdminStats(),
           userService.getUsers(10),
           supportTicketService.getAllTickets(),
-          eventService.getEvents()
+          eventService.getEvents(),
+          courseService.getPendingCourses(5),
         ]);
 
         setStats(systemStatsData);
         setSupportTickets(ticketsData);
         setEvents(eventsData);
+        setPendingCourses(pendingCoursesData);
 
         // Transform users data
         const rows: RecentUserRow[] = usersData.map((u: FirestoreUser) => ({
@@ -615,7 +618,8 @@ const getTicketStatusColor = (status: string) => {
             </div>
 
             {/* Recent Courses */}
-            <div className="bg-white rounded-lg shadow-sm border">
+
+                        <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">
                 <div className="flex justify-between items-center">
                   <div>
@@ -629,13 +633,62 @@ const getTicketStatusColor = (status: string) => {
               </div>
               <div className="p-6 space-y-4">
                 {/* Placeholder for course list - will be populated when courses are available */}
-                <div className="text-center text-gray-500 py-8">
+                
+                <div className="p-6 space-y-4">
+  {pendingCourses.length > 0 ? (
+    <div className="space-y-3">
+      {pendingCourses.map((c) => (
+        <div key={c.id} className="p-3 border rounded-lg flex items-center justify-between">
+          <div>
+            <div className="font-medium text-gray-900">{c.title}</div>
+            <div className="text-xs text-gray-600">By {c.instructorName} • {c.category}</div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={async () => {
+                await courseService.updateCourse(c.id, { isActive: true });
+                toast.success('Course approved');
+                const list = await courseService.getPendingCourses(5);
+                setPendingCourses(list);
+              }}
+            >
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={async () => {
+                if (!confirm('Are you sure you want to reject this course?')) return;
+                await courseService.updateCourse(c.id, { isActive: false });
+                toast.success('Course rejected');
+                const list = await courseService.getPendingCourses(5);
+                setPendingCourses(list);
+              }}
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-center text-gray-500 py-8">
+      <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+      <p>No pending courses for approval</p>
+      <p className="text-sm">Courses submitted by teachers will appear here</p>
+    </div>
+  )}
+</div>
+{/*                 <div className="text-center text-gray-500 py-8">
                   <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>No pending courses for approval</p>
                   <p className="text-sm">Courses submitted by teachers will appear here</p>
-                </div>
+                </div> */}
               </div>
             </div>
+
 
             {/* Analytics Charts */}
 

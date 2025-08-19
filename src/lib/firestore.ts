@@ -72,6 +72,18 @@ export interface FirestoreSubmission {
   feedback?: string;
 }
 
+export interface FirestoreAssignment {
+
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  dueDate: Timestamp;
+  maxPoints: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface FirestoreSupportTicket {
 
   id: string;
@@ -145,6 +157,7 @@ const collections = {
   supportTickets: () => collection(db, 'support_tickets'),
   blogs: () => collection(db, 'blogs'),
   announcements: () => collection(db, 'announcements'),
+  assignments: () => collection(db, 'assignments'),
   events: () => collection(db, 'events'),
   forumThreads: () => collection(db, 'forum_threads'),
   forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
@@ -555,6 +568,30 @@ export const announcementService = {
   },
 };
 
+// Assignment operations
+export const assignmentService = {
+  async createAssignment(assignmentData: Omit<FirestoreAssignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.assignments(), {
+      ...assignmentData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getAssignmentsByCourse(courseId: string, limitCount = 50): Promise<FirestoreAssignment[]> {
+    const q = query(
+      collections.assignments(),
+      where('courseId', '==', courseId),
+      orderBy('dueDate', 'asc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+  },
+};
+
 // Event operations
 export const eventService = {
   async getEvents(limitCount = 10): Promise<FirestoreEvent[]> {
@@ -738,6 +775,7 @@ export default {
   supportTicketService,
   blogService,
   announcementService,
+  assignmentService,
   eventService,
   forumService,
   analyticsService,

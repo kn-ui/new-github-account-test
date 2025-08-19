@@ -34,6 +34,8 @@ import AuthDebugger from "./components/AuthDebugger";
 import CorrectUIDFixer from "./components/CorrectUIDFixer";
 import SupportTickets from "./pages/SupportTickets";
 import Events from "./pages/Events";
+import Students from "./pages/Students";
+import Submissions from "./pages/Submissions";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -116,6 +118,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Events />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/students" 
+              element={
+                <ProtectedRoute>
+                  <Students />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/submissions" 
+              element={
+                <ProtectedRoute>
+                  <Submissions />
                 </ProtectedRoute>
               } 
             />

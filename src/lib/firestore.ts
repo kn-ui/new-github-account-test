@@ -85,6 +85,18 @@ export interface FirestoreAssignment {
   updatedAt: Timestamp;
 }
 
+export interface FirestoreCourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  type: 'document' | 'video' | 'link' | 'other';
+  fileUrl?: string;
+  externalLink?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface FirestoreSupportTicket {
 
   id: string;
@@ -171,6 +183,7 @@ const collections = {
   events: () => collection(db, 'events'),
   forumThreads: () => collection(db, 'forum_threads'),
   forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
+  courseMaterials: () => collection(db, 'courseMaterials'),
 };
 
 // User operations
@@ -615,6 +628,43 @@ export const assignmentService = {
   },
 };
 
+// Course Material operations
+export const courseMaterialService = {
+  async createCourseMaterial(materialData: Omit<FirestoreCourseMaterial, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.courseMaterials(), {
+      ...materialData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getCourseMaterialsByCourse(courseId: string, limitCount = 50): Promise<FirestoreCourseMaterial[]> {
+    const q = query(
+      collections.courseMaterials(),
+      where('courseId', '==', courseId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial));
+  },
+
+  async updateCourseMaterial(materialId: string, updates: Partial<FirestoreCourseMaterial>): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteCourseMaterial(materialId: string): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await deleteDoc(docRef);
+  },
+};
+
 // Certificates
 export const certificateService = {
   async getCertificatesForUser(uid: string): Promise<FirestoreCertificate[]> {
@@ -832,6 +882,7 @@ export default {
   announcementService,
   assignmentService,
   certificateService,
+  courseMaterialService,
   activityLogService,
   eventService,
   forumService,

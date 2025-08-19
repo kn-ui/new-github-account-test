@@ -4,9 +4,11 @@ import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X }
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, FirestoreCertificate, assignmentService, courseService } from '@/lib/firestore';
 import CertificateCard from '@/components/CertificateCard';
 import { evaluateAndAwardCertificates } from '@/lib/certificates';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface EnrolledCourse {
   id: string | number;
@@ -24,6 +26,9 @@ export default function StudentDashboard() {
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<FirestoreCertificate[]>([]);
+  const [showAnnouncementsDialog, setShowAnnouncementsDialog] = useState(false);
+  const [announcementsSearch, setAnnouncementsSearch] = useState('');
+  const [selectedAssignment, setSelectedAssignment] = useState<any | null>(null);
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { t } = useI18n();
@@ -62,9 +67,30 @@ export default function StudentDashboard() {
           // Log today's activity for attendance
           await activityLogService.upsertToday(currentUser.uid);
 
-          // Load upcoming assignments
+          // Load upcoming assignments with details
           const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
-          setUpcomingAssignments(submissions.slice(0, 5));
+          const topSubs = submissions.slice(0, 5);
+          const assignmentIds = Array.from(new Set(topSubs.map((s: any) => s.assignmentId).filter(Boolean)));
+          const assignmentMap = await assignmentService.getAssignmentsByIds(assignmentIds);
+          const courseIds = Array.from(new Set(Object.values(assignmentMap).filter(Boolean).map((a: any) => a.courseId)));
+          const courseMap: Record<string, any> = {};
+          await Promise.all(courseIds.map(async (cid) => {
+            try {
+              const c = await courseService.getCourseById(cid);
+              if (c) courseMap[cid] = c;
+            } catch {}
+          }));
+          const enriched = topSubs.map((s: any) => {
+            const a = assignmentMap[s.assignmentId] as any;
+            const c = a ? courseMap[a.courseId] : undefined;
+            return {
+              ...s,
+              title: a?.title || 'Assignment',
+              courseTitle: c?.title || 'Course',
+              dueDate: a?.dueDate ? a.dueDate.toDate().toISOString().slice(0, 10) : '—',
+            };
+          });
+          setUpcomingAssignments(enriched);
 
           // Load announcements for enrolled courses and general announcements
           const [courseAnnouncements, generalAnnouncements] = await Promise.all([
@@ -82,7 +108,6 @@ export default function StudentDashboard() {
           
           const allAnnouncements = [...courseAnnouncements.flat(), ...generalAnnouncements]
             .sort((a: any, b: any) => b.createdAt.toDate() - a.createdAt.toDate())
-            .slice(0, 5);
           setAnnouncements(allAnnouncements);
 
           const certs = await certificateService.getCertificatesForUser(currentUser.uid);
@@ -299,7 +324,7 @@ export default function StudentDashboard() {
                 <p className="text-gray-600">{t('student.myCourses.subtitle')}</p>
               </div>
               <div className="p-6 space-y-6">
-                {displayCourses.map((course) => (
+                {displayCourses.slice(0, 3).map((course) => (
                   <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -342,6 +367,14 @@ export default function StudentDashboard() {
                     </div>
                   </div>
                 ))}
+                {displayCourses.length > 3 && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate('/courses')}
+                      className="w-full border px-4 py-2 rounded"
+                    >View Courses</button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -370,7 +403,7 @@ export default function StudentDashboard() {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status || 'pending')}`}>
                             {(assignment.status || 'pending').replace('-', ' ')}
                           </span>
-                          <button className="text-blue-600 hover:text-blue-800 transition-colors">
+                          <button className="text-blue-600 hover:text-blue-800 transition-colors" onClick={() => setSelectedAssignment(assignment)}>
                             View
                           </button>
                         </div>
@@ -400,7 +433,7 @@ export default function StudentDashboard() {
               </div>
               <div className="p-6 space-y-4">
                 {announcements.length > 0 ? (
-                  announcements.map((announcement) => (
+                  announcements.slice(0, 3).map((announcement) => (
                     <div key={announcement.id} className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-lg">
                       <h3 className="font-medium text-gray-900 mb-2">{announcement.title}</h3>
                       <p className="text-sm text-gray-700 mb-2">{announcement.body}</p>
@@ -416,6 +449,9 @@ export default function StudentDashboard() {
                     <p>No announcements</p>
                     <p className="text-sm">Check back later for updates</p>
                   </div>
+                )}
+                {announcements.length > 3 && (
+                  <button className="w-full border px-4 py-2 rounded" onClick={() => setShowAnnouncementsDialog(true)}>View Announcements</button>
                 )}
               </div>
             </div>
@@ -452,6 +488,50 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Announcement Modal */}
+      <Dialog open={showAnnouncementsDialog} onOpenChange={setShowAnnouncementsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>All Announcements</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Input placeholder="Search announcements..." value={announcementsSearch} onChange={(e) => setAnnouncementsSearch(e.target.value)} />
+            </div>
+            <div className="space-y-3 max-h-[60vh] overflow-auto">
+              {announcements.filter(a => [a.title, a.body, a.courseTitle].some((v: string) => v?.toLowerCase().includes(announcementsSearch.toLowerCase()))).map((a) => (
+                <div key={a.id} className="p-3 border rounded-lg">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>{a.courseTitle || 'General'}</span>
+                    <span>{a.createdAt ? a.createdAt.toDate().toLocaleString() : ''}</span>
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">{a.title}</div>
+                  <div className="text-sm text-gray-700">{a.body}</div>
+                </div>
+              ))}
+              {announcements.length === 0 && <div className="text-gray-500">No announcements</div>}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assignment Detail Modal */}
+      <Dialog open={!!selectedAssignment} onOpenChange={(o) => !o && setSelectedAssignment(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Assignment Details</DialogTitle>
+          </DialogHeader>
+          {selectedAssignment && (
+            <div className="space-y-2 text-sm">
+              <div className="font-medium text-gray-900">{selectedAssignment.title}</div>
+              <div className="text-gray-600">Course: {selectedAssignment.courseTitle}</div>
+              <div className="text-gray-600">Due: {selectedAssignment.dueDate}</div>
+              <div className="text-gray-600">Status: {(selectedAssignment.status || 'pending').replace('-', ' ')}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

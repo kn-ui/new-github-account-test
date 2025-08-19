@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import DashboardLayout from "./components/layouts/DashboardLayout";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
@@ -78,6 +79,182 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Dashboard Sub-routes */}
+            <Route 
+              path="/dashboard/users" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <UserManager />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/courses" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <CourseManager />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/events" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <Events />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/support-tickets" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <SupportTickets />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/reports" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <div>Admin Reports Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/settings" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="admin">
+                    <div>Admin Settings Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Teacher Dashboard Routes */}
+            <Route 
+              path="/dashboard/students" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <Students />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/assignments" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <div>Teacher Assignments Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/submissions" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <Submissions />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/announcements" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <div>Teacher Announcements Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/materials" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <div>Teacher Course Materials Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/reports" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="teacher">
+                    <TeacherReports />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Student Dashboard Routes */}
+            <Route 
+              path="/dashboard/student-assignments" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="student">
+                    <div>Student Assignments Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/submissions" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="student">
+                    <div>Student Submissions Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/certificates" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="student">
+                    <Certificates />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/announcements" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="student">
+                    <div>Student Announcements Page</div>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/progress" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout userRole="student">
+                    <div>Student Progress Page</div>
+                  </DashboardLayout>
                 </ProtectedRoute>
               } 
             />

@@ -97,9 +97,10 @@ const CreateCourse = () => {
           </div>
 
           {/* Course Creation Form */}
-          <CourseCreateForm 
+          <CourseCreateForm
             onSuccess={handleSuccess}
             onCancel={handleCancel}
+            defaultIsActive={userProfile?.role === 'admin'} // admin can publish active; teacher is pending
           />
         </div>
       </main>

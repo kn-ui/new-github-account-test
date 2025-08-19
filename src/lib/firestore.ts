@@ -223,6 +223,17 @@ export const courseService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
+  async getPendingCourses(limitCount = 10): Promise<FirestoreCourse[]> {
+  const q = query(
+    collections.courses(),
+    where('isActive', '==', false),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+},
+
   async getCourseById(courseId: string): Promise<FirestoreCourse | null> {
     const docRef = doc(db, 'courses', courseId);
     const docSnap = await getDoc(docRef);
@@ -431,6 +442,11 @@ export const supportTicketService = {
 
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
   },
+
+  async deleteTicket(ticketId: string): Promise<void> {
+  const docRef = doc(db, 'support_tickets', ticketId);
+  await deleteDoc(docRef);
+},
 
   async updateTicketStatus(ticketId: string, status: FirestoreSupportTicket['status']): Promise<void> {
     const docRef = doc(db, 'support_tickets', ticketId);

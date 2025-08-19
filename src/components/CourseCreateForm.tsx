@@ -38,6 +38,12 @@ interface CourseCreateFormProps {
   onCancel?: () => void;
 }
 
+interface CourseCreateFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  defaultIsActive?: boolean; // if false, course will be created pending approval
+}
+
 const COURSE_CATEGORIES = [
   'Mathematics',
   'Science',
@@ -55,7 +61,7 @@ const COURSE_CATEGORIES = [
   'Other'
 ];
 
-const CourseCreateForm = ({ onSuccess, onCancel }: CourseCreateFormProps) => {
+const CourseCreateForm = ({ onSuccess, onCancel, defaultIsActive = true }: CourseCreateFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
   const [showCustomCategory, setShowCustomCategory] = useState(false);
@@ -72,7 +78,7 @@ const CourseCreateForm = ({ onSuccess, onCancel }: CourseCreateFormProps) => {
     defaultValues: {
       duration: 8,
       maxStudents: 30,
-      isActive: true,
+      isActive: defaultIsActive,
     }
   });
 
@@ -89,6 +95,7 @@ const CourseCreateForm = ({ onSuccess, onCancel }: CourseCreateFormProps) => {
       const courseData = {
         ...data,
         category: finalCategory,
+        isActive: defaultIsActive ? data.isActive : false,
       };
 
       const response = await api.createCourse(courseData);

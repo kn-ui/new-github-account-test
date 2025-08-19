@@ -67,7 +67,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'Submissions', href: '/dashboard/submissions', icon: ClipboardList },
           { label: 'Announcements', href: '/dashboard/announcements', icon: Bell },
           { label: 'Course Materials', href: '/dashboard/materials', icon: FolderOpen },
-          { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+          { label: 'Reports', href: '/dashboard/teacher-reports', icon: BarChart3 },
         ];
       
       case 'student':
@@ -75,9 +75,9 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           ...baseItems,
           { label: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
           { label: 'Assignments', href: '/dashboard/student-assignments', icon: FileText },
-          { label: 'Submissions', href: '/dashboard/submissions', icon: ClipboardList },
+          { label: 'Submissions', href: '/dashboard/student-submissions', icon: ClipboardList },
           { label: 'Certificates', href: '/dashboard/certificates', icon: Award },
-          { label: 'Announcements', href: '/dashboard/announcements', icon: Bell },
+          { label: 'Announcements', href: '/dashboard/student-announcements', icon: Bell },
           { label: 'Progress', href: '/dashboard/progress', icon: TrendingUp },
         ];
       

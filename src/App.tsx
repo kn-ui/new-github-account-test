@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
-import DashboardLayout from "./components/layouts/DashboardLayout";
+import DashboardWrapper from "./components/DashboardWrapper";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
@@ -88,9 +88,9 @@ const App = () => (
               path="/dashboard/users" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <UserManager />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -98,9 +98,9 @@ const App = () => (
               path="/dashboard/courses" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <CourseManager />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -108,9 +108,9 @@ const App = () => (
               path="/dashboard/events" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <Events />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -118,9 +118,9 @@ const App = () => (
               path="/dashboard/support-tickets" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <SupportTickets />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -128,9 +128,9 @@ const App = () => (
               path="/dashboard/reports" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <div>Admin Reports Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -138,9 +138,9 @@ const App = () => (
               path="/dashboard/settings" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="admin">
+                  <DashboardWrapper>
                     <div>Admin Settings Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -150,9 +150,9 @@ const App = () => (
               path="/dashboard/students" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <Students />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -160,9 +160,9 @@ const App = () => (
               path="/dashboard/assignments" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <div>Teacher Assignments Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -170,9 +170,9 @@ const App = () => (
               path="/dashboard/submissions" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <Submissions />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -180,9 +180,9 @@ const App = () => (
               path="/dashboard/announcements" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <div>Teacher Announcements Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -190,19 +190,19 @@ const App = () => (
               path="/dashboard/materials" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <div>Teacher Course Materials Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/dashboard/reports" 
+              path="/dashboard/teacher-reports" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="teacher">
+                  <DashboardWrapper>
                     <TeacherReports />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -212,19 +212,19 @@ const App = () => (
               path="/dashboard/student-assignments" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="student">
+                  <DashboardWrapper>
                     <div>Student Assignments Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/dashboard/submissions" 
+              path="/dashboard/student-submissions" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="student">
+                  <DashboardWrapper>
                     <div>Student Submissions Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -232,19 +232,19 @@ const App = () => (
               path="/dashboard/certificates" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="student">
+                  <DashboardWrapper>
                     <Certificates />
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/dashboard/announcements" 
+              path="/dashboard/student-announcements" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="student">
+                  <DashboardWrapper>
                     <div>Student Announcements Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -252,9 +252,9 @@ const App = () => (
               path="/dashboard/progress" 
               element={
                 <ProtectedRoute>
-                  <DashboardLayout userRole="student">
+                  <DashboardWrapper>
                     <div>Student Progress Page</div>
-                  </DashboardLayout>
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />

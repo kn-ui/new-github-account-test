@@ -1,57 +1,37 @@
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import StudentDashboard from '@/components/dashboards/StudentDashboard';
-import TeacherDashboard from '@/components/dashboards/TeacherDashboard';
-import AdminDashboard from '@/components/dashboards/AdminDashboard';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import AdminOverview from '@/pages/dashboard/AdminOverview';
+import TeacherOverview from '@/pages/dashboard/TeacherOverview';
+import StudentOverview from '@/pages/dashboard/StudentOverview';
 
-const Dashboard = () => {
-  const { currentUser, userProfile, loading } = useAuth();
-
-  // Debug logging
-  console.log('Dashboard Debug:', {
-    currentUser: currentUser?.uid,
-    currentUserEmail: currentUser?.email,
-    userProfile: userProfile,
-    userRole: userProfile?.role,
-    loading,
-    hasUserProfile: !!userProfile
-  });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return null;
-  }
+export default function Dashboard() {
+  const { userProfile } = useAuth();
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">User profile not found. Please contact support.</p>
-          <p className="text-sm text-gray-500 mt-2">User ID: {currentUser.uid}</p>
-          <p className="text-sm text-gray-500">Email: {currentUser.email}</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
-  switch (userProfile.role) {
-    case 'teacher':
-      return <TeacherDashboard />;
-    case 'admin':
-      return <AdminDashboard />;
-    case 'student':
-    default:
-      return <StudentDashboard />;
-  }
-};
+  const renderOverview = () => {
+    switch (userProfile.role) {
+      case 'admin':
+        return <AdminOverview />;
+      case 'teacher':
+        return <TeacherOverview />;
+      case 'student':
+        return <StudentOverview />;
+      default:
+        return <div>Unknown role</div>;
+    }
+  };
 
-export default Dashboard;
+  return (
+    <DashboardLayout userRole={userProfile.role}>
+      {renderOverview()}
+    </DashboardLayout>
+  );
+}

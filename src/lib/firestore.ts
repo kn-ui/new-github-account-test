@@ -5,6 +5,7 @@ import {
   getDocs, 
   getDoc, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -72,6 +73,30 @@ export interface FirestoreSubmission {
   feedback?: string;
 }
 
+export interface FirestoreAssignment {
+
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  dueDate: Timestamp;
+  maxPoints: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface FirestoreCourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  type: 'document' | 'video' | 'link' | 'other';
+  fileUrl?: string;
+  externalLink?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface FirestoreSupportTicket {
 
   id: string;
@@ -83,6 +108,15 @@ export interface FirestoreSupportTicket {
 
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
   createdAt: Timestamp;
+}
+
+export interface FirestoreCertificate {
+
+  id: string;
+  type: 'top-performer' | 'perfect-attendance' | 'homework-hero';
+  awardedAt: Timestamp;
+  period: { start: Timestamp; end: Timestamp };
+  details?: Record<string, any>;
 }
 
 export interface FirestoreBlog {
@@ -145,9 +179,11 @@ const collections = {
   supportTickets: () => collection(db, 'support_tickets'),
   blogs: () => collection(db, 'blogs'),
   announcements: () => collection(db, 'announcements'),
+  assignments: () => collection(db, 'assignments'),
   events: () => collection(db, 'events'),
   forumThreads: () => collection(db, 'forum_threads'),
   forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
+  courseMaterials: () => collection(db, 'courseMaterials'),
 };
 
 // User operations
@@ -284,6 +320,11 @@ export const courseService = {
       updatedAt: Timestamp.now(),
     });
   },
+  
+  async deleteCourse(courseId: string): Promise<void> {
+    const docRef = doc(db, 'courses', courseId);
+    await deleteDoc(docRef);
+  },
 };
 
 // Enrollment operations
@@ -396,6 +437,16 @@ export const submissionService = {
     );
     const snapshot = await getDocs(q);
 
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
+  },
+
+  async getSubmissionsByCourse(courseId: string): Promise<FirestoreSubmission[]> {
+    const q = query(
+      collections.submissions(),
+      where('courseId', '==', courseId),
+      orderBy('submittedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSubmission));
   },
 
@@ -537,6 +588,112 @@ export const announcementService = {
       createdAt: now,
     });
     return docRef.id;
+  },
+};
+
+// Assignment operations
+export const assignmentService = {
+  async createAssignment(assignmentData: Omit<FirestoreAssignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.assignments(), {
+      ...assignmentData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getAssignmentsByCourse(courseId: string, limitCount = 50): Promise<FirestoreAssignment[]> {
+    const q = query(
+      collections.assignments(),
+      where('courseId', '==', courseId),
+      orderBy('dueDate', 'asc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+  },
+  async getAssignmentsByIds(ids: string[]): Promise<Record<string, FirestoreAssignment | null>> {
+    const results: Record<string, FirestoreAssignment | null> = {};
+    await Promise.all(ids.map(async (id) => {
+      try {
+        const ref = doc(db, 'assignments', id);
+        const snap = await getDoc(ref);
+        results[id] = snap.exists() ? ({ id: snap.id, ...snap.data() } as any) : null;
+      } catch {
+        results[id] = null;
+      }
+    }));
+    return results;
+  },
+};
+
+// Course Material operations
+export const courseMaterialService = {
+  async createCourseMaterial(materialData: Omit<FirestoreCourseMaterial, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.courseMaterials(), {
+      ...materialData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getCourseMaterialsByCourse(courseId: string, limitCount = 50): Promise<FirestoreCourseMaterial[]> {
+    const q = query(
+      collections.courseMaterials(),
+      where('courseId', '==', courseId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial));
+  },
+
+  async updateCourseMaterial(materialId: string, updates: Partial<FirestoreCourseMaterial>): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteCourseMaterial(materialId: string): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await deleteDoc(docRef);
+  },
+};
+
+// Certificates
+export const certificateService = {
+  async getCertificatesForUser(uid: string): Promise<FirestoreCertificate[]> {
+    const q = query(collection(db, `users/${uid}/certificates`), orderBy('awardedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCertificate));
+  },
+  async award(uid: string, cert: Omit<FirestoreCertificate, 'id'>): Promise<string> {
+    const ref = await addDoc(collection(db, `users/${uid}/certificates`), cert as any);
+    return ref.id;
+  },
+};
+
+// Activity logs (simple daily marker for attendance)
+export const activityLogService = {
+  async upsertToday(uid: string): Promise<void> {
+    const key = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const ref = doc(db, 'activity_logs', `${uid}_${key}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { userId: uid, dateKey: key, createdAt: Timestamp.now(), source: 'app-open' });
+    }
+  },
+  async countDays(uid: string, daysBack: number): Promise<number> {
+    const since = new Date(); since.setDate(since.getDate() - daysBack);
+    const q = query(collection(db, 'activity_logs'), where('userId','==',uid), orderBy('createdAt','desc'));
+    const snapshot = await getDocs(q);
+    const recent = snapshot.docs.map(d => d.data()).filter((d: any) => d.createdAt.toDate() >= since);
+    return new Set(recent.map((d: any) => d.dateKey)).size;
   },
 };
 
@@ -723,6 +880,10 @@ export default {
   supportTicketService,
   blogService,
   announcementService,
+  assignmentService,
+  certificateService,
+  courseMaterialService,
+  activityLogService,
   eventService,
   forumService,
   analyticsService,

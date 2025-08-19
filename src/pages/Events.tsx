@@ -1,11 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar as CalendarIcon, Edit2, Trash2, ArrowLeft, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { eventService, FirestoreEvent } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -15,7 +27,10 @@ const EventsPage = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<FirestoreEvent | null>(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', date: '', description: '' });
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title-asc' | 'title-desc'>('date-desc');
   const navigate = useNavigate();
 
   const load = async () => {
@@ -86,6 +101,29 @@ const EventsPage = () => {
     }
   };
 
+  const filteredAndSorted = useMemo(() => {
+    const filtered = events.filter(ev =>
+      [ev.title, ev.description].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+    );
+    const sorted = [...filtered].sort((a, b) => {
+      const ad = (a.date as any)?.toDate ? (a.date as any).toDate() : (a.date as unknown as Date);
+      const bd = (b.date as any)?.toDate ? (b.date as any).toDate() : (b.date as unknown as Date);
+      switch (sortBy) {
+        case 'date-asc':
+          return ad.getTime() - bd.getTime();
+        case 'date-desc':
+          return bd.getTime() - ad.getTime();
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  }, [events, search, sortBy]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading events...</div>;
 
   return (
@@ -110,8 +148,27 @@ const EventsPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map(ev => {
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <Input placeholder="Search events..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Sort by</span>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Date: Newest</SelectItem>
+                  <SelectItem value="date-asc">Date: Oldest</SelectItem>
+                  <SelectItem value="title-asc">Title: A → Z</SelectItem>
+                  <SelectItem value="title-desc">Title: Z → A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-4">
+          {filteredAndSorted.map(ev => {
             const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date);
             return (
               <div key={ev.id} className="bg-white border rounded-lg p-4">
@@ -127,16 +184,41 @@ const EventsPage = () => {
                     <Button variant="outline" size="sm" onClick={() => openEdit(ev)}>
                       <Edit2 className="h-4 w-4 mr-1" /> Edit
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => remove(ev.id)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteId(ev.id)}>
+                          <Trash2 className="h-4 w-4 mr-1" /> Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently remove the event
+                            "{ev.title}" scheduled on {((ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date)).toLocaleDateString()}.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={async () => {
+                              await remove(ev.id);
+                              setConfirmDeleteId(null);
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
                 <div className="text-sm text-gray-700 mt-3">{ev.description}</div>
               </div>
             );
           })}
-          {events.length === 0 && (
+          {filteredAndSorted.length === 0 && (
             <div className="text-center text-gray-500 col-span-full">No events found</div>
           )}
         </div>

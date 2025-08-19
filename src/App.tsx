@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import DashboardWrapper from "./components/DashboardWrapper";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
@@ -34,6 +35,10 @@ import AuthDebugger from "./components/AuthDebugger";
 import CorrectUIDFixer from "./components/CorrectUIDFixer";
 import SupportTickets from "./pages/SupportTickets";
 import Events from "./pages/Events";
+import Students from "./pages/Students";
+import Submissions from "./pages/Submissions";
+import TeacherReports from "./pages/TeacherReports";
+import Certificates from "./pages/Certificates";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -77,6 +82,182 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Dashboard Sub-routes */}
+            <Route 
+              path="/dashboard/users" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <UserManager />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/courses" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <CourseManager />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/events" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <Events />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/support-tickets" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <SupportTickets />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/reports" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Admin Reports Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/settings" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Admin Settings Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Teacher Dashboard Routes */}
+            <Route 
+              path="/dashboard/students" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <Students />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/assignments" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Teacher Assignments Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/submissions" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <Submissions />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/announcements" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Teacher Announcements Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/materials" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Teacher Course Materials Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/teacher-reports" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherReports />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Student Dashboard Routes */}
+            <Route 
+              path="/dashboard/student-assignments" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Student Assignments Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-submissions" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Student Submissions Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/certificates" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <Certificates />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-announcements" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Student Announcements Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/progress" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <div>Student Progress Page</div>
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/create-course" 
               element={
@@ -116,6 +297,38 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Events />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/students" 
+              element={
+                <ProtectedRoute>
+                  <Students />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/submissions" 
+              element={
+                <ProtectedRoute>
+                  <Submissions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/teacher-reports" 
+              element={
+                <ProtectedRoute>
+                  <TeacherReports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/certificates" 
+              element={
+                <ProtectedRoute>
+                  <Certificates />
                 </ProtectedRoute>
               } 
             />

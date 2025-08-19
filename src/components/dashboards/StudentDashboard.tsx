@@ -4,7 +4,9 @@ import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X }
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
+import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import CertificateCard from '@/components/CertificateCard';
+import { evaluateAndAwardCertificates } from '@/lib/certificates';
 
 interface EnrolledCourse {
   id: string | number;
@@ -21,6 +23,7 @@ export default function StudentDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<FirestoreCertificate[]>([]);
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { t } = useI18n();
@@ -56,6 +59,9 @@ export default function StudentDashboard() {
           console.log('🎯 Normalized courses:', normalized);
           setEnrolledCourses(normalized);
 
+          // Log today's activity for attendance
+          await activityLogService.upsertToday(currentUser.uid);
+
           // Load upcoming assignments
           const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
           setUpcomingAssignments(submissions.slice(0, 5));
@@ -78,6 +84,9 @@ export default function StudentDashboard() {
             .sort((a: any, b: any) => b.createdAt.toDate() - a.createdAt.toDate())
             .slice(0, 5);
           setAnnouncements(allAnnouncements);
+
+          const certs = await certificateService.getCertificatesForUser(currentUser.uid);
+          setCertificates(certs);
         } else {
           // If no currentUser, show empty state instead of demo data
           setEnrolledCourses([]);
@@ -92,6 +101,7 @@ export default function StudentDashboard() {
         setStats(null);
         setUpcomingAssignments([]);
         setAnnouncements([]);
+        setCertificates([]);
       } finally {
         setLoading(false);
       }
@@ -250,6 +260,38 @@ export default function StudentDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Certificates */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">My Certificates</h2>
+                  <p className="text-gray-600">Your earned achievements</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!currentUser) return;
+                    await evaluateAndAwardCertificates(currentUser.uid);
+                    const list = await certificateService.getCertificatesForUser(currentUser.uid);
+                    setCertificates(list);
+                  }}
+                  className="text-sm border px-3 py-2 rounded"
+                >Check for new</button>
+              </div>
+              <div className="p-6 grid md:grid-cols-2 gap-4">
+                {certificates.map((c) => (
+                  <CertificateCard
+                    key={c.id}
+                    type={c.type}
+                    studentName={currentUser?.email || 'Student'}
+                    awardedAt={c.awardedAt.toDate()}
+                    details={c.details}
+                  />
+                ))}
+                {certificates.length === 0 && (
+                  <div className="text-gray-500">No certificates yet</div>
+                )}
+              </div>
+            </div>
             {/* Enrolled Courses */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">

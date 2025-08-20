@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search, Trash2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search, Trash2, Plus } from 'lucide-react';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,6 +131,7 @@ export default function CourseManager() {
                 <p className="text-gray-600">Manage all system courses and approvals</p>
               </div>
             </div>
+
             <div>
               <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />

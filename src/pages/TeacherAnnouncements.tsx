@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Badge } from '@/components/ui/badge';
 import { 
   Bell, 
@@ -42,6 +44,7 @@ export default function TeacherAnnouncements() {
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -76,6 +79,7 @@ export default function TeacherAnnouncements() {
     }
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -83,6 +87,7 @@ export default function TeacherAnnouncements() {
       toast.error('Please fill in all required fields');
       return;
     }
+
 
     if (!formData.isGeneral && !formData.courseId) {
       toast.error('Please select a course or mark as general announcement');
@@ -116,6 +121,7 @@ export default function TeacherAnnouncements() {
     }
   };
 
+
   const handleEdit = (announcement: FirestoreAnnouncement) => {
     setEditingAnnouncement(announcement);
     setFormData({
@@ -137,6 +143,7 @@ export default function TeacherAnnouncements() {
       toast.error('Failed to delete announcement');
     }
   };
+
 
   const resetForm = () => {
     setFormData({
@@ -194,6 +201,7 @@ export default function TeacherAnnouncements() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
+
               <p className="text-gray-600">Create and manage course announcements</p>
             </div>
             <div>
@@ -207,6 +215,7 @@ export default function TeacherAnnouncements() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -324,6 +333,7 @@ export default function TeacherAnnouncements() {
               {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
             </DialogTitle>
           </DialogHeader>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="title">Title *</Label>

@@ -65,6 +65,7 @@ export default function CreateEvent() {
     }
   };
 
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -98,6 +99,7 @@ export default function CreateEvent() {
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Create New Event</h1>
+
               <p className="text-gray-600">Schedule a new system event</p>
             </div>
           </div>
@@ -111,6 +113,7 @@ export default function CreateEvent() {
               <Label htmlFor="title">Event Title *</Label>
               <Input
                 id="title"
+
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -120,6 +123,7 @@ export default function CreateEvent() {
             </div>
 
             <div>
+
               <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
@@ -206,6 +210,7 @@ export default function CreateEvent() {
               >
                 Cancel
               </Button>
+
             </div>
           </form>
         </div>

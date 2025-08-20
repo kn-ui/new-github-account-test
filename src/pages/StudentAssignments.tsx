@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +51,7 @@ export default function StudentAssignments() {
       setLoading(true);
       
       // Get student's enrollments
+
       const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
       const courseIds = enrollments.map(enrollment => enrollment.courseId);
       
@@ -124,6 +126,7 @@ export default function StudentAssignments() {
       setLoading(false);
     }
   };
+
 
   const filteredAndSortedAssignments = useMemo(() => {
     let filtered = assignments.filter(assignment => {
@@ -217,6 +220,7 @@ export default function StudentAssignments() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">My Assignments</h1>
@@ -227,6 +231,7 @@ export default function StudentAssignments() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -383,6 +388,7 @@ export default function StudentAssignments() {
                   </div>
                 </div>
               </div>
+
             );
           })}
           {filteredAndSortedAssignments.length === 0 && (

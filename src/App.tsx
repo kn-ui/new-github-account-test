@@ -133,6 +133,7 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
 
+
                     <div>Admin Reports Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -143,6 +144,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
 
                     <div>Admin Settings Page</div>
                   </DashboardWrapper>
@@ -167,6 +169,7 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
 
+
                     <div>Teacher Assignments Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -188,6 +191,7 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
 
+
                     <div>Teacher Announcements Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -198,6 +202,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
 
                     <div>Teacher Course Materials Page</div>
                   </DashboardWrapper>
@@ -222,6 +227,7 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
 
+
                     <div>Student Assignments Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -233,7 +239,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Student Submissions Page</div>
+                    <StudentSubmissions />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -307,6 +313,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Events />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create-event" 
+              element={
+                <ProtectedRoute>
+                  <CreateEvent />
                 </ProtectedRoute>
               } 
             />

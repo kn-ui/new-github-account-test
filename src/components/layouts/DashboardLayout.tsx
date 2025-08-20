@@ -203,6 +203,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 Home
               </Link>
 
+
               <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
                 Browse Courses
               </Link>

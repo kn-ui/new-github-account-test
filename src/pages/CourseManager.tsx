@@ -131,12 +131,13 @@ export default function CourseManager() {
                 <p className="text-gray-600">Manage all system courses and approvals</p>
               </div>
             </div>
-            <Button asChild>
-              <Link to="/create-course">
+
+            <div>
+              <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Course
-              </Link>
-            </Button>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

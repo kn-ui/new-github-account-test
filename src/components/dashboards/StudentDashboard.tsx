@@ -78,7 +78,9 @@ export default function StudentDashboard() {
             try {
               const c = await courseService.getCourseById(cid);
               if (c) courseMap[cid] = c;
-            } catch {}
+            } catch (error) {
+              console.warn(`Failed to load course ${cid}:`, error);
+            }
           }));
           const enriched = topSubs.map((s: any) => {
             const a = assignmentMap[s.assignmentId] as any;

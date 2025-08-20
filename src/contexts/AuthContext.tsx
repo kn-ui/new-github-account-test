@@ -71,7 +71,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = await result.user.getIdToken();
         setAuthToken(token);
-      } catch {}
+      } catch (error) {
+      console.warn('Failed to update user profile:', error);
+    }
 
       toast.success('Successfully logged in!');
       return result;

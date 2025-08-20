@@ -131,7 +131,9 @@ export default function TeacherDashboard() {
               course: en.courseTitle,
               progress: en.progress || 0,
             })));
-          } catch {}
+                      } catch (error) {
+              console.warn(`Failed to load submissions for course ${course.id}:`, error);
+            }
 
           // Messages placeholder: if there is a support tickets per course/student, could surface here.
           setRecentMessages([]);

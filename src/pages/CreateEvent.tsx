@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Plus, X } from 'lucide-react';
-import { eventService } from '@/lib/firestore';
+import { eventService, FirestoreEvent } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,14 +22,14 @@ export default function CreateEvent() {
 
     try {
       setLoading(true);
-      const payload = {
+      const payload: Omit<FirestoreEvent, 'id'> = {
         title: form.title,
-        date: new Date(form.date) as any,
+        date: new Date(form.date) as any, // Firestore Timestamp
         description: form.description,
         createdBy: 'admin'
       };
       
-      await eventService.createEvent(payload as any);
+      await eventService.createEvent(payload);
       toast.success('Event created successfully');
       navigate('/dashboard/events');
     } catch (error) {
@@ -67,7 +67,7 @@ export default function CreateEvent() {
             </div>
 
             <div>
-              <Label htmlFor="date">Event Date *</Label>
+              <Label htmlFor="title">Event Date *</Label>
               <Input
                 id="date"
                 type="date"

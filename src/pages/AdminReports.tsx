@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
-import { ArrowLeft, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import TeacherReportGenerator from '@/components/ui/TeacherReportGenerator';
+import { X } from 'lucide-react';
+import ReportGenerator from '@/components/ui/ReportGenerator';
 import { Button } from '@/components/ui/button';
 
-export default function TeacherReportsPage() {
-  const navigate = useNavigate();
+export default function AdminReportsPage() {
   const [message, setMessage] = useState<string | null>(null);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Teacher Reports</h1>
-              <p className="text-gray-600">Export data related to your courses</p>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Reports</h1>
+              <p className="text-gray-600">Generate comprehensive system reports</p>
             </div>
           </div>
           {message && (
@@ -28,9 +27,8 @@ export default function TeacherReportsPage() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <TeacherReportGenerator onReportGenerated={setMessage} />
+        <ReportGenerator onReportGenerated={setMessage} />
       </div>
     </div>
   );
 }
-

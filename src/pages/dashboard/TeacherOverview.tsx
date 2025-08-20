@@ -199,6 +199,62 @@ export default function TeacherOverview() {
         </Card>
       </div>
 
+      {/* My Courses */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <BookOpen className="h-5 w-5" />
+            <span>My Courses</span>
+          </CardTitle>
+          <CardDescription>Your active courses</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {myCourses.length > 0 ? (
+              myCourses.slice(0, 5).map((course) => (
+                <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{course.title}</p>
+                      <p className="text-xs text-gray-500">{course.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={course.isActive ? 'default' : 'secondary'}>
+                      {course.isActive ? 'Active' : 'Pending'}
+                    </Badge>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/dashboard/courses/${course.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No courses yet</p>
+              </div>
+            )}
+            <div className="flex space-x-2">
+              <Button variant="outline" className="flex-1" asChild>
+                <Link to="/dashboard/teacher-courses">View All Courses</Link>
+              </Button>
+              <Button className="flex-1" asChild>
+                <Link to="/create-course">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Course
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Submissions */}

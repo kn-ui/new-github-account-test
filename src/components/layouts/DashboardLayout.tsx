@@ -61,7 +61,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       case 'teacher':
         return [
           ...baseItems,
-          { label: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
+          { label: 'My Courses', href: '/dashboard/teacher-courses', icon: BookOpen },
           { label: 'Students', href: '/dashboard/students', icon: Users },
           { label: 'Assignments', href: '/dashboard/assignments', icon: FileText },
           { label: 'Submissions', href: '/dashboard/submissions', icon: ClipboardList },
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       case 'student':
         return [
           ...baseItems,
-          { label: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
+          { label: 'My Courses', href: '/dashboard/student-courses', icon: BookOpen },
           { label: 'Assignments', href: '/dashboard/student-assignments', icon: FileText },
           { label: 'Submissions', href: '/dashboard/student-submissions', icon: ClipboardList },
           { label: 'Certificates', href: '/dashboard/certificates', icon: Award },
@@ -200,9 +200,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
                 Home
               </Link>
-              <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
-                Browse Courses
-              </Link>
+              {userRole !== 'admin' && (
+                <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
+                  Browse Courses
+                </Link>
+              )}
             </div>
           </div>
         </div>

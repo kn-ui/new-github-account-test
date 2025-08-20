@@ -71,6 +71,8 @@ export interface FirestoreSubmission {
   status: 'submitted' | 'graded';
   grade?: number;
   feedback?: string;
+  maxScore?: number;
+  instructions?: string;
 }
 
 export interface FirestoreAssignment {
@@ -80,7 +82,9 @@ export interface FirestoreAssignment {
   title: string;
   description: string;
   dueDate: Timestamp;
-  maxPoints: number;
+  maxScore: number;
+  instructions?: string;
+  teacherId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -589,6 +593,45 @@ export const announcementService = {
     });
     return docRef.id;
   },
+
+  async getAnnouncementsByTeacher(teacherId: string): Promise<FirestoreAnnouncement[]> {
+    // Get all courses by the teacher first
+    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const courseIds = teacherCourses.map(course => course.id);
+    
+    if (courseIds.length === 0) return [];
+    
+    // Get announcements for all teacher's courses plus general announcements by the teacher
+    const courseAnnouncementsPromises = courseIds.map(courseId => 
+      this.getAnnouncements(courseId, 1000)
+    );
+    const courseAnnouncementsArrays = await Promise.all(courseAnnouncementsPromises);
+    const allCourseAnnouncements = courseAnnouncementsArrays.flat();
+    
+    // Get general announcements by the teacher
+    const generalAnnouncementsQuery = query(
+      collections.announcements(),
+      where('courseId', '==', null),
+      where('authorId', '==', teacherId),
+      orderBy('createdAt', 'desc')
+    );
+    const generalSnapshot = await getDocs(generalAnnouncementsQuery);
+    const generalAnnouncements = generalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    
+    // Combine and sort by creation date (newest first)
+    const allAnnouncements = [...allCourseAnnouncements, ...generalAnnouncements];
+    return allAnnouncements.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+  },
+
+  async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {
+    const docRef = doc(db, 'announcements', announcementId);
+    await updateDoc(docRef, updates as any);
+  },
+
+  async deleteAnnouncement(announcementId: string): Promise<void> {
+    const docRef = doc(db, 'announcements', announcementId);
+    await deleteDoc(docRef);
+  },
 };
 
 // Assignment operations
@@ -626,6 +669,29 @@ export const assignmentService = {
     }));
     return results;
   },
+
+  async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
+    const q = query(
+      collections.assignments(),
+      where('teacherId', '==', teacherId),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+  },
+
+  async updateAssignment(assignmentId: string, updates: Partial<FirestoreAssignment>): Promise<void> {
+    const docRef = doc(db, 'assignments', assignmentId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteAssignment(assignmentId: string): Promise<void> {
+    const docRef = doc(db, 'assignments', assignmentId);
+    await deleteDoc(docRef);
+  },
 };
 
 // Course Material operations
@@ -662,6 +728,24 @@ export const courseMaterialService = {
   async deleteCourseMaterial(materialId: string): Promise<void> {
     const docRef = doc(db, 'courseMaterials', materialId);
     await deleteDoc(docRef);
+  },
+
+  async getMaterialsByTeacher(teacherId: string): Promise<FirestoreCourseMaterial[]> {
+    // Get all courses by the teacher first
+    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const courseIds = teacherCourses.map(course => course.id);
+    
+    if (courseIds.length === 0) return [];
+    
+    // Get materials for all teacher's courses
+    const materialsPromises = courseIds.map(courseId => 
+      this.getCourseMaterialsByCourse(courseId, 1000)
+    );
+    const materialsArrays = await Promise.all(materialsPromises);
+    const allMaterials = materialsArrays.flat();
+    
+    // Sort by creation date (newest first)
+    return allMaterials.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
   },
 };
 
@@ -785,6 +869,7 @@ export const analyticsService = {
     const totalUsers = usersSnapshot.size;
     const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
+    const pendingCourses = coursesSnapshot.docs.filter(doc => !doc.data().isActive).length;
 
     
     // Calculate completion rate from enrollments
@@ -796,7 +881,7 @@ export const analyticsService = {
       totalUsers,
       totalStudents,
       activeCourses,
-
+      pendingCourses,
       completionRate,
       systemHealth: 99.9, // Placeholder
     };

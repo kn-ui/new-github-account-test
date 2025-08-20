@@ -131,14 +131,16 @@ const EventsPage = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
-            </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">All Events</h1>
               <p className="text-gray-600">Manage all system calendar events</p>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex space-x-3">
+              <Button variant="outline" asChild>
+                <Link to="/calendar">
+                  <Calendar className="h-4 w-4 mr-2" /> View Calendar
+                </Link>
+              </Button>
               <Button onClick={openNew}>
                 <Plus className="h-4 w-4 mr-2" /> New Event
               </Button>

@@ -126,18 +126,16 @@ export default function CourseManager() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Course Management</h1>
                 <p className="text-gray-600">Manage all system courses and approvals</p>
               </div>
+            </div>
+            <div>
+              <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Course
+              </Button>
             </div>
           </div>
         </div>

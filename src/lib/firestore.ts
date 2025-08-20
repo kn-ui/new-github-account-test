@@ -71,6 +71,34 @@ export interface FirestoreSubmission {
   status: 'submitted' | 'graded';
   grade?: number;
   feedback?: string;
+  maxScore?: number;
+  instructions?: string;
+}
+
+export interface FirestoreAssignment {
+
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  dueDate: Timestamp;
+  maxScore: number;
+  instructions?: string;
+  teacherId: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface FirestoreCourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  type: 'document' | 'video' | 'link' | 'other';
+  fileUrl?: string;
+  externalLink?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface FirestoreAssignment {
@@ -589,6 +617,192 @@ export const announcementService = {
     });
     return docRef.id;
   },
+
+  async getAnnouncementsByTeacher(teacherId: string): Promise<FirestoreAnnouncement[]> {
+    // Get all courses by the teacher first
+    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const courseIds = teacherCourses.map(course => course.id);
+    
+    if (courseIds.length === 0) return [];
+    
+    // Get announcements for all teacher's courses plus general announcements by the teacher
+    const courseAnnouncementsPromises = courseIds.map(courseId => 
+      this.getAnnouncements(courseId, 1000)
+    );
+    const courseAnnouncementsArrays = await Promise.all(courseAnnouncementsPromises);
+    const allCourseAnnouncements = courseAnnouncementsArrays.flat();
+    
+    // Get general announcements by the teacher
+    const generalAnnouncementsQuery = query(
+      collections.announcements(),
+      where('courseId', '==', null),
+      where('authorId', '==', teacherId),
+      orderBy('createdAt', 'desc')
+    );
+    const generalSnapshot = await getDocs(generalAnnouncementsQuery);
+    const generalAnnouncements = generalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    
+    // Combine and sort by creation date (newest first)
+    const allAnnouncements = [...allCourseAnnouncements, ...generalAnnouncements];
+    return allAnnouncements.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+  },
+
+  async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {
+    const docRef = doc(db, 'announcements', announcementId);
+    await updateDoc(docRef, updates as any);
+  },
+
+  async deleteAnnouncement(announcementId: string): Promise<void> {
+    const docRef = doc(db, 'announcements', announcementId);
+    await deleteDoc(docRef);
+  },
+};
+
+// Assignment operations
+export const assignmentService = {
+  async createAssignment(assignmentData: Omit<FirestoreAssignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.assignments(), {
+      ...assignmentData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getAssignmentsByCourse(courseId: string, limitCount = 50): Promise<FirestoreAssignment[]> {
+    const q = query(
+      collections.assignments(),
+      where('courseId', '==', courseId),
+      orderBy('dueDate', 'asc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+  },
+  async getAssignmentsByIds(ids: string[]): Promise<Record<string, FirestoreAssignment | null>> {
+    const results: Record<string, FirestoreAssignment | null> = {};
+    await Promise.all(ids.map(async (id) => {
+      try {
+        const ref = doc(db, 'assignments', id);
+        const snap = await getDoc(ref);
+        results[id] = snap.exists() ? ({ id: snap.id, ...snap.data() } as any) : null;
+      } catch {
+        results[id] = null;
+      }
+    }));
+    return results;
+  },
+
+  async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
+    const q = query(
+      collections.assignments(),
+      where('teacherId', '==', teacherId),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+  },
+
+  async updateAssignment(assignmentId: string, updates: Partial<FirestoreAssignment>): Promise<void> {
+    const docRef = doc(db, 'assignments', assignmentId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteAssignment(assignmentId: string): Promise<void> {
+    const docRef = doc(db, 'assignments', assignmentId);
+    await deleteDoc(docRef);
+  },
+};
+
+// Course Material operations
+export const courseMaterialService = {
+  async createCourseMaterial(materialData: Omit<FirestoreCourseMaterial, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.courseMaterials(), {
+      ...materialData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async getCourseMaterialsByCourse(courseId: string, limitCount = 50): Promise<FirestoreCourseMaterial[]> {
+    const q = query(
+      collections.courseMaterials(),
+      where('courseId', '==', courseId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial));
+  },
+
+  async updateCourseMaterial(materialId: string, updates: Partial<FirestoreCourseMaterial>): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteCourseMaterial(materialId: string): Promise<void> {
+    const docRef = doc(db, 'courseMaterials', materialId);
+    await deleteDoc(docRef);
+  },
+
+  async getMaterialsByTeacher(teacherId: string): Promise<FirestoreCourseMaterial[]> {
+    // Get all courses by the teacher first
+    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const courseIds = teacherCourses.map(course => course.id);
+    
+    if (courseIds.length === 0) return [];
+    
+    // Get materials for all teacher's courses
+    const materialsPromises = courseIds.map(courseId => 
+      this.getCourseMaterialsByCourse(courseId, 1000)
+    );
+    const materialsArrays = await Promise.all(materialsPromises);
+    const allMaterials = materialsArrays.flat();
+    
+    // Sort by creation date (newest first)
+    return allMaterials.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+  },
+};
+
+// Certificates
+export const certificateService = {
+  async getCertificatesForUser(uid: string): Promise<FirestoreCertificate[]> {
+    const q = query(collection(db, `users/${uid}/certificates`), orderBy('awardedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCertificate));
+  },
+  async award(uid: string, cert: Omit<FirestoreCertificate, 'id'>): Promise<string> {
+    const ref = await addDoc(collection(db, `users/${uid}/certificates`), cert as any);
+    return ref.id;
+  },
+};
+
+// Activity logs (simple daily marker for attendance)
+export const activityLogService = {
+  async upsertToday(uid: string): Promise<void> {
+    const key = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const ref = doc(db, 'activity_logs', `${uid}_${key}`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { userId: uid, dateKey: key, createdAt: Timestamp.now(), source: 'app-open' });
+    }
+  },
+  async countDays(uid: string, daysBack: number): Promise<number> {
+    const since = new Date(); since.setDate(since.getDate() - daysBack);
+    const q = query(collection(db, 'activity_logs'), where('userId','==',uid), orderBy('createdAt','desc'));
+    const snapshot = await getDocs(q);
+    const recent = snapshot.docs.map(d => d.data()).filter((d: any) => d.createdAt.toDate() >= since);
+    return new Set(recent.map((d: any) => d.dateKey)).size;
+  },
 };
 
 // Assignment operations
@@ -785,6 +999,7 @@ export const analyticsService = {
     const totalUsers = usersSnapshot.size;
     const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
+    const pendingCourses = coursesSnapshot.docs.filter(doc => !doc.data().isActive).length;
 
     
     // Calculate completion rate from enrollments
@@ -796,7 +1011,7 @@ export const analyticsService = {
       totalUsers,
       totalStudents,
       activeCourses,
-
+      pendingCourses,
       completionRate,
       systemHealth: 99.9, // Placeholder
     };

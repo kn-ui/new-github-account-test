@@ -13,6 +13,7 @@ import DashboardWrapper from "./components/DashboardWrapper";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
+import CreateEvent from "./pages/CreateEvent";
 import UserManager from "./pages/UserManager";
 import CourseManager from "./pages/CourseManager";
 import NotFound from "./pages/NotFound";
@@ -39,6 +40,17 @@ import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
 import TeacherReports from "./pages/TeacherReports";
 import Certificates from "./pages/Certificates";
+import TeacherAssignments from "./pages/TeacherAssignments";
+import TeacherAnnouncements from "./pages/TeacherAnnouncements";
+import TeacherCourseMaterials from "./pages/TeacherCourseMaterials";
+import StudentAssignments from "./pages/StudentAssignments";
+import StudentAnnouncements from "./pages/StudentAnnouncements";
+import StudentSubmissions from "./pages/StudentSubmissions";
+import StudentProgress from "./pages/StudentProgress";
+import AdminReports from "./pages/AdminReports";
+import AdminSettings from "./pages/AdminSettings";
+import TeacherCourses from "./pages/TeacherCourses";
+import StudentCourses from "./pages/StudentCourses";
 
 // import Catalog from "./pages/Catalog";
 
@@ -132,9 +144,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Admin Reports Page</div>
+                    <AdminReports />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -144,9 +154,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Admin Settings Page</div>
+                    <AdminSettings />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -168,9 +176,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Teacher Assignments Page</div>
+                    <TeacherAssignments />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -190,9 +196,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Teacher Announcements Page</div>
+                    <TeacherAnnouncements />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -202,9 +206,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Teacher Course Materials Page</div>
+                    <TeacherCourseMaterials />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -226,9 +228,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
-
-                    <div>Student Assignments Page</div>
+                    <StudentAssignments />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -259,7 +259,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Student Announcements Page</div>
+                    <StudentAnnouncements />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -269,7 +269,27 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Student Progress Page</div>
+                    <StudentProgress />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/my-courses" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherCourses />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-courses" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <StudentCourses />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

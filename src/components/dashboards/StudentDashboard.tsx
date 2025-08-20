@@ -224,7 +224,6 @@ export default function StudentDashboard() {
             </div>
             <div className="flex items-center space-x-2">
               <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.home')}</Link>
-              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.courses')}</Link>
               <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('nav.forum')}</Link>
               <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">{t('auth.logout')}</button>
             </div>
@@ -487,10 +486,9 @@ export default function StudentDashboard() {
                 </button>
                 <button 
                   onClick={() => navigate('/courses')}
-                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2"
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors"
                 >
-                  <BookOpen className="h-4 w-4" />
-                  <span>Browse Courses</span>
+                  Browse Courses
                 </button>
               </div>
             </div>

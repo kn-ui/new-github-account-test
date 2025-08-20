@@ -201,7 +201,6 @@ export default function TeacherDashboard() {
             </div>
             <div className="flex items-center space-x-2">
               <Link to="/" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Home</Link>
-              <Link to="/courses" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Courses</Link>
               <Link to="/forum" className="text-sm px-3 py-2 rounded hover:bg-gray-100">Forum</Link>
               <button onClick={async () => { await logout(); navigate('/'); }} className="text-sm px-3 py-2 rounded hover:bg-gray-100">Logout</button>
             </div>

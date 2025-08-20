@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
+import { AlertCircle, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supportTicketService, FirestoreSupportTicket } from '@/lib/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

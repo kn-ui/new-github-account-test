@@ -465,11 +465,25 @@ export default function StudentDashboard() {
               </div>
               <div className="p-6 space-y-3">
                 <button 
-                  onClick={() => navigate('/calendar')}
+                  onClick={() => navigate('/dashboard/student-courses')}
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
-                  <Calendar className="h-4 w-4" />
-                  <span>View Schedule</span>
+                  <BookOpen className="h-4 w-4" />
+                  <span>My Courses</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/dashboard/student-assignments')}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>My Assignments</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/dashboard/student-grades')}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                >
+                  <Award className="h-4 w-4" />
+                  <span>My Grades</span>
                 </button>
                 <button 
                   onClick={() => navigate('/courses')}
@@ -477,13 +491,6 @@ export default function StudentDashboard() {
                 >
                   <BookOpen className="h-4 w-4" />
                   <span>Browse Courses</span>
-                </button>
-                <button 
-                  onClick={() => navigate('/certificates')}
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                >
-                  <Award className="h-4 w-4" />
-                  <span>My Certificates</span>
                 </button>
               </div>
             </div>

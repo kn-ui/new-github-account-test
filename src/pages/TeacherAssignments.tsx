@@ -1,174 +1,216 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  BookOpen, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  Calendar,
-  FileText,
-  Users,
-  Clock,
-  CheckCircle,
-  XCircle
-} from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { assignmentService, courseService, FirestoreAssignment } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { 
+  FileText, 
+  Search, 
+  Plus, 
+  Edit, 
+  Eye, 
+  Trash2,
+  Calendar,
+  Clock
+} from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function TeacherAssignments() {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     courseId: '',
     dueDate: '',
-    maxPoints: 100,
+
+    maxScore: 100,
     instructions: ''
   });
 
   useEffect(() => {
-    loadData();
-  }, [currentUser?.uid]);
+
+    if (currentUser?.uid && userProfile?.role === 'teacher') {
+      loadData();
+    }
+  }, [currentUser?.uid, userProfile?.role]);
 
   const loadData = async () => {
-    if (!currentUser?.uid) return;
-    
     try {
       setLoading(true);
       const [teacherCourses, teacherAssignments] = await Promise.all([
-        courseService.getCoursesByInstructor(currentUser.uid),
-        assignmentService.getAssignmentsByInstructor(currentUser.uid)
+        courseService.getCoursesByInstructor(currentUser!.uid),
+        assignmentService.getAssignmentsByTeacher(currentUser!.uid)
       ]);
-      
       setCourses(teacherCourses);
       setAssignments(teacherAssignments);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load assignments');
+      console.error('Error loading data:', error);
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  const openNew = () => {
-    setEditingAssignment(null);
-    setForm({
-      title: '',
-      description: '',
-      courseId: '',
-      dueDate: '',
-      maxPoints: 100,
-      instructions: ''
-    });
-    setShowDialog(true);
-  };
-
-  const openEdit = (assignment: FirestoreAssignment) => {
-    setEditingAssignment(assignment);
-    const dueDate = assignment.dueDate?.toDate ? assignment.dueDate.toDate() : new Date(assignment.dueDate as any);
-    const formattedDate = dueDate.toISOString().split('T')[0];
-    
-    setForm({
-      title: assignment.title,
-      description: assignment.description,
-      courseId: assignment.courseId,
-      dueDate: formattedDate,
-      maxPoints: assignment.maxPoints || 100,
-      instructions: assignment.instructions || ''
-    });
-    setShowDialog(true);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!form.title || !form.description || !form.courseId || !form.dueDate) {
+    if (!formData.title || !formData.description || !formData.courseId || !formData.dueDate) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
-      const payload = {
-        title: form.title,
-        description: form.description,
-        courseId: form.courseId,
-        dueDate: new Date(form.dueDate) as any,
-        maxPoints: form.maxPoints,
-        instructions: form.instructions,
-        instructorId: currentUser?.uid
+
+      const assignmentData = {
+        title: formData.title,
+        description: formData.description,
+        courseId: formData.courseId,
+        dueDate: new Date(formData.dueDate),
+        maxScore: formData.maxScore,
+        instructions: formData.instructions,
+        teacherId: currentUser!.uid,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       if (editingAssignment) {
-        await assignmentService.updateAssignment(editingAssignment.id, payload as any);
+        await assignmentService.updateAssignment(editingAssignment.id, assignmentData);
         toast.success('Assignment updated successfully');
       } else {
-        await assignmentService.createAssignment(payload as any);
+        await assignmentService.createAssignment(assignmentData);
         toast.success('Assignment created successfully');
       }
 
-      setShowDialog(false);
-      await loadData();
+      setShowCreateDialog(false);
+      setEditingAssignment(null);
+      resetForm();
+      loadData();
     } catch (error) {
-      console.error('Failed to save assignment:', error);
+      console.error('Error saving assignment:', error);
       toast.error('Failed to save assignment');
     }
   };
 
+
+  const handleEdit = (assignment: FirestoreAssignment) => {
+    setEditingAssignment(assignment);
+    setFormData({
+      title: assignment.title,
+      description: assignment.description,
+      courseId: assignment.courseId,
+      dueDate: assignment.dueDate.toDate().toISOString().split('T')[0],
+      maxScore: assignment.maxScore,
+      instructions: assignment.instructions || ''
+    });
+    setShowCreateDialog(true);
+  };
+
   const handleDelete = async (assignmentId: string) => {
-    if (!confirm('Are you sure you want to delete this assignment?')) return;
-    
     try {
       await assignmentService.deleteAssignment(assignmentId);
       toast.success('Assignment deleted successfully');
-      await loadData();
+      loadData();
     } catch (error) {
-      console.error('Failed to delete assignment:', error);
+      console.error('Error deleting assignment:', error);
       toast.error('Failed to delete assignment');
     }
   };
 
-  const getStatusColor = (dueDate: any) => {
-    if (!dueDate) return 'bg-gray-100 text-gray-800';
-    
-    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      courseId: '',
+      dueDate: '',
+      maxScore: 100,
+      instructions: ''
+    });
+  };
+
+  const openCreateDialog = () => {
+    setEditingAssignment(null);
+    resetForm();
+    setShowCreateDialog(true);
+  };
+
+  const filteredAssignments = assignments.filter(assignment => {
+    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCourse = courseFilter === 'all' || assignment.courseId === courseFilter;
+    return matchesSearch && matchesCourse;
+  });
+
+  const getCourseName = (courseId: string) => {
+    const course = courses.find(c => c.id === courseId);
+    return course ? course.title : 'Unknown Course';
+  };
+
+  const getStatusColor = (dueDate: Date) => {
     const now = new Date();
-    const diffTime = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return 'bg-red-100 text-red-800';
-    if (diffDays <= 3) return 'bg-yellow-100 text-yellow-800';
+    const due = dueDate.toDate();
+    if (due < now) {
+      return 'bg-red-100 text-red-800';
+    } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
+      return 'bg-yellow-100 text-yellow-800';
+    }
     return 'bg-green-100 text-green-800';
   };
 
-  const getStatusText = (dueDate: any) => {
-    if (!dueDate) return 'No due date';
-    
-    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
+  const getStatusText = (dueDate: Date) => {
     const now = new Date();
-    const diffTime = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return 'Overdue';
-    if (diffDays === 0) return 'Due today';
-    if (diffDays === 1) return 'Due tomorrow';
-    if (diffDays <= 3) return `Due in ${diffDays} days`;
-    return `Due in ${diffDays} days`;
+    const due = dueDate.toDate();
+    if (due < now) {
+      return 'Overdue';
+    } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
+      return 'Due Soon';
+    }
+    return 'Active';
   };
+
+  if (!userProfile || userProfile.role !== 'teacher') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only teachers can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -185,109 +227,158 @@ export default function TeacherAssignments() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
-              <p className="text-gray-600">Manage assignments for your courses</p>
+
+              <p className="text-gray-600">Create and manage course assignments</p>
             </div>
-            <Button onClick={openNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Assignment
-            </Button>
+            <div>
+              <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Assignment
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {assignments.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments yet</h3>
-            <p className="text-gray-600 mb-4">Create your first assignment to get started</p>
-            <Button onClick={openNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Assignment
-            </Button>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="search">Search Assignments</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Search by title or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {courses.map(course => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {assignments.map((assignment) => {
-              const course = courses.find(c => c.id === assignment.courseId);
-              return (
-                <div key={assignment.id} className="bg-white border rounded-lg p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">{assignment.title}</h3>
-                        <Badge variant={assignment.maxPoints >= 100 ? 'default' : 'secondary'}>
-                          {assignment.maxPoints} points
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-gray-600 mb-3">{assignment.description}</p>
-                      
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{course?.title || 'Unknown Course'}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{assignment.dueDate ? getStatusText(assignment.dueDate) : 'No due date'}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4" />
-                          <span>0 submissions</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(assignment.dueDate)}>
-                        {assignment.dueDate ? getStatusText(assignment.dueDate) : 'No due date'}
-                      </Badge>
-                      <Button variant="outline" size="sm" onClick={() => openEdit(assignment)}>
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleDelete(assignment.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+        </div>
+
+        {/* Assignments List */}
+        <div className="grid gap-4">
+          {filteredAssignments.map(assignment => (
+            <div key={assignment.id} className="bg-white border rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">{assignment.title}</h3>
+                    <p className="text-sm text-gray-600">{assignment.description}</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {assignment.dueDate.toDate().toLocaleDateString()}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Max Score: {assignment.maxScore}
+                      </span>
+                      <span>{getCourseName(assignment.courseId)}</span>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="flex items-center gap-2">
+                  <Badge className={getStatusColor(assignment.dueDate)}>
+                    {getStatusText(assignment.dueDate)}
+                  </Badge>
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this assignment?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently remove the assignment
+                          "{assignment.title}" and all associated submissions.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={() => handleDelete(assignment.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredAssignments.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No assignments found</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Assignment Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      {/* Create/Edit Assignment Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="course">Course *</Label>
-                <Select value={form.courseId} onValueChange={(value) => setForm({ ...form, courseId: value })}>
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Assignment title"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="courseId">Course *</Label>
+                <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses.map((course) => (
+
+                    {courses.map(course => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
                       </SelectItem>
@@ -295,67 +386,67 @@ export default function TeacherAssignments() {
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div>
-                <Label htmlFor="maxPoints">Max Points *</Label>
-                <Input
-                  id="maxPoints"
-                  type="number"
-                  min="1"
-                  value={form.maxPoints}
-                  onChange={(e) => setForm({ ...form, maxPoints: parseInt(e.target.value) || 100 })}
-                />
-              </div>
-            </div>
 
-            <div>
-              <Label htmlFor="title">Assignment Title *</Label>
-              <Input
-                id="title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Enter assignment title"
-              />
             </div>
-
+            
             <div>
               <Label htmlFor="description">Description *</Label>
-              <Textarea
+              <Input
                 id="description"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Enter assignment description"
-                rows={3}
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of the assignment"
+                required
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="dueDate">Due Date *</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxScore">Max Score</Label>
+                <Input
+                  id="maxScore"
+                  type="number"
+                  value={formData.maxScore}
+                  onChange={(e) => setFormData(prev => ({ ...prev, maxScore: parseInt(e.target.value) }))}
+                  min="1"
+                  max="1000"
+                />
+              </div>
             </div>
 
             <div>
               <Label htmlFor="instructions">Instructions</Label>
               <Textarea
                 id="instructions"
-                value={form.instructions}
-                onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                placeholder="Enter detailed instructions for students"
+
+                value={formData.instructions}
+                onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
+                placeholder="Detailed instructions for students"
                 rows={4}
               />
             </div>
 
-            <div>
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
+            <div className="flex space-x-3 pt-4">
+              <Button type="submit" className="flex-1">
                 {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowCreateDialog(false)}
+                className="flex-1"
+              >
+                Cancel
               </Button>
             </div>
           </form>

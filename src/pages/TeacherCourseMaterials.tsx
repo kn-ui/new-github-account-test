@@ -1,215 +1,227 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  FolderOpen, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  Download,
-  FileText,
-  Image,
-  Video,
-  File,
-  BookOpen,
-  Calendar,
-  Users
-} from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { 
+  FolderOpen, 
+  Search, 
+  Plus, 
+  Edit, 
+  Trash2,
+  Calendar,
+  FileText,
+  Video,
+  Link,
+  Paperclip
+} from 'lucide-react';
 import { toast } from 'sonner';
-
-interface CourseMaterial {
-  id: string;
-  title: string;
-  description: string;
-  type: 'document' | 'video' | 'image' | 'link' | 'other';
-  url: string;
-  courseId: string;
-  createdAt: any;
-  updatedAt: any;
-  isPublic: boolean;
-  fileSize?: string;
-  downloadCount?: number;
-}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function TeacherCourseMaterials() {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
-  const [courses, setCourses] = useState<FirestoreCourse[]>([]);
+  const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<CourseMaterial | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
-  const [form, setForm] = useState({
+  const [searchTerm, setSearchTerm] = useState('');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'document' as CourseMaterial['type'],
-    url: '',
     courseId: '',
-    isPublic: true
+    type: 'document' as 'document' | 'video' | 'link' | 'other',
+    fileUrl: '',
+    externalLink: ''
   });
 
   useEffect(() => {
-    loadData();
-  }, [currentUser?.uid]);
+    if (currentUser?.uid && userProfile?.role === 'teacher') {
+      loadData();
+    }
+  }, [currentUser?.uid, userProfile?.role]);
 
   const loadData = async () => {
-    if (!currentUser?.uid) return;
-    
     try {
       setLoading(true);
-      const teacherCourses = await courseService.getCoursesByInstructor(currentUser.uid);
+      const [teacherCourses, teacherMaterials] = await Promise.all([
+        courseService.getCoursesByInstructor(currentUser!.uid),
+        courseMaterialService.getMaterialsByTeacher(currentUser!.uid)
+      ]);
       setCourses(teacherCourses);
-      
-      // For now, we'll create mock materials since the material service might not exist yet
-      // In a real implementation, you'd load materials from a material service
-      const mockMaterials: CourseMaterial[] = teacherCourses.map((course, index) => ({
-        id: `material-${index}`,
-        title: `Sample Material ${index + 1}`,
-        description: `This is a sample material for ${course.title}`,
-        type: ['document', 'video', 'image'][index % 3] as CourseMaterial['type'],
-        url: 'https://example.com/sample-material.pdf',
-        courseId: course.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isPublic: true,
-        fileSize: '2.5 MB',
-        downloadCount: Math.floor(Math.random() * 50)
-      }));
-      
-      setMaterials(mockMaterials);
+      setMaterials(teacherMaterials);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load course materials');
+      console.error('Error loading data:', error);
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  const openNew = () => {
-    setEditingMaterial(null);
-    setForm({
-      title: '',
-      description: '',
-      type: 'document',
-      url: '',
-      courseId: '',
-      isPublic: true
-    });
-    setShowDialog(true);
-  };
-
-  const openEdit = (material: CourseMaterial) => {
-    setEditingMaterial(material);
-    setForm({
-      title: material.title,
-      description: material.description,
-      type: material.type,
-      url: material.url,
-      courseId: material.courseId,
-      isPublic: material.isPublic
-    });
-    setShowDialog(true);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!form.title || !form.description || !form.url || !form.courseId) {
+    if (!formData.title || !formData.description || !formData.courseId) {
       toast.error('Please fill in all required fields');
       return;
     }
 
+    if (formData.type === 'document' && !formData.fileUrl) {
+      toast.error('Please provide a file URL for document materials');
+      return;
+    }
+
+    if (formData.type === 'link' && !formData.externalLink) {
+      toast.error('Please provide an external link for link materials');
+      return;
+    }
+
     try {
-      // In a real implementation, you'd save to a material service
+      const materialData = {
+        title: formData.title,
+        description: formData.description,
+        courseId: formData.courseId,
+        type: formData.type,
+        fileUrl: formData.type === 'document' ? formData.fileUrl : undefined,
+        externalLink: formData.type === 'link' ? formData.externalLink : undefined
+      };
+
       if (editingMaterial) {
-        // Update existing material
-        setMaterials(prev => prev.map(m => 
-          m.id === editingMaterial.id 
-            ? { ...m, ...form, updatedAt: new Date() }
-            : m
-        ));
+        await courseMaterialService.updateCourseMaterial(editingMaterial.id, materialData);
         toast.success('Material updated successfully');
       } else {
-        // Create new material
-        const newMaterial: CourseMaterial = {
-          id: `material-${Date.now()}`,
-          ...form,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          fileSize: 'Unknown',
-          downloadCount: 0
-        };
-        setMaterials(prev => [...prev, newMaterial]);
+        await courseMaterialService.createCourseMaterial(materialData);
         toast.success('Material created successfully');
       }
 
-      setShowDialog(false);
+      setShowCreateDialog(false);
+      setEditingMaterial(null);
+      resetForm();
+      loadData();
     } catch (error) {
-      console.error('Failed to save material:', error);
+      console.error('Error saving material:', error);
       toast.error('Failed to save material');
     }
   };
 
+
+  const handleEdit = (material: FirestoreCourseMaterial) => {
+    setEditingMaterial(material);
+    setFormData({
+      title: material.title,
+      description: material.description,
+      courseId: material.courseId,
+      type: material.type,
+      fileUrl: material.fileUrl || '',
+      externalLink: material.externalLink || ''
+    });
+    setShowCreateDialog(true);
+  };
+
   const handleDelete = async (materialId: string) => {
-    if (!confirm('Are you sure you want to delete this material?')) return;
-    
     try {
-      setMaterials(prev => prev.filter(m => m.id !== materialId));
+      await courseMaterialService.deleteCourseMaterial(materialId);
       toast.success('Material deleted successfully');
+      loadData();
     } catch (error) {
-      console.error('Failed to delete material:', error);
+      console.error('Error deleting material:', error);
       toast.error('Failed to delete material');
     }
   };
 
-  const getTypeIcon = (type: CourseMaterial['type']) => {
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      courseId: '',
+      type: 'document',
+      fileUrl: '',
+      externalLink: ''
+    });
+  };
+
+  const openCreateDialog = () => {
+    setEditingMaterial(null);
+    resetForm();
+    setShowCreateDialog(true);
+  };
+
+  const filteredMaterials = materials.filter(material => {
+    const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         material.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCourse = courseFilter === 'all' || material.courseId === courseFilter;
+    const matchesType = typeFilter === 'all' || material.type === typeFilter;
+    return matchesSearch && matchesCourse && matchesType;
+  });
+
+  const getCourseName = (courseId: string) => {
+    const course = courses.find(c => c.id === courseId);
+    return course ? course.title : 'Unknown Course';
+  };
+
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'document':
-        return <FileText className="h-5 w-5" />;
-      case 'video':
-        return <Video className="h-5 w-5" />;
-      case 'image':
-        return <Image className="h-5 w-5" />;
-      case 'link':
-        return <File className="h-5 w-5" />;
-      default:
-        return <File className="h-5 w-5" />;
+      case 'document': return <FileText className="h-4 w-4 text-blue-600" />;
+      case 'video': return <Video className="h-4 w-4 text-red-600" />;
+      case 'link': return <Link className="h-4 w-4 text-green-600" />;
+      case 'other': return <Paperclip className="h-4 w-4 text-gray-600" />;
+      default: return <Paperclip className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getTypeColor = (type: CourseMaterial['type']) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
-      case 'document':
-        return 'bg-blue-100 text-blue-800';
-      case 'video':
-        return 'bg-purple-100 text-purple-800';
-      case 'image':
-        return 'bg-green-100 text-green-800';
-      case 'link':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'document': return 'bg-blue-100 text-blue-800';
+      case 'video': return 'bg-red-100 text-red-800';
+      case 'link': return 'bg-green-100 text-green-800';
+      case 'other': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredMaterials = selectedCourse === 'all' 
-    ? materials 
-    : materials.filter(m => m.courseId === selectedCourse);
+  if (!userProfile || userProfile.role !== 'teacher') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only teachers can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading course materials...</div>
+
+        <div className="text-gray-600">Loading materials...</div>
       </div>
     );
   }
@@ -221,146 +233,46 @@ export default function TeacherCourseMaterials() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Course Materials</h1>
-              <p className="text-gray-600">Manage materials and resources for your courses</p>
+
+              <p className="text-gray-600">Create and manage course materials</p>
             </div>
-            <Button onClick={openNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Material
-            </Button>
+            <div>
+              <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Material
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Course Filter */}
+
+        {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <Label htmlFor="course-filter">Filter by Course:</Label>
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Courses</SelectItem>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
-                    {course.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-gray-500">
-              {filteredMaterials.length} material{filteredMaterials.length !== 1 ? 's' : ''} found
-            </span>
-          </div>
-        </div>
-
-        {filteredMaterials.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No materials found</h3>
-            <p className="text-gray-600 mb-4">
-              {selectedCourse === 'all' 
-                ? 'Create your first material to get started'
-                : 'No materials found for this course'
-              }
-            </p>
-            <Button onClick={openNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Material
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {filteredMaterials.map((material) => {
-              const course = courses.find(c => c.id === material.courseId);
-              return (
-                <div key={material.id} className="bg-white border rounded-lg p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div className={`p-2 rounded-lg ${getTypeColor(material.type)}`}>
-                          {getTypeIcon(material.type)}
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900">{material.title}</h3>
-                        <Badge variant={material.isPublic ? 'default' : 'secondary'}>
-                          {material.isPublic ? 'Public' : 'Private'}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-gray-600 mb-3">{material.description}</p>
-                      
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{course?.title || 'Unknown Course'}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{material.updatedAt.toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Download className="h-4 w-4" />
-                          <span>{material.downloadCount || 0} downloads</span>
-                        </div>
-                        {material.fileSize && (
-                          <div className="flex items-center space-x-1">
-                            <File className="h-4 w-4" />
-                            <span>{material.fileSize}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Preview
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => openEdit(material)}>
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleDelete(material.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Material Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingMaterial ? 'Edit Material' : 'Add New Material'}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="course">Course *</Label>
-              <Select value={form.courseId} onValueChange={(value) => setForm({ ...form, courseId: value })}>
+              <Label htmlFor="search">Search Materials</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Search by title or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a course" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {courses.map((course) => (
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
                     </SelectItem>
@@ -368,73 +280,233 @@ export default function TeacherCourseMaterials() {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label htmlFor="title">Material Title *</Label>
-              <Input
-                id="title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Enter material title"
-              />
+              <Label htmlFor="type-filter">Filter by Type</Label>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="document">Documents</SelectItem>
+                  <SelectItem value="video">Videos</SelectItem>
+                  <SelectItem value="link">Links</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+        </div>
 
+        {/* Materials List */}
+        <div className="grid gap-4">
+          {filteredMaterials.map(material => (
+            <div key={material.id} className="bg-white border rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    {getTypeIcon(material.type)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium text-gray-900">{material.title}</h3>
+                      <Badge className={getTypeColor(material.type)}>
+                        {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {material.createdAt.toDate().toLocaleDateString()}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FolderOpen className="h-3 w-3" />
+                        {getCourseName(material.courseId)}
+                      </span>
+                    </div>
+                    {material.fileUrl && (
+                      <div className="mt-2">
+                        <a 
+                          href={material.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                        >
+                          <FileText className="h-3 w-3" />
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                    {material.externalLink && (
+                      <div className="mt-2">
+                        <a 
+                          href={material.externalLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
+                        >
+                          <Link className="h-3 w-3" />
+                          Visit Link
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(material)}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this material?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently remove the material
+                          "{material.title}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={() => handleDelete(material.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredMaterials.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No materials found</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create/Edit Material Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingMaterial ? 'Edit Material' : 'Add New Material'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Material title"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="courseId">Course *</Label>
+                <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map(course => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             <div>
               <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Enter material description"
+
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of the material"
                 rows={3}
+                required
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="type">Material Type *</Label>
+              <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ 
+                ...prev, 
+                type: value as 'document' | 'video' | 'link' | 'other',
+                fileUrl: '',
+                externalLink: ''
+              }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="document">Document</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="link">External Link</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.type === 'document' && (
               <div>
-                <Label htmlFor="type">Material Type *</Label>
-                <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value as CourseMaterial['type'] })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="document">Document</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
-                    <SelectItem value="image">Image</SelectItem>
-                    <SelectItem value="link">Link</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="url">URL/File Path *</Label>
+                <Label htmlFor="fileUrl">File URL *</Label>
                 <Input
-                  id="url"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  placeholder="Enter URL or file path"
+                  id="fileUrl"
+                  value={formData.fileUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))}
+                  placeholder="https://example.com/file.pdf"
+                  type="url"
+                  required
                 />
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isPublic"
-                checked={form.isPublic}
-                onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor="isPublic">Make this material public to students</Label>
-            </div>
+            {formData.type === 'link' && (
+              <div>
+                <Label htmlFor="externalLink">External Link *</Label>
+                <Input
+                  id="externalLink"
+                  value={formData.externalLink}
+                  onChange={(e) => setFormData(prev => ({ ...prev, externalLink: e.target.value }))}
+                  placeholder="https://example.com/resource"
+                  type="url"
+                  required
+                />
+              </div>
+            )}
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
+            <div className="flex space-x-3 pt-4">
+              <Button type="submit" className="flex-1">
                 {editingMaterial ? 'Update Material' : 'Add Material'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowCreateDialog(false)}
+                className="flex-1"
+              >
+                Cancel
               </Button>
             </div>
           </form>

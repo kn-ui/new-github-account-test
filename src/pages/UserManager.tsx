@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Edit, ArrowLeft, Search } from 'lucide-react';
+import { Users, Edit, Search } from 'lucide-react';
 import { userService, FirestoreUser } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

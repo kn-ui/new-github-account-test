@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { certificateService, activityLogService, FirestoreCertificate } from '@/lib/firestore';

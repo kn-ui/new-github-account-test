@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import CourseCreateForm from '@/components/CourseCreateForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 const CreateCourse = () => {
   const { currentUser, userProfile, loading } = useAuth();

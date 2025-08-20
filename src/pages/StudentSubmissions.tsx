@@ -82,6 +82,7 @@ export default function StudentSubmissions() {
     }
   };
 
+
   const handleInputChange = (field: keyof SubmissionFormData, value: string | File[]) => {
     setFormData(prev => ({
       ...prev,
@@ -209,6 +210,7 @@ export default function StudentSubmissions() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+
         <div className="text-gray-600">Loading assignment...</div>
       </div>
     );
@@ -225,6 +227,7 @@ export default function StudentSubmissions() {
     );
   }
 
+
   const dueDateStatus = getDueDateStatus(assignment.dueDate);
   const isOverdue = assignment.dueDate.toDate() < new Date();
 
@@ -232,6 +235,7 @@ export default function StudentSubmissions() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="outline" size="sm" asChild>
@@ -252,6 +256,7 @@ export default function StudentSubmissions() {
           </div>
         </div>
       </div>
+
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid gap-6">
@@ -377,6 +382,7 @@ export default function StudentSubmissions() {
                       </div>
                     ))}
                   </div>
+
                 )}
                 <p className="text-sm text-gray-500 mt-1">
                   You can attach supporting files to your submission.

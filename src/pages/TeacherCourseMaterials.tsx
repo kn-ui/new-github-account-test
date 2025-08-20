@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,6 +83,7 @@ export default function TeacherCourseMaterials() {
     }
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -128,6 +130,7 @@ export default function TeacherCourseMaterials() {
     }
   };
 
+
   const handleEdit = (material: FirestoreCourseMaterial) => {
     setEditingMaterial(material);
     setFormData({
@@ -151,6 +154,7 @@ export default function TeacherCourseMaterials() {
       toast.error('Failed to delete material');
     }
   };
+
 
   const resetForm = () => {
     setFormData({
@@ -216,6 +220,7 @@ export default function TeacherCourseMaterials() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+
         <div className="text-gray-600">Loading materials...</div>
       </div>
     );
@@ -228,6 +233,7 @@ export default function TeacherCourseMaterials() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Course Materials</h1>
+
               <p className="text-gray-600">Create and manage course materials</p>
             </div>
             <div>
@@ -241,6 +247,7 @@ export default function TeacherCourseMaterials() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -398,6 +405,7 @@ export default function TeacherCourseMaterials() {
               {editingMaterial ? 'Edit Material' : 'Add New Material'}
             </DialogTitle>
           </DialogHeader>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -431,6 +439,7 @@ export default function TeacherCourseMaterials() {
               <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
+
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Brief description of the material"

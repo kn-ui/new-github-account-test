@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +44,7 @@ export default function TeacherAssignments() {
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -52,11 +54,13 @@ export default function TeacherAssignments() {
     description: '',
     courseId: '',
     dueDate: '',
+
     maxScore: 100,
     instructions: ''
   });
 
   useEffect(() => {
+
     if (currentUser?.uid && userProfile?.role === 'teacher') {
       loadData();
     }
@@ -79,6 +83,7 @@ export default function TeacherAssignments() {
     }
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -88,6 +93,7 @@ export default function TeacherAssignments() {
     }
 
     try {
+
       const assignmentData = {
         title: formData.title,
         description: formData.description,
@@ -118,6 +124,7 @@ export default function TeacherAssignments() {
     }
   };
 
+
   const handleEdit = (assignment: FirestoreAssignment) => {
     setEditingAssignment(assignment);
     setFormData({
@@ -141,6 +148,7 @@ export default function TeacherAssignments() {
       toast.error('Failed to delete assignment');
     }
   };
+
 
   const resetForm = () => {
     setFormData({
@@ -219,6 +227,7 @@ export default function TeacherAssignments() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
+
               <p className="text-gray-600">Create and manage course assignments</p>
             </div>
             <div>
@@ -232,6 +241,7 @@ export default function TeacherAssignments() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -347,6 +357,7 @@ export default function TeacherAssignments() {
               {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
             </DialogTitle>
           </DialogHeader>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -366,6 +377,7 @@ export default function TeacherAssignments() {
                     <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
                   <SelectContent>
+
                     {courses.map(course => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
@@ -374,6 +386,7 @@ export default function TeacherAssignments() {
                   </SelectContent>
                 </Select>
               </div>
+
             </div>
             
             <div>
@@ -415,6 +428,7 @@ export default function TeacherAssignments() {
               <Label htmlFor="instructions">Instructions</Label>
               <Textarea
                 id="instructions"
+
                 value={formData.instructions}
                 onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
                 placeholder="Detailed instructions for students"

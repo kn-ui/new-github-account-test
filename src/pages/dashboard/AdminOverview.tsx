@@ -241,6 +241,47 @@ export default function AdminOverview() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Recent Events */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5" />
+              <span>Recent Events</span>
+            </CardTitle>
+            <CardDescription>Upcoming and newly created events</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentEvents.map((ev) => {
+                const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date);
+                return (
+                  <div key={ev.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{ev.title}</p>
+                        <p className="text-xs text-gray-500">{d.toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to="/dashboard/events">
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/dashboard/events">View All Events</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}

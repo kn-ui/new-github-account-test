@@ -138,7 +138,7 @@ const EventsPage = () => {
             <div className="ml-auto flex space-x-3">
               <Button variant="outline" asChild>
                 <Link to="/calendar">
-                  <Calendar className="h-4 w-4 mr-2" /> View Calendar
+                  <CalendarIcon className="h-4 w-4 mr-2" /> View Calendar
                 </Link>
               </Button>
               <Button onClick={openNew}>

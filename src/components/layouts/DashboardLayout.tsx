@@ -99,7 +99,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -110,12 +110,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:relative lg:inset-0 dashboard-sidebar
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b">
+          <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
             <div className="flex items-center space-x-2">
               <GraduationCap className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">LMS</span>
@@ -131,7 +131,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="nav-content px-4 py-6 space-y-2">
             {navigationItems.map((item) => (
               <Link
                 key={item.href}
@@ -157,7 +157,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0">
             <div className="flex items-center space-x-3 px-3 py-2">
               <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-blue-600" />
@@ -183,9 +183,9 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       </div>
 
       {/* Main content */}
-      <div className="lg:ml-64">
+      <div className="flex-1 flex flex-col min-w-0 dashboard-main">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b px-4 py-3">
+        <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -208,8 +208,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         </div>
 
         {/* Page content */}
-        <main className="p-6">
-          {children}
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="dashboard-page">
+            {children}
+          </div>
         </main>
       </div>
     </div>

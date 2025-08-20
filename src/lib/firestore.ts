@@ -839,6 +839,7 @@ export const analyticsService = {
 
     const totalUsers = usersSnapshot.size;
     const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
+    const totalTeachers = usersSnapshot.docs.filter(doc => doc.data().role === 'teacher').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
     const pendingCourses = coursesSnapshot.docs.filter(doc => !doc.data().isActive).length;
 
@@ -849,6 +850,7 @@ export const analyticsService = {
     return {
       totalUsers,
       totalStudents,
+      totalTeachers,
       activeCourses,
       pendingCourses,
       completionRate,
@@ -857,19 +859,45 @@ export const analyticsService = {
   },
 
   async getTeacherStats(teacherId: string) {
-    const [coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
+    const [coursesSnapshot, enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([
       getDocs(query(collections.courses(), where('instructor', '==', teacherId))),
       getDocs(collections.enrollments()),
+      getDocs(collections.submissions()),
     ]);
 
     const myCourses = coursesSnapshot.size;
     const courseIds = coursesSnapshot.docs.map(doc => doc.id);
-    const studentEnrollments = enrollmentsSnapshot.docs.filter(doc => courseIds.includes(doc.data().courseId)).length;
-    
-    // You can add more stats here, e.g., total submissions, grades, etc.
+    const activeCourses = coursesSnapshot.docs.filter(doc => !!doc.data().isActive).length;
+    const totalStudents = enrollmentsSnapshot.docs.filter(doc => courseIds.includes(doc.data().courseId)).length;
+    const pendingReviews = submissionsSnapshot.docs.filter(doc => courseIds.includes(doc.data().courseId) && doc.data().status === 'submitted').length;
+    const avgRating = 0; // Not tracked yet
+
     return {
       myCourses,
-      studentEnrollments,
+      activeCourses,
+      totalStudents,
+      pendingReviews,
+      avgRating,
+    };
+  },
+
+  async getStudentStats(studentId: string) {
+    const [enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([
+      getDocs(query(collections.enrollments(), where('studentId', '==', studentId))),
+      getDocs(query(collections.submissions(), where('studentId', '==', studentId))),
+    ]);
+
+    const enrollments = enrollmentsSnapshot.docs.map(d => d.data());
+    const enrolledCourses = enrollments.length;
+    const averageProgress = enrollments.length
+      ? Math.round(enrollments.reduce((sum, e: any) => sum + (e.progress || 0), 0) / enrollments.length)
+      : 0;
+    const pendingAssignments = submissionsSnapshot.docs.filter(d => d.data().status === 'submitted').length;
+
+    return {
+      enrolledCourses,
+      averageProgress,
+      pendingAssignments,
     };
   },
 };

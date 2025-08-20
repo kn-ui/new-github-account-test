@@ -83,31 +83,32 @@
   }
 
   /* Dashboard Layout Fixes */
-  .dashboard-page {
-    height: 100%;
-    min-height: 0;
-  }
-  
-  .dashboard-page > * {
-    height: 100%;
-    min-height: 0;
-  }
 
-  /* Sidebar Layout Fixes */
-  .dashboard-sidebar {
-    height: 100vh;
-    max-height: 100vh;
-  }
-  
-  .dashboard-sidebar .nav-content {
-    height: calc(100vh - 140px); /* Account for header and user section */
-    overflow-y: auto;
-  }
-  
-  .dashboard-main {
-    height: 100vh;
-    max-height: 100vh;
-  }
+.dashboard-page {
+  height: 100%;
+  min-height: 0;
+}
+
+.dashboard-page > * {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Sidebar Layout Fixes */
+.dashboard-sidebar {
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.dashboard-sidebar .nav-content {
+  height: calc(100vh - 140px); /* Account for header and user section */
+  overflow-y: auto;
+}
+
+.dashboard-main {
+  height: 100vh;
+  max-height: 100vh;
+}
 
   .dark {
     /* Dark Academic Theme */

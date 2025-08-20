@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search, Trash2, Plus } from 'lucide-react';
+import { BookOpen, CheckCircle, XCircle, Eye, ArrowLeft, Search, Trash2 } from 'lucide-react';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

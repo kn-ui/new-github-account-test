@@ -73,23 +73,33 @@ export default function TeacherDashboard() {
           setEnrollmentCounts(map);
 
           // Load recent submissions for my courses (by course id)
-          const allSubmissions = await Promise.all(
-            courses.map(async (course) => {
+          try {
+            const allSubmissions = await Promise.all(
+              courses.map(async (course) => {
+                try {
+                  const submissions = await submissionService.getSubmissionsByCourse(course.id);
+                  return submissions.map((submission: any) => ({
+                    ...submission,
+                    courseTitle: course.title,
+                  }));
+                } catch (error) {
+                  console.warn(`Failed to load submissions for course ${course.id}:`, error);
+                  return [];
+                }
+              })
+            );
+            const flatSubmissions = allSubmissions.flat().filter((s: any) => s.submittedAt).sort((a: any, b: any) => {
               try {
-                const submissions = await submissionService.getSubmissionsByCourse(course.id);
-                return submissions.map((submission: any) => ({
-                  ...submission,
-                  courseTitle: course.title,
-                }));
+                return b.submittedAt.toDate() - a.submittedAt.toDate();
               } catch {
-                return [];
+                return 0;
               }
-            })
-          );
-          const flatSubmissions = allSubmissions.flat().sort((a: any, b: any) => 
-            b.submittedAt.toDate() - a.submittedAt.toDate()
-          );
-          setRecentSubmissions(flatSubmissions.slice(0, 5));
+            });
+            setRecentSubmissions(flatSubmissions.slice(0, 5));
+          } catch (error) {
+            console.error('Failed to load submissions:', error);
+            setRecentSubmissions([]);
+          }
 
           // Load announcements for my courses
           const courseAnnouncements = await Promise.all(
@@ -333,7 +343,7 @@ export default function TeacherDashboard() {
                             <Plus className="h-4 w-4 mr-2" />
                             Add Material
                           </Button>
-                          <Button variant="destructive" size="sm" onClick={async () => {
+                          <Button variant="outline" size="sm" onClick={async () => {
                             try {
                               await courseService.updateCourse(course.id, { isActive: false });
                               toast.success('Course deactivated');
@@ -342,7 +352,7 @@ export default function TeacherDashboard() {
                               toast.error('Failed to update course');
                             }
                           }}>
-                            Delete
+                            Deactivate
                           </Button>
                         </div>
                       </div>

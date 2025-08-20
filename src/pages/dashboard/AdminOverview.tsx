@@ -24,6 +24,7 @@ export default function AdminOverview() {
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const [recentEvents, setRecentEvents] = useState<any[]>([]);
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
+  const [pendingCoursesCount, setPendingCoursesCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
@@ -38,17 +39,19 @@ export default function AdminOverview() {
           setStats(adminStats);
 
           // Load recent data
-          const [users, courses, events, tickets] = await Promise.all([
+          const [users, courses, events, tickets, pendingCount] = await Promise.all([
             userService.getUsers(5),
             courseService.getPendingCourses(5),
             eventService.getEvents(5),
-            supportTicketService.getSupportTickets(5)
+            supportTicketService.getSupportTickets(5),
+            courseService.getPendingCourses(1000).then(list => list.length)
           ]);
 
           setRecentUsers(users);
           setRecentCourses(courses);
           setRecentEvents(events);
           setRecentTickets(tickets);
+          setPendingCoursesCount(pendingCount);
         }
       } catch (error) {
         console.error('Failed to load admin dashboard data:', error);
@@ -148,7 +151,7 @@ export default function AdminOverview() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentCourses.length}</div>
+            <div className="text-2xl font-bold">{pendingCoursesCount}</div>
             <p className="text-xs text-muted-foreground">
               Courses awaiting approval
             </p>

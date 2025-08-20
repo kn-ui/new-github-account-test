@@ -121,7 +121,6 @@ export default function StudentOverview() {
         <div className="flex space-x-3">
           <Button asChild>
             <Link to="/courses">
-              <Plus className="h-4 w-4 mr-2" />
               Browse Courses
             </Link>
           </Button>

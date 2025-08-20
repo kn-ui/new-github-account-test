@@ -200,9 +200,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
                 Home
               </Link>
-              <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
-                Browse Courses
-              </Link>
+              {userRole !== 'admin' && (
+                <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
+                  Browse Courses
+                </Link>
+              )}
             </div>
           </div>
         </div>

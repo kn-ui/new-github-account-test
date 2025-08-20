@@ -39,6 +39,14 @@ import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
 import TeacherReports from "./pages/TeacherReports";
 import Certificates from "./pages/Certificates";
+import CreateEvent from "./pages/CreateEvent";
+import AdminReports from "./pages/AdminReports";
+import SystemSettings from "./pages/SystemSettings";
+import TeacherAssignments from "./pages/TeacherAssignments";
+import TeacherAnnouncements from "./pages/TeacherAnnouncements";
+import TeacherCourseMaterials from "./pages/TeacherCourseMaterials";
+import StudentAssignments from "./pages/StudentAssignments";
+import StudentSubmissions from "./pages/StudentSubmissions";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -129,7 +137,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Admin Reports Page</div>
+                    <AdminReports />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -139,7 +147,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Admin Settings Page</div>
+                    <SystemSettings />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -161,7 +169,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Teacher Assignments Page</div>
+                    <TeacherAssignments />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -181,7 +189,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Teacher Announcements Page</div>
+                    <TeacherAnnouncements />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -191,7 +199,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Teacher Course Materials Page</div>
+                    <TeacherCourseMaterials />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -213,7 +221,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Student Assignments Page</div>
+                    <StudentAssignments />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -223,7 +231,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <div>Student Submissions Page</div>
+                    <StudentSubmissions />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -297,6 +305,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Events />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create-event" 
+              element={
+                <ProtectedRoute>
+                  <CreateEvent />
                 </ProtectedRoute>
               } 
             />

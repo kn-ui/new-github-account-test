@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, Edit2, Trash2, ArrowLeft, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit2, Trash2, Plus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { eventService, FirestoreEvent } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';

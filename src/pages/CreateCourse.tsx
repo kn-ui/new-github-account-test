@@ -61,10 +61,7 @@ const CreateCourse = () => {
               </AlertDescription>
             </Alert>
             
-            <Button onClick={() => navigate('/dashboard')} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
+
           </div>
         </main>
       </div>
@@ -79,15 +76,6 @@ const CreateCourse = () => {
         <div className="max-w-4xl mx-auto">
           {/* Page Header */}
           <div className="mb-8">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/dashboard')}
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            
             <div className="text-center">
               <h1 className="text-3xl font-bold mb-2">Create New Course</h1>
               <p className="text-muted-foreground">

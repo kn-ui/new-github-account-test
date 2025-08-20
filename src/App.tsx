@@ -39,6 +39,7 @@ import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
 import TeacherReports from "./pages/TeacherReports";
 import Certificates from "./pages/Certificates";
+
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
@@ -105,6 +106,7 @@ const App = () => (
               } 
             />
             <Route 
+
               path="/dashboard/events" 
               element={
                 <ProtectedRoute>
@@ -115,6 +117,7 @@ const App = () => (
               } 
             />
             <Route 
+
               path="/dashboard/support-tickets" 
               element={
                 <ProtectedRoute>
@@ -129,6 +132,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Admin Reports Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -139,6 +143,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Admin Settings Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -161,6 +166,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Teacher Assignments Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -181,6 +187,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Teacher Announcements Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -191,6 +198,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Teacher Course Materials Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -213,12 +221,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <div>Student Assignments Page</div>
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
             <Route 
+
               path="/dashboard/student-submissions" 
               element={
                 <ProtectedRoute>

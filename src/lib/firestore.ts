@@ -144,6 +144,7 @@ export interface FirestoreEvent {
   date: Timestamp;
   description: string;
   createdBy: string;
+  type: string;
 }
 
 export interface FirestoreForumThread {
@@ -234,6 +235,11 @@ export const userService = {
       ...updates,
       updatedAt: Timestamp.now(),
     });
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    const docRef = doc(db, 'users', userId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -461,6 +467,16 @@ export const supportTicketService = {
     return docRef.id;
   },
 
+  async getTickets(limitCount = 100): Promise<FirestoreSupportTicket[]> {
+    const q = query(
+      collections.supportTickets(),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
+  },
+
   async getTicketsByUser(userId: string): Promise<FirestoreSupportTicket[]> {
     const q = query(
       collections.supportTickets(),
@@ -474,6 +490,11 @@ export const supportTicketService = {
   async deleteTicket(ticketId: string): Promise<void> {
     const docRef = doc(db, 'support_tickets', ticketId);
     await deleteDoc(docRef);
+  },
+
+  async updateTicket(ticketId: string, updates: Partial<FirestoreSupportTicket>): Promise<void> {
+    const docRef = doc(db, 'support_tickets', ticketId);
+    await updateDoc(docRef, updates as any);
   },
 
   async updateTicketStatus(ticketId: string, status: FirestoreSupportTicket['status']): Promise<void> {
@@ -780,6 +801,8 @@ export const eventService = {
     await deleteDoc(docRef);
   },
 };
+
+
 
 // Forum operations
 export const forumService = {

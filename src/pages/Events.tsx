@@ -25,7 +25,10 @@ import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
-  Users
+  Users,
+  Target,
+  Activity,
+  Zap
 } from 'lucide-react';
 import { eventService } from '@/lib/firestore';
 
@@ -33,7 +36,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date;
+  date: any; // Timestamp from Firestore
   time: string;
   location: string;
   type: string;
@@ -51,8 +54,14 @@ const EventsPage = () => {
 
   // Calculate stats
   const totalEvents = events.length;
-  const upcomingEvents = events.filter(e => new Date(e.date) > new Date()).length;
-  const pastEvents = events.filter(e => new Date(e.date) <= new Date()).length;
+  const upcomingEvents = events.filter(e => {
+    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
+    return eventDate > new Date();
+  }).length;
+  const pastEvents = events.filter(e => {
+    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
+    return eventDate <= new Date();
+  }).length;
 
   useEffect(() => {
     fetchEvents();
@@ -66,13 +75,13 @@ const EventsPage = () => {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase())
+        (event.location && event.location.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(event => event.status === statusFilter);
+      filtered = filtered.filter(event => event.status && event.status === statusFilter);
     }
 
     setFilteredEvents(filtered);
@@ -127,6 +136,97 @@ const EventsPage = () => {
     }
   };
 
+  // Mini Calendar Component
+  const MiniCalendar = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Get events for current month
+    const monthEvents = events.filter(event => {
+      const eventDate = event.date instanceof Date ? event.date : event.date.toDate();
+      return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+    });
+
+    const renderCalendarDays = () => {
+      const days = [];
+      
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < firstDayOfMonth; i++) {
+        days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>);
+      }
+      
+      // Add days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const hasEvent = monthEvents.some(event => {
+          const eventDate = event.date instanceof Date ? event.date : event.date.toDate();
+          return eventDate.getDate() === day;
+        });
+        
+        const isToday = day === today.getDate();
+        
+        days.push(
+          <div
+            key={day}
+            className={`h-8 w-8 flex items-center justify-center text-sm rounded-full transition-colors ${
+              isToday 
+                ? 'bg-blue-600 text-white font-semibold' 
+                : hasEvent 
+                  ? 'bg-purple-100 text-purple-700 font-medium' 
+                  : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {day}
+          </div>
+        );
+      }
+      
+      return days;
+    };
+
+    return (
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-purple-600" />
+            {monthNames[currentMonth]} {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-7 gap-1 mb-3">
+            {weekDays.map(day => (
+              <div key={day} className="text-xs font-medium text-gray-500 text-center py-1">
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {renderCalendarDays()}
+          </div>
+          <div className="mt-4 space-y-2 text-xs text-gray-600">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+              <span>Today</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-purple-100 rounded-full"></div>
+              <span>Has Event</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -136,24 +236,27 @@ const EventsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Events Management</h1>
-              <p className="text-gray-600">Manage system events and schedules</p>
+              <h1 className="text-4xl font-bold mb-4">Events Management</h1>
+              <p className="text-xl text-purple-100 max-w-2xl">
+                Manage system events, schedules, and activities. Keep track of upcoming events and past activities.
+              </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-6 lg:mt-0">
               <Link to="/calendar">
-                <Button variant="outline">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
+                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600 transition-all duration-300">
+                  <CalendarIcon className="h-5 w-5 mr-2" />
                   View Calendar
                 </Button>
               </Link>
-              <Link to="/dashboard/create-event">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
+              <Link to="/create-event">
+                <Button className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
+                  <Plus className="h-5 w-5 mr-2" />
                   Create Event
                 </Button>
               </Link>
@@ -162,33 +265,45 @@ const EventsPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Events</CardTitle>
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Total Events
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalEvents}</div>
+              <div className="text-3xl font-bold mb-2">{totalEvents}</div>
+              <div className="text-blue-100 text-sm">All events</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Upcoming Events</CardTitle>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Upcoming Events
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{upcomingEvents}</div>
+              <div className="text-3xl font-bold mb-2">{upcomingEvents}</div>
+              <div className="text-green-100 text-sm">Scheduled events</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-gray-500 to-gray-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Past Events</CardTitle>
+          <Card className="bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-100 flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Past Events
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pastEvents}</div>
+              <div className="text-3xl font-bold mb-2">{pastEvents}</div>
+              <div className="text-gray-100 text-sm">Completed events</div>
             </CardContent>
           </Card>
         </div>
@@ -196,29 +311,21 @@ const EventsPage = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Mini Calendar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Calendar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <CalendarIcon className="h-32 w-32 mx-auto text-gray-300" />
-                  <p className="text-gray-500 mt-2">Calendar view coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="sticky top-8">
+              <MiniCalendar />
+            </div>
           </div>
 
           {/* Events List */}
           <div className="lg:col-span-2">
             {/* Search and Filters */}
-            <Card className="mb-6">
+            <Card className="mb-6 shadow-lg">
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search events..."
+                      placeholder="Search events by title, description, or location..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -227,7 +334,7 @@ const EventsPage = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
                   >
                     <option value="all">All Status</option>
                     <option value="upcoming">Upcoming</option>
@@ -238,95 +345,122 @@ const EventsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Events Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>All Events</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredEvents.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <CalendarIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p>No events found</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Event</TableHead>
-                        <TableHead>Date & Time</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Attendees</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredEvents.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{event.title}</div>
-                              <div className="text-sm text-gray-500">{event.description}</div>
+            {/* Events Grid */}
+            <div className="space-y-4">
+              {filteredEvents.map((event) => (
+                <Card key={event.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-start gap-4">
+                          <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                            <CalendarIcon className="h-8 w-8 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-semibold text-gray-900">{event.title}</h3>
+                              <Badge 
+                                variant={getTypeBadgeVariant(event.type)}
+                                className="text-xs"
+                              >
+                                {event.type}
+                              </Badge>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <div>
-                                <div className="font-medium">{event.date.toLocaleDateString()}</div>
-                                <div className="text-sm text-gray-500">{event.time}</div>
-                              </div>
+                            <p className="text-gray-600 mb-3 line-clamp-2">{event.description}</p>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}
+                              </span>
+                              {event.time && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {event.time}
+                                </span>
+                              )}
+                              {event.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  {event.location}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {event.currentAttendees}/{event.maxAttendees} attendees
+                              </span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-gray-400" />
-                              <span>{event.location}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getTypeBadgeVariant(event.type)}>
-                              {event.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-gray-400" />
-                              <span>{event.currentAttendees}/{event.maxAttendees}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusBadgeVariant(event.status)}>
-                              {event.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={() => handleDeleteEvent(event.id)}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
+                        <Badge 
+                          variant={getStatusBadgeVariant(event.status)}
+                          className="text-sm px-3 py-1"
+                        >
+                          {event.status}
+                        </Badge>
+                        
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-gray-50"
+                          >
+                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem className="cursor-pointer">
+                                <CalendarIcon className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600 cursor-pointer"
+                                onClick={() => handleDeleteEvent(event.id)}
+                              >
+                                <CalendarIcon className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {filteredEvents.length === 0 && (
+              <Card className="text-center py-12 shadow-lg">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CalendarIcon className="h-8 w-8 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
+                <p className="text-gray-500 mb-4">
+                  {searchTerm || statusFilter !== 'all' 
+                    ? 'Try adjusting your search or filters'
+                    : 'Get started by creating your first event'
+                  }
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Link to="/create-event">
+                    <Button className="bg-purple-600 hover:bg-purple-700">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Event
+                    </Button>
+                  </Link>
                 )}
-              </CardContent>
-            </Card>
+              </Card>
+            )}
           </div>
         </div>
       </div>

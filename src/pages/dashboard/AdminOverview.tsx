@@ -1,318 +1,278 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { analyticsService, courseService, userService, eventService, supportTicketService } from '@/lib/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { 
   Users, 
   BookOpen, 
+  Clock, 
   TrendingUp, 
-  Calendar, 
-  MessageSquare, 
-  Clock,
-  Eye,
-  Plus,
-  BarChart3
+  FileText, 
+  Settings,
+  Calendar,
+  User,
+  BookOpen as BookOpenIcon
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { userService } from '@/lib/firestore';
+import { courseService } from '@/lib/firestore';
+import { eventService } from '@/lib/firestore';
+import { analyticsService } from '@/lib/firestore';
 
-export default function AdminOverview() {
-  const [stats, setStats] = useState<any>(null);
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [recentCourses, setRecentCourses] = useState<any[]>([]);
-  const [recentEvents, setRecentEvents] = useState<any[]>([]);
-  const [recentTickets, setRecentTickets] = useState<any[]>([]);
-  const [pendingCoursesCount, setPendingCoursesCount] = useState(0);
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: Date;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: Date;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  date: Date;
+  type: string;
+}
+
+const AdminOverview = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    totalEvents: 0,
+    pendingReviews: 0,
+    totalTeachers: 0
+  });
+  const [recentUsers, setRecentUsers] = useState<User[]>([]);
+  const [pendingCourses, setPendingCourses] = useState<Course[]>([]);
+  const [recentEvents, setRecentEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const { currentUser } = useAuth();
 
   useEffect(() => {
-    const loadDashboardData = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        
-        if (currentUser?.uid) {
-          // Load admin stats
-          const adminStats = await analyticsService.getAdminStats();
-          setStats(adminStats);
+        const [adminStats, users, courses, events] = await Promise.all([
+          analyticsService.getAdminStats(),
+          userService.getUsers(5),
+          courseService.getPendingCourses(),
+          eventService.getEvents(5)
+        ]);
 
-          // Load recent data
-          const [users, courses, events, tickets, pendingCount] = await Promise.all([
-            userService.getUsers(5),
-            courseService.getPendingCourses(5),
-            eventService.getEvents(5),
-            supportTicketService.getSupportTickets(5),
-            courseService.getPendingCourses(1000).then(list => list.length)
-          ]);
-
-          setRecentUsers(users);
-          setRecentCourses(courses);
-          setRecentEvents(events);
-          setRecentTickets(tickets);
-          setPendingCoursesCount(pendingCount);
-        }
+        setStats(adminStats);
+        setRecentUsers(users);
+        setPendingCourses(courses);
+        setRecentEvents(events);
       } catch (error) {
-        console.error('Failed to load admin dashboard data:', error);
+        console.error('Error fetching admin data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadDashboardData();
-  }, [currentUser?.uid]);
+    fetchData();
+  }, []);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">System overview and management</p>
-        </div>
-        <div className="flex space-x-3">
-          <Button asChild>
-            <Link to="/create-course">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Course
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/create-event">
-              <Calendar className="h-4 w-4 mr-2" />
-              Create Event
-            </Link>
-          </Button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening in your system.</p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.totalStudents || 0} students, {stats?.totalTeachers || 0} teachers
-            </p>
-          </CardContent>
-        </Card>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-blue-100 text-sm">Active accounts</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Active Courses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalCourses}</div>
+              <div className="text-green-100 text-sm">Published courses</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">System Health</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">98%</div>
+              <div className="text-purple-100 text-sm">All systems operational</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Pending Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingReviews}</div>
+              <div className="text-orange-100 text-sm">Awaiting approval</div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeCourses || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.completionRate || 0}% completion rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Health</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.systemHealth || 99.9}%</div>
-            <p className="text-xs text-muted-foreground">
-              All systems operational
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-
-            <div className="text-2xl font-bold">{recentCourses.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Courses awaiting approval
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Users */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="h-5 w-5" />
-              <span>Recent Users</span>
-            </CardTitle>
-            <CardDescription>Latest user registrations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Users className="h-4 w-4 text-blue-600" />
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Recent Users */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Recent Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentUsers.length > 0 ? (
+                <div className="space-y-3">
+                  {recentUsers.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                      </div>
+                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : 'outline'}>
+                        {user.role}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{user.displayName}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : 'outline'}>
-                      {user.role}
-                    </Badge>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/dashboard/users/${user.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/users">View All Users</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Courses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5" />
-              <span>Pending Courses</span>
-            </CardTitle>
-            <CardDescription>Courses awaiting approval</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentCourses.map((course) => (
-                <div key={course.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <BookOpen className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{course.title}</p>
-                      <p className="text-xs text-gray-500">by {course.instructorName}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">{course.category}</Badge>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/dashboard/courses/${course.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <User className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                  <p>Recent users will be shown here</p>
                 </div>
-              ))}
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/courses">View All Courses</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pending Courses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Pending Courses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingCourses.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingCourses.map((course) => (
+                    <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <BookOpenIcon className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{course.title}</p>
+                          <p className="text-sm text-gray-500">Created {course.createdAt.toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Pending</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BookOpenIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                  <p>Pending courses will be shown here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Recent Events */}
-        <Card>
+        <Card className="mt-8">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              <span>Recent Events</span>
+              Recent Events
             </CardTitle>
-            <CardDescription>Upcoming and newly created events</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentEvents.map((ev) => {
-                const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date);
-                return (
-                  <div key={ev.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Calendar className="h-4 w-4 text-blue-600" />
+            {recentEvents.length > 0 ? (
+              <div className="space-y-3">
+                {recentEvents.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-purple-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{ev.title}</p>
-                        <p className="text-xs text-gray-500">{d.toLocaleDateString()}</p>
+                        <p className="font-medium text-gray-900">{event.title}</p>
+                        <p className="text-sm text-gray-500">{event.date.toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to="/dashboard/events">
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
+                    <Badge variant="secondary">{event.type}</Badge>
                   </div>
-                );
-              })}
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/events">View All Events</Link>
-              </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p>Recent events will be shown here</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <Link to="/dashboard/reports">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View Reports
+                </Button>
+              </Link>
+              <Link to="/dashboard/settings">
+                <Button variant="outline">
+                  <Settings className="h-4 w-4 mr-2" />
+                  System Settings
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common administrative tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/users">
-                <Users className="h-6 w-6 mb-2" />
-                Manage Users
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/courses">
-                <BookOpen className="h-6 w-6 mb-2" />
-                Manage Courses
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/reports">
-                <BarChart3 className="h-6 w-6 mb-2" />
-                View Reports
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
-}
+};
+
+export default AdminOverview;

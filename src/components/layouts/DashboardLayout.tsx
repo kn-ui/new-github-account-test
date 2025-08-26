@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   BookOpen, 
   Users, 
@@ -10,6 +11,7 @@ import {
   Settings, 
   Calendar,
   Bell,
+  Search,
   Award,
   Home,
   Menu,
@@ -184,7 +186,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 dashboard-main">
-        {/* Top bar */}
+{/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <Button
@@ -196,15 +198,31 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <Menu className="h-5 w-5" />
             </Button>
             
+            <div className="flex items-center space-x-4 flex-1 justify-center">
+              {/* Search Bar */}
+              <div className="relative max-w-md w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search users, courses, events..."
+                  className="pl-10 w-full"
+                />
+              </div>
+            </div>
+            
             <div className="flex items-center space-x-4">
-              <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
-                Home
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                  3
+                </span>
+              </Button>
+              
+              {/* Logo - Clickable to Home */}
+              <Link to="/" className="flex items-center space-x-2">
+                <GraduationCap className="h-8 w-8 text-blue-600" />
+                <span className="text-xl font-bold text-gray-900">LMS</span>
               </Link>
-              {userRole !== 'admin' && (
-                <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">
-                  Browse Courses
-                </Link>
-              )}
             </div>
           </div>
         </div>

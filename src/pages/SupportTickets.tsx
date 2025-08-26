@@ -1,170 +1,389 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { supportTicketService, FirestoreSupportTicket } from '@/lib/firestore';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  MoreHorizontal, 
+  Search, 
+  Plus, 
+  MessageSquare,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  User
+} from 'lucide-react';
+
+interface Ticket {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  category: string;
+  submittedBy: string;
+  assignedTo: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const SupportTicketsPage = () => {
-  const [tickets, setTickets] = useState<FirestoreSupportTicket[]>([]);
-  const [search, setSearch] = useState('');
-  const [statusSort, setStatusSort] = useState<string>('all');
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+
+  // Calculate stats
+  const totalTickets = tickets.length;
+  const openTickets = tickets.filter(t => t.status === 'open').length;
+  const inProgressTickets = tickets.filter(t => t.status === 'in-progress').length;
+  const resolvedTickets = tickets.filter(t => t.status === 'resolved').length;
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await supportTicketService.getAllTickets();
-        setTickets(data);
-      } catch {
-        toast.error('Failed to load tickets');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    fetchTickets();
   }, []);
 
-  const updateStatus = async (id: string, status: FirestoreSupportTicket['status']) => {
+  useEffect(() => {
+    let filtered = tickets;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(ticket =>
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.status === statusFilter);
+    }
+
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
+    }
+
+    setFilteredTickets(filtered);
+  }, [searchTerm, statusFilter, priorityFilter, tickets]);
+
+  const fetchTickets = async () => {
     try {
-      await supportTicketService.updateTicketStatus(id, status);
-      setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
-      toast.success('Ticket status updated');
-    } catch {
-      toast.error('Failed to update status');
+      // Mock data - replace with actual API call
+      const mockTickets: Ticket[] = [
+        {
+          id: '1',
+          title: 'Login Issue',
+          description: 'Unable to access the system with correct credentials',
+          status: 'open',
+          priority: 'high',
+          category: 'Technical',
+          submittedBy: 'john.doe@example.com',
+          assignedTo: 'tech-support',
+          createdAt: new Date('2024-01-15'),
+          updatedAt: new Date('2024-01-15')
+        },
+        {
+          id: '2',
+          title: 'Course Enrollment Problem',
+          description: 'Student cannot enroll in the selected course',
+          status: 'in-progress',
+          priority: 'medium',
+          category: 'Academic',
+          submittedBy: 'jane.smith@example.com',
+          assignedTo: 'academic-support',
+          createdAt: new Date('2024-01-14'),
+          updatedAt: new Date('2024-01-16')
+        },
+        {
+          id: '3',
+          title: 'Payment Processing Error',
+          description: 'Credit card payment is not going through',
+          status: 'resolved',
+          priority: 'high',
+          category: 'Financial',
+          submittedBy: 'mike.johnson@example.com',
+          assignedTo: 'finance-team',
+          createdAt: new Date('2024-01-13'),
+          updatedAt: new Date('2024-01-15')
+        }
+      ];
+      
+      setTickets(mockTickets);
+      setFilteredTickets(mockTickets);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const remove = async (id: string) => {
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
-      await supportTicketService.deleteTicket(id);
-      setTickets(prev => prev.filter(t => t.id !== id));
-      toast.success('Ticket deleted');
-    } catch {
-      toast.error('Failed to delete ticket');
+      // Update ticket status - replace with actual API call
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === ticketId 
+          ? { ...ticket, status: newStatus, updatedAt: new Date() }
+          : ticket
+      ));
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
     }
   };
 
-  const filteredAndSorted = useMemo(() => {
-    const filtered = tickets.filter(t =>
-      [t.subject, t.message, t.email, t.name].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (window.confirm('Are you sure you want to delete this ticket?')) {
+      try {
+        // Delete ticket - replace with actual API call
+        setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+      } catch (error) {
+        console.error('Error deleting ticket:', error);
+      }
+    }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'open':
+        return 'destructive';
+      case 'in-progress':
+        return 'secondary';
+      case 'resolved':
+        return 'default';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'open':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'in-progress':
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'resolved':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default:
+        return <MessageSquare className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
     );
-    if (statusSort === 'all') return filtered;
-    return filtered.sort((a, b) => {
-      const aMatch = a.status === statusSort ? 0 : 1;
-      const bMatch = b.status === statusSort ? 0 : 1;
-      if (aMatch !== bMatch) return aMatch - bMatch;
-      return b.createdAt.toMillis() - a.createdAt.toMillis();
-    });
-  }, [tickets, search, statusSort]);
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading tickets...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Support Tickets</h1>
-              <p className="text-gray-600">View and manage all support tickets</p>
+              <p className="text-gray-600">Manage customer support requests</p>
             </div>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Ticket
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <Input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sort by status</span>
-              <Select value={statusSort} onValueChange={setStatusSort}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Tickets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalTickets}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Open Tickets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{openTickets}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">In Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{inProgressTickets}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Resolved</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{resolvedTickets}</div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid gap-4">
-          {filteredAndSorted.map(ticket => (
-            <div key={ticket.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <div className="text-xs">
-                    <div className="font-medium">{ticket.subject}</div>
-                    <div className="text-gray-600">{ticket.name} ({ticket.email})</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select value={ticket.status} onValueChange={(v) => updateStatus(ticket.id, v as any)}>
-                    <SelectTrigger className="h-8 w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-1" /> Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this ticket?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently remove the support ticket "{ticket.subject}".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => remove(ticket.id)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+        {/* Search and Filters */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search tickets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-              <div className="text-sm text-gray-700 mt-3">{ticket.message}</div>
-              <div className="text-xs text-gray-500 mt-2">{ticket.createdAt.toDate().toLocaleString()}</div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="open">Open</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Priority</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
             </div>
-          ))}
-          {filteredAndSorted.length === 0 && (
-            <div className="text-center text-gray-500">No tickets found</div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
+
+        {/* Tickets Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>All Tickets</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredTickets.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <MessageSquare className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p>No tickets found</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticket</TableHead>
+                    <TableHead>Submitted By</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTickets.map((ticket) => (
+                    <TableRow key={ticket.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{ticket.title}</div>
+                          <div className="text-sm text-gray-500">{ticket.description}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">{ticket.submittedBy}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{ticket.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getPriorityBadgeVariant(ticket.priority)}>
+                          {ticket.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(ticket.status)}
+                          <Badge variant={getStatusBadgeVariant(ticket.status)}>
+                            {ticket.status}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {ticket.createdAt.toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem>Assign</DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => handleDeleteTicket(ticket.id)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

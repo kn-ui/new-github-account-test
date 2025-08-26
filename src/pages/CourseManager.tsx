@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus } from 'lucide-react';
+import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp } from 'lucide-react';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -34,7 +35,7 @@ export default function CourseManager() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithApproval | null>(null);
   const [showCourseDialog, setShowCourseDialog] = useState(false);
 
-    // Calculate stats
+  // Calculate stats
   const totalCourses = courses.length;
   const activeCourses = courses.filter(c => c.isActive).length;
   const pendingCourses = courses.filter(c => !c.isActive).length;
@@ -127,21 +128,23 @@ export default function CourseManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Course Management</h1>
-                <p className="text-gray-600">Manage all system courses and approvals</p>
-              </div>
-            </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
+              <h1 className="text-4xl font-bold mb-4">Course Management</h1>
+              <p className="text-xl text-green-100 max-w-2xl">
+                Manage all system courses, approvals, and content. Monitor course performance and student engagement.
+              </p>
+            </div>
+            <div className="mt-6 lg:mt-0">
+              <Button 
+                onClick={() => navigate('/create-course')} 
+                className="bg-white text-green-600 hover:bg-green-50 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Plus className="h-5 w-5 mr-2" />
                 Create Course
               </Button>
             </div>
@@ -149,232 +152,265 @@ export default function CourseManager() {
         </div>
       </div>
 
-      {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Courses</CardTitle>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Total Courses
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalCourses}</div>
+              <div className="text-3xl font-bold mb-2">{totalCourses}</div>
+              <div className="text-blue-100 text-sm">All courses</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Active Courses</CardTitle>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Active Courses
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeCourses}</div>
+              <div className="text-3xl font-bold mb-2">{activeCourses}</div>
+              <div className="text-green-100 text-sm">Published & active</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Pending Approval</CardTitle>
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Pending Approval
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pendingCourses}</div>
+              <div className="text-3xl font-bold mb-2">{pendingCourses}</div>
+              <div className="text-orange-100 text-sm">Awaiting review</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Students</CardTitle>
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Total Students
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalStudents}</div>
+              <div className="text-3xl font-bold mb-2">{totalStudents}</div>
+              <div className="text-purple-100 text-sm">Enrolled students</div>
             </CardContent>
           </Card>
         </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Label htmlFor="search">Search Courses</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Search by title or instructor..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        <Card className="mb-6 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2 block">Search Courses</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="search"
+                    placeholder="Search by title or instructor..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="md:w-48">
+                <Label htmlFor="status" className="text-sm font-medium text-gray-700 mb-2 block">Status Filter</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div>
-              <Label htmlFor="status-filter">Filter by Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Courses Grid */}
+        <div className="grid gap-6">
+          {filteredCourses.map((course) => (
+            <Card key={course.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                        <BookOpen className="h-8 w-8 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{course.title}</h3>
+                        <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            Instructor: {course.instructorName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Target className="h-4 w-4" />
+                            {course.category}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="h-4 w-4" />
+                            {course.duration} hours
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
+                    <Badge 
+                      variant="outline" 
+                      className={`px-3 py-1 text-sm font-medium ${getStatusColor(course)}`}
+                    >
+                      {getStatusText(course)}
+                    </Badge>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewCourse(course)}
+                        className="hover:bg-gray-50"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      
+                      {!course.isActive && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApproveCourse(course.id)}
+                            className="text-green-600 border-green-300 hover:bg-green-50"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRejectCourse(course.id)}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{course.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteCourse(course.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Courses Table */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Courses ({filteredCourses.length})
-              </h2>
+        {filteredCourses.length === 0 && (
+          <Card className="text-center py-12 shadow-lg">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="h-8 w-8 text-green-600" />
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCourses.map((course, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                        <p className="text-sm text-gray-500">{course.category}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{course.instructorName}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(course)}`}>
-                        {getStatusText(course)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {course.duration} weeks
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewCourse(course)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        {!course.isActive && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveCourse(course.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleRejectCourse(course.id)}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="h-4 w-4 mr-1" /> Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this course?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently remove the course "{course.title}".
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDeleteCourse(course.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredCourses.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                      No courses found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
+            <p className="text-gray-500 mb-4">
+              {searchTerm || statusFilter !== 'all' 
+                ? 'Try adjusting your search or filters'
+                : 'Get started by creating your first course'
+              }
+            </p>
+            {!searchTerm && statusFilter === 'all' && (
+              <Button onClick={() => navigate('/create-course')} className="bg-green-600 hover:bg-green-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Course
+              </Button>
+            )}
+          </Card>
+        )}
       </div>
 
-      {/* Course Details Dialog */}
+      {/* Course Detail Dialog */}
       <Dialog open={showCourseDialog} onOpenChange={setShowCourseDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Course Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-green-600" />
+              Course Details
+            </DialogTitle>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4">
               <div>
-                <Label>Title</Label>
-                <p className="text-sm text-gray-900 font-medium">{selectedCourse.title}</p>
+                <h3 className="text-lg font-semibold text-gray-900">{selectedCourse.title}</h3>
+                <p className="text-gray-600">{selectedCourse.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Instructor:</span>
+                  <p className="text-gray-600">{selectedCourse.instructorName}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Category:</span>
+                  <p className="text-gray-600">{selectedCourse.category}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Duration:</span>
+                  <p className="text-gray-600">{selectedCourse.duration} hours</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Max Students:</span>
+                  <p className="text-gray-600">{selectedCourse.maxStudents}</p>
+                </div>
               </div>
               <div>
-                <Label>Description</Label>
-                <p className="text-sm text-gray-600">{selectedCourse.description}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Category</Label>
-                  <p className="text-sm text-gray-900">{selectedCourse.category}</p>
-                </div>
-                <div>
-                  <Label>Duration</Label>
-                  <p className="text-sm text-gray-900">{selectedCourse.duration} weeks</p>
-                </div>
-                <div>
-                  <Label>Max Students</Label>
-                  <p className="text-sm text-gray-900">{selectedCourse.maxStudents}</p>
-                </div>
-                <div>
-                  <Label>Instructor</Label>
-                  <p className="text-sm text-gray-900">{selectedCourse.instructorName}</p>
-                </div>
-              </div>
-              {selectedCourse.syllabus && (
-                <div>
-                  <Label>Syllabus</Label>
-                  <p className="text-sm text-gray-600">{selectedCourse.syllabus}</p>
-                </div>
-              )}
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowCourseDialog(false)}>
-                  Close
-                </Button>
+                <span className="font-medium text-gray-700">Syllabus:</span>
+                <p className="text-gray-600 mt-1">{selectedCourse.syllabus}</p>
               </div>
             </div>
           )}

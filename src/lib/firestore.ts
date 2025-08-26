@@ -467,6 +467,16 @@ export const supportTicketService = {
     return docRef.id;
   },
 
+  async getTickets(limitCount = 100): Promise<FirestoreSupportTicket[]> {
+    const q = query(
+      collections.supportTickets(),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
+  },
+
   async getTicketsByUser(userId: string): Promise<FirestoreSupportTicket[]> {
     const q = query(
       collections.supportTickets(),
@@ -480,6 +490,11 @@ export const supportTicketService = {
   async deleteTicket(ticketId: string): Promise<void> {
     const docRef = doc(db, 'support_tickets', ticketId);
     await deleteDoc(docRef);
+  },
+
+  async updateTicket(ticketId: string, updates: Partial<FirestoreSupportTicket>): Promise<void> {
+    const docRef = doc(db, 'support_tickets', ticketId);
+    await updateDoc(docRef, updates as any);
   },
 
   async updateTicketStatus(ticketId: string, status: FirestoreSupportTicket['status']): Promise<void> {
@@ -787,37 +802,7 @@ export const eventService = {
   },
 };
 
-// Support Ticket operations
-export const supportTicketService = {
-  async getTickets(limitCount = 100): Promise<FirestoreSupportTicket[]> {
-    const q = query(
-      collections.supportTickets(),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreSupportTicket));
-  },
 
-  async createTicket(ticketData: Omit<FirestoreSupportTicket, 'id' | 'createdAt'>): Promise<string> {
-    const now = Timestamp.now();
-    const docRef = await addDoc(collections.supportTickets(), {
-      ...ticketData,
-      createdAt: now,
-    });
-    return docRef.id;
-  },
-
-  async updateTicket(ticketId: string, updates: Partial<FirestoreSupportTicket>): Promise<void> {
-    const docRef = doc(db, 'support_tickets', ticketId);
-    await updateDoc(docRef, updates as any);
-  },
-
-  async deleteTicket(ticketId: string): Promise<void> {
-    const docRef = doc(db, 'support_tickets', ticketId);
-    await deleteDoc(docRef);
-  },
-};
 
 // Forum operations
 export const forumService = {

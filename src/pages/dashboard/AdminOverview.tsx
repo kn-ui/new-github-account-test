@@ -12,7 +12,10 @@ import {
   Settings,
   Calendar,
   User,
-  BookOpen as BookOpenIcon
+  BookOpen as BookOpenIcon,
+  Activity,
+  Target,
+  Zap
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { courseService } from '@/lib/firestore';
@@ -93,126 +96,172 @@ const AdminOverview = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening in your system.</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Admin Dashboard</h1>
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+              Welcome back! Here's what's happening in your system. Monitor users, courses, and events at a glance.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Total Users</CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Total Users
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <div className="text-blue-100 text-sm">Active accounts</div>
+              <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
+              <div className="text-blue-100 text-sm flex items-center gap-1">
+                <Activity className="h-4 w-4" />
+                Active accounts
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Active Courses</CardTitle>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Active Courses
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCourses}</div>
-              <div className="text-green-100 text-sm">Published courses</div>
+              <div className="text-3xl font-bold mb-2">{stats.totalCourses}</div>
+              <div className="text-green-100 text-sm flex items-center gap-1">
+                <Target className="h-4 w-4" />
+                Published courses
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">System Health</CardTitle>
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                System Health
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">98%</div>
-              <div className="text-purple-100 text-sm">All systems operational</div>
+              <div className="text-3xl font-bold mb-2">98%</div>
+              <div className="text-purple-100 text-sm flex items-center gap-1">
+                <Activity className="h-4 w-4" />
+                All systems operational
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-white">Pending Reviews</CardTitle>
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Pending Reviews
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingReviews}</div>
-              <div className="text-orange-100 text-sm">Awaiting approval</div>
+              <div className="text-3xl font-bold mb-2">{stats.pendingReviews}</div>
+              <div className="text-orange-100 text-sm flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                Awaiting approval
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
           {/* Recent Users */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+              <CardTitle className="flex items-center gap-3 text-blue-900">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
                 Recent Users
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {recentUsers.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {recentUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-blue-600" />
+                    <div key={user.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all duration-200">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                          <User className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.displayName}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="font-semibold text-gray-900 text-lg">{user.displayName}</p>
+                          <p className="text-sm text-gray-600">{user.email}</p>
                         </div>
                       </div>
-                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : 'outline'}>
+                      <Badge 
+                        variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : 'outline'}
+                        className="text-sm px-3 py-1"
+                      >
                         {user.role}
                       </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <User className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p>Recent users will be shown here</p>
+                <div className="text-center py-12 text-gray-500">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <p className="text-lg font-medium">Recent users will be shown here</p>
+                  <p className="text-sm text-gray-400">New user registrations will appear in this section</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Pending Courses */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b">
+              <CardTitle className="flex items-center gap-3 text-green-900">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
                 Pending Courses
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {pendingCourses.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {pendingCourses.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <BookOpenIcon className="h-4 w-4 text-green-600" />
+                    <div key={course.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border border-gray-100 hover:border-green-200 transition-all duration-200">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md">
+                          <BookOpenIcon className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{course.title}</p>
-                          <p className="text-sm text-gray-500">Created {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}</p>
+                          <p className="font-semibold text-gray-900 text-lg">{course.title}</p>
+                          <p className="text-sm text-gray-600">
+                            Created {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
-                      <Badge variant="outline">{course.isActive ? 'Active' : 'Pending'}</Badge>
+                      <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 px-3 py-1">
+                        Pending
+                      </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <BookOpenIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p>Pending courses will be shown here</p>
+                <div className="text-center py-12 text-gray-500">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpenIcon className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="text-lg font-medium">Pending courses will be shown here</p>
+                  <p className="text-sm text-gray-400">New course submissions will appear in this section</p>
                 </div>
               )}
             </CardContent>
@@ -220,56 +269,70 @@ const AdminOverview = () => {
         </div>
 
         {/* Recent Events */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
+            <CardTitle className="flex items-center gap-3 text-purple-900">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-purple-600" />
+              </div>
               Recent Events
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {recentEvents.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentEvents.map((event) => (
-                  <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <Calendar className="h-4 w-4 text-purple-600" />
+                  <div key={event.id} className="p-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl border border-gray-100 hover:border-purple-200 transition-all duration-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-md">
+                        <Calendar className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{event.title}</p>
-                        <p className="text-sm text-gray-500">{event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}</p>
+                        <p className="font-semibold text-gray-900">{event.title}</p>
+                        <p className="text-sm text-gray-600">
+                          {event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
-                    <Badge variant="secondary">{event.type}</Badge>
+                    <Badge variant="secondary" className="w-full justify-center">
+                      {event.type}
+                    </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p>Recent events will be shown here</p>
+              <div className="text-center py-12 text-gray-500">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-8 w-8 text-purple-600" />
+                </div>
+                <p className="text-lg font-medium">Recent events will be shown here</p>
+                <p className="text-sm text-gray-400">New events will appear in this section</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+            <CardTitle className="flex items-center gap-3 text-gray-900">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Zap className="h-6 w-6 text-gray-600" />
+              </div>
+              Quick Actions
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="flex flex-wrap gap-4">
               <Link to="/dashboard/reports">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <FileText className="h-4 w-4 mr-2" />
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <FileText className="h-5 w-5 mr-3" />
                   View Reports
                 </Button>
               </Link>
               <Link to="/dashboard/settings">
-                <Button variant="outline">
-                  <Settings className="h-4 w-4 mr-2" />
+                <Button variant="outline" className="border-2 hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1">
+                  <Settings className="h-5 w-5 mr-3" />
                   System Settings
                 </Button>
               </Link>

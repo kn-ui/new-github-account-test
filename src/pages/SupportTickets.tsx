@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supportTicketService } from '@/lib/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,8 +38,8 @@ interface Ticket {
   category: string;
   submittedBy: string;
   assignedTo: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: any; // Timestamp from Firestore
+  updatedAt: any; // Timestamp from Firestore
 }
 
 const SupportTicketsPage = () => {
@@ -86,48 +87,9 @@ const SupportTicketsPage = () => {
 
   const fetchTickets = async () => {
     try {
-      // Mock data - replace with actual API call
-      const mockTickets: Ticket[] = [
-        {
-          id: '1',
-          title: 'Login Issue',
-          description: 'Unable to access the system with correct credentials',
-          status: 'open',
-          priority: 'high',
-          category: 'Technical',
-          submittedBy: 'john.doe@example.com',
-          assignedTo: 'tech-support',
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-15')
-        },
-        {
-          id: '2',
-          title: 'Course Enrollment Problem',
-          description: 'Student cannot enroll in the selected course',
-          status: 'in-progress',
-          priority: 'medium',
-          category: 'Academic',
-          submittedBy: 'jane.smith@example.com',
-          assignedTo: 'academic-support',
-          createdAt: new Date('2024-01-14'),
-          updatedAt: new Date('2024-01-16')
-        },
-        {
-          id: '3',
-          title: 'Payment Processing Error',
-          description: 'Credit card payment is not going through',
-          status: 'resolved',
-          priority: 'high',
-          category: 'Financial',
-          submittedBy: 'mike.johnson@example.com',
-          assignedTo: 'finance-team',
-          createdAt: new Date('2024-01-13'),
-          updatedAt: new Date('2024-01-15')
-        }
-      ];
-      
-      setTickets(mockTickets);
-      setFilteredTickets(mockTickets);
+      const fetchedTickets = await supportTicketService.getTickets();
+      setTickets(fetchedTickets);
+      setFilteredTickets(fetchedTickets);
     } catch (error) {
       console.error('Error fetching tickets:', error);
     } finally {
@@ -137,12 +99,8 @@ const SupportTicketsPage = () => {
 
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
-      // Update ticket status - replace with actual API call
-      setTickets(prev => prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: newStatus, updatedAt: new Date() }
-          : ticket
-      ));
+      await supportTicketService.updateTicket(ticketId, { status: newStatus as any });
+      fetchTickets(); // Refresh the list
     } catch (error) {
       console.error('Error updating ticket status:', error);
     }
@@ -151,8 +109,8 @@ const SupportTicketsPage = () => {
   const handleDeleteTicket = async (ticketId: string) => {
     if (window.confirm('Are you sure you want to delete this ticket?')) {
       try {
-        // Delete ticket - replace with actual API call
-        setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+        await supportTicketService.deleteTicket(ticketId);
+        fetchTickets(); // Refresh the list
       } catch (error) {
         console.error('Error deleting ticket:', error);
       }
@@ -356,7 +314,7 @@ const SupportTicketsPage = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
-                        {ticket.createdAt.toLocaleDateString()}
+                        {ticket.createdAt instanceof Date ? ticket.createdAt.toLocaleDateString() : ticket.createdAt.toDate().toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

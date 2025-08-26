@@ -28,6 +28,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -43,11 +44,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface User {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
   role: string;
-  status: string;
-  createdAt: Date;
+  isActive: boolean;
+  createdAt: any; // Timestamp from Firestore
 }
 
 const UserManager = () => {
@@ -57,7 +58,7 @@ const UserManager = () => {
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({
-    name: '',
+    displayName: '',
     email: '',
     role: 'student',
     password: ''
@@ -65,7 +66,7 @@ const UserManager = () => {
 
   // Calculate stats
   const totalUsers = users.length;
-  const activeUsers = users.filter(u => u.status === 'active').length;
+  const activeUsers = users.filter(u => u.isActive).length;
   const totalTeachers = users.filter(u => u.role === 'teacher').length;
   const totalStudents = users.filter(u => u.role === 'student').length;
 
@@ -75,7 +76,7 @@ const UserManager = () => {
 
   useEffect(() => {
     const filtered = users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -112,9 +113,14 @@ const UserManager = () => {
 
   const handleAddUser = async () => {
     try {
-      await userService.createUser(newUser);
+      await createUser({
+        displayName: newUser.displayName,
+        email: newUser.email,
+        role: newUser.role,
+        isActive: true
+      });
       setIsAddUserOpen(false);
-      setNewUser({ name: '', email: '', role: 'student', password: '' });
+      setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();
     } catch (error) {
       console.error('Error creating user:', error);
@@ -125,11 +131,11 @@ const UserManager = () => {
     const csvContent = [
       ['Name', 'Email', 'Role', 'Status', 'Created At'],
       ...filteredUsers.map(user => [
-        user.name,
+        user.displayName,
         user.email,
         user.role,
-        user.status,
-        user.createdAt.toLocaleDateString()
+        user.isActive ? 'Active' : 'Inactive',
+        user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -180,13 +186,13 @@ const UserManager = () => {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">Name</Label>
-                      <Input
-                        id="name"
-                        value={newUser.name}
-                        onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                        className="col-span-3"
-                      />
+                                              <Label htmlFor="displayName" className="text-right">Name</Label>
+                        <Input
+                          id="displayName"
+                          value={newUser.displayName}
+                          onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                          className="col-span-3"
+                        />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="email" className="text-right">Email</Label>
@@ -311,13 +317,13 @@ const UserManager = () => {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src="" alt={user.name} />
+                          <AvatarImage src="" alt={user.displayName} />
                           <AvatarFallback className="bg-blue-100 text-blue-600">
-                            {user.name.charAt(0).toUpperCase()}
+                            {user.displayName.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{user.name}</div>
+                          <div className="font-medium">{user.displayName}</div>
                           <div className="text-sm text-gray-500">{user.email}</div>
                         </div>
                       </div>
@@ -328,12 +334,12 @@ const UserManager = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                        {user.status}
+                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                        {user.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {user.createdAt.toLocaleDateString()}
+                      {user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

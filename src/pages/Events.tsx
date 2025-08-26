@@ -33,7 +33,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date;
+  date: any; // Timestamp from Firestore
   time: string;
   location: string;
   type: string;
@@ -51,8 +51,14 @@ const EventsPage = () => {
 
   // Calculate stats
   const totalEvents = events.length;
-  const upcomingEvents = events.filter(e => new Date(e.date) > new Date()).length;
-  const pastEvents = events.filter(e => new Date(e.date) <= new Date()).length;
+  const upcomingEvents = events.filter(e => {
+    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
+    return eventDate > new Date();
+  }).length;
+  const pastEvents = events.filter(e => {
+    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
+    return eventDate <= new Date();
+  }).length;
 
   useEffect(() => {
     fetchEvents();
@@ -66,13 +72,13 @@ const EventsPage = () => {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase())
+        (event.location && event.location.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(event => event.status === statusFilter);
+      filtered = filtered.filter(event => event.status && event.status === statusFilter);
     }
 
     setFilteredEvents(filtered);
@@ -275,7 +281,7 @@ const EventsPage = () => {
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-gray-400" />
                               <div>
-                                <div className="font-medium">{event.date.toLocaleDateString()}</div>
+                                <div className="font-medium">{event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}</div>
                                 <div className="text-sm text-gray-500">{event.time}</div>
                               </div>
                             </div>

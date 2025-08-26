@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -36,8 +36,8 @@ export default function CourseManager() {
 
     // Calculate stats
   const totalCourses = courses.length;
-  const activeCourses = courses.filter(c => c.status === 'active').length;
-  const pendingCourses = courses.filter(c => c.status === 'pending').length;
+  const activeCourses = courses.filter(c => c.isActive).length;
+  const pendingCourses = courses.filter(c => !c.isActive).length;
   const totalStudents = courses.reduce((total, course) => total + (course.enrolledStudents || 0), 0);
 
   const navigate = useNavigate();

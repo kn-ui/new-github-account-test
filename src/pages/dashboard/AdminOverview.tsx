@@ -21,23 +21,23 @@ import { analyticsService } from '@/lib/firestore';
 
 interface User {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
   role: string;
-  createdAt: Date;
+  createdAt: any; // Timestamp from Firestore
 }
 
 interface Course {
   id: string;
   title: string;
-  status: string;
-  createdAt: Date;
+  isActive: boolean;
+  createdAt: any; // Timestamp from Firestore
 }
 
 interface Event {
   id: string;
   title: string;
-  date: Date;
+  date: any; // Timestamp from Firestore
   type: string;
 }
 
@@ -64,7 +64,13 @@ const AdminOverview = () => {
           eventService.getEvents(5)
         ]);
 
-        setStats(adminStats);
+        setStats({
+          totalUsers: adminStats.totalUsers,
+          totalCourses: adminStats.activeCourses,
+          totalEvents: 0, // Not provided by analytics service
+          pendingReviews: adminStats.pendingCourses,
+          totalTeachers: adminStats.totalTeachers
+        });
         setRecentUsers(users);
         setPendingCourses(courses);
         setRecentEvents(events);
@@ -158,7 +164,7 @@ const AdminOverview = () => {
                           <User className="h-4 w-4 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="font-medium text-gray-900">{user.displayName}</p>
                           <p className="text-sm text-gray-500">{user.email}</p>
                         </div>
                       </div>
@@ -196,10 +202,10 @@ const AdminOverview = () => {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{course.title}</p>
-                          <p className="text-sm text-gray-500">Created {course.createdAt.toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-500">Created {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <Badge variant="outline">Pending</Badge>
+                      <Badge variant="outline">{course.isActive ? 'Active' : 'Pending'}</Badge>
                     </div>
                   ))}
                 </div>
@@ -232,7 +238,7 @@ const AdminOverview = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{event.title}</p>
-                        <p className="text-sm text-gray-500">{event.date.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-500">{event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}</p>
                       </div>
                     </div>
                     <Badge variant="secondary">{event.type}</Badge>

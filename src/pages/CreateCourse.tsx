@@ -25,8 +25,8 @@ const CreateCourse = () => {
     }
   }, [currentUser, userProfile, loading, navigate]);
 
-  const handleSuccess = () => {
-    navigate('/dashboard');
+ const handleSuccess = () => {
+    navigate('/dashboard/courses'); // Changed from /dashboard to /dashboard/courses
   };
 
   const handleCancel = () => {

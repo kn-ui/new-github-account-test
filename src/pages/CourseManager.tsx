@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Card } from '@/components/ui/card';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -32,6 +33,12 @@ export default function CourseManager() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<CourseWithApproval | null>(null);
   const [showCourseDialog, setShowCourseDialog] = useState(false);
+
+    // Calculate stats
+  const totalCourses = courses.length;
+  const activeCourses = courses.filter(c => c.status === 'active').length;
+  const pendingCourses = courses.filter(c => c.status === 'pending').length;
+  const totalStudents = courses.reduce((total, course) => total + (course.enrolledStudents || 0), 0);
 
   const navigate = useNavigate();
 
@@ -141,6 +148,45 @@ export default function CourseManager() {
           </div>
         </div>
       </div>
+
+      {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Courses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalCourses}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Active Courses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCourses}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Pending Approval</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingCourses}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Students</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalStudents}</div>
+            </CardContent>
+          </Card>
+        </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}

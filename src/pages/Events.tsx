@@ -1,256 +1,335 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, Edit2, Trash2, Plus } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
-import { eventService, FirestoreEvent } from '@/lib/firestore';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  MoreHorizontal, 
+  Search, 
+  Plus, 
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Users
+} from 'lucide-react';
+import { eventService } from '@/lib/firestore';
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  time: string;
+  location: string;
+  type: string;
+  maxAttendees: number;
+  currentAttendees: number;
+  status: string;
+}
 
 const EventsPage = () => {
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<FirestoreEvent | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: '', date: '', description: '' });
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'title-asc' | 'title-desc'>('date-desc');
-  const navigate = useNavigate();
 
-  const load = async () => {
+  // Calculate stats
+  const totalEvents = events.length;
+  const upcomingEvents = events.filter(e => new Date(e.date) > new Date()).length;
+  const pastEvents = events.filter(e => new Date(e.date) <= new Date()).length;
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    let filtered = events;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(event =>
+        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(event => event.status === statusFilter);
+    }
+
+    setFilteredEvents(filtered);
+  }, [searchTerm, statusFilter, events]);
+
+  const fetchEvents = async () => {
     try {
-      setLoading(true);
-      const data = await eventService.getEvents(500);
-      setEvents(data);
-    } catch (e) {
-      toast.error('Failed to load events');
+      const fetchedEvents = await eventService.getEvents();
+      setEvents(fetchedEvents);
+      setFilteredEvents(fetchedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  const openNew = () => {
-    setEditing(null);
-    setForm({ title: '', date: '', description: '' });
-    setShowDialog(true);
-  };
-
-  const openEdit = (ev: FirestoreEvent) => {
-    setEditing(ev);
-    const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    setForm({ title: ev.title, date: `${y}-${m}-${day}`, description: ev.description });
-    setShowDialog(true);
-  };
-
-  const save = async () => {
-    try {
-      if (!form.title || !form.date || !form.description) {
-        toast.error('Please fill in all required fields');
-        return;
+  const handleDeleteEvent = async (eventId: string) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        await eventService.deleteEvent(eventId);
+        fetchEvents();
+      } catch (error) {
+        console.error('Error deleting event:', error);
       }
-      const payload = {
-        title: form.title,
-        date: new Date(form.date) as any,
-        description: form.description,
-        createdBy: 'admin'
-      };
-      if (editing) {
-        await eventService.updateEvent(editing.id, payload as any);
-        toast.success('Event updated');
-      } else {
-        await eventService.createEvent(payload as any);
-        toast.success('Event created');
-      }
-      setShowDialog(false);
-      await load();
-    } catch (e) {
-      toast.error('Failed to save event');
     }
   };
 
-  const remove = async (id: string) => {
-    try {
-      await eventService.deleteEvent(id);
-      toast.success('Event deleted');
-      await load();
-    } catch (e) {
-      toast.error('Failed to delete event');
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return 'default';
+      case 'ongoing':
+        return 'secondary';
+      case 'completed':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
-  const filteredAndSorted = useMemo(() => {
-    const filtered = events.filter(ev =>
-      [ev.title, ev.description].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'workshop':
+        return 'default';
+      case 'seminar':
+        return 'secondary';
+      case 'meeting':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
     );
-    const sorted = [...filtered].sort((a, b) => {
-      const ad = (a.date as any)?.toDate ? (a.date as any).toDate() : (a.date as unknown as Date);
-      const bd = (b.date as any)?.toDate ? (b.date as any).toDate() : (b.date as unknown as Date);
-      switch (sortBy) {
-        case 'date-asc':
-          return ad.getTime() - bd.getTime();
-        case 'date-desc':
-          return bd.getTime() - ad.getTime();
-        case 'title-asc':
-          return a.title.localeCompare(b.title);
-        case 'title-desc':
-          return b.title.localeCompare(a.title);
-        default:
-          return 0;
-      }
-    });
-    return sorted;
-  }, [events, search, sortBy]);
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading events...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">All Events</h1>
-              <p className="text-gray-600">Manage all system calendar events</p>
+              <h1 className="text-2xl font-bold text-gray-900">Events Management</h1>
+              <p className="text-gray-600">Manage system events and schedules</p>
             </div>
-            <div className="ml-auto flex space-x-3">
-              <Button variant="outline" asChild>
-                <Link to="/calendar">
-                  <CalendarIcon className="h-4 w-4 mr-2" /> View Calendar
-                </Link>
-              </Button>
-              <Button onClick={openNew}>
-                <Plus className="h-4 w-4 mr-2" /> New Event
-              </Button>
+            <div className="flex gap-3">
+              <Link to="/calendar">
+                <Button variant="outline">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  View Calendar
+                </Button>
+              </Link>
+              <Link to="/dashboard/create-event">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Event
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <Input placeholder="Search events..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sort by</span>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date-desc">Date: Newest</SelectItem>
-                  <SelectItem value="date-asc">Date: Oldest</SelectItem>
-                  <SelectItem value="title-asc">Title: A → Z</SelectItem>
-                  <SelectItem value="title-desc">Title: Z → A</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Total Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalEvents}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Upcoming Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{upcomingEvents}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-r from-gray-500 to-gray-600 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-white">Past Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pastEvents}</div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="grid gap-4">
-          {filteredAndSorted.map(ev => {
-            const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date);
-            return (
-              <div key={ev.id} className="bg-white border rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <div className="font-medium text-gray-900">{ev.title}</div>
-                      <div className="text-xs text-gray-500">{d.toLocaleDateString()}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(ev)}>
-                      <Edit2 className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteId(ev.id)}>
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this event?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove the event
-                            "{ev.title}" scheduled on {((ev.date as any)?.toDate ? (ev.date as any).toDate() : (ev.date as unknown as Date)).toLocaleDateString()}.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={async () => {
-                              await remove(ev.id);
-                              setConfirmDeleteId(null);
-                            }}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Mini Calendar */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-8">
+              <CardHeader>
+                <CardTitle>Calendar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <CalendarIcon className="h-32 w-32 mx-auto text-gray-300" />
+                  <p className="text-gray-500 mt-2">Calendar view coming soon</p>
                 </div>
-                <div className="text-sm text-gray-700 mt-3">{ev.description}</div>
-              </div>
-            );
-          })}
-          {filteredAndSorted.length === 0 && (
-            <div className="text-center text-gray-500 col-span-full">No events found</div>
-          )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Events List */}
+          <div className="lg:col-span-2">
+            {/* Search and Filters */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search events..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Events Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>All Events</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredEvents.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <CalendarIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                    <p>No events found</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Attendees</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEvents.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{event.title}</div>
+                              <div className="text-sm text-gray-500">{event.description}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-gray-400" />
+                              <div>
+                                <div className="font-medium">{event.date.toLocaleDateString()}</div>
+                                <div className="text-sm text-gray-500">{event.time}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <span>{event.location}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getTypeBadgeVariant(event.type)}>
+                              {event.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-gray-400" />
+                              <span>{event.currentAttendees}/{event.maxAttendees}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusBadgeVariant(event.status)}>
+                              {event.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => handleDeleteEvent(event.id)}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Event' : 'New Event'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="evTitle">Title</Label>
-              <Input id="evTitle" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="evDate">Date</Label>
-              <Input id="evDate" type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="evDesc">Description</Label>
-              <Textarea id="evDesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-            </div>
-            <div className="flex gap-2">
-              <Button className="flex-1" onClick={save}>Save</Button>
-              <Button className="flex-1" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

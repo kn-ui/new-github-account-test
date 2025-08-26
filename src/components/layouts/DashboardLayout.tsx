@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
   FolderOpen,
   TrendingUp
 } from 'lucide-react';
+import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,9 +40,23 @@ interface NavigationItem {
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+
+  useEffect(() => {
+    // Load recent announcements for notifications
+    const loadAnnouncements = async () => {
+      try {
+        const list = await announcementService.getAnnouncements(undefined, 5);
+        setAnnouncements(list);
+      } catch {}
+    };
+    loadAnnouncements();
+  }, []);
 
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
@@ -59,7 +74,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
           { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
         ];
-      
       case 'teacher':
         return [
           ...baseItems,
@@ -71,7 +85,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'Course Materials', href: '/dashboard/materials', icon: FolderOpen },
           { label: 'Reports', href: '/dashboard/teacher-reports', icon: BarChart3 },
         ];
-      
       case 'student':
         return [
           ...baseItems,
@@ -82,7 +95,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'Announcements', href: '/dashboard/student-announcements', icon: Bell },
           { label: 'Progress', href: '/dashboard/progress', icon: TrendingUp },
         ];
-      
       default:
         return baseItems;
     }
@@ -98,6 +110,22 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       return location.pathname === '/dashboard';
     }
     return location.pathname.startsWith(href);
+  };
+
+  const onSubmitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchValue.trim();
+    if (!query) return;
+    // Role-based destination
+    if (userRole === 'admin') {
+      // Admin can search all; default to Users list and pass query
+      navigate(`/dashboard/users?search=${encodeURIComponent(query)}`);
+    } else if (userRole === 'teacher') {
+      navigate(`/dashboard/my-courses?search=${encodeURIComponent(query)}`);
+    } else {
+      navigate(`/dashboard/student-courses?search=${encodeURIComponent(query)}`);
+    }
+    setShowAnnouncements(false);
   };
 
   return (
@@ -118,10 +146,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
-            <div className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2">
               <GraduationCap className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">LMS</span>
-            </div>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
@@ -186,7 +214,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 dashboard-main">
-{/* Top bar */}
+        {/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <Button
@@ -198,31 +226,46 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <Menu className="h-5 w-5" />
             </Button>
             
-            <div className="flex items-center space-x-4 flex-1 justify-center">
+            <form onSubmit={onSubmitSearch} className="flex items-center space-x-4 flex-1 justify-center">
               {/* Search Bar */}
               <div className="relative max-w-md w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search users, courses, events..."
+                  placeholder={userRole === 'admin' ? 'Search users, courses, events...' : 'Search courses...'}
                   className="pl-10 w-full"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
               </div>
-            </div>
+            </form>
             
-            <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                  3
-                </span>
-              </Button>
-              
-              {/* Logo - Clickable to Home */}
-              <Link to="/" className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">LMS</span>
-              </Link>
+            <div className="flex items-center space-x-2">
+              {/* Notifications (Announcements) */}
+              <div className="relative">
+                <Button variant="ghost" size="sm" className="relative" onClick={() => setShowAnnouncements(!showAnnouncements)}>
+                  <Bell className="h-5 w-5" />
+                  {announcements.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full" />
+                  )}
+                </Button>
+                {showAnnouncements && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white border rounded-md shadow-lg z-50">
+                    <div className="px-3 py-2 border-b text-sm font-semibold">Announcements</div>
+                    <div className="max-h-80 overflow-auto">
+                      {announcements.length === 0 ? (
+                        <div className="p-4 text-sm text-gray-500">No announcements</div>
+                      ) : (
+                        announcements.map(a => (
+                          <div key={a.id} className="p-3 hover:bg-gray-50">
+                            <div className="text-sm font-medium text-gray-900">{a.title}</div>
+                            <div className="text-xs text-gray-500">{a.createdAt.toDate().toLocaleString()}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

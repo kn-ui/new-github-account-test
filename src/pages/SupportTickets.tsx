@@ -32,16 +32,15 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { supportTicketService } from '@/lib/firestore';
+import DeleteConfirmationDialog from '@/components/ui/DeleteConfirmationDialog';
 
 interface Ticket {
   id: string;
-  title: string;
-  description: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
   status: string;
-  priority: string;
-  category: string;
-  submittedBy: string;
-  assignedTo: string;
   createdAt: any; // Timestamp from Firestore
   updatedAt: any; // Timestamp from Firestore
 }
@@ -51,7 +50,17 @@ const SupportTicketsPage = () => {
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    ticketId: string | null;
+    ticketSubject: string;
+  }>({
+    isOpen: false,
+    ticketId: null,
+    ticketSubject: '',
+  });
+
   const [loading, setLoading] = useState(true);
 
   // Calculate stats
@@ -70,9 +79,10 @@ const SupportTicketsPage = () => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(ticket =>
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase())
+        ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.message.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -81,13 +91,8 @@ const SupportTicketsPage = () => {
       filtered = filtered.filter(ticket => ticket.status === statusFilter);
     }
 
-    // Apply priority filter
-    if (priorityFilter !== 'all') {
-      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
-    }
-
     setFilteredTickets(filtered);
-  }, [searchTerm, statusFilter, priorityFilter, tickets]);
+  }, [searchTerm, statusFilter, tickets]);
 
   const fetchTickets = async () => {
     try {
@@ -110,10 +115,19 @@ const SupportTicketsPage = () => {
     }
   };
 
-  const handleDeleteTicket = async (ticketId: string) => {
-    if (window.confirm('Are you sure you want to delete this ticket?')) {
+  const handleDeleteTicket = (ticketId: string, ticketSubject: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      ticketId,
+      ticketSubject,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteDialog.ticketId) {
       try {
-        await supportTicketService.deleteTicket(ticketId);
+        await supportTicketService.deleteTicket(deleteDialog.ticketId);
+        setDeleteDialog({ isOpen: false, ticketId: null, ticketSubject: '' });
         fetchTickets(); // Refresh the list
       } catch (error) {
         console.error('Error deleting ticket:', error);
@@ -134,18 +148,7 @@ const SupportTicketsPage = () => {
     }
   };
 
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'secondary';
-      case 'low':
-        return 'outline';
-      default:
-        return 'outline';
-    }
-  };
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -172,25 +175,17 @@ const SupportTicketsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-orange-600 via-orange-700 to-red-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4">Support Tickets</h1>
-              <p className="text-xl text-orange-100 max-w-2xl">
-                Manage customer support requests and technical issues. Track ticket status and ensure timely resolution.
-              </p>
-            </div>
-            <div className="mt-6 lg:mt-0">
-              <Button className="bg-white text-orange-600 hover:bg-orange-50 transition-all duration-300 shadow-lg hover:shadow-xl">
-                <Plus className="h-5 w-5 mr-2" />
-                Create Ticket
-              </Button>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-3">Support Tickets</h1>
+            <p className="text-lg text-orange-100 max-w-2xl mx-auto">
+              Manage and track support requests from users across the system.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -253,7 +248,7 @@ const SupportTicketsPage = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search tickets by title, description, or submitter..."
+                  placeholder="Search tickets by name, email, subject, or message..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -269,16 +264,7 @@ const SupportTicketsPage = () => {
                 <option value="in-progress">In Progress</option>
                 <option value="resolved">Resolved</option>
               </select>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-              >
-                <option value="all">All Priority</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+
             </div>
           </CardContent>
         </Card>
@@ -299,8 +285,6 @@ const SupportTicketsPage = () => {
                 <TableRow className="bg-gray-50">
                   <TableHead className="font-semibold text-gray-900">Ticket</TableHead>
                   <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Priority</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Category</TableHead>
                   <TableHead className="font-semibold text-gray-900">Submitted By</TableHead>
                   <TableHead className="font-semibold text-gray-900">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -315,8 +299,8 @@ const SupportTicketsPage = () => {
                           <MessageSquare className="h-5 w-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 text-lg mb-1">{ticket.title}</div>
-                          <p className="text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
+                          <div className="font-semibold text-gray-900 text-lg mb-1">{ticket.name}</div>
+                          <p className="text-sm text-gray-600 line-clamp-2">{ticket.message}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -330,24 +314,11 @@ const SupportTicketsPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={getPriorityBadgeVariant(ticket.priority)}
-                        className="px-3 py-1"
-                      >
-                        {ticket.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="px-3 py-1">
-                        {ticket.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                           <User className="h-4 w-4 text-blue-600" />
                         </div>
-                        <span className="text-sm text-gray-700">{ticket.submittedBy}</span>
+                        <span className="text-sm text-gray-700">{ticket.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
@@ -371,7 +342,7 @@ const SupportTicketsPage = () => {
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-red-600 cursor-pointer"
-                            onClick={() => handleDeleteTicket(ticket.id)}
+                                                            onClick={() => handleDeleteTicket(ticket.id, ticket.subject)}
                           >
                             <AlertCircle className="h-4 w-4 mr-2" />
                             Delete
@@ -393,12 +364,12 @@ const SupportTicketsPage = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
+              {searchTerm || statusFilter !== 'all'
                 ? 'Try adjusting your search or filters'
                 : 'No support tickets have been created yet'
               }
             </p>
-            {!searchTerm && statusFilter === 'all' && priorityFilter === 'all' && (
+            {!searchTerm && statusFilter === 'all' && (
               <Button className="bg-orange-600 hover:bg-orange-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Ticket
@@ -407,6 +378,17 @@ const SupportTicketsPage = () => {
           </Card>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, ticketId: null, ticketSubject: '' })}
+        onConfirm={confirmDelete}
+        title="Delete Ticket"
+        description={`Are you sure you want to delete the ticket "${deleteDialog.ticketSubject}"? This action cannot be undone.`}
+        confirmText="Delete Ticket"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

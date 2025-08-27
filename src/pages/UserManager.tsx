@@ -173,85 +173,85 @@ const UserManager = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4">User Management</h1>
-              <p className="text-xl text-blue-100 max-w-2xl">
-                Manage user accounts, permissions, and system access. Monitor user activity and maintain security.
-              </p>
-            </div>
-            <div className="flex gap-3 mt-6 lg:mt-0">
-              <Button onClick={exportUsers} variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transition-all duration-300">
-                <FileSpreadsheet className="h-5 w-5 mr-2" />
-                Export Users
-              </Button>
-              <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
-                    <UserPlus className="h-5 w-5 mr-2" />
-                    Add User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <UserPlus className="h-5 w-5 text-blue-600" />
-                      Add New User
-                    </DialogTitle>
-                    <DialogDescription>
-                      Create a new user account with the specified role and permissions.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="displayName" className="text-right">Name</Label>
-                      <Input
-                        id="displayName"
-                        value={newUser.displayName}
-                        onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Enter full name"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newUser.email}
-                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Enter email address"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="role" className="text-right">Role</Label>
-                      <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-                      Create User
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-3">User Management</h1>
+            <p className="text-lg text-blue-100 max-w-2xl mx-auto">
+              Manage user accounts, roles, and permissions across the system.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 mb-6">
+          <Button onClick={exportUsers} variant="outline" className="border-2 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300">
+            <FileSpreadsheet className="h-5 w-5 mr-2" />
+            Export Users
+          </Button>
+          <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-blue-600" />
+                  Add New User
+                </DialogTitle>
+                <DialogDescription>
+                  Create a new user account with the specified role and permissions.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="displayName" className="text-right">Name</Label>
+                  <Input
+                    id="displayName"
+                    value={newUser.displayName}
+                    onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="role" className="text-right">Role</Label>
+                  <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
+                  Create User
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">

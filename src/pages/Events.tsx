@@ -31,6 +31,19 @@ import {
   Zap
 } from 'lucide-react';
 import { eventService } from '@/lib/firestore';
+import DeleteConfirmationDialog from '@/components/ui/DeleteConfirmationDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Event {
   id: string;
@@ -52,6 +65,27 @@ const EventsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    eventId: string | null;
+    eventTitle: string;
+  }>({
+    isOpen: false,
+    eventId: null,
+    eventTitle: '',
+  });
+  const [createEventDialog, setCreateEventDialog] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    description: '',
+    date: '',
+    time: '',
+    location: '',
+    type: '',
+    customType: '',
+    maxAttendees: 50,
+    status: 'upcoming'
+  });
 
   // Calculate stats
   const totalEvents = events.length;
@@ -106,19 +140,23 @@ const EventsPage = () => {
     }
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      try {
-        await eventService.deleteEvent(eventId);
-        fetchEvents();
-      } catch (error) {
-        console.error('Error deleting event:', error);
-      }
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'workshop':
+        return 'default';
+      case 'seminar':
+        return 'secondary';
+      case 'conference':
+        return 'destructive';
+      case 'meeting':
+        return 'outline';
+      default:
+        return 'secondary';
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'upcoming':
         return 'default';
       case 'ongoing':
@@ -126,20 +164,71 @@ const EventsPage = () => {
       case 'completed':
         return 'outline';
       default:
-        return 'outline';
+        return 'secondary';
     }
   };
 
-  const getTypeBadgeVariant = (type: string) => {
-    switch (type) {
-      case 'workshop':
-        return 'default';
-      case 'seminar':
-        return 'secondary';
-      case 'meeting':
-        return 'outline';
-      default:
-        return 'outline';
+  const handleDeleteEvent = (eventId: string, eventTitle: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      eventId,
+      eventTitle,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteDialog.eventId) {
+      try {
+        await eventService.deleteEvent(deleteDialog.eventId);
+        setEvents(events.filter(e => e.id !== deleteDialog.eventId));
+        setDeleteDialog({ isOpen: false, eventId: null, eventTitle: '' });
+      } catch (error) {
+        console.error('Error deleting event:', error);
+      }
+    }
+  };
+
+  const handleEditEvent = (event: Event) => {
+    // TODO: Implement edit functionality
+    console.log('Edit event:', event);
+  };
+
+  const handleViewEvent = (event: Event) => {
+    // TODO: Implement view functionality
+    console.log('View event:', event);
+  };
+
+  const handleCreateEvent = async () => {
+    try {
+      const eventData = {
+        title: newEvent.title,
+        description: newEvent.description,
+        date: new Date(newEvent.date + 'T' + newEvent.time),
+        time: newEvent.time,
+        location: newEvent.location,
+        type: newEvent.type === 'custom' ? newEvent.customType : newEvent.type,
+        maxAttendees: newEvent.maxAttendees,
+        currentAttendees: 0,
+        status: newEvent.status,
+        createdBy: 'admin', // TODO: Get from auth context
+      };
+      
+      await eventService.createEvent(eventData);
+      setCreateEventDialog(false);
+      setNewEvent({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        location: '',
+        type: '',
+        customType: '',
+        maxAttendees: 50,
+        status: 'upcoming'
+      });
+      fetchEvents();
+    } catch (error) {
+      console.error('Error creating event:', error);
     }
   };
 
@@ -246,33 +335,163 @@ const EventsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4">Events Management</h1>
-              <p className="text-xl text-purple-100 max-w-2xl">
-                Manage system events, schedules, and activities. Keep track of upcoming events and past activities.
-              </p>
-            </div>
-            <div className="flex gap-3 mt-6 lg:mt-0">
-              <Link to="/calendar">
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600 transition-all duration-300">
-                  <CalendarIcon className="h-5 w-5 mr-2" />
-                  View Calendar
-                </Button>
-              </Link>
-              <Link to="/create-event">
-                <Button className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Event
-                </Button>
-              </Link>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-3">Events Management</h1>
+            <p className="text-lg text-purple-100 max-w-2xl mx-auto">
+              Create, manage, and monitor events across the system.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4">
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-3 mb-6">
+          <Link to="/calendar">
+            <Button variant="outline" className="border-2 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300">
+              <CalendarIcon className="h-5 w-5 mr-2" />
+              View Calendar
+            </Button>
+          </Link>
+          <Dialog open={createEventDialog} onOpenChange={setCreateEventDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <Plus className="h-5 w-5 mr-2" />
+                Create Event
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Event</DialogTitle>
+                <DialogDescription>
+                  Add details for the new event to be scheduled.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title
+                  </Label>
+                  <Input
+                    id="title"
+                    value={newEvent.title}
+                    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={newEvent.description}
+                    onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">
+                    Date
+                  </Label>
+                  <Input
+                    type="date"
+                    id="date"
+                    value={newEvent.date}
+                    onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="time" className="text-right">
+                    Time
+                  </Label>
+                  <Input
+                    type="time"
+                    id="time"
+                    value={newEvent.time}
+                    onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">
+                    Location
+                  </Label>
+                  <Input
+                    id="location"
+                    value={newEvent.location}
+                    onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">
+                    Type
+                  </Label>
+                  <Select onValueChange={(value) => setNewEvent({ ...newEvent, type: value })} defaultValue="workshop">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="workshop">Workshop</SelectItem>
+                      <SelectItem value="seminar">Seminar</SelectItem>
+                      <SelectItem value="conference">Conference</SelectItem>
+                      <SelectItem value="meeting">Meeting</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {newEvent.type === 'custom' && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="customType" className="text-right">
+                      Custom Type
+                    </Label>
+                    <Input
+                      id="customType"
+                      value={newEvent.customType}
+                      onChange={(e) => setNewEvent({ ...newEvent, customType: e.target.value })}
+                      className="col-span-3"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="maxAttendees" className="text-right">
+                    Max Attendees
+                  </Label>
+                  <Input
+                    type="number"
+                    id="maxAttendees"
+                    value={newEvent.maxAttendees}
+                    onChange={(e) => setNewEvent({ ...newEvent, maxAttendees: parseInt(e.target.value, 10) || 50 })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select onValueChange={(value) => setNewEvent({ ...newEvent, status: value })} defaultValue="upcoming">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upcoming">Upcoming</SelectItem>
+                      <SelectItem value="ongoing">Ongoing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCreateEventDialog(false)}>Cancel</Button>
+                <Button onClick={handleCreateEvent}>Create Event</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -413,6 +632,7 @@ const EventsPage = () => {
                             variant="outline"
                             size="sm"
                             className="hover:bg-gray-50"
+                            onClick={() => handleViewEvent(event)}
                           >
                             <CalendarIcon className="h-4 w-4 mr-1" />
                             View
@@ -425,13 +645,16 @@ const EventsPage = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="cursor-pointer">
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleEditEvent(event)}
+                              >
                                 <CalendarIcon className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-red-600 cursor-pointer"
-                                onClick={() => handleDeleteEvent(event.id)}
+                                onClick={() => handleDeleteEvent(event.id, event.title)}
                               >
                                 <CalendarIcon className="h-4 w-4 mr-2" />
                                 Delete
@@ -471,6 +694,17 @@ const EventsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, eventId: null, eventTitle: '' })}
+        onConfirm={confirmDelete}
+        title="Delete Event"
+        description={`Are you sure you want to delete "${deleteDialog.eventTitle}"? This action cannot be undone.`}
+        confirmText="Delete Event"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

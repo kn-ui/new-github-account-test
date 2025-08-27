@@ -138,28 +138,17 @@ export default function CourseManager() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4">Course Management</h1>
-              <p className="text-xl text-green-100 max-w-2xl">
-                Manage all system courses, approvals, and content. Monitor course performance and student engagement.
-              </p>
-            </div>
-            <div className="mt-6 lg:mt-0">
-              <Button 
-                onClick={() => navigate('/create-course')} 
-                className="bg-white text-green-600 hover:bg-green-50 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create Course
-              </Button>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-3">Course Management</h1>
+            <p className="text-lg text-green-100 max-w-2xl mx-auto">
+              Manage courses, approve submissions, and monitor enrollment across the system.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">

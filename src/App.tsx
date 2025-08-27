@@ -13,7 +13,6 @@ import DashboardWrapper from "./components/DashboardWrapper";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
-import CreateEvent from "./pages/CreateEvent";
 import UserManager from "./pages/UserManager";
 import CourseManager from "./pages/CourseManager";
 import NotFound from "./pages/NotFound";
@@ -347,14 +346,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/create-event" 
-              element={
-                <ProtectedRoute>
-                  <CreateEvent />
-                </ProtectedRoute>
-              } 
-            />
+            {/* create-event deprecated in favor of modal */}
             <Route 
               path="/students" 
               element={

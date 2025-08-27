@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,15 @@ import {
   FolderOpen,
   TrendingUp
 } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,6 +48,8 @@ interface NavigationItem {
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -100,6 +111,25 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
     return location.pathname.startsWith(href);
   };
 
+  useEffect(() => {
+    const loadAnnouncements = async () => {
+      try {
+        const list = await announcementService.getAllAnnouncements(5);
+        setAnnouncements(list);
+      } catch {
+        // ignore
+      }
+    };
+    loadAnnouncements();
+  }, []);
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = searchTerm.trim();
+    if (!q) return;
+    navigate(`/dashboard/search?q=${encodeURIComponent(q)}`);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile sidebar overlay */}
@@ -118,10 +148,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
-            <div className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2 cursor-pointer">
               <GraduationCap className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">LMS</span>
-            </div>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
@@ -200,29 +230,46 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             <div className="flex items-center space-x-4 flex-1 justify-center">
               {/* Search Bar */}
-              <div className="relative max-w-md w-full">
+              <form className="relative max-w-md w-full" onSubmit={handleSearchSubmit}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search users, courses, events..."
                   className="pl-10 w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
+              </form>
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                  3
-                </span>
-              </Button>
-              
-              {/* Logo - Clickable to Home */}
-              <Link to="/" className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">LMS</span>
-              </Link>
+              {/* Notifications - announcements only */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {announcements.length > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                        {announcements.length}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Announcements</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {announcements.length === 0 && (
+                    <div className="p-3 text-sm text-gray-600">No announcements</div>
+                  )}
+                  {announcements.map((a) => (
+                    <DropdownMenuItem key={a.id} className="block whitespace-normal">
+                      <div>
+                        <div className="font-medium">{a.title}</div>
+                        <div className="text-xs text-gray-600 line-clamp-2">{a.body}</div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

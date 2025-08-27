@@ -162,17 +162,17 @@ const UserManager = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section */}
+      {/* Hero Section (condensed) */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">User Management</h1>
-              <p className="text-xl text-blue-100 max-w-2xl">
-                Manage user accounts, permissions, and system access. Monitor user activity and maintain security.
+              <h1 className="text-3xl font-bold">User Management</h1>
+              <p className="text-sm sm:text-base text-blue-100 max-w-2xl mt-2">
+                Manage user accounts, permissions, and system access.
               </p>
             </div>
-            <div className="flex gap-3 mt-6 lg:mt-0">
+            <div className="flex gap-3 mt-4 lg:mt-0">
               <Button onClick={exportUsers} variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transition-all duration-300">
                 <FileSpreadsheet className="h-5 w-5 mr-2" />
                 Export Users

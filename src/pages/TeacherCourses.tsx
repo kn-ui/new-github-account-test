@@ -137,16 +137,17 @@ export default function TeacherCourses() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Hero Section (condensed) */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-              <p className="text-gray-600">Manage your courses</p>
+              <h1 className="text-3xl font-bold">My Courses</h1>
+              <p className="text-sm text-blue-100">Manage your courses</p>
             </div>
             <div>
-              <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => navigate('/create-course')} className="bg-white text-blue-700 hover:bg-blue-50">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Course
               </Button>
@@ -155,7 +156,7 @@ export default function TeacherCourses() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -231,7 +232,7 @@ export default function TeacherCourses() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                        <p className="text-sm text-gray-500">{course.description}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

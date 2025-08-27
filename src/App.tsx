@@ -51,6 +51,7 @@ import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 import TeacherCourses from "./pages/TeacherCourses";
 import StudentCourses from "./pages/StudentCourses";
+import SearchResults from "./pages/SearchResults";
 
 // import Catalog from "./pages/Catalog";
 
@@ -92,6 +93,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/search" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <SearchResults />
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />

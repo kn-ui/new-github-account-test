@@ -111,31 +111,34 @@ export default function StudentOverview() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-          <p className="text-gray-600">Track your learning progress</p>
-        </div>
-        <div className="flex space-x-3">
-          <Button asChild>
-            <Link to="/courses">
-
-
-              <Plus className="h-4 w-4 mr-2" />
-              Browse Courses
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/dashboard/certificates">
-              <Award className="h-4 w-4 mr-2" />
-              View Certificates
-            </Link>
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Hero Section (condensed) */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Student Dashboard</h1>
+              <p className="text-sm text-blue-100">Track your learning progress</p>
+            </div>
+            <div className="flex space-x-3">
+              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50">
+                <Link to="/courses">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Browse Courses
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="border-white text-white hover:bg-white hover:text-blue-700">
+                <Link to="/dashboard/certificates">
+                  <Award className="h-4 w-4 mr-2" />
+                  View Certificates
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
@@ -363,6 +366,7 @@ export default function StudentOverview() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

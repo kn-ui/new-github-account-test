@@ -42,6 +42,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import CSVUpload from '@/components/ui/CSVUpload';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -67,6 +68,7 @@ const UserManager = () => {
     role: 'student' as 'student' | 'teacher' | 'admin',
     password: ''
   });
+  const [mode, setMode] = useState<'single' | 'bulk'>('single');
 
   // Calculate stats
   const totalUsers = users.length;
@@ -177,64 +179,81 @@ const UserManager = () => {
                 <FileSpreadsheet className="h-5 w-5 mr-2" />
                 Export Users
               </Button>
-              <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+              <Dialog open={isAddUserOpen} onOpenChange={(o) => { setIsAddUserOpen(o); if (!o) setMode('single'); }}>
                 <DialogTrigger asChild>
                   <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
                     <UserPlus className="h-5 w-5 mr-2" />
                     Add User
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-xl">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <UserPlus className="h-5 w-5 text-blue-600" />
-                      Add New User
-                    </DialogTitle>
+                    <div className="flex items-center justify-between">
+                      <DialogTitle className="flex items-center gap-2">
+                        <UserPlus className="h-5 w-5 text-blue-600" />
+                        Add Users
+                      </DialogTitle>
+                      <div className="flex items-center gap-2 text-sm">
+                        <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>Single</button>
+                        <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>Bulk</button>
+                      </div>
+                    </div>
                     <DialogDescription>
-                      Create a new user account with the specified role and permissions.
+                      {mode==='single' ? 'Create a single user account with the specified role.' : 'Upload a CSV to create multiple users at once.'}
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="displayName" className="text-right">Name</Label>
-                      <Input
-                        id="displayName"
-                        value={newUser.displayName}
-                        onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Enter full name"
+                  {mode==='single' ? (
+                    <>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="displayName" className="text-right">Name</Label>
+                          <Input
+                            id="displayName"
+                            value={newUser.displayName}
+                            onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                            className="col-span-3"
+                            placeholder="Enter full name"
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="email" className="text-right">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                            className="col-span-3"
+                            placeholder="Enter email address"
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="role" className="text-right">Role</Label>
+                          <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="student">Student</SelectItem>
+                              <SelectItem value="teacher">Teacher</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
+                          Create User
+                        </Button>
+                      </DialogFooter>
+                    </>
+                  ) : (
+                    <div className="py-2">
+                      <CSVUpload 
+                        onUsersCreated={(count) => { setIsAddUserOpen(false); fetchUsers(); }}
+                        onError={(msg) => console.error(msg)}
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newUser.email}
-                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Enter email address"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="role" className="text-right">Role</Label>
-                      <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-                      Create User
-                    </Button>
-                  </DialogFooter>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>

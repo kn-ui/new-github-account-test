@@ -7,22 +7,12 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    department: '',
     subject: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const departments = [
-    { value: '', label: 'Select Department' },
-    { value: 'admissions', label: 'Admissions Office' },
-    { value: 'academic', label: 'Academic Affairs' },
-    { value: 'student-affairs', label: 'Student Affairs' },
-    { value: 'finance', label: 'Finance Office' },
-    { value: 'library', label: 'Library Services' },
-    { value: 'it-support', label: 'IT Support' },
-    { value: 'general', label: 'General Inquiry' }
-  ];
+  // Department removed per requirements
 
   const contactInfo = [
     {
@@ -80,7 +70,6 @@ export default function ContactPage() {
       setFormData({
         name: '',
         email: '',
-        department: '',
         subject: '',
         message: ''
       });
@@ -188,25 +177,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                {/* Department Field */}
-                <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
-                  </label>
-                  <select
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {departments.map(dept => (
-                      <option key={dept.value} value={dept.value}>
-                        {dept.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Department removed */}
 
                 {/* Subject Field */}
                 <div>

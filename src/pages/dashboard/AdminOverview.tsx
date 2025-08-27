@@ -97,19 +97,19 @@ const AdminOverview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section */}
+      {/* Hero Section (condensed) */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Admin Dashboard</h1>
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Welcome back! Here's what's happening in your system. Monitor users, courses, and events at a glance.
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto mt-2">
+              Monitor users, courses, and events at a glance.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -177,16 +177,19 @@ const AdminOverview = () => {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
           {/* Recent Users */}
           <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-3 text-blue-900">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 Recent Users
               </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/users">View all users</Link>
+              </Button>
             </CardHeader>
             <CardContent className="p-6">
               {recentUsers.length > 0 ? (
@@ -225,13 +228,16 @@ const AdminOverview = () => {
 
           {/* Pending Courses */}
           <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-3 text-green-900">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Clock className="h-6 w-6 text-green-600" />
                 </div>
                 Pending Courses
               </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/courses">View all courses</Link>
+              </Button>
             </CardHeader>
             <CardContent className="p-6">
               {pendingCourses.length > 0 ? (
@@ -270,13 +276,16 @@ const AdminOverview = () => {
 
         {/* Recent Events */}
         <Card className="shadow-lg hover:shadow-xl transition-all duration-300 mb-8">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-3 text-purple-900">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Calendar className="h-6 w-6 text-purple-600" />
               </div>
               Recent Events
             </CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard/events">View all events</Link>
+            </Button>
           </CardHeader>
           <CardContent className="p-6">
             {recentEvents.length > 0 ? (

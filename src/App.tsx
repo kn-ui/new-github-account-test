@@ -13,7 +13,6 @@ import DashboardWrapper from "./components/DashboardWrapper";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
-import CreateEvent from "./pages/CreateEvent";
 import UserManager from "./pages/UserManager";
 import CourseManager from "./pages/CourseManager";
 import NotFound from "./pages/NotFound";
@@ -26,14 +25,7 @@ import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
-import DatabaseSeeder from "./components/DatabaseSeeder";
-import AuthUserSeeder from "./components/AuthUserSeeder";
-import TestAuthUIDs from "./components/TestAuthUIDs";
-import UIDMapper from "./components/UIDMapper";
-import SimpleTest from "./components/SimpleTest";
-import QuickUIDFix from "./components/QuickUIDFix";
-import AuthDebugger from "./components/AuthDebugger";
-import CorrectUIDFixer from "./components/CorrectUIDFixer";
+// Dev utilities removed for production cleanup
 import SupportTickets from "./pages/SupportTickets";
 import Events from "./pages/Events";
 import Students from "./pages/Students";
@@ -51,6 +43,7 @@ import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 import TeacherCourses from "./pages/TeacherCourses";
 import StudentCourses from "./pages/StudentCourses";
+import SearchResults from "./pages/SearchResults";
 
 // import Catalog from "./pages/Catalog";
 
@@ -76,14 +69,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:threadId" element={<ForumThread />} />
-            <Route path="/seed-database" element={<DatabaseSeeder />} />
-            <Route path="/seed-auth-users" element={<AuthUserSeeder />} />
-            <Route path="/test-auth-uids" element={<TestAuthUIDs />} />
-            <Route path="/uid-mapper" element={<UIDMapper />} />
-            <Route path="/simple-test" element={<SimpleTest />} />
-            <Route path="/quick-uid-fix" element={<QuickUIDFix />} />
-            <Route path="/auth-debugger" element={<AuthDebugger />} />
-            <Route path="/correct-uid-fixer" element={<CorrectUIDFixer />} />
+            {/* Development-only routes removed */}
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
@@ -92,6 +78,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/search" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <SearchResults />
+                  </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
@@ -336,14 +332,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/create-event" 
-              element={
-                <ProtectedRoute>
-                  <CreateEvent />
-                </ProtectedRoute>
-              } 
-            />
+            {/* create-event deprecated in favor of modal */}
             <Route 
               path="/students" 
               element={

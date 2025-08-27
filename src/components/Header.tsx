@@ -38,18 +38,21 @@ const Header = () => {
       { label: t('nav.courses'), to: '/courses' },
       { label: t('nav.forum'), to: '/forum' },
       { label: t('nav.calendar'), to: '/calendar' },
+      { label: t('nav.contact'), to: '/contact' },
     ],
     teacher: [
       { label: t('nav.dashboard'), to: '/dashboard' },
       { label: t('nav.courses'), to: '/courses' },
       { label: t('nav.forum'), to: '/forum' },
       { label: t('nav.calendar'), to: '/calendar' },
+      { label: t('nav.contact'), to: '/contact' },
     ],
     admin: [
       { label: t('nav.dashboard'), to: '/dashboard' },
       { label: t('nav.academic'), to: '/academic' },
       { label: t('nav.forum'), to: '/forum' },
       { label: t('nav.calendar'), to: '/calendar' },
+      { label: t('nav.contact'), to: '/contact' },
     ],
   };
 

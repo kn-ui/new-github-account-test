@@ -51,7 +51,7 @@ const SupportTicketsPage = () => {
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+  // removed priority filter per requirements
   const [loading, setLoading] = useState(true);
 
   // Calculate stats
@@ -69,10 +69,11 @@ const SupportTicketsPage = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(ticket =>
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter((ticket: any) =>
+        (ticket.subject || ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ticket.message || ticket.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ticket.name || ticket.submittedBy || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ticket.email || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -81,13 +82,8 @@ const SupportTicketsPage = () => {
       filtered = filtered.filter(ticket => ticket.status === statusFilter);
     }
 
-    // Apply priority filter
-    if (priorityFilter !== 'all') {
-      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
-    }
-
     setFilteredTickets(filtered);
-  }, [searchTerm, statusFilter, priorityFilter, tickets]);
+  }, [searchTerm, statusFilter, tickets]);
 
   const fetchTickets = async () => {
     try {
@@ -170,21 +166,15 @@ const SupportTicketsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50">
-      {/* Hero Section */}
+      {/* Hero Section (condensed) */}
       <div className="bg-gradient-to-r from-orange-600 via-orange-700 to-red-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Support Tickets</h1>
-              <p className="text-xl text-orange-100 max-w-2xl">
-                Manage customer support requests and technical issues. Track ticket status and ensure timely resolution.
+              <h1 className="text-3xl font-bold">Support Tickets</h1>
+              <p className="text-sm sm:text-base text-orange-100 max-w-2xl mt-2">
+                Manage customer support requests and technical issues.
               </p>
-            </div>
-            <div className="mt-6 lg:mt-0">
-              <Button className="bg-white text-orange-600 hover:bg-orange-50 transition-all duration-300 shadow-lg hover:shadow-xl">
-                <Plus className="h-5 w-5 mr-2" />
-                Create Ticket
-              </Button>
             </div>
           </div>
         </div>
@@ -253,7 +243,7 @@ const SupportTicketsPage = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search tickets by title, description, or submitter..."
+                  placeholder="Search tickets by subject, message, name, or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -268,17 +258,9 @@ const SupportTicketsPage = () => {
                 <option value="open">Open</option>
                 <option value="in-progress">In Progress</option>
                 <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
               </select>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-              >
-                <option value="all">All Priority</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+              
             </div>
           </CardContent>
         </Card>
@@ -297,11 +279,10 @@ const SupportTicketsPage = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Ticket</TableHead>
+                  <TableHead className="font-semibold text-gray-900">Subject</TableHead>
                   <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Priority</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Category</TableHead>
                   <TableHead className="font-semibold text-gray-900">Submitted By</TableHead>
+                  <TableHead className="font-semibold text-gray-900">Email</TableHead>
                   <TableHead className="font-semibold text-gray-900">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -315,8 +296,8 @@ const SupportTicketsPage = () => {
                           <MessageSquare className="h-5 w-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 text-lg mb-1">{ticket.title}</div>
-                          <p className="text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
+                          <div className="font-semibold text-gray-900 text-lg mb-1">{(ticket as any).subject || (ticket as any).title}</div>
+                          <p className="text-sm text-gray-600 line-clamp-2">{(ticket as any).message || (ticket as any).description}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -330,26 +311,14 @@ const SupportTicketsPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={getPriorityBadgeVariant(ticket.priority)}
-                        className="px-3 py-1"
-                      >
-                        {ticket.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="px-3 py-1">
-                        {ticket.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                           <User className="h-4 w-4 text-blue-600" />
                         </div>
-                        <span className="text-sm text-gray-700">{ticket.submittedBy}</span>
+                        <span className="text-sm text-gray-700">{(ticket as any).name || 'Anonymous'}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm text-gray-700">{(ticket as any).email || '-'}</TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {ticket.createdAt instanceof Date ? ticket.createdAt.toLocaleDateString() : ticket.createdAt.toDate().toLocaleDateString()}
                     </TableCell>
@@ -361,21 +330,34 @@ const SupportTicketsPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => { setViewTicket(ticket as any); setStatusUpdate((ticket as any).status); }}>
                             <MessageSquare className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => { setViewTicket(ticket as any); setStatusUpdate((ticket as any).status); }}>
                             <Clock className="h-4 w-4 mr-2" />
                             Update Status
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-red-600 cursor-pointer"
-                            onClick={() => handleDeleteTicket(ticket.id)}
-                          >
-                            <AlertCircle className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <div className="text-red-600 cursor-pointer px-2 py-1 flex items-center">
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                                Delete
+                              </div>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Ticket</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{(ticket as any).subject || (ticket as any).title}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteTicket(ticket.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -393,19 +375,43 @@ const SupportTicketsPage = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
+              {searchTerm || statusFilter !== 'all'
                 ? 'Try adjusting your search or filters'
                 : 'No support tickets have been created yet'
               }
             </p>
-            {!searchTerm && statusFilter === 'all' && priorityFilter === 'all' && (
-              <Button className="bg-orange-600 hover:bg-orange-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Ticket
-              </Button>
-            )}
           </Card>
         )}
+        {/* View/Update Dialog */}
+        <Dialog open={!!viewTicket} onOpenChange={(o) => !o && setViewTicket(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Ticket Details</DialogTitle>
+            </DialogHeader>
+            {viewTicket && (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-700"><span className="font-medium">Subject:</span> {viewTicket.subject}</div>
+                <div className="text-sm text-gray-700"><span className="font-medium">From:</span> {viewTicket.name || 'Anonymous'} ({viewTicket.email})</div>
+                <div className="text-sm text-gray-700"><span className="font-medium">Message:</span> {viewTicket.message}</div>
+                <div className="text-sm text-gray-700"><span className="font-medium">Created:</span> {viewTicket.createdAt instanceof Date ? viewTicket.createdAt.toLocaleString() : viewTicket.createdAt.toDate().toLocaleString()}</div>
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Status:</span>
+                  <select value={statusUpdate} onChange={(e) => setStatusUpdate(e.target.value as Ticket['status'])} className="ml-2 px-2 py-1 border rounded">
+                    <option value="open">Open</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              {viewTicket && (
+                <Button onClick={() => handleStatusChange(viewTicket.id, statusUpdate)}>Update Status</Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

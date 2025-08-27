@@ -7,13 +7,13 @@ export default function AdminReportsPage() {
   const [message, setMessage] = useState<string | null>(null);
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Reports</h1>
-              <p className="text-gray-600">Generate comprehensive system reports</p>
+              <h1 className="text-3xl font-bold">Admin Reports</h1>
+              <p className="text-sm text-blue-100">Generate comprehensive system reports</p>
             </div>
           </div>
           {message && (

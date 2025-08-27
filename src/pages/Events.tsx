@@ -31,6 +31,18 @@ import {
   Zap
 } from 'lucide-react';
 import { eventService } from '@/lib/firestore';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Event {
   id: string;
@@ -51,6 +63,12 @@ const EventsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date() as any, time: '', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' } as any);
+  const [editForm, setEditForm] = useState<Partial<Event>>({} as any);
 
   // Calculate stats
   const totalEvents = events.length;
@@ -100,13 +118,53 @@ const EventsPage = () => {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      try {
-        await eventService.deleteEvent(eventId);
-        fetchEvents();
-      } catch (error) {
-        console.error('Error deleting event:', error);
-      }
+    try {
+      await eventService.deleteEvent(eventId);
+      setConfirmDeleteId(null);
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
+  };
+
+  const openEdit = (ev: Event) => {
+    setSelectedEvent(ev);
+    setEditForm({ ...ev });
+    setIsEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedEvent) return;
+    try {
+      await eventService.updateEvent(selectedEvent.id, {
+        title: editForm.title,
+        description: editForm.description,
+        time: editForm.time,
+        location: editForm.location,
+        type: editForm.type,
+        maxAttendees: editForm.maxAttendees,
+        status: editForm.status,
+      } as any);
+      setIsEditOpen(false);
+      fetchEvents();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const submitCreate = async () => {
+    try {
+      await eventService.createEvent({
+        title: String(createForm.title || ''),
+        description: String(createForm.description || ''),
+        date: (createForm.date as any) as any,
+        createdBy: 'system',
+        type: String(createForm.type || 'meeting'),
+      } as any);
+      setIsCreateOpen(false);
+      fetchEvents();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -237,29 +295,27 @@ const EventsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
-      {/* Hero Section */}
+      {/* Hero Section (condensed) */}
       <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Events Management</h1>
-              <p className="text-xl text-purple-100 max-w-2xl">
-                Manage system events, schedules, and activities. Keep track of upcoming events and past activities.
+              <h1 className="text-3xl font-bold">Events Management</h1>
+              <p className="text-sm sm:text-base text-purple-100 max-w-2xl mt-2">
+                Manage system events, schedules, and activities.
               </p>
             </div>
-            <div className="flex gap-3 mt-6 lg:mt-0">
+            <div className="flex gap-3 mt-4 lg:mt-0">
               <Link to="/calendar">
                 <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600 transition-all duration-300">
                   <CalendarIcon className="h-5 w-5 mr-2" />
                   View Calendar
                 </Button>
               </Link>
-              <Link to="/create-event">
-                <Button className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Event
-                </Button>
-              </Link>
+              <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
+                <Plus className="h-5 w-5 mr-2" />
+                Create Event
+              </Button>
             </div>
           </div>
         </div>
@@ -406,6 +462,7 @@ const EventsPage = () => {
                             variant="outline"
                             size="sm"
                             className="hover:bg-gray-50"
+                            onClick={() => setSelectedEvent(event)}
                           >
                             <CalendarIcon className="h-4 w-4 mr-1" />
                             View
@@ -418,13 +475,13 @@ const EventsPage = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="cursor-pointer">
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(event)}>
                                 <CalendarIcon className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-red-600 cursor-pointer"
-                                onClick={() => handleDeleteEvent(event.id)}
+                                onClick={() => setConfirmDeleteId(event.id)}
                               >
                                 <CalendarIcon className="h-4 w-4 mr-2" />
                                 Delete
@@ -452,20 +509,146 @@ const EventsPage = () => {
                   }
                 </p>
                 {!searchTerm && statusFilter === 'all' && (
-                  <Link to="/create-event">
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Event
-                    </Button>
-                  </Link>
+                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => setIsCreateOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Event
+                  </Button>
                 )}
               </Card>
             )}
           </div>
         </div>
       </div>
+      {/* Create Event Modal */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-purple-600" />
+              Create Event
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date</label>
+              <Input type="date" value={(() => { const d = createForm.date instanceof Date ? createForm.date : new Date(); return d.toISOString().slice(0,10); })()} onChange={(e) => setCreateForm({ ...createForm, date: new Date(e.target.value) } as any)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Time</label>
+                <Input value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Type</label>
+                <Input value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <Input value={String(createForm.location || '')} onChange={(e) => setCreateForm({ ...createForm, location: e.target.value } as any)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700">Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Event Modal */}
+      <Dialog open={!!selectedEvent && !isEditOpen} onOpenChange={(o) => !o && setSelectedEvent(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-purple-600" />
+              Event Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-2 text-sm text-gray-700">
+              <div><span className="font-medium">Title:</span> {selectedEvent.title}</div>
+              <div><span className="font-medium">Date:</span> {selectedEvent.date instanceof Date ? selectedEvent.date.toLocaleDateString() : selectedEvent.date.toDate().toLocaleDateString()}</div>
+              {selectedEvent.time && (<div><span className="font-medium">Time:</span> {selectedEvent.time}</div>)}
+              {selectedEvent.location && (<div><span className="font-medium">Location:</span> {selectedEvent.location}</div>)}
+              <div><span className="font-medium">Type:</span> {selectedEvent.type}</div>
+              <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
+              <div><span className="font-medium">Description:</span> {selectedEvent.description}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Event Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-purple-600" />
+              Edit Event
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <Input value={String(editForm.title || '')} onChange={(e) => setEditForm({ ...editForm, title: e.target.value } as any)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Time</label>
+                <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Type</label>
+                <Input value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <Input value={String(editForm.location || '')} onChange={(e) => setEditForm({ ...editForm, location: e.target.value } as any)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Status</label>
+              <Input value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={!!confirmDeleteId}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDeleteId && handleDeleteEvent(confirmDeleteId)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default EventsPage;
+
+// Modals
+// Create Event Modal
+// Placed after default export intentionally for clarity; in real code we would keep before.

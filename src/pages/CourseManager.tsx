@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp } from 'lucide-react';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil } from 'lucide-react';
+import { courseService, FirestoreCourse, enrollmentService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -34,12 +36,28 @@ export default function CourseManager() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<CourseWithApproval | null>(null);
   const [showCourseDialog, setShowCourseDialog] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState<number>(1);
+  const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
+  const { userProfile, currentUser } = useAuth();
+
+  const [editForm, setEditForm] = useState<Partial<FirestoreCourse>>({});
+  const [createForm, setCreateForm] = useState<Partial<FirestoreCourse>>({
+    title: '',
+    description: '',
+    category: '',
+    duration: 8 as any,
+    maxStudents: 30 as any,
+    syllabus: '',
+    isActive: false,
+  } as any);
 
   // Calculate stats
   const totalCourses = courses.length;
   const activeCourses = courses.filter(c => c.isActive).length;
   const pendingCourses = courses.filter(c => !c.isActive).length;
-  const totalStudents = courses.reduce((total, course) => total + (course.enrolledStudents || 0), 0);
+  const totalStudents = totalEnrolledStudents;
 
   const navigate = useNavigate();
 
@@ -55,6 +73,13 @@ export default function CourseManager() {
         courseService.getPendingCourses(1000),
       ]);
       setCourses([...(activeCourses as CourseWithApproval[]), ...(pendingCourses as CourseWithApproval[])]);
+      // compute total enrolled students across all courses
+      try {
+        const enrollments = await enrollmentService.getAllEnrollments();
+        setTotalEnrolledStudents(enrollments.length);
+      } catch {
+        setTotalEnrolledStudents(0);
+      }
     } catch (error) {
       console.error('Error loading courses:', error);
       toast.error('Failed to load courses');
@@ -101,6 +126,67 @@ export default function CourseManager() {
     setShowCourseDialog(true);
   };
 
+  const openEdit = (course: CourseWithApproval) => {
+    setSelectedCourse(course);
+    setEditForm({ ...course });
+    setIsEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedCourse) return;
+    try {
+      await courseService.updateCourse(selectedCourse.id, {
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category,
+        duration: editForm.duration,
+        maxStudents: editForm.maxStudents,
+        syllabus: editForm.syllabus,
+        isActive: editForm.isActive,
+      } as Partial<FirestoreCourse>);
+      toast.success('Course updated');
+      setIsEditOpen(false);
+      loadCourses();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update course');
+    }
+  };
+
+  const startCreate = () => {
+    setCreateForm({
+      title: '', description: '', category: '', duration: 8 as any, maxStudents: 30 as any, syllabus: '', isActive: userProfile?.role === 'admin',
+    } as any);
+    setCreateStep(1);
+    setIsCreateOpen(true);
+  };
+
+  const submitCreate = async () => {
+    try {
+      if (!currentUser || !userProfile) {
+        toast.error('Not authenticated');
+        return;
+      }
+      await courseService.createCourse({
+        title: String(createForm.title || ''),
+        description: String(createForm.description || ''),
+        category: String(createForm.category || ''),
+        duration: Number(createForm.duration || 1),
+        maxStudents: Number(createForm.maxStudents || 1),
+        syllabus: String(createForm.syllabus || ''),
+        isActive: userProfile.role === 'admin' ? !!createForm.isActive : false,
+        instructor: currentUser.uid,
+        instructorName: userProfile.displayName || userProfile.email || 'Instructor',
+      } as any);
+      toast.success('Course created');
+      setIsCreateOpen(false);
+      loadCourses();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to create course');
+    }
+  };
+
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -129,19 +215,19 @@ export default function CourseManager() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
-      {/* Hero Section */}
+      {/* Hero Section (condensed) */}
       <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Course Management</h1>
-              <p className="text-xl text-green-100 max-w-2xl">
-                Manage all system courses, approvals, and content. Monitor course performance and student engagement.
+              <h1 className="text-3xl font-bold">Course Management</h1>
+              <p className="text-sm sm:text-base text-green-100 max-w-2xl mt-2">
+                Manage courses, approvals, and content.
               </p>
             </div>
-            <div className="mt-6 lg:mt-0">
+            <div className="mt-4 lg:mt-0">
               <Button 
-                onClick={() => navigate('/create-course')} 
+                onClick={startCreate} 
                 className="bg-white text-green-600 hover:bg-green-50 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 <Plus className="h-5 w-5 mr-2" />
@@ -292,6 +378,15 @@ export default function CourseManager() {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEdit(course)}
+                        className="hover:bg-gray-50"
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
                       
                       {!course.isActive && (
                         <>
@@ -414,6 +509,113 @@ export default function CourseManager() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Course Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-green-600" />
+              Edit Course
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input id="title" value={editForm.title || ''} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input id="category" value={editForm.category || ''} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="duration">Duration (hours)</Label>
+              <Input id="duration" type="number" value={Number(editForm.duration || 0)} onChange={(e) => setEditForm({ ...editForm, duration: Number(e.target.value) as any })} />
+            </div>
+            <div>
+              <Label htmlFor="max">Max Students</Label>
+              <Input id="max" type="number" value={Number(editForm.maxStudents || 0)} onChange={(e) => setEditForm({ ...editForm, maxStudents: Number(e.target.value) as any })} />
+            </div>
+            <div>
+              <Label htmlFor="desc">Description</Label>
+              <Textarea id="desc" value={editForm.description || ''} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={saveEdit} className="bg-green-600 hover:bg-green-700">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Course Wizard */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-green-600" />
+              Create Course
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {createStep === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Title</Label>
+                  <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input value={String(createForm.category || '')} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value } as any)} />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+                </div>
+              </div>
+            )}
+            {createStep === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Duration (hours)</Label>
+                  <Input type="number" value={Number(createForm.duration || 1)} onChange={(e) => setCreateForm({ ...createForm, duration: Number(e.target.value) as any } as any)} />
+                </div>
+                <div>
+                  <Label>Max Students</Label>
+                  <Input type="number" value={Number(createForm.maxStudents || 1)} onChange={(e) => setCreateForm({ ...createForm, maxStudents: Number(e.target.value) as any } as any)} />
+                </div>
+                <div>
+                  <Label>Syllabus</Label>
+                  <Textarea value={String(createForm.syllabus || '')} onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value } as any)} />
+                </div>
+              </div>
+            )}
+            {createStep === 3 && (
+              <div className="space-y-2 text-sm text-gray-700">
+                <div><span className="font-medium">Title:</span> {String(createForm.title || '')}</div>
+                <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
+                <div><span className="font-medium">Duration:</span> {Number(createForm.duration || 1)} hours</div>
+                <div><span className="font-medium">Max Students:</span> {Number(createForm.maxStudents || 1)}</div>
+                <div><span className="font-medium">Active:</span> {userProfile?.role === 'admin' ? 'Yes' : 'No (awaiting approval)'}</div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              {createStep > 1 && (
+                <Button variant="outline" onClick={() => setCreateStep((s) => Math.max(1, s - 1))}>Back</Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {createStep < 3 && (
+                <Button onClick={() => setCreateStep((s) => Math.min(3, s + 1))}>Next</Button>
+              )}
+              {createStep === 3 && (
+                <Button className="bg-green-600 hover:bg-green-700" onClick={submitCreate}>Create</Button>
+              )}
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -25,14 +25,7 @@ import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
-import DatabaseSeeder from "./components/DatabaseSeeder";
-import AuthUserSeeder from "./components/AuthUserSeeder";
-import TestAuthUIDs from "./components/TestAuthUIDs";
-import UIDMapper from "./components/UIDMapper";
-import SimpleTest from "./components/SimpleTest";
-import QuickUIDFix from "./components/QuickUIDFix";
-import AuthDebugger from "./components/AuthDebugger";
-import CorrectUIDFixer from "./components/CorrectUIDFixer";
+// Dev utilities removed for production cleanup
 import SupportTickets from "./pages/SupportTickets";
 import Events from "./pages/Events";
 import Students from "./pages/Students";
@@ -76,14 +69,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:threadId" element={<ForumThread />} />
-            <Route path="/seed-database" element={<DatabaseSeeder />} />
-            <Route path="/seed-auth-users" element={<AuthUserSeeder />} />
-            <Route path="/test-auth-uids" element={<TestAuthUIDs />} />
-            <Route path="/uid-mapper" element={<UIDMapper />} />
-            <Route path="/simple-test" element={<SimpleTest />} />
-            <Route path="/quick-uid-fix" element={<QuickUIDFix />} />
-            <Route path="/auth-debugger" element={<AuthDebugger />} />
-            <Route path="/correct-uid-fixer" element={<CorrectUIDFixer />} />
+            {/* Development-only routes removed */}
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />

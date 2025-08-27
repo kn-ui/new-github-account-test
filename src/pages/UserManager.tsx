@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLocation } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -56,6 +57,7 @@ interface User {
 
 const UserManager = () => {
   const { createUser } = useAuth();
+  const location = useLocation();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,6 +79,13 @@ const UserManager = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Sync search from URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('search') || '';
+    if (q) setSearchTerm(q);
+  }, [location.search]);
 
   useEffect(() => {
     const filtered = users.filter(user =>
@@ -164,7 +173,7 @@ const UserManager = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-4">User Management</h1>
@@ -242,7 +251,7 @@ const UserManager = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">

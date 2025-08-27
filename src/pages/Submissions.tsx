@@ -64,19 +64,20 @@ export default function SubmissionsPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading submissions...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Hero Section (condensed) */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Submissions</h1>
-              <p className="text-gray-600">All submissions for your courses</p>
+              <h1 className="text-3xl font-bold">Submissions</h1>
+              <p className="text-sm text-blue-100">All submissions for your courses</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">

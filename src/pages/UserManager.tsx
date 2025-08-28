@@ -66,8 +66,7 @@ const UserManager = () => {
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
-    password: ''
+    role: 'student' as 'student' | 'teacher' | 'admin'
   });
 
   // Calculate stats
@@ -133,7 +132,7 @@ const UserManager = () => {
         isActive: true
       });
       setIsAddUserOpen(false);
-      setNewUser({ displayName: '', email: '', role: 'student', password: '' });
+      setNewUser({ displayName: '', email: '', role: 'student' });
       fetchUsers();
     } catch (error) {
       console.error('Error creating user:', error);

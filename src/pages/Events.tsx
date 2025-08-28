@@ -86,6 +86,19 @@ const EventsPage = () => {
     maxAttendees: 50,
     status: 'upcoming'
   });
+  const [editEventDialog, setEditEventDialog] = useState(false);
+  const [editEvent, setEditEvent] = useState({
+    id: '' as string,
+    title: '',
+    description: '',
+    date: '',
+    time: '',
+    location: '',
+    type: '',
+    customType: '',
+    maxAttendees: 50,
+    status: 'upcoming'
+  });
 
   // Calculate stats
   const totalEvents = events.length;
@@ -189,8 +202,49 @@ const EventsPage = () => {
   };
 
   const handleEditEvent = (event: Event) => {
-    // TODO: Implement edit functionality
-    console.log('Edit event:', event);
+    const eventDate: Date = event.date instanceof Date ? event.date : event.date.toDate();
+    const yyyy = eventDate.getFullYear();
+    const mm = String(eventDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(eventDate.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+
+    const predefinedTypes = ['workshop', 'seminar', 'conference', 'meeting'];
+    const isCustom = !predefinedTypes.includes((event.type || '').toLowerCase());
+
+    setEditEvent({
+      id: event.id,
+      title: event.title,
+      description: event.description || '',
+      date: dateStr,
+      time: event.time || '',
+      location: event.location || '',
+      type: isCustom ? 'custom' : (event.type || ''),
+      customType: isCustom ? (event.type || '') : '',
+      maxAttendees: event.maxAttendees || 50,
+      status: event.status || 'upcoming',
+    });
+    setEditEventDialog(true);
+  };
+
+  const submitEditEvent = async () => {
+    try {
+      const updates = {
+        title: editEvent.title,
+        description: editEvent.description,
+        date: new Date(editEvent.date + 'T' + (editEvent.time || '00:00')),
+        time: editEvent.time,
+        location: editEvent.location,
+        type: editEvent.type === 'custom' ? editEvent.customType : editEvent.type,
+        maxAttendees: editEvent.maxAttendees,
+        status: editEvent.status,
+      } as Partial<Event>;
+
+      await eventService.updateEvent(editEvent.id, updates as any);
+      setEditEventDialog(false);
+      fetchEvents();
+    } catch (error) {
+      console.error('Error updating event:', error);
+    }
   };
 
   const handleViewEvent = (event: Event) => {
@@ -705,6 +759,80 @@ const EventsPage = () => {
         confirmText="Delete Event"
         cancelText="Cancel"
       />
+
+      {/* Edit Event Dialog */}
+      <Dialog open={editEventDialog} onOpenChange={setEditEventDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+            <DialogDescription>Update the details for this event.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-title" className="text-right">Title</Label>
+              <Input id="edit-title" value={editEvent.title} onChange={(e) => setEditEvent({ ...editEvent, title: e.target.value })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-right">Description</Label>
+              <Textarea id="edit-description" value={editEvent.description} onChange={(e) => setEditEvent({ ...editEvent, description: e.target.value })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-date" className="text-right">Date</Label>
+              <Input type="date" id="edit-date" value={editEvent.date} onChange={(e) => setEditEvent({ ...editEvent, date: e.target.value })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-time" className="text-right">Time</Label>
+              <Input type="time" id="edit-time" value={editEvent.time} onChange={(e) => setEditEvent({ ...editEvent, time: e.target.value })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-location" className="text-right">Location</Label>
+              <Input id="edit-location" value={editEvent.location} onChange={(e) => setEditEvent({ ...editEvent, location: e.target.value })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-type" className="text-right">Type</Label>
+              <Select value={editEvent.type} onValueChange={(value) => setEditEvent({ ...editEvent, type: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="seminar">Seminar</SelectItem>
+                  <SelectItem value="conference">Conference</SelectItem>
+                  <SelectItem value="meeting">Meeting</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editEvent.type === 'custom' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-customType" className="text-right">Custom Type</Label>
+                <Input id="edit-customType" value={editEvent.customType} onChange={(e) => setEditEvent({ ...editEvent, customType: e.target.value })} className="col-span-3" />
+              </div>
+            )}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-maxAttendees" className="text-right">Max Attendees</Label>
+              <Input type="number" id="edit-maxAttendees" value={editEvent.maxAttendees} onChange={(e) => setEditEvent({ ...editEvent, maxAttendees: parseInt(e.target.value, 10) || 50 })} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">Status</Label>
+              <Select value={editEvent.status} onValueChange={(value) => setEditEvent({ ...editEvent, status: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="ongoing">Ongoing</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditEventDialog(false)}>Cancel</Button>
+            <Button onClick={submitEditEvent}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

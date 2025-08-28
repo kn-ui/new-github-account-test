@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   BookOpen, 
   Search, 
@@ -40,6 +42,17 @@ export default function TeacherCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('title-asc');
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState<number>(1);
+  const [createForm, setCreateForm] = useState<Partial<FirestoreCourse>>({
+    title: '',
+    description: '',
+    category: '',
+    duration: 8 as any,
+    maxStudents: 30 as any,
+    syllabus: '',
+    isActive: false,
+  } as any);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -137,16 +150,17 @@ export default function TeacherCourses() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Hero Section (condensed) */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-              <p className="text-gray-600">Manage your courses</p>
+              <h1 className="text-3xl font-bold">My Courses</h1>
+              <p className="text-sm text-blue-100">Manage your courses</p>
             </div>
             <div>
-              <Button onClick={() => navigate('/create-course')} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-blue-700 hover:bg-blue-50">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Course
               </Button>
@@ -155,7 +169,7 @@ export default function TeacherCourses() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -231,7 +245,7 @@ export default function TeacherCourses() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                        <p className="text-sm text-gray-500">{course.description}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -312,6 +326,98 @@ export default function TeacherCourses() {
           </div>
         </div>
       </div>
+            {/* Create Course Wizard (multi-step) */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-blue-700" />
+              Create Course
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {createStep === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Title</Label>
+                  <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input value={String(createForm.category || '')} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value } as any)} />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+                </div>
+              </div>
+            )}
+            {createStep === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Duration (weeks)</Label>
+                  <Input type="number" min={1} max={52} value={Number(createForm.duration || 1)} onChange={(e) => setCreateForm({ ...createForm, duration: Number(e.target.value) as any } as any)} />
+                </div>
+                <div>
+                  <Label>Max Students</Label>
+                  <Input type="number" min={1} max={1000} value={Number(createForm.maxStudents || 1)} onChange={(e) => setCreateForm({ ...createForm, maxStudents: Number(e.target.value) as any } as any)} />
+                </div>
+                <div>
+                  <Label>Syllabus (optional)</Label>
+                  <Textarea value={String(createForm.syllabus || '')} onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value } as any)} />
+                </div>
+              </div>
+            )}
+            {createStep === 3 && (
+              <div className="space-y-2 text-sm text-gray-700">
+                <div><span className="font-medium">Title:</span> {String(createForm.title || '')}</div>
+                <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
+                <div><span className="font-medium">Duration:</span> {Number(createForm.duration || 1)} weeks</div>
+                <div><span className="font-medium">Max Students:</span> {Number(createForm.maxStudents || 1)}</div>
+                <div><span className="font-medium">Status:</span> Pending Approval</div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              {createStep > 1 && (
+                <Button variant="outline" onClick={() => setCreateStep((s) => Math.max(1, s - 1))}>Back</Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {createStep < 3 && (
+                <Button onClick={() => setCreateStep((s) => Math.min(3, s + 1))}>Next</Button>
+              )}
+              {createStep === 3 && (
+                <Button className="bg-blue-700 hover:bg-blue-800" onClick={async () => {
+                  try {
+                    if (!currentUser || !userProfile) return;
+                    await courseService.createCourse({
+                      title: String(createForm.title || ''),
+                      description: String(createForm.description || ''),
+                      category: String(createForm.category || ''),
+                      duration: Number(createForm.duration || 1),
+                      maxStudents: Number(createForm.maxStudents || 1),
+                      syllabus: String(createForm.syllabus || ''),
+                      isActive: false, // teacher-created courses require approval
+                      instructor: currentUser.uid,
+                      instructorName: userProfile.displayName || userProfile.email || 'Instructor',
+                    } as any);
+                    setIsCreateOpen(false);
+                    setCreateStep(1);
+                    setCreateForm({ title: '', description: '', category: '', duration: 8 as any, maxStudents: 30 as any, syllabus: '', isActive: false } as any);
+                    await loadCourses();
+                    toast.success('Course created and pending approval');
+                  } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to create course');
+                  }
+                }}>Create</Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

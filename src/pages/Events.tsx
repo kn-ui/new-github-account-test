@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -307,7 +308,7 @@ const EventsPage = () => {
             </div>
             <div className="flex gap-3 mt-4 lg:mt-0">
               <Link to="/calendar">
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600 transition-all duration-300">
+                <Button className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
                   <CalendarIcon className="h-5 w-5 mr-2" />
                   View Calendar
                 </Button>
@@ -540,12 +541,18 @@ const EventsPage = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Time</label>
-                <Input value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
+                <Input type="time" value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
-                <Input value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
-              </div>
+                <select className="w-full border rounded px-3 py-2" value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}>
+                  {['meeting','workshop','seminar','social','other'].map(t => (<option key={t} value={t}>{t}</option>))}
+                </select>
+                              </div>
+            </div>
+                        <div>
+              <label className="block text-sm font-medium mb-1">Custom Type (optional)</label>
+              <Input placeholder="Enter custom type if not in list" value={String(createForm.type && !['meeting','workshop','seminar','social','other'].includes(String(createForm.type)) ? createForm.type : '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
@@ -602,12 +609,17 @@ const EventsPage = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Time</label>
-                <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
+                <Input type="time" value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
-                <Input value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
-              </div>
+                <select className="w-full border rounded px-3 py-2" value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)}>
+                  {['meeting','workshop','seminar','social','other'].map(t => (<option key={t} value={t}>{t}</option>))}
+                </select>              </div>
+            </div>
+                        <div>
+              <label className="block text-sm font-medium mb-1">Custom Type (optional)</label>
+              <Input placeholder="Enter custom type if not in list" value={String(editForm.type && !['meeting','workshop','seminar','social','other'].includes(String(editForm.type)) ? editForm.type : '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
@@ -615,8 +627,9 @@ const EventsPage = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Status</label>
-              <Input value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)} />
-            </div>
+              <select className="w-full border rounded px-3 py-2" value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)}>
+                {['upcoming','ongoing','completed'].map(s => (<option key={s} value={s}>{s}</option>))}
+              </select>            </div>
             <div>
               <label className="block text-sm font-medium mb-1">Description</label>
               <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />

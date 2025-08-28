@@ -132,20 +132,7 @@ export default function TeacherOverview() {
               <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
               <p className="text-sm text-blue-100">Manage your courses and students</p>
             </div>
-            <div className="flex space-x-3">
-              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50">
-                <Link to="/create-course">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Course
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="border-white text-white hover:bg-white hover:text-blue-700">
-                <Link to="/dashboard/assignments">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Assignment
-                </Link>
-              </Button>
-            </div>
+                        <div className="flex space-x-3" />
           </div>
         </div>
       </div>

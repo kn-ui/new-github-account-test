@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { courseService, submissionService } from '@/lib/firestore';
+  import DashboardHero from '@/components/DashboardHero';
+
 
 interface SubmissionRow {
   id: string;
@@ -63,19 +65,15 @@ export default function SubmissionsPage() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading submissions...</div>;
 
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Submissions</h1>
-              <p className="text-sm text-blue-100">All submissions for your courses</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="Submissions"
+        subtitle="All submissions for your courses"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">

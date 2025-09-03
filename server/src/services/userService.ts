@@ -1,160 +1,125 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { firestore, auth, isTestMode } from '../config/firebase';
+import { firestore, auth } from '../config/firebase';
 import { User, UserRole } from '../types';
 
 class UserService {
   private usersCollection = firestore?.collection('users');
-  
-  // In-memory store for test mode
-  private testUsers: Map<string, User> = new Map();
 
-// Create a new user in Firestore
-async createUser(userData: Partial<User>): Promise<User> {
-  try {
-    if (isTestMode || !this.usersCollection) {
-      console.log('Test mode: User creation simulated');
-      const newUser: User = {
-        uid: userData.uid!,
-        email: userData.email!,
-        displayName: userData.displayName!,
-        role: userData.role || UserRole.STUDENT,
-        isActive: true,
+  // Create a new user in Firestore
+  async createUser(userData: Partial<User>): Promise<User> {
+    try {
+      if (!this.usersCollection) {
+        throw new Error('Users collection not initialized');
+      }
+
+      const { uid, ...data } = userData;
+      if (!uid) {
+        throw new Error('UID is required to create a user');
+      }
+
+      const newUserDoc = {
+        email: data.email || '',
+        displayName: data.displayName || 'New User',
+        role: data.role || UserRole.STUDENT,
+        isActive: data.isActive !== undefined ? data.isActive : true,
         createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await this.usersCollection.doc(uid).set(newUserDoc);
+
+      return { uid, ...newUserDoc } as User;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw new Error('Failed to create user');
+    }
+  }
+
+  // Get user by UID
+  async getUserById(uid: string): Promise<User | null> {
+    try {
+      if (!this.usersCollection) {
+        return null;
+      }
+
+      const userDoc = await this.usersCollection.doc(uid).get();
+      
+      if (!userDoc.exists) {
+        return null;
+      }
+
+      return { uid, ...userDoc.data() } as User;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      throw new Error('Failed to get user');
+    }
+  }
+
+  // Get user by email
+  async getUserByEmail(email: string): Promise<User | null> {
+    try {
+      if (!this.usersCollection) {
+        return null;
+      }
+
+      const querySnapshot = await this.usersCollection
+        .where('email', '==', email)
+        .limit(1)
+        .get();
+
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      const doc = querySnapshot.docs[0];
+      return { uid: doc.id, ...doc.data() } as User;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      throw new Error('Failed to get user');
+    }
+  }
+
+  // Update user
+  async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
+    try {
+      if (!this.usersCollection) {
+        throw new Error('Users collection not initialized');
+      }
+
+      // Filter out undefined values
+      const updateDoc: any = {
         updatedAt: new Date()
       };
-      
-      // Store in memory for consistency in test mode
-      this.testUsers.set(newUser.uid, newUser);
-      console.log('Test user stored:', newUser);
-      
-      return newUser;
-    }
 
-    const { uid, ...data } = userData;
-    if (!uid) {
-      throw new Error('UID is required to create a user');
-    }
-
-    const newUserDoc = {
-      email: data.email || '',
-      displayName: data.displayName || 'New User',
-      role: data.role || UserRole.STUDENT,
-      isActive: data.isActive !== undefined ? data.isActive : true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await this.usersCollection.doc(uid).set(newUserDoc);
-
-    return { uid, ...newUserDoc } as User;
-  } catch (error) {
-    console.error('Error creating user:', error);
-    throw new Error('Failed to create user');
-  }
-}
-
-// Get user by UID
-async getUserById(uid: string): Promise<User | null> {
-  try {
-    if (isTestMode || !this.usersCollection) {
-      // In test mode, check the in-memory store
-      const testUser = this.testUsers.get(uid);
-      console.log('Test mode: getUserById for', uid, 'found:', !!testUser);
-      return testUser || null;
-    }
-
-    const userDoc = await this.usersCollection.doc(uid).get();
-    
-    if (!userDoc.exists) {
-      return null;
-    }
-
-    return { uid, ...userDoc.data() } as User;
-  } catch (error) {
-    console.error('Error getting user:', error);
-    throw new Error('Failed to get user');
-  }
-}
-
-// Get user by email
-async getUserByEmail(email: string): Promise<User | null> {
-  try {
-    if (isTestMode || !this.usersCollection) {
-      // In test mode, search the in-memory store
-      for (const user of this.testUsers.values()) {
-        if (user.email === email) {
-          console.log('Test mode: getUserByEmail found user for', email);
-          return user;
+      // Only add defined values to the update object
+      Object.keys(updateData).forEach(key => {
+        const value = updateData[key as keyof Partial<User>];
+        if (value !== undefined && value !== null) {
+          updateDoc[key] = value;
         }
+      });
+
+      await this.usersCollection.doc(uid).update(updateDoc);
+      
+      const updatedUser = await this.getUserById(uid);
+      if (!updatedUser) {
+        throw new Error('User not found after update');
       }
-      console.log('Test mode: getUserByEmail - no user found for', email);
-      return null;
+
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new Error('Failed to update user');
     }
-
-    const querySnapshot = await this.usersCollection
-      .where('email', '==', email)
-      .limit(1)
-      .get();
-
-    if (querySnapshot.empty) {
-      return null;
-    }
-
-    const doc = querySnapshot.docs[0];
-    return { uid: doc.id, ...doc.data() } as User;
-  } catch (error) {
-    console.error('Error getting user by email:', error);
-    throw new Error('Failed to get user');
   }
-}
-
-// Update user
-async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
-  try {
-    if (isTestMode || !this.usersCollection) {
-      console.log('Test mode: User update simulated');
-      // Return mock updated user
-      return {
-        uid,
-        email: 'test@example.com',
-        displayName: updateData.displayName || 'Test User',
-        role: updateData.role || UserRole.STUDENT,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-
-    // Filter out undefined values
-    const updateDoc: any = {
-      updatedAt: new Date()
-    };
-
-    // Only add defined values to the update object
-    Object.keys(updateData).forEach(key => {
-      const value = updateData[key as keyof Partial<User>];
-      if (value !== undefined && value !== null) {
-        updateDoc[key] = value;
-      }
-    });
-
-    await this.usersCollection.doc(uid).update(updateDoc);
-    
-    const updatedUser = await this.getUserById(uid);
-    if (!updatedUser) {
-      throw new Error('User not found after update');
-    }
-
-    return updatedUser;
-  } catch (error) {
-    console.error('Error updating user:', error);
-    throw new Error('Failed to update user');
-  }
-}
 
   // Update user role (admin only)
   async updateUserRole(uid: string, newRole: UserRole): Promise<User> {
     try {
+      if (!this.usersCollection) {
+        throw new Error('Users collection not initialized');
+      }
+
       const updateData = {
         role: newRole,
         updatedAt: new Date()
@@ -182,53 +147,8 @@ async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
     totalPages: number;
   }> {
     try {
-      // Return mock data in test mode
-      if (isTestMode || !this.usersCollection) {
-        const mockUsers: User[] = [
-          {
-            uid: 'user-1',
-            email: 'student@demo.com',
-            displayName: 'John Student',
-            role: UserRole.STUDENT,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            uid: 'user-2',
-            email: 'teacher@demo.com',
-            displayName: 'Jane Teacher',
-            role: UserRole.TEACHER,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            uid: 'user-3',
-            email: 'admin@demo.com',
-            displayName: 'Admin User',
-            role: UserRole.ADMIN,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ];
-
-        // Filter by role if specified
-        let filteredUsers = mockUsers;
-        if (role) {
-          filteredUsers = mockUsers.filter(user => user.role === role);
-        }
-
-        const offset = (page - 1) * limit;
-        const paginatedUsers = filteredUsers.slice(offset, offset + limit);
-
-        return {
-          users: paginatedUsers,
-          total: filteredUsers.length,
-          page,
-          totalPages: Math.ceil(filteredUsers.length / limit)
-        };
+      if (!this.usersCollection) {
+        return { users: [], total: 0, page, totalPages: 0 };
       }
 
       let query = this.usersCollection.orderBy('createdAt', 'desc');
@@ -270,6 +190,10 @@ async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
     totalPages: number;
   }> {
     try {
+      if (!this.usersCollection) {
+        return { users: [], total: 0, page, totalPages: 0 };
+      }
+
       // Note: Firestore doesn't support full-text search, so we'll use a basic approach
       // In production, consider using Algolia or Elasticsearch for better search
       
@@ -319,8 +243,7 @@ async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
   // Deactivate user
   async deactivateUser(uid: string): Promise<void> {
     try {
-      if (isTestMode || !this.usersCollection) {
-        console.log('Test mode: User deactivation simulated');
+      if (!this.usersCollection) {
         return;
       }
 
@@ -342,8 +265,7 @@ async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
   // Activate user
   async activateUser(uid: string): Promise<void> {
     try {
-      if (isTestMode || !this.usersCollection) {
-        console.log('Test mode: User activation simulated');
+      if (!this.usersCollection) {
         return;
       }
 
@@ -371,6 +293,10 @@ async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
     totalAdmins: number;
   }> {
     try {
+      if (!this.usersCollection) {
+        return { totalUsers: 0, activeUsers: 0, totalStudents: 0, totalTeachers: 0, totalAdmins: 0 };
+      }
+
       const [
         totalUsersSnapshot,
         activeUsersSnapshot,

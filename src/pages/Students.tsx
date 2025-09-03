@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { courseService, enrollmentService, userService, FirestoreCourse, FirestoreUser } from '@/lib/firestore';
+  import DashboardHero from '@/components/DashboardHero';
 
+  
 interface StudentRow {
   id: string;
   name: string;
@@ -82,19 +84,17 @@ export default function StudentsPage() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading students...</div>;
 
+
+
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Students</h1>
-              <p className="text-sm text-blue-100">Students enrolled in your courses</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="Students"
+        subtitle="Students enrolled in your courses"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">

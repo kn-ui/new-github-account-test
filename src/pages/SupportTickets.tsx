@@ -4,24 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  MoreHorizontal, 
-  Search, 
-  Plus, 
+import {
+  MoreHorizontal,
+  Search,
   MessageSquare,
   Clock,
   CheckCircle,
@@ -29,22 +28,45 @@ import {
   User,
   Target,
   Activity,
-  Zap,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react';
 import { supportTicketService } from '@/lib/firestore';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+  import DashboardHero from '@/components/DashboardHero';
+
 
 interface Ticket {
   id: string;
   title: string;
   description: string;
-  status: string;
-  priority: string;
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high';
   category: string;
   submittedBy: string;
   assignedTo: string;
   createdAt: any; // Timestamp from Firestore
   updatedAt: any; // Timestamp from Firestore
+  subject?: string;
+  message?: string;
+  name?: string;
+  email?: string;
 }
 
 const SupportTicketsPage = () => {
@@ -52,8 +74,9 @@ const SupportTicketsPage = () => {
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  // removed priority filter per requirements
   const [loading, setLoading] = useState(true);
+  const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
+  const [statusUpdate, setStatusUpdate] = useState<Ticket['status']>('open');
 
   // Calculate stats
   const totalTickets = tickets.length;
@@ -168,7 +191,7 @@ const SupportTicketsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50">
       {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-orange-600 via-orange-700 to-red-800 text-white">
+{/*       <div className="bg-gradient-to-r from-orange-600 via-orange-700 to-red-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
@@ -179,7 +202,12 @@ const SupportTicketsPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
+
+            <DashboardHero 
+              title="Support Tickets"
+              subtitle="Manage customer support requests and technical issues."
+            />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}

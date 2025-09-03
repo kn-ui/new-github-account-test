@@ -9,9 +9,7 @@ const LoginHeroAside = () => {
       </div>
       <div className="relative z-10 h-full flex flex-col justify-center p-16 text-white">
         <div className="flex items-center gap-3">
-          <div className="bg-white/20 p-3 rounded-lg">
-            <BookOpen className="h-6 w-6" />
-          </div>
+          <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto rounded-lg" />
           <div>
             <h3 className="text-2xl font-bold">St. Raguel Church</h3>
             <p className="text-sm text-white/80">Spiritual School</p>

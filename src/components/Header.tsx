@@ -64,12 +64,8 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="bg-[#0e4fb9] p-2 rounded-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
             <Link to="/" className="cursor-pointer">
-              <h1 className="text-lg font-bold text-gray-900">St. Raguel Church</h1>
-              <p className="text-xs text-gray-600">Spiritual School</p>
+              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto" />
             </Link>
           </div>
 

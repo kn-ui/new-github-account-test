@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import userService from '../services/userService';
+import { auth as adminAuth } from '../config/firebase';
 import {
   sendSuccess,
   sendError,
@@ -11,6 +12,37 @@ import {
 } from '../utils/response';
 
 export class UserController {
+  // Admin: Create a new user
+  async createUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { email, password, displayName, role } = req.body;
+
+      // Step 1: Create user in Firebase Auth
+      const userRecord = await adminAuth.createUser({
+        email,
+        password,
+        displayName,
+      });
+
+      // Step 2: Create user in Firestore
+      const newUser = await userService.createUser({
+        uid: userRecord.uid,
+        email,
+        displayName,
+        role: role || UserRole.STUDENT,
+      });
+
+      sendCreated(res, 'User created successfully', newUser);
+    } catch (error: any) {
+      console.error('Create user error:', error);
+      if (error.code === 'auth/email-already-exists') {
+        sendError(res, 'Email already in use', undefined, 409);
+      } else {
+        sendServerError(res, 'Failed to create user');
+      }
+    }
+  }
+
 // Create or update user profile
 async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -40,7 +72,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       console.log('User does not exist, creating new profile');
       // Create new user profile
       const newUser = await userService.createUser({
-        uid,
+        uid: uid,
         email: email || '',
         displayName: displayName || 'New User',
         phoneNumber,

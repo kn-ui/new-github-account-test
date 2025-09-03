@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { firestore, isTestMode } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { Course, Enrollment, UserRole } from '../types';
 
 class CourseService {
@@ -74,72 +73,8 @@ class CourseService {
     totalPages: number;
   }> {
     try {
-      if (isTestMode || !this.coursesCollection) {
-        const mockCourses: Course[] = [
-          {
-            id: '1',
-            title: 'Introduction to Mathematics',
-            description: 'Basic mathematics course for beginners',
-            instructor: 'instructor-1',
-            instructorName: 'John Doe',
-            category: 'Mathematics',
-            duration: 8,
-            maxStudents: 30,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            syllabus: 'Basic math concepts and operations'
-          },
-          {
-            id: '2',
-            title: 'English Literature',
-            description: 'Exploring classic and modern literature',
-            instructor: 'instructor-2',
-            instructorName: 'Jane Smith',
-            category: 'Literature',
-            duration: 12,
-            maxStudents: 25,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            syllabus: 'Study of various literary works'
-          },
-          {
-            id: '3',
-            title: 'Biblical Studies',
-            description: 'Understanding the Bible and Christian theology',
-            instructor: 'instructor-3',
-            instructorName: 'Pastor Michael',
-            category: 'Theology',
-            duration: 16,
-            maxStudents: 40,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            syllabus: 'Comprehensive Bible study program'
-          }
-        ];
-        let filteredCourses = mockCourses;
-        if (category) {
-          filteredCourses = filteredCourses.filter(course => course.category === category);
-        }
-        if (instructorId) {
-          filteredCourses = filteredCourses.filter(course => course.instructor === instructorId);
-        }
-        if (isActive !== undefined) {
-          filteredCourses = filteredCourses.filter(course => course.isActive === isActive);
-        }
-
-        const total = filteredCourses.length;
-        const offset = (page - 1) * limit;
-        const paginatedCourses = filteredCourses.slice(offset, offset + limit);
-
-        return {
-          courses: paginatedCourses,
-          total,
-          page,
-          totalPages: Math.ceil(total / limit)
-        };
+      if (!this.coursesCollection) {
+        return { courses: [], total: 0, page, totalPages: 0 };
       }
 
       let query = this.coursesCollection.orderBy('createdAt', 'desc');

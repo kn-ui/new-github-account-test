@@ -18,6 +18,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+  import DashboardHero from '@/components/DashboardHero';
 
 export default function TeacherOverview() {
   const [stats, setStats] = useState<any>(null);
@@ -122,71 +123,73 @@ export default function TeacherOverview() {
     );
   }
 
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
-              <p className="text-sm text-blue-100">Manage your courses and students</p>
-            </div>
-                        <div className="flex space-x-3" />
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="Teacher Dashboard"
+        subtitle="Manage your courses and students"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Active Courses
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeCourses || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold mb-2">{stats?.activeCourses || 0}</div>
+            <p className="text-xs text-blue-100">
               {myCourses.length} total courses
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Total Students
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold mb-2">{stats?.totalStudents || 0}</div>
+            <p className="text-xs text-green-100">
               Enrolled across all courses
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Pending Reviews
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.pendingReviews || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold mb-2">{stats?.pendingReviews || 0}</div>
+            <p className="text-xs text-orange-100">
               Submissions to grade
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Average Rating
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.avgRating || 4.8}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold mb-2">{stats?.avgRating || 4.8}</div>
+            <p className="text-xs text-purple-100">
               Student satisfaction
             </p>
           </CardContent>

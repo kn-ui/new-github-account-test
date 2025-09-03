@@ -21,6 +21,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+export { Timestamp };
+
 // Types for Firestore documents
 export interface FirestoreUser {
   uid?: string; // Optional for backward compatibility
@@ -145,6 +147,11 @@ export interface FirestoreEvent {
   description: string;
   createdBy: string;
   type: string;
+  time: string;
+  location: string;
+  maxAttendees: number;
+  currentAttendees: number;
+  status: string;
 }
 
 export interface FirestoreForumThread {

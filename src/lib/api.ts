@@ -184,6 +184,13 @@ class ApiClient {
   }
 
   // Users API
+  async createUser(userData: Partial<User>): Promise<ApiResponse<User>> {
+    return this.request<User>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
   async getUsers(params?: {
     page?: number;
     limit?: number;

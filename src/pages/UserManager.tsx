@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ import {
 import { 
   MoreHorizontal, 
   Search, 
-  Plus, 
   Download,
   Users,
   UserCheck,
@@ -28,7 +28,8 @@ import {
   BookOpen,
   Shield,
   UserPlus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  User
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +46,7 @@ import {
 import CSVUpload from '@/components/ui/CSVUpload';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DashboardHero from '@/components/DashboardHero';
 
 interface User {
   id: string;
@@ -60,8 +62,11 @@ const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin'
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
+  const [editingUser, setEditingUser] = useState<User | null>(null); // New state for user being edited
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
@@ -82,12 +87,13 @@ const UserManager = () => {
 
   useEffect(() => {
     const filtered = users.filter(user =>
-      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (filterRole === 'all' || user.role === filterRole)
     );
     setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+  }, [searchTerm, users, filterRole]);
 
   const fetchUsers = async () => {
     try {
@@ -133,6 +139,28 @@ const UserManager = () => {
     }
   };
 
+  const handleEditClick = (user: User) => {
+    setEditingUser(user);
+    setIsEditUserOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    try {
+      await userService.updateUser(editingUser.id, {
+        displayName: editingUser.displayName,
+        email: editingUser.email,
+        role: editingUser.role,
+        isActive: editingUser.isActive,
+      });
+      setIsEditUserOpen(false);
+      setEditingUser(null);
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
+
   const exportUsers = () => {
     const csvContent = [
       ['Name', 'Email', 'Role', 'Status', 'Created At'],
@@ -164,102 +192,162 @@ const UserManager = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">User Management</h1>
-              <p className="text-sm sm:text-base text-blue-100 max-w-2xl mt-2">
-                Manage user accounts, permissions, and system access.
-              </p>
-            </div>
-            <div className="flex gap-3 mt-4 lg:mt-0">
-              <Button onClick={exportUsers} variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 transition-all duration-300">
-                <FileSpreadsheet className="h-5 w-5 mr-2" />
-                Export Users
+      <DashboardHero 
+        title="User Management"
+        subtitle="Manage user accounts, permissions, and system access."
+      >
+        <div className="flex gap-3 mt-4 lg:mt-0">
+          <Button onClick={exportUsers} className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
+            <FileSpreadsheet className="h-5 w-5 mr-2" />
+            Export Users
+          </Button>
+          <Dialog open={isAddUserOpen} onOpenChange={(o) => { setIsAddUserOpen(o); if (!o) setMode('single'); }}>
+            <DialogTrigger asChild>
+              <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Add User
               </Button>
-              <Dialog open={isAddUserOpen} onOpenChange={(o) => { setIsAddUserOpen(o); if (!o) setMode('single'); }}>
-                <DialogTrigger asChild>
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
-                    <UserPlus className="h-5 w-5 mr-2" />
-                    Add User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-xl">
-                  <DialogHeader>
-                    <div className="flex items-center justify-between">
-                      <DialogTitle className="flex items-center gap-2">
-                        <UserPlus className="h-5 w-5 text-blue-600" />
-                        Add Users
-                      </DialogTitle>
-                      <div className="flex items-center gap-2 text-sm">
-                        <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>Single</button>
-                        <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>Bulk</button>
-                      </div>
-                    </div>
-                    <DialogDescription>
-                      {mode==='single' ? 'Create a single user account with the specified role.' : 'Upload a CSV to create multiple users at once.'}
-                    </DialogDescription>
-                  </DialogHeader>
-                  {mode==='single' ? (
-                    <>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="displayName" className="text-right">Name</Label>
-                          <Input
-                            id="displayName"
-                            value={newUser.displayName}
-                            onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
-                            className="col-span-3"
-                            placeholder="Enter full name"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="email" className="text-right">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={newUser.email}
-                            onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                            className="col-span-3"
-                            placeholder="Enter email address"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="role" className="text-right">Role</Label>
-                          <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="student">Student</SelectItem>
-                              <SelectItem value="teacher">Teacher</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-                          Create User
-                        </Button>
-                      </DialogFooter>
-                    </>
-                  ) : (
-                    <div className="py-2">
-                      <CSVUpload 
-                        onUsersCreated={(count) => { setIsAddUserOpen(false); fetchUsers(); }}
-                        onError={(msg) => console.error(msg)}
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-blue-600" />
+                    Add Users
+                  </DialogTitle>
+                  <div className="flex items-center gap-2 text-sm">
+                    <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>Single</button>
+                    <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>Bulk</button>
+                  </div>
+                </div>
+                <DialogDescription>
+                  {mode==='single' ? 'Create a single user account with the specified role.' : 'Upload a CSV to create multiple users at once.'}
+                </DialogDescription>
+              </DialogHeader>
+              {mode==='single' ? (
+                <>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="displayName" className="text-right">Name</Label>
+                      <Input
+                        id="displayName"
+                        value={newUser.displayName}
+                        onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                        className="col-span-3"
+                        placeholder="Enter full name"
                       />
                     </div>
-                  )}
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="email" className="text-right">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        className="col-span-3"
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="role" className="text-right">Role</Label>
+                      <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="teacher">Teacher</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
+                      Create User
+                    </Button>
+                  </DialogFooter>
+                </>
+              ) : (
+                <div className="py-2">
+                  <CSVUpload 
+                    onUsersCreated={(count) => { setIsAddUserOpen(false); fetchUsers(); }}
+                    onError={(msg) => console.error(msg)}
+                  />
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit User Dialog */}
+          <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  Edit User
+                </DialogTitle>
+                <DialogDescription>
+                  Update the details for {editingUser?.displayName || 'this user'}.
+                </DialogDescription>
+              </DialogHeader>
+              {editingUser && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editDisplayName" className="text-right">Name</Label>
+                    <Input
+                      id="editDisplayName"
+                      value={editingUser.displayName}
+                      onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editEmail" className="text-right">Email</Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      value={editingUser.email}
+                      onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editRole" className="text-right">Role</Label>
+                    <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value as any})}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editIsActive" className="text-right">Status</Label>
+                    <Select value={editingUser.isActive ? 'active' : 'inactive'} onValueChange={(value) => setEditingUser({...editingUser, isActive: value === 'active'})}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700">
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
+      </DashboardHero>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}
@@ -320,8 +408,8 @@ const UserManager = () => {
         {/* Search and Filters */}
         <Card className="mb-6 shadow-lg">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex items-center space-x-8">
+              <div className="relative flex-1 max-w-md"> {/* Removed max-w-md here */}
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search users by name, email, or role..."
@@ -330,6 +418,17 @@ const UserManager = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -402,7 +501,7 @@ const UserManager = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(user)}>
                             <User className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>

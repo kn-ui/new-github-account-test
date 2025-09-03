@@ -149,8 +149,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
             <Link to="/" className="flex items-center space-x-2 cursor-pointer">
-              <GraduationCap className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">LMS</span>
+              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto" />
             </Link>
             <Button
               variant="ghost"

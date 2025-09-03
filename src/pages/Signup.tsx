@@ -91,15 +91,7 @@ const Signup = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="p-3 bg-gradient-primary rounded-lg shadow-soft">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
-            </div>
-            <div className="text-left">
-              <h1 className="text-2xl font-bold text-gradient-primary">
-                St. Raguel Church School
-              </h1>
-              <p className="text-sm text-muted-foreground">Educational Excellence</p>
-            </div>
+            <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-20 w-auto" />
           </div>
         </div>
 

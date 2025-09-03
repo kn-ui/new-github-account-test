@@ -162,7 +162,7 @@
       "examination": "Examinations",
       "holiday": "Holidays"
     },
-    "weekdays": ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+    "weekdays": ["እሁድ","ሰኞ","ማክሰኞ","ረቡዕ","ሐሙስ","ዓርብ","ቅዳሜ"],
     "loading": "Loading events...",
     "more": "+{count} more"
   },

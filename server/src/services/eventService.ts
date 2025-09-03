@@ -1,11 +1,11 @@
-import { firestore, isTestMode } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { EventItem } from '../types';
 
 class EventService {
   private collection = firestore?.collection('events');
 
   async getEvents(page = 1, limit = 50, type?: string, month?: string): Promise<{ events: EventItem[]; total: number; }> {
-    if (isTestMode || !this.collection) {
+    if (!this.collection) {
       return { events: [], total: 0 };
     }
 

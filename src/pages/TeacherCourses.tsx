@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import DashboardHero from '@/components/DashboardHero';
 
 export default function TeacherCourses() {
   const { currentUser, userProfile } = useAuth();
@@ -151,28 +152,15 @@ export default function TeacherCourses() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">My Courses</h1>
-              <p className="text-sm text-blue-100">Manage your courses</p>
-            </div>
-            <div>
-              <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-blue-700 hover:bg-blue-50">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Course
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="My Courses"
+        subtitle="Manage your courses"
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <Label htmlFor="search">Search Courses</Label>
               <div className="relative">
@@ -215,6 +203,13 @@ export default function TeacherCourses() {
               </Select>
             </div>
           </div>
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-700 hover:bg-blue-800">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Course
+          </Button>
         </div>
 
         {/* Courses Table */}

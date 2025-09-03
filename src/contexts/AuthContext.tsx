@@ -3,15 +3,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User as FirebaseUser,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile,
   UserCredential
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { userService, FirestoreUser } from '../lib/firestore';
-import { setAuthToken, removeAuthToken } from '@/lib/api';
+import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -97,9 +95,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Create user function - for admin use only
   const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
-      const userId = await userService.createUser(userData);
-      toast.success('User created successfully!');
-      return userId;
+      const response = await api.createUser(userData);
+      if (response.success && response.data) {
+        toast.success('User created successfully!');
+        return response.data.uid;
+      }
+      throw new Error(response.message);
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);
       throw error;

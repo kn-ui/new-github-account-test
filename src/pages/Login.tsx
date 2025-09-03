@@ -48,9 +48,7 @@ const Login = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="bg-blue-700 p-3 rounded-full">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
+              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-20 w-auto" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">
               {t('auth.welcomeBack') || 'Welcome Back'}

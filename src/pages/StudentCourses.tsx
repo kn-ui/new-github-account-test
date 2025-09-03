@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+  import DashboardHero from '@/components/DashboardHero';
 
 interface EnrolledCourse {
   id: string;
@@ -157,27 +158,24 @@ export default function StudentCourses() {
     );
   }
 
+
+
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-              <p className="text-gray-600">Your enrolled courses and progress</p>
-            </div>
-            <div>
-              <Button asChild>
-                <Link to="/courses">
-                  Browse More Courses
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="My Courses"
+        subtitle="Your enrolled courses and progress"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-end mb-6">
+          <Button asChild>
+            <Link to="/courses">
+              Browse More Courses
+            </Link>
+          </Button>
+        </div>
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

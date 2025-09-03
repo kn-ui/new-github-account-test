@@ -7,6 +7,7 @@ import { certificateService, activityLogService, FirestoreCertificate } from '@/
 import { evaluateAndAwardCertificates } from '@/lib/certificates';
 import CertificateCard from '@/components/CertificateCard';
 import { Button } from '@/components/ui/button';
+  import DashboardHero from '@/components/DashboardHero';
 
 export default function CertificatesPage() {
   const { currentUser, userProfile } = useAuth();
@@ -36,23 +37,19 @@ export default function CertificatesPage() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading certificates...</div>;
 
+
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Certificates</h1>
-              <p className="text-gray-600">Your earned achievements</p>
-            </div>
-            <div className="ml-auto">
-              <Button onClick={checkNew}>Check for new</Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="My Certificates"
+        subtitle="Your earned achievements"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-end mb-6">
+          <Button onClick={checkNew}>Check for new</Button>
+        </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {certs.map(c => (
             <CertificateCard

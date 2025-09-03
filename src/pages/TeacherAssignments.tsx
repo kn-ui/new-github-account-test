@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import DashboardHero from '@/components/DashboardHero';
 
 export default function TeacherAssignments() {
   const { currentUser, userProfile } = useAuth();
@@ -93,12 +93,12 @@ export default function TeacherAssignments() {
     }
 
     try {
-
+      const dueDate = new Date(formData.dueDate);
       const assignmentData = {
         title: formData.title,
         description: formData.description,
         courseId: formData.courseId,
-        dueDate: new Date(formData.dueDate),
+        dueDate: dueDate,
         maxScore: formData.maxScore,
         instructions: formData.instructions,
         teacherId: currentUser!.uid,
@@ -181,7 +181,7 @@ export default function TeacherAssignments() {
 
   const getStatusColor = (dueDate: Date) => {
     const now = new Date();
-    const due = dueDate.toDate();
+    const due = dueDate;
     if (due < now) {
       return 'bg-red-100 text-red-800';
     } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
@@ -192,7 +192,7 @@ export default function TeacherAssignments() {
 
   const getStatusText = (dueDate: Date) => {
     const now = new Date();
-    const due = dueDate.toDate();
+    const due = dueDate;
     if (due < now) {
       return 'Overdue';
     } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
@@ -222,25 +222,18 @@ export default function TeacherAssignments() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
-
-              <p className="text-gray-600">Create and manage course assignments</p>
-            </div>
-            <div>
-              <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Assignment
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="Assignments"
+        subtitle="Create and manage course assignments"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-end mb-6">
+          <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Assignment
+          </Button>
+        </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
@@ -303,8 +296,8 @@ export default function TeacherAssignments() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(assignment.dueDate)}>
-                    {getStatusText(assignment.dueDate)}
+                  <Badge className={getStatusColor(assignment.dueDate.toDate())}>
+                    {getStatusText(assignment.dueDate.toDate())}
                   </Badge>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
                     <Edit className="h-4 w-4 mr-1" />

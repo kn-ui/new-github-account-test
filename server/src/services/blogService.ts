@@ -1,11 +1,11 @@
-import { firestore, isTestMode } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { BlogPost } from '../types';
 
 class BlogService {
   private collection = firestore?.collection('blog_posts');
 
   async getPosts(page = 1, limit = 10, search?: string, category?: string): Promise<{ posts: BlogPost[]; total: number; }> {
-    if (isTestMode || !this.collection) {
+    if (!this.collection) {
       return { posts: [], total: 0 };
     }
 

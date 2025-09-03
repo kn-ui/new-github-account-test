@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { auth, firestore, isTestMode } from '../config/firebase';
+import { auth, firestore } from '../config/firebase';
 import { AuthenticatedRequest, UserRole } from '../types';
 
 // Verify Firebase token and extract user info
@@ -12,61 +12,16 @@ export const authenticateToken = async (
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-if (!token) {
-  res.status(401).json({
-    success: false,
-    message: 'Access token is missing'
-  });
-  return;
-}
-
-// In development mode, allow bypass with a special test token ONLY
-if (process.env.NODE_ENV === 'development' && token === 'test-token') {
-  console.log('⚠️  Development mode: Using test token');
-  
-  req.user = {
-    uid: 'test-user-id',
-    email: 'test@example.com',
-    role: UserRole.ADMIN
-  };
-  
-  next();
-  return;
-}
-
-// In test mode or when Firebase is not configured, simulate token verification
-if (isTestMode || !auth || !firestore) {
-  console.log('⚠️  Test mode: Simulating token verification');
-  
-  // Try to extract some info from token for consistency, or use defaults
-  try {
-    // In test mode, we can try to decode the JWT without verification
-    const tokenParts = token.split('.');
-    if (tokenParts.length === 3) {
-      const payload = JSON.parse(atob(tokenParts[1]));
-      req.user = {
-        uid: payload.user_id || payload.sub || `test-user-${Date.now()}`,
-        email: payload.email || `test-user-${Date.now()}@example.com`,
-        role: UserRole.STUDENT
-      };
-    } else {
-      throw new Error('Invalid token format');
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        message: 'Access token is missing'
+      });
+      return;
     }
-  } catch (e) {
-    // If token parsing fails, use completely fake data
-    req.user = {
-      uid: `test-user-${Date.now()}`,
-      email: `test-user-${Date.now()}@example.com`,
-      role: UserRole.STUDENT
-    };
-  }
-  
-  next();
-  return;
-}
 
-// Verify the Firebase token for all other cases
-const decodedToken = await auth.verifyIdToken(token);
+    // Verify the Firebase token for all other cases
+    const decodedToken = await auth.verifyIdToken(token);
     
 // Get user data from Firestore
 const userDoc = await firestore.collection('users').doc(decodedToken.uid).get();

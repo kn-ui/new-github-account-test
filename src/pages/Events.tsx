@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-irregular-whitespace */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,7 @@ import {
   Activity,
   Zap
 } from 'lucide-react';
-import { eventService } from '@/lib/firestore';
+import { eventService, Timestamp } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -44,12 +45,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import DashboardHero from '@/components/DashboardHero';
+
+import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
+import EthiopianHolidays from '@/components/EthiopianHolidays';
 
 interface Event {
   id: string;
   title: string;
   description: string;
-  date: any; // Timestamp from Firestore
+  date: Date | Timestamp;
   time: string;
   location: string;
   type: string;
@@ -68,18 +73,17 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date() as any, time: '', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' } as any);
-  const [editForm, setEditForm] = useState<Partial<Event>>({} as any);
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
+  const [editForm, setEditForm] = useState<Partial<Event>>({});
 
-  // Calculate stats
   const totalEvents = events.length;
   const upcomingEvents = events.filter(e => {
-    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
-    return eventDate > new Date();
+    const eventDate = e.date instanceof Date ? e.date : (e.date as Timestamp)?.toDate();
+    return eventDate && eventDate > new Date();
   }).length;
   const pastEvents = events.filter(e => {
-    const eventDate = e.date instanceof Date ? e.date : e.date.toDate();
-    return eventDate <= new Date();
+    const eventDate = e.date instanceof Date ? e.date : (e.date as Timestamp)?.toDate();
+    return eventDate && eventDate <= new Date();
   }).length;
 
   useEffect(() => {
@@ -88,8 +92,6 @@ const EventsPage = () => {
 
   useEffect(() => {
     let filtered = events;
-
-    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,26 +99,31 @@ const EventsPage = () => {
         (event.location && event.location.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
-
-    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(event => event.status && event.status === statusFilter);
     }
-
     setFilteredEvents(filtered);
   }, [searchTerm, statusFilter, events]);
 
   const fetchEvents = async () => {
     try {
       const fetchedEvents = await eventService.getEvents();
+      console.log('Fetched events:', fetchedEvents);
       setEvents(fetchedEvents);
-      setFilteredEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    console.log('Events state updated:', events);
+  }, [events]);
+
+  useEffect(() => {
+    console.log('Search term or status filter changed:', searchTerm, statusFilter);
+  }, [searchTerm, statusFilter]);
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
@@ -145,7 +152,7 @@ const EventsPage = () => {
         type: editForm.type,
         maxAttendees: editForm.maxAttendees,
         status: editForm.status,
-      } as any);
+      });
       setIsEditOpen(false);
       fetchEvents();
     } catch (e) {
@@ -155,13 +162,21 @@ const EventsPage = () => {
 
   const submitCreate = async () => {
     try {
+      const date = createForm.date || new Date();
+      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
+
       await eventService.createEvent({
-        title: String(createForm.title || ''),
-        description: String(createForm.description || ''),
-        date: (createForm.date as any) as any,
+        title: createForm.title || '',
+        description: createForm.description || '',
+        date: timestampDate,
         createdBy: 'system',
-        type: String(createForm.type || 'meeting'),
-      } as any);
+        type: createForm.type || 'meeting',
+        time: createForm.time || '',
+        location: createForm.location || '',
+        maxAttendees: createForm.maxAttendees || 50,
+        currentAttendees: createForm.currentAttendees || 0,
+        status: createForm.status || 'upcoming',
+      });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
@@ -195,82 +210,23 @@ const EventsPage = () => {
     }
   };
 
-  // Mini Calendar Component
   const MiniCalendar = () => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    // Get events for current month
-    const monthEvents = events.filter(event => {
-      const eventDate = event.date instanceof Date ? event.date : event.date.toDate();
-      return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
-    });
-
-    const renderCalendarDays = () => {
-      const days = [];
-      
-      // Add empty cells for days before the first day of the month
-      for (let i = 0; i < firstDayOfMonth; i++) {
-        days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>);
-      }
-      
-      // Add days of the month
-      for (let day = 1; day <= daysInMonth; day++) {
-        const hasEvent = monthEvents.some(event => {
-          const eventDate = event.date instanceof Date ? event.date : event.date.toDate();
-          return eventDate.getDate() === day;
-        });
-        
-        const isToday = day === today.getDate();
-        
-        days.push(
-          <div
-            key={day}
-            className={`h-8 w-8 flex items-center justify-center text-sm rounded-full transition-colors ${
-              isToday 
-                ? 'bg-blue-600 text-white font-semibold' 
-                : hasEvent 
-                  ? 'bg-purple-100 text-purple-700 font-medium' 
-                  : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            {day}
-          </div>
-        );
-      }
-      
-      return days;
-    };
-
+    const ethiopianToday = toEthiopianDate(today);
+    const formattedEthiopianMonthYear = formatEthiopianDate(ethiopianToday).split(',')[0];
     return (
       <Card className="shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-purple-600" />
-            {monthNames[currentMonth]} {currentYear}
+            {formattedEthiopianMonthYear}, {ethiopianToday.year} EC
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-1 mb-3">
-            {weekDays.map(day => (
-              <div key={day} className="text-xs font-medium text-gray-500 text-center py-1">
-                {day}
-              </div>
-            ))}
+          <div className="text-center text-4xl font-bold text-blue-600 py-4">
+            {ethiopianToday.day}
           </div>
-          <div className="grid grid-cols-7 gap-1">
-            {renderCalendarDays()}
-          </div>
+          <p className="text-center text-sm text-gray-500">Today's Ethiopian Date</p>
           <div className="mt-4 space-y-2 text-xs text-gray-600">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
@@ -278,7 +234,7 @@ const EventsPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-100 rounded-full"></div>
-              <span>Has Event</span>
+              <span>Has Event (Gregorian)</span>
             </div>
           </div>
         </CardContent>
@@ -296,34 +252,25 @@ const EventsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Events Management</h1>
-              <p className="text-sm sm:text-base text-purple-100 max-w-2xl mt-2">
-                Manage system events, schedules, and activities.
-              </p>
-            </div>
-            <div className="flex gap-3 mt-4 lg:mt-0">
-              <Link to="/calendar">
-                <Button className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
-                  <CalendarIcon className="h-5 w-5 mr-2" />
-                  View Calendar
-                </Button>
-              </Link>
-              <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
-                <Plus className="h-5 w-5 mr-2" />
-                Create Event
-              </Button>
-            </div>
-          </div>
+      <DashboardHero 
+        title="Event Management"
+        subtitle="Manage system events, schedules, and activities."
+      >
+        <div className="flex gap-3 mt-4 lg:mt-0">
+          <Link to="/calendar">
+            <Button  className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
+              <CalendarIcon className="h-5 w-5 mr-2" />
+              View Calendar
+            </Button>
+          </Link>
+          <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
+            <Plus className="h-5 w-5 mr-2" />
+            Create Event
+          </Button>
         </div>
-      </div>
+      </DashboardHero>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
-        {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardHeader className="pb-3">
@@ -366,16 +313,13 @@ const EventsPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Mini Calendar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
               <MiniCalendar />
+              <EthiopianHolidays />
             </div>
           </div>
-
-          {/* Events List */}
           <div className="lg:col-span-2">
-            {/* Search and Filters */}
             <Card className="mb-6 shadow-lg">
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -402,7 +346,6 @@ const EventsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Events Grid */}
             <div className="space-y-4">
               {filteredEvents.map((event) => (
                 <Card key={event.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
@@ -427,7 +370,29 @@ const EventsPage = () => {
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                {event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}
+                                {(() => {
+                                  try {
+                                    let gregorianEventDate: Date;
+                                    if (event.date instanceof Date) {
+                                      gregorianEventDate = event.date;
+                                    } else if (event.date && typeof (event.date as Timestamp).toDate === 'function') {
+                                      gregorianEventDate = (event.date as Timestamp).toDate();
+                                    } else {
+                                      console.error('Invalid event date format:', event.title, event.date);
+                                      return 'Invalid Date';
+                                    }
+
+                                    if (isNaN(gregorianEventDate.getTime())) {
+                                      console.error('Invalid Gregorian Date object:', event.title, gregorianEventDate);
+                                      return 'Invalid Date';
+                                    }
+                                    const ethiopianEventDate = toEthiopianDate(gregorianEventDate);
+                                    return formatEthiopianDate(ethiopianEventDate);
+                                  } catch (error) {
+                                    console.error('Error converting date for event:', event.title, error);
+                                    return 'Invalid Date';
+                                  }
+                                })()}
                               </span>
                               {event.time && (
                                 <span className="flex items-center gap-1">
@@ -496,7 +461,6 @@ const EventsPage = () => {
                 </Card>
               ))}
             </div>
-
             {filteredEvents.length === 0 && (
               <Card className="text-center py-12 shadow-lg">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -520,7 +484,6 @@ const EventsPage = () => {
           </div>
         </div>
       </div>
-      {/* Create Event Modal */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -536,23 +499,17 @@ const EventsPage = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Date</label>
-              <Input type="date" value={(() => { const d = createForm.date instanceof Date ? createForm.date : new Date(); return d.toISOString().slice(0,10); })()} onChange={(e) => setCreateForm({ ...createForm, date: new Date(e.target.value) } as any)} />
+              <Input type="date" value={createForm.date instanceof Date ? createForm.date.toISOString().slice(0,10) : new Date().toISOString().slice(0,10)} onChange={(e) => setCreateForm({ ...createForm, date: new Date(e.target.value) })} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Time</label>
-                <Input type="time" value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
+                <Input value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
-                <select className="w-full border rounded px-3 py-2" value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}>
-                  {['meeting','workshop','seminar','social','other'].map(t => (<option key={t} value={t}>{t}</option>))}
-                </select>
-                              </div>
-            </div>
-                        <div>
-              <label className="block text-sm font-medium mb-1">Custom Type (optional)</label>
-              <Input placeholder="Enter custom type if not in list" value={String(createForm.type && !['meeting','workshop','seminar','social','other'].includes(String(createForm.type)) ? createForm.type : '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
+                <Input value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
@@ -569,7 +526,6 @@ const EventsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* View Event Modal */}
       <Dialog open={!!selectedEvent && !isEditOpen} onOpenChange={(o) => !o && setSelectedEvent(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -581,7 +537,7 @@ const EventsPage = () => {
           {selectedEvent && (
             <div className="space-y-2 text-sm text-gray-700">
               <div><span className="font-medium">Title:</span> {selectedEvent.title}</div>
-              <div><span className="font-medium">Date:</span> {selectedEvent.date instanceof Date ? selectedEvent.date.toLocaleDateString() : selectedEvent.date.toDate().toLocaleDateString()}</div>
+              <div><span className="font-medium">Date:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
               {selectedEvent.time && (<div><span className="font-medium">Time:</span> {selectedEvent.time}</div>)}
               {selectedEvent.location && (<div><span className="font-medium">Location:</span> {selectedEvent.location}</div>)}
               <div><span className="font-medium">Type:</span> {selectedEvent.type}</div>
@@ -592,7 +548,6 @@ const EventsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Event Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -609,17 +564,12 @@ const EventsPage = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Time</label>
-                <Input type="time" value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
+                <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
-                <select className="w-full border rounded px-3 py-2" value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)}>
-                  {['meeting','workshop','seminar','social','other'].map(t => (<option key={t} value={t}>{t}</option>))}
-                </select>              </div>
-            </div>
-                        <div>
-              <label className="block text-sm font-medium mb-1">Custom Type (optional)</label>
-              <Input placeholder="Enter custom type if not in list" value={String(editForm.type && !['meeting','workshop','seminar','social','other'].includes(String(editForm.type)) ? editForm.type : '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
+                <Input value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
@@ -627,9 +577,8 @@ const EventsPage = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Status</label>
-              <select className="w-full border rounded px-3 py-2" value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)}>
-                {['upcoming','ongoing','completed'].map(s => (<option key={s} value={s}>{s}</option>))}
-              </select>            </div>
+              <Input value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)} />
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1">Description</label>
               <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />
@@ -641,7 +590,6 @@ const EventsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm */}
       <AlertDialog open={!!confirmDeleteId}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -661,7 +609,3 @@ const EventsPage = () => {
 };
 
 export default EventsPage;
-
-// Modals
-// Create Event Modal
-// Placed after default export intentionally for clarity; in real code we would keep before.

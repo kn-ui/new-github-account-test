@@ -1,12 +1,12 @@
-import { firestore, isTestMode } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { SupportTicket } from '../types';
 
 class SupportService {
   private collection = firestore?.collection('support_tickets');
 
   async create(ticket: Omit<SupportTicket, 'id' | 'status' | 'createdAt' | 'updatedAt'> & { userId?: string }): Promise<SupportTicket> {
-    if (isTestMode || !this.collection) {
-      return { ...(ticket as any), id: 'test', status: 'open', createdAt: new Date(), updatedAt: new Date() };
+    if (!this.collection) {
+      throw new Error('Support tickets collection not initialized');
     }
     const doc = {
       ...ticket,
@@ -19,7 +19,7 @@ class SupportService {
   }
 
   async listByUser(userId: string, page = 1, limit = 20): Promise<{ tickets: SupportTicket[]; total: number; }> {
-    if (isTestMode || !this.collection) return { tickets: [], total: 0 };
+    if (!this.collection) return { tickets: [], total: 0 };
     const q = this.collection.where('userId', '==', userId).orderBy('createdAt', 'desc');
     const snapshot = await q.get();
     const total = snapshot.size;

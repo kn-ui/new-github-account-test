@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil } from 'lucide-react';
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import DashboardHero from '@/components/DashboardHero';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -47,11 +49,11 @@ export default function CourseManager() {
     title: '',
     description: '',
     category: '',
-    duration: 8 as any,
-    maxStudents: 30 as any,
+    duration: 8,
+    maxStudents: 30,
     syllabus: '',
     isActive: false,
-  } as any);
+  });
 
   // Calculate stats
   const totalCourses = courses.length;
@@ -215,16 +217,10 @@ export default function CourseManager() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Course Management</h1>
-              <p className="text-sm sm:text-base text-green-100 max-w-2xl mt-2">
-                Manage courses, approvals, and content.
-              </p>
-            </div>
+      <DashboardHero 
+        title="Course Management"
+        subtitle="Manage courses, approvals, and content."
+      >
             <div className="mt-4 lg:mt-0">
               <Button 
                 onClick={startCreate} 
@@ -234,9 +230,9 @@ export default function CourseManager() {
                 Create Course
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+
+      </DashboardHero>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}

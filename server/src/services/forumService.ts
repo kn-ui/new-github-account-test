@@ -1,4 +1,4 @@
-import { firestore, isTestMode } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { ForumThread, ForumThreadPost } from '../types';
 
 class ForumService {
@@ -6,7 +6,7 @@ class ForumService {
   private posts = firestore?.collection('forum_posts');
 
   async listThreads(page = 1, limit = 20, category?: string): Promise<{ threads: ForumThread[]; total: number; }> {
-    if (isTestMode || !this.threads) return { threads: [], total: 0 };
+    if (!this.threads) return { threads: [], total: 0 };
 
     let query: FirebaseFirestore.Query = this.threads.orderBy('lastActivityAt', 'desc');
     if (category) query = query.where('category', '==', category);
@@ -19,7 +19,7 @@ class ForumService {
   }
 
   async listPosts(threadId: string, page = 1, limit = 50): Promise<{ posts: ForumThreadPost[]; total: number; }> {
-    if (isTestMode || !this.posts) return { posts: [], total: 0 };
+    if (!this.posts) return { posts: [], total: 0 };
 
     let query: FirebaseFirestore.Query = this.posts.where('threadId', '==', threadId).orderBy('createdAt', 'asc');
     const snapshot = await query.get();
@@ -30,17 +30,8 @@ class ForumService {
   }
 
   async createThread(params: { title: string; category: string; createdBy: string; createdByName: string; }): Promise<ForumThread> {
-    if (isTestMode || !this.threads) {
-      return {
-        id: 'test',
-        title: params.title,
-        category: params.category,
-        createdBy: params.createdBy,
-        createdByName: params.createdByName,
-        createdAt: new Date(),
-        lastActivityAt: new Date(),
-        pinned: false,
-      } as ForumThread;
+    if (!this.threads) {
+      throw new Error('Forum threads collection not initialized');
     }
     const doc = {
       title: params.title,
@@ -56,15 +47,8 @@ class ForumService {
   }
 
   async createPost(params: { threadId: string; body: string; createdBy: string; createdByName: string; }): Promise<ForumThreadPost> {
-    if (isTestMode || !this.posts || !this.threads) {
-      return {
-        id: 'test',
-        threadId: params.threadId,
-        body: params.body,
-        createdBy: params.createdBy,
-        createdByName: params.createdByName,
-        createdAt: new Date(),
-      } as ForumThreadPost;
+    if (!this.posts || !this.threads) {
+      throw new Error('Forum posts or threads collection not initialized');
     }
     const doc = {
       threadId: params.threadId,

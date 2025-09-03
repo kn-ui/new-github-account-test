@@ -11,6 +11,9 @@ const router = Router();
 // Protected routes (authentication required)
 router.use(authenticateToken);
 
+// Admin: Create a new user
+router.post('/', requireAdmin, validateUserRegistration, userController.createUser);
+
 // User profile routes  
 router.post('/profile', userController.createOrUpdateProfile);
 router.get('/profile', userController.getProfile);

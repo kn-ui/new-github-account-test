@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+  import DashboardHero from '@/components/DashboardHero';
 
 interface CourseProgress {
   id: string;
@@ -182,67 +183,73 @@ export default function StudentProgress() {
     );
   }
 
+
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Progress</h1>
-            <p className="text-gray-600">Track your learning journey across all courses</p>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="My Progress"
+        subtitle="Track your learning journey across all courses"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overall Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Total Courses
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overallStats.totalCourses}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold mb-2">{overallStats.totalCourses}</div>
+              <p className="text-xs text-blue-100">
                 Enrolled courses
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Progress</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Average Progress
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overallStats.averageProgress}%</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold mb-2">{overallStats.averageProgress}%</div>
+              <p className="text-xs text-green-100">
                 Across all courses
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assignments</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Assignments
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overallStats.completedAssignments}/{overallStats.totalAssignments}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold mb-2">{overallStats.completedAssignments}/{overallStats.totalAssignments}</div>
+              <p className="text-xs text-orange-100">
                 Completed assignments
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Grade</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Average Grade
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overallStats.averageGrade}%</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold mb-2">{overallStats.averageGrade}%</div>
+              <p className="text-xs text-purple-100">
                 Overall performance
               </p>
             </CardContent>

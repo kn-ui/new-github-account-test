@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import { userService } from '@/lib/firestore';
 import { courseService } from '@/lib/firestore';
 import { eventService } from '@/lib/firestore';
 import { analyticsService } from '@/lib/firestore';
+  import DashboardHero from '@/components/DashboardHero';
 
 interface User {
   id: string;
@@ -95,19 +97,16 @@ const AdminOverview = () => {
     );
   }
 
+
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Hero Section (condensed) */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto mt-2">
-              Monitor users, courses, and events at a glance.
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="Admin Dashboard"
+        subtitle="Monitor users, courses, and events at a glance."
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
@@ -195,7 +194,7 @@ const AdminOverview = () => {
               {recentUsers.length > 0 ? (
                 <div className="space-y-4">
                   {recentUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all duration-200">
+                    <div key={user.id} className="flex items-center justify-between p-2 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all duration-200">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md">
                           <User className="h-6 w-6 text-white" />
@@ -243,7 +242,7 @@ const AdminOverview = () => {
               {pendingCourses.length > 0 ? (
                 <div className="space-y-4">
                   {pendingCourses.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border border-gray-100 hover:border-green-200 transition-all duration-200">
+                    <div key={course.id} className="flex items-center justify-between p-2 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border border-gray-100 hover:border-green-200 transition-all duration-200">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md">
                           <BookOpenIcon className="h-6 w-6 text-white" />
@@ -291,7 +290,7 @@ const AdminOverview = () => {
             {recentEvents.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentEvents.map((event) => (
-                  <div key={event.id} className="p-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl border border-gray-100 hover:border-purple-200 transition-all duration-200">
+                  <div key={event.id} className="p-2 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl border border-gray-100 hover:border-purple-200 transition-all duration-200">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                         <Calendar className="h-5 w-5 text-white" />

@@ -12,7 +12,7 @@ import {
 } from '../utils/response';
 
 export class CourseController {
-  // Create a new course (teacher/admin only)
+  // Create a new course (admin only)
   async createCourse(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { title, description, syllabus, category, duration, maxStudents, thumbnail, isActive } = req.body;
@@ -34,6 +34,7 @@ export class CourseController {
         duration: parseInt(duration) || 8,
         maxStudents: parseInt(maxStudents) || 50,
         thumbnail,
+
         // Teachers' courses should be pending approval by default
         // Admins can choose, defaulting to true if unspecified
         isActive: typeof isActive === 'boolean' ? isActive : true

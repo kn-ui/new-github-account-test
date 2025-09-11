@@ -69,6 +69,7 @@ export default function CourseManager() {
   const loadCourses = async () => {
     try {
       setLoading(true);
+
       const courses = await courseService.getCourses(1000);
       setCourses(courses); // Added this line
       // compute total enrolled students across all courses
@@ -85,6 +86,7 @@ export default function CourseManager() {
       setLoading(false);
     }
   };
+
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
@@ -143,6 +145,11 @@ export default function CourseManager() {
         toast.error('Not authenticated');
         return;
       }
+      // Only admins can create from this page; otherwise, block
+      if (userProfile.role !== 'admin') {
+        toast.error('Only administrators can create courses.');
+        return;
+      }
       await courseService.createCourse({
         title: String(createForm.title || ''),
         description: String(createForm.description || ''),
@@ -150,7 +157,7 @@ export default function CourseManager() {
         duration: Number(createForm.duration || 1),
         maxStudents: Number(createForm.maxStudents || 1),
         syllabus: String(createForm.syllabus || ''),
-        isActive: userProfile.role === 'admin' ? !!createForm.isActive : false,
+        isActive: !!createForm.isActive,
         instructor: currentUser.uid,
         instructorName: userProfile.displayName || userProfile.email || 'Instructor',
       } as any);
@@ -166,6 +173,7 @@ export default function CourseManager() {
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesSearch;
   });
 
@@ -226,8 +234,8 @@ export default function CourseManager() {
             </CardContent>
           </Card>
           
-          
-          
+
+                    
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">

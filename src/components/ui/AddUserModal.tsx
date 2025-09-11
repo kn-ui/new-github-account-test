@@ -14,7 +14,7 @@ export default function AddUserModal({ isOpen, onClose, onUserCreated }: AddUser
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
+    role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -166,6 +166,7 @@ export default function AddUserModal({ isOpen, onClose, onUserCreated }: AddUser
                   <option value="student">Student</option>
                   <option value="teacher">Teacher</option>
                   <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
                 </select>
               </div>
 

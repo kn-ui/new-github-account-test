@@ -1,20 +1,19 @@
 import { toEthiopian, toGregorian } from 'ethiopian-date';
 
 export const toEthiopianDate = (gregorianDate: Date): { year: number; month: number; day: number } => {
-  // toEthiopian expects year, month (0-indexed), day
-  const ethiopianArray = toEthiopian(gregorianDate.getFullYear(), gregorianDate.getMonth(), gregorianDate.getDate());
-  return {
-    year: ethiopianArray[0],
-    month: ethiopianArray[1],
-    day: ethiopianArray[2],
-  };
+  // Many libraries expect 1-indexed Gregorian month. Date#getMonth is 0-indexed.
+  const year = gregorianDate.getFullYear();
+  const month1Indexed = gregorianDate.getMonth() + 1;
+  const day = gregorianDate.getDate();
+  const [ey, em, ed] = toEthiopian(year, month1Indexed, day);
+  return { year: ey, month: em, day: ed };
 };
 
 export const fromEthiopianDate = (ethiopianYear: number, ethiopianMonth: number, ethiopianDay: number): Date => {
-  // toGregorian expects year, month, day (1-indexed for Ethiopian month)
-  const gregorianArray = toGregorian(ethiopianYear, ethiopianMonth, ethiopianDay);
-  // Date constructor expects year, month (0-indexed), day
-  return new Date(gregorianArray[0], gregorianArray[1], gregorianArray[2]);
+  // toGregorian returns [year, month (1-indexed), day]
+  const [gy, gm1, gd] = toGregorian(ethiopianYear, ethiopianMonth, ethiopianDay);
+  // Date month is 0-indexed
+  return new Date(gy, gm1 - 1, gd);
 };
 
 export const formatEthiopianDate = (ethiopianDate: { year: number; month: number; day: number }): string => {

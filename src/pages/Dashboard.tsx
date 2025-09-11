@@ -21,6 +21,8 @@ export default function Dashboard() {
     switch (userProfile.role) {
       case 'admin':
         return <AdminOverview />;
+      case 'super_admin':
+        return <AdminOverview />;
       case 'teacher':
         return <TeacherOverview />;
       case 'student':

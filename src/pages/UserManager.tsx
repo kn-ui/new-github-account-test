@@ -63,6 +63,7 @@ const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
   const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin' 
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);

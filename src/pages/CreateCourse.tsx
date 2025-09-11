@@ -18,8 +18,8 @@ const CreateCourse = () => {
       return;
     }
 
-    // Redirect if not admin or teacher
-    if (!loading && userProfile && !['admin', 'teacher'].includes(userProfile.role)) {
+    // Redirect if not admin (teachers no longer allowed)
+    if (!loading && userProfile && userProfile.role !== 'admin') {
       navigate('/dashboard');
       return;
     }
@@ -48,7 +48,7 @@ const CreateCourse = () => {
   }
 
   // Show unauthorized message if user doesn't have permission
-  if (!loading && (!userProfile || !['admin', 'teacher'].includes(userProfile.role))) {
+  if (!loading && (!userProfile || userProfile.role !== 'admin')) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -57,7 +57,7 @@ const CreateCourse = () => {
             <Alert variant="destructive" className="mb-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                You don't have permission to create courses. Only administrators and teachers can create courses.
+                You don't have permission to create courses. Only administrators can create courses.
               </AlertDescription>
             </Alert>
             

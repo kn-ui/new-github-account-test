@@ -123,12 +123,12 @@
       "placeholder": "የትንታኔ ገጽታ ቦታ",
       "realtime": "በእውነተኛ ጊዜ ዳታ"
     },
-    "pendingApprovals": "የሚጠብቁ ማጽደቃዎች",
+    "pendingApprovals": "ቅርብ ጊዜ የተጨመሩ ኮርሶች",
     "systemAlerts": "የስርዓት ማንቂያዎች",
     "quickActions": {
       "title": "ፈጣን እርምጃዎች",
-      "addUser": "አዲስ ተጠቃሚ አክል",
-      "createCourse": "ኮርስ ፍጠር",
+      "addUser": "አዲስ ተጠቃሚ",
+      "createCourse": "ኮርስ ፍጠር (አስተዳዳሪ)",
       "generateReport": "ሪፖርት መፍጠር",
       "systemSettings": "የስርዓት ቅንብር"
     },

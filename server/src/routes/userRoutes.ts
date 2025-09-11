@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import userController from '../controllers/userController';
+
 import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAuth, requireAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth';
 import { validateUserRegistration, validatePagination } from '../middleware/validation';
 
@@ -20,6 +21,7 @@ router.get('/profile', userController.getProfile);
 router.put('/profile', userController.updateProfile);
 
 // Specific routes first (before parameterized routes)
+
 router.get('/search', requireTeacherOrAdmin, validatePagination, userController.searchUsers);
 router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats);
 
@@ -27,6 +29,7 @@ router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats
 router.get('/', requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
 
 // Parameterized routes last
+
 router.get('/:userId', requireTeacherOrAdmin, userController.getUserById);
 router.put('/:userId/role', requireAdminOrSuperAdmin, userController.updateUserRole);
 router.put('/:userId/deactivate', requireAdmin, userController.deactivateUser);

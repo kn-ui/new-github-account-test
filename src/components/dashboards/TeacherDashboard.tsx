@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell, Eye, FileText, Star, X, Send } from 'lucide-react';
+import DualDateInput from '@/components/ui/DualDateInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -272,12 +273,7 @@ export default function TeacherDashboard() {
                     <h2 className="text-xl font-semibold text-gray-900">My Courses</h2>
                     <p className="text-gray-600">Manage your active courses</p>
                   </div>
-                  <Link to="/create-course">
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Course
-                    </Button>
-                  </Link>
+                  {/* Teachers can no longer create courses */}
                 </div>
               </div>
               <div className="p-6">
@@ -649,11 +645,10 @@ export default function TeacherDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Due Date *</label>
-                  <input
-                    type="date"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    value={(newAnnouncement as any).assignmentDueDate || ''}
-                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentDueDate: e.target.value } as any) })}
+                  <DualDateInput
+                    value={(newAnnouncement as any).assignmentDueDate ? new Date((newAnnouncement as any).assignmentDueDate) : new Date()}
+                    onChange={(d) => setNewAnnouncement({ ...newAnnouncement, ...( { assignmentDueDate: d.toISOString().slice(0,10) } as any) })}
+                    defaultMode="ethiopian"
                   />
                 </div>
                 <div>

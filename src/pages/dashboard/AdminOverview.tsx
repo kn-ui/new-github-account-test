@@ -55,7 +55,7 @@ const AdminOverview = () => {
     totalTeachers: 0
   });
   const [recentUsers, setRecentUsers] = useState<User[]>([]);
-  const [pendingCourses, setPendingCourses] = useState<Course[]>([]);
+  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
   const [recentEvents, setRecentEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +65,7 @@ const AdminOverview = () => {
         const [adminStats, users, courses, events] = await Promise.all([
           analyticsService.getAdminStats(),
           userService.getUsers(5),
-          courseService.getPendingCourses(),
+          courseService.getCourses(5),
           eventService.getEvents(5)
         ]);
 
@@ -77,7 +77,7 @@ const AdminOverview = () => {
           totalTeachers: adminStats.totalTeachers
         });
         setRecentUsers(users);
-        setPendingCourses(courses);
+        setRecentCourses(courses);
         setRecentEvents(events);
       } catch (error) {
         console.error('Error fetching admin data:', error);
@@ -232,16 +232,16 @@ const AdminOverview = () => {
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Clock className="h-6 w-6 text-green-600" />
                 </div>
-                Pending Courses
+                Recently Added Courses
               </CardTitle>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/dashboard/courses">View all courses</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-6">
-              {pendingCourses.length > 0 ? (
+              {recentCourses.length > 0 ? (
                 <div className="space-y-4">
-                  {pendingCourses.map((course) => (
+                  {recentCourses.map((course) => (
                     <div key={course.id} className="flex items-center justify-between p-2 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border border-gray-100 hover:border-green-200 transition-all duration-200">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md">
@@ -254,8 +254,8 @@ const AdminOverview = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 px-3 py-1">
-                        Pending
+                      <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 px-3 py-1">
+                        Active
                       </Badge>
                     </div>
                   ))}
@@ -265,8 +265,8 @@ const AdminOverview = () => {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpenIcon className="h-8 w-8 text-green-600" />
                   </div>
-                  <p className="text-lg font-medium">Pending courses will be shown here</p>
-                  <p className="text-sm text-gray-400">New course submissions will appear in this section</p>
+                  <p className="text-lg font-medium">Recently added courses will be shown here</p>
+                  <p className="text-sm text-gray-400">New courses will appear in this section</p>
                 </div>
               )}
             </CardContent>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, User, MessageSquare } from 'lucide-react';
-
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -54,6 +54,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/contact`, {
         method: 'POST',
         headers: {

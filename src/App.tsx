@@ -121,12 +121,13 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
+
                     <SuperAdminRoute page="events" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
-            
+
             <Route 
               path="/dashboard/reports" 
               element={
@@ -308,7 +309,7 @@ const App = () => (
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
 
-            
+
             <Route 
               path="/events" 
               element={

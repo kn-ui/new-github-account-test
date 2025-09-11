@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -55,6 +56,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { lang, setLang } = useI18n();
 
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
@@ -68,13 +70,14 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'User Management', href: '/dashboard/users', icon: Users },
           { label: 'Course Management', href: '/dashboard/courses', icon: BookOpen },
           { label: 'Events', href: '/dashboard/events', icon: Calendar },
-          
+
           { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
           { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
         ];
       case 'super_admin':
         return [
           ...baseItems,
+
           { label: 'Users', href: '/dashboard/users', icon: Users },
           { label: 'Courses', href: '/dashboard/courses', icon: BookOpen },
           { label: 'Events', href: '/dashboard/events', icon: Calendar },
@@ -278,6 +281,16 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              {/* Language Switcher */}
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as any)}
+                className="border rounded px-2 py-1 text-sm"
+                aria-label="Language"
+              >
+                <option value="en">English</option>
+                <option value="am">አማርኛ</option>
+              </select>
             </div>
           </div>
         </div>

@@ -199,7 +199,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
     }
   }
 
-  // Update user role (admin only)
+  // Update user role (admin or super admin only)
   async updateUserRole(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;

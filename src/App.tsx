@@ -26,7 +26,7 @@ import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
 // Dev utilities removed for production cleanup
-// SupportTickets removed per client request
+
 import Events from "./pages/Events";
 import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
@@ -48,6 +48,8 @@ import SearchResults from "./pages/SearchResults";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
+
+import SuperAdminRoute from "./pages/SuperAdminRoutes";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -98,7 +100,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <UserManager />
+                    <SuperAdminRoute page="users" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -108,7 +110,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <CourseManager />
+                    <SuperAdminRoute page="courses" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -119,12 +121,13 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <Events />
+
+                    <SuperAdminRoute page="events" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
-            {/* Support tickets route removed */}
+
             <Route 
               path="/dashboard/reports" 
               element={
@@ -306,7 +309,7 @@ const App = () => (
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
 
-            {/* Public support tickets route removed */}
+
             <Route 
               path="/events" 
               element={

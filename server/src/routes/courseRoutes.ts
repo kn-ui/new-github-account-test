@@ -59,7 +59,7 @@ router.get('/admin/stats', requireTeacherAdminOrSuperAdmin, courseController.get
 router.put('/enrollments/:enrollmentId/progress', courseController.updateProgress);
 
 // Teacher/Admin routes
-// Restrict creation to Admin only
+
 router.post('/', requireAdmin, validateCourseCreation, courseController.createCourse);
 
 // Parameterized routes last

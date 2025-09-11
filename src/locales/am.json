@@ -9,7 +9,20 @@
     "dashboard": "ዳሽቦርድ",
     "courses": "ኮርሶች",
     "forum": "ፎረም",
-    "calendar": "የቀን መቁጠሪያ"
+    "calendar": "የቀን መቁጠሪያ",
+    "userManagement": "የተጠቃሚ አስተዳደር",
+    "courseManagement": "የኮርስ አስተዳደር",
+    "events": "ክስተቶች",
+    "reports": "ሪፖርቶች",
+    "settings": "የስርዓት ቅንብር",
+    "myCourses": "የእኔ ኮርሶች",
+    "students": "ተማሪዎች",
+    "assignments": "ተግባራት",
+    "submissions": "ስብስቦች",
+    "announcements": "ማስታወቂያዎች",
+    "materials": "የኮርስ ቁሳቁሶች",
+    "certificates": "ማረጋገጫዎች",
+    "progress": "እድገት"
   },
   "auth": {
     "login": "መግባት",

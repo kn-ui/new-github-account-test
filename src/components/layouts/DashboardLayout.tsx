@@ -56,54 +56,53 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
 
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
-      { label: 'Dashboard', href: '/dashboard', icon: Home },
+      { label: t('nav.dashboard'), href: '/dashboard', icon: Home },
     ];
 
     switch (userRole) {
       case 'admin':
         return [
           ...baseItems,
-          { label: 'User Management', href: '/dashboard/users', icon: Users },
-          { label: 'Course Management', href: '/dashboard/courses', icon: BookOpen },
-          { label: 'Events', href: '/dashboard/events', icon: Calendar },
-
-          { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
-          { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
+          { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
+          { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
+          { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
+          { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
+          { label: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
         ];
       case 'super_admin':
         return [
           ...baseItems,
 
-          { label: 'Users', href: '/dashboard/users', icon: Users },
-          { label: 'Courses', href: '/dashboard/courses', icon: BookOpen },
-          { label: 'Events', href: '/dashboard/events', icon: Calendar },
-          { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+          { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
+          { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
+          { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
+          { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
         ];
       case 'teacher':
         return [
           ...baseItems,
-          { label: 'My Courses', href: '/dashboard/my-courses', icon: BookOpen },
-          { label: 'Students', href: '/dashboard/students', icon: Users },
-          { label: 'Assignments', href: '/dashboard/assignments', icon: FileText },
-          { label: 'Submissions', href: '/dashboard/submissions', icon: ClipboardList },
-          { label: 'Announcements', href: '/dashboard/announcements', icon: Bell },
-          { label: 'Course Materials', href: '/dashboard/materials', icon: FolderOpen },
-          { label: 'Reports', href: '/dashboard/teacher-reports', icon: BarChart3 },
+          { label: t('nav.myCourses'), href: '/dashboard/my-courses', icon: BookOpen },
+          { label: t('nav.students'), href: '/dashboard/students', icon: Users },
+          { label: t('nav.assignments'), href: '/dashboard/assignments', icon: FileText },
+          { label: t('nav.submissions'), href: '/dashboard/submissions', icon: ClipboardList },
+          { label: t('nav.announcements'), href: '/dashboard/announcements', icon: Bell },
+          { label: t('nav.materials'), href: '/dashboard/materials', icon: FolderOpen },
+          { label: t('nav.reports'), href: '/dashboard/teacher-reports', icon: BarChart3 },
         ];
       
       case 'student':
         return [
           ...baseItems,
-          { label: 'My Courses', href: '/dashboard/student-courses', icon: BookOpen },
-          { label: 'Assignments', href: '/dashboard/student-assignments', icon: FileText },
-          { label: 'Submissions', href: '/dashboard/student-submissions', icon: ClipboardList },
-          { label: 'Certificates', href: '/dashboard/certificates', icon: Award },
-          { label: 'Announcements', href: '/dashboard/student-announcements', icon: Bell },
-          { label: 'Progress', href: '/dashboard/progress', icon: TrendingUp },
+          { label: t('nav.myCourses'), href: '/dashboard/student-courses', icon: BookOpen },
+          { label: t('nav.assignments'), href: '/dashboard/student-assignments', icon: FileText },
+          { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
+          { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },
+          { label: t('nav.announcements'), href: '/dashboard/student-announcements', icon: Bell },
+          { label: t('nav.progress'), href: '/dashboard/progress', icon: TrendingUp },
         ];
       
       default:
@@ -143,7 +142,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -226,7 +225,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 dashboard-main overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 dashboard-main">
 {/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -296,7 +295,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="dashboard-page">
             {children}
           </div>

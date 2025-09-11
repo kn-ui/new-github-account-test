@@ -14,6 +14,7 @@ import rateLimit from 'express-rate-limit';
 import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
 import contentRoutes from './routes/contentRoutes';
+import emailRoutes from './routes/emailRoutes';
 
 
 const app = express();
@@ -72,6 +73,7 @@ try {
   app.use('/api/users', userRoutes);
   app.use('/api/courses', courseRoutes);
   app.use('/api/content', contentRoutes);
+  app.use('/api/email', emailRoutes);
   console.log('✅ Routes loaded successfully');
 } catch (error) {
   console.error('❌ Error loading routes:', error);

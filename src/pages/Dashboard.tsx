@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminOverview from '@/pages/dashboard/AdminOverview';
 import TeacherOverview from '@/pages/dashboard/TeacherOverview';
 import StudentOverview from '@/pages/dashboard/StudentOverview';
+import SuperAdminOverview from '@/pages/dashboard/SuperAdminOverview';
 
 export default function Dashboard() {
   const { userProfile } = useAuth();
@@ -24,6 +25,8 @@ export default function Dashboard() {
         return <TeacherOverview />;
       case 'student':
         return <StudentOverview />;
+      case 'super_admin':
+        return <SuperAdminOverview />;
       default:
         return <div>Unknown role</div>;
     }

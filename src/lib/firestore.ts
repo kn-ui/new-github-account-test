@@ -29,7 +29,7 @@ export interface FirestoreUser {
   id?: string;  // Document ID
   displayName: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'super_admin';
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -190,12 +190,14 @@ const collections = {
 
 // User operations
 export const userService = {
-  async getUsers(limitCount = 10): Promise<FirestoreUser[]> {
-    const q = query(
-      collections.users(),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
+  async getUsers(limitCount?: number): Promise<FirestoreUser[]> {
+    const q = limitCount
+      ? query(
+          collections.users(),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
+        )
+      : query(collections.users(), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },

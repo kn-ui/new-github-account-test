@@ -81,8 +81,14 @@ export const authorizeRoles = (...roles: UserRole[]) => {
 // Check if user is admin
 export const requireAdmin = authorizeRoles(UserRole.ADMIN);
 
+// Check if user is super admin
+export const requireSuperAdmin = authorizeRoles(UserRole.SUPER_ADMIN);
+
+// Check if user is admin or super admin
+export const requireAdminOrSuperAdmin = authorizeRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN);
+
 // Check if user is teacher or admin
-export const requireTeacherOrAdmin = authorizeRoles(UserRole.TEACHER, UserRole.ADMIN);
+export const requireTeacherOrAdmin = authorizeRoles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPER_ADMIN);
 
 // Check if user is student, teacher, or admin (authenticated users)
-export const requireAuth = authorizeRoles(UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN);
+export const requireAuth = authorizeRoles(UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPER_ADMIN);

@@ -36,7 +36,7 @@ import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  userRole: 'admin' | 'teacher' | 'student';
+  userRole: 'admin' | 'teacher' | 'student' | 'super_admin';
 }
 
 interface NavigationItem {
@@ -45,6 +45,8 @@ interface NavigationItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
 }
+
+import logo from '@/assets/logo.jpg';
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -66,11 +68,18 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'User Management', href: '/dashboard/users', icon: Users },
           { label: 'Course Management', href: '/dashboard/courses', icon: BookOpen },
           { label: 'Events', href: '/dashboard/events', icon: Calendar },
-          { label: 'Support Tickets', href: '/dashboard/support-tickets', icon: MessageSquare },
+          
           { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
           { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
         ];
-      
+      case 'super_admin':
+        return [
+          ...baseItems,
+          { label: 'Users', href: '/dashboard/users', icon: Users },
+          { label: 'Courses', href: '/dashboard/courses', icon: BookOpen },
+          { label: 'Events', href: '/dashboard/events', icon: Calendar },
+          { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+        ];
       case 'teacher':
         return [
           ...baseItems,
@@ -131,7 +140,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -149,7 +158,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
             <Link to="/" className="flex items-center space-x-2 cursor-pointer">
-              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto" />
+              <img src={logo} alt="St. Raguel Church Logo" className="h-16 w-auto" />
             </Link>
             <Button
               variant="ghost"
@@ -214,7 +223,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 dashboard-main">
+      <div className="flex-1 flex flex-col min-w-0 dashboard-main overflow-y-auto">
 {/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -274,7 +283,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-6">
           <div className="dashboard-page">
             {children}
           </div>

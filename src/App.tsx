@@ -26,7 +26,7 @@ import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
 // Dev utilities removed for production cleanup
-import SupportTickets from "./pages/SupportTickets";
+
 import Events from "./pages/Events";
 import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
@@ -48,6 +48,8 @@ import SearchResults from "./pages/SearchResults";
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
+
+import SuperAdminRoute from "./pages/SuperAdminRoutes";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -98,7 +100,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <UserManager />
+                    <SuperAdminRoute page="users" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -108,7 +110,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <CourseManager />
+                    <SuperAdminRoute page="courses" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -119,22 +121,12 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <Events />
+                    <SuperAdminRoute page="events" />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
             />
-            <Route 
-
-              path="/dashboard/support-tickets" 
-              element={
-                <ProtectedRoute>
-                  <DashboardWrapper>
-                    <SupportTickets />
-                  </DashboardWrapper>
-                </ProtectedRoute>
-              } 
-            />
+            
             <Route 
               path="/dashboard/reports" 
               element={
@@ -316,14 +308,7 @@ const App = () => (
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
 
-            <Route 
-              path="/support-tickets" 
-              element={
-                <ProtectedRoute>
-                  <SupportTickets />
-                </ProtectedRoute>
-              } 
-            />
+            
             <Route 
               path="/events" 
               element={

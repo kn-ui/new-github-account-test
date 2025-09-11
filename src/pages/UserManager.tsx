@@ -29,7 +29,8 @@ import {
   Shield,
   UserPlus,
   FileSpreadsheet,
-  User
+  User,
+  Eye
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,7 +63,7 @@ const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin'
+  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin' 
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
@@ -70,7 +71,7 @@ const UserManager = () => {
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
+    role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
     password: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
@@ -108,8 +109,8 @@ const UserManager = () => {
   };
 
   const handleDeleteUser = async (userId: string, userRole: string) => {
-    if (userRole === 'admin') {
-      alert('Cannot delete admin users');
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      alert('Cannot delete admin or super admin users');
       return;
     }
     
@@ -258,6 +259,7 @@ const UserManager = () => {
                           <SelectItem value="student">Student</SelectItem>
                           <SelectItem value="teacher">Teacher</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -322,6 +324,7 @@ const UserManager = () => {
                         <SelectItem value="student">Student</SelectItem>
                         <SelectItem value="teacher">Teacher</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -427,6 +430,7 @@ const UserManager = () => {
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -473,10 +477,11 @@ const UserManager = () => {
                     </TableCell>
                     <TableCell>
                       <Badge 
-                        variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : 'outline'}
+                        variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
                         className="flex items-center gap-1"
                       >
                         {user.role === 'admin' && <Shield className="h-3 w-3" />}
+                        {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
                         {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
                         {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
                         {user.role}
@@ -505,7 +510,7 @@ const UserManager = () => {
                             <User className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          {user.role !== 'admin' && (
+                          {user.role !== 'super_admin' && (
                             <DropdownMenuItem 
                               className="text-red-600 cursor-pointer"
                               onClick={() => handleDeleteUser(user.id, user.role)}

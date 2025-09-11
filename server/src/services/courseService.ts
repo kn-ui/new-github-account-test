@@ -104,6 +104,9 @@ class CourseService {
         ...doc.data()
       } as Course));
 
+      console.log('getAllCourses - Fetched courses:', courses);
+      console.log('getAllCourses - Total courses:', total);
+
       return {
         courses,
         total,

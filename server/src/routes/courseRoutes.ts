@@ -59,7 +59,7 @@ router.get('/admin/stats', requireTeacherOrAdmin, courseController.getCourseStat
 router.put('/enrollments/:enrollmentId/progress', courseController.updateProgress);
 
 // Teacher/Admin routes
-router.post('/', requireTeacherOrAdmin, validateCourseCreation, courseController.createCourse);
+router.post('/', requireAdmin, validateCourseCreation, courseController.createCourse);
 
 // Parameterized routes last
 router.get('/:courseId', courseController.getCourseById);

@@ -9,7 +9,20 @@
     "dashboard": "Dashboard",
     "courses": "Courses",
     "forum": "Forum",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "userManagement": "User Management",
+    "courseManagement": "Course Management",
+    "events": "Events",
+    "reports": "Reports",
+    "settings": "System Settings",
+    "myCourses": "My Courses",
+    "students": "Students",
+    "assignments": "Assignments",
+    "submissions": "Submissions",
+    "announcements": "Announcements",
+    "materials": "Course Materials",
+    "certificates": "Certificates",
+    "progress": "Progress"
   },
   "auth": {
     "login": "Login",
@@ -162,7 +175,7 @@
       "examination": "Examinations",
       "holiday": "Holidays"
     },
-    "weekdays": ["እሁድ","ሰኞ","ማክሰኞ","ረቡዕ","ሐሙስ","ዓርብ","ቅዳሜ"],
+    "weekdays": ["እሁድ", "ሰኞ", "ማክሰኞ", "ረቡዕ", "ሐሙስ", "ዓርብ", "ቅዳሜ"],
     "loading": "Loading events...",
     "more": "+{count} more"
   },

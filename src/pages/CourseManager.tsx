@@ -58,7 +58,6 @@ export default function CourseManager() {
   // Calculate stats
   const totalCourses = courses.length;
   const activeCourses = courses.filter(c => c.isActive).length;
-  const pendingCourses = courses.filter(c => !c.isActive).length;
   const totalStudents = totalEnrolledStudents;
 
   const navigate = useNavigate();
@@ -70,11 +69,8 @@ export default function CourseManager() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const [activeCourses, pendingCourses] = await Promise.all([
-        courseService.getCourses(1000),
-        courseService.getPendingCourses(1000),
-      ]);
-      setCourses([...(activeCourses as CourseWithApproval[]), ...(pendingCourses as CourseWithApproval[])]);
+      const activeCoursesList = await courseService.getCourses(1000);
+      setCourses([...(activeCoursesList as CourseWithApproval[])]);
       // compute total enrolled students across all courses
       try {
         const enrollments = await enrollmentService.getAllEnrollments();
@@ -90,27 +86,9 @@ export default function CourseManager() {
     }
   };
 
-  const handleApproveCourse = async (courseId: string) => {
-    try {
-      await courseService.updateCourse(courseId, { isActive: true });
-      toast.success('Course approved successfully');
-      loadCourses(); // Refresh the list
-    } catch (error) {
-      console.error('Error approving course:', error);
-      toast.error('Failed to approve course');
-    }
-  };
+  // Approval flow removed
 
-  const handleRejectCourse = async (courseId: string) => {
-    try {
-      await courseService.updateCourse(courseId, { isActive: false });
-      toast.success('Course rejected');
-      loadCourses(); // Refresh the list
-    } catch (error) {
-      console.error('Error rejecting course:', error);
-      toast.error('Failed to reject course');
-    }
-  };
+  // Rejection flow removed
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
@@ -169,6 +147,11 @@ export default function CourseManager() {
         toast.error('Not authenticated');
         return;
       }
+      // Only admins can create from this page; otherwise, block
+      if (userProfile.role !== 'admin') {
+        toast.error('Only administrators can create courses.');
+        return;
+      }
       await courseService.createCourse({
         title: String(createForm.title || ''),
         description: String(createForm.description || ''),
@@ -176,7 +159,7 @@ export default function CourseManager() {
         duration: Number(createForm.duration || 1),
         maxStudents: Number(createForm.maxStudents || 1),
         syllabus: String(createForm.syllabus || ''),
-        isActive: userProfile.role === 'admin' ? !!createForm.isActive : false,
+        isActive: !!createForm.isActive,
         instructor: currentUser.uid,
         instructorName: userProfile.displayName || userProfile.email || 'Instructor',
       } as any);
@@ -193,9 +176,7 @@ export default function CourseManager() {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'pending' && !course.isActive) ||
-                         (statusFilter === 'approved' && course.isActive) ||
-                         (statusFilter === 'rejected' && !course.isActive);
+                         (statusFilter === 'approved' && course.isActive);
     return matchesSearch && matchesStatus;
   });
 
@@ -204,7 +185,7 @@ export default function CourseManager() {
   };
 
   const getStatusText = (course: CourseWithApproval) => {
-    return course.isActive ? 'Approved' : 'Pending Approval';
+    return course.isActive ? 'Active' : 'Inactive';
   };
 
   if (loading) {
@@ -267,12 +248,12 @@ export default function CourseManager() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Pending Approval
+                Recently Added
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{pendingCourses}</div>
-              <div className="text-orange-100 text-sm">Awaiting review</div>
+              <div className="text-3xl font-bold mb-2">{totalCourses}</div>
+              <div className="text-orange-100 text-sm">In the last period</div>
             </CardContent>
           </Card>
           
@@ -384,28 +365,7 @@ export default function CourseManager() {
                         Edit
                       </Button>
                       
-                      {!course.isActive && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApproveCourse(course.id)}
-                            className="text-green-600 border-green-300 hover:bg-green-50"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRejectCourse(course.id)}
-                            className="text-red-600 border-red-300 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </>
-                      )}
+                      
                       
                       <AlertDialog>
                         <AlertDialogTrigger asChild>

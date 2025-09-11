@@ -21,7 +21,7 @@ const Header = () => {
   };
 
   const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || t('auth.user');
-  const userRole = userProfile?.role as 'student' | 'teacher' | 'admin' | undefined;
+  const userRole = userProfile?.role as 'student' | 'teacher' | 'admin' | 'super_admin' | undefined;
 
   const publicNavItems = [
     { label: t('nav.home'), to: '/' },

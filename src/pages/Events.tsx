@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import DualDateInput from '@/components/ui/DualDateInput';
 import { 
   Table, 
   TableBody, 
@@ -498,8 +499,12 @@ const EventsPage = () => {
               <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Date</label>
-              <Input type="date" value={createForm.date instanceof Date ? createForm.date.toISOString().slice(0,10) : new Date().toISOString().slice(0,10)} onChange={(e) => setCreateForm({ ...createForm, date: new Date(e.target.value) })} />
+              <DualDateInput
+                label="Date"
+                value={createForm.date instanceof Date ? createForm.date : new Date()}
+                onChange={(d) => setCreateForm({ ...createForm, date: d })}
+                defaultMode="ethiopian"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

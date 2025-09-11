@@ -17,6 +17,7 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     startDate: '',
     endDate: '',
   });
+  const [calendarMode, setCalendarMode] = useState<'ethiopian' | 'gregorian'>('ethiopian');
 
   const reportTypes = [
     {
@@ -277,6 +278,7 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
               />
             </div>
           </div>
+          <div className="mt-2 text-xs text-gray-500">Dates shown in Gregorian; reports reflect the same range regardless of calendar preference.</div>
         </div>
 
         {/* Generate Button */}

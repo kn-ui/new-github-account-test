@@ -36,7 +36,7 @@ import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  userRole: 'admin' | 'teacher' | 'student';
+  userRole: 'admin' | 'teacher' | 'student' | 'super_admin';
 }
 
 interface NavigationItem {
@@ -66,9 +66,16 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: 'User Management', href: '/dashboard/users', icon: Users },
           { label: 'Course Management', href: '/dashboard/courses', icon: BookOpen },
           { label: 'Events', href: '/dashboard/events', icon: Calendar },
-          { label: 'Support Tickets', href: '/dashboard/support-tickets', icon: MessageSquare },
           { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
           { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
+        ];
+      case 'super_admin':
+        return [
+          ...baseItems,
+          { label: 'User Management', href: '/dashboard/users', icon: Users },
+          { label: 'Course Management', href: '/dashboard/courses', icon: BookOpen },
+          { label: 'Events', href: '/dashboard/events', icon: Calendar },
+          { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
         ];
       
       case 'teacher':

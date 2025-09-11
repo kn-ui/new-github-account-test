@@ -40,7 +40,7 @@ export interface User {
   uid: string;
   email: string;
   displayName: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'super_admin';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -92,6 +92,11 @@ class ApiClient {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+  }
+
+  // Public contact endpoint
+  async sendContactMessage(payload: { name: string; email: string; subject: string; message: string; }): Promise<ApiResponse<any>> {
+    return this.request(`/api/content/contact`, { method: 'POST', body: JSON.stringify(payload) });
   }
 
   private async request<T>(

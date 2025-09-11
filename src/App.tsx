@@ -26,7 +26,7 @@ import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
 // Dev utilities removed for production cleanup
-import SupportTickets from "./pages/SupportTickets";
+// SupportTickets removed per client request
 import Events from "./pages/Events";
 import Students from "./pages/Students";
 import Submissions from "./pages/Submissions";
@@ -124,17 +124,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-
-              path="/dashboard/support-tickets" 
-              element={
-                <ProtectedRoute>
-                  <DashboardWrapper>
-                    <SupportTickets />
-                  </DashboardWrapper>
-                </ProtectedRoute>
-              } 
-            />
+            {/* Support tickets route removed */}
             <Route 
               path="/dashboard/reports" 
               element={
@@ -316,14 +306,7 @@ const App = () => (
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
 
-            <Route 
-              path="/support-tickets" 
-              element={
-                <ProtectedRoute>
-                  <SupportTickets />
-                </ProtectedRoute>
-              } 
-            />
+            {/* Public support tickets route removed */}
             <Route 
               path="/events" 
               element={

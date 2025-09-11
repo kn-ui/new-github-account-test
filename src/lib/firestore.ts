@@ -29,7 +29,7 @@ export interface FirestoreUser {
   id?: string;  // Document ID
   displayName: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'super_admin';
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -263,16 +263,7 @@ export const courseService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
-  async getPendingCourses(limitCount = 10): Promise<FirestoreCourse[]> {
-    const q = query(
-      collections.courses(),
-      where('isActive', '==', false),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
-  },
+  // Pending courses flow removed
 
   async getCourseById(courseId: string): Promise<FirestoreCourse | null> {
     const docRef = doc(db, 'courses', courseId);

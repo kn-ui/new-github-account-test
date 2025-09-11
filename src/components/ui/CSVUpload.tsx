@@ -5,7 +5,7 @@ import { userService } from '@/lib/firestore';
 interface CSVUser {
   displayName: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'super_admin';
 }
 
 interface CSVUploadProps {
@@ -77,7 +77,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             const user: CSVUser = {
               displayName: values[headers.indexOf('displayname')] || '',
               email: values[headers.indexOf('email')] || '',
-              role: values[headers.indexOf('role')] as 'student' | 'teacher' | 'admin' || 'student',
+              role: values[headers.indexOf('role')] as 'student' | 'teacher' | 'admin' | 'super_admin' || 'student',
             };
 
             // Validate user data
@@ -87,7 +87,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             if (!user.email || !isValidEmail(user.email)) {
               newErrors.push(`Row ${i + 1}: Invalid email address`);
             }
-            if (!['student', 'teacher', 'admin'].includes(user.role)) {
+            if (!['student', 'teacher', 'admin', 'super_admin'].includes(user.role)) {
               newErrors.push(`Row ${i + 1}: Invalid role (must be student, teacher, or admin)`);
             }
 

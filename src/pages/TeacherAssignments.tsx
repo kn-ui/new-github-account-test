@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { assignmentService, courseService, FirestoreAssignment } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DualDateInput from '@/components/ui/DualDateInput';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -396,12 +397,10 @@ export default function TeacherAssignments() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="dueDate">Due Date *</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                  required
+                <DualDateInput
+                  value={formData.dueDate ? new Date(formData.dueDate) : new Date()}
+                  onChange={(d) => setFormData(prev => ({ ...prev, dueDate: d.toISOString().slice(0,10) }))}
+                  defaultMode="ethiopian"
                 />
               </div>
               <div>

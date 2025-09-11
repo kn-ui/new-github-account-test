@@ -62,7 +62,7 @@ const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin'
+  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin'
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
@@ -70,7 +70,7 @@ const UserManager = () => {
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
+    role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
     password: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
@@ -258,6 +258,7 @@ const UserManager = () => {
                           <SelectItem value="student">Student</SelectItem>
                           <SelectItem value="teacher">Teacher</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -322,6 +323,7 @@ const UserManager = () => {
                         <SelectItem value="student">Student</SelectItem>
                         <SelectItem value="teacher">Teacher</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -427,6 +429,7 @@ const UserManager = () => {
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

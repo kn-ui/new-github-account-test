@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import courseController from '../controllers/courseController';
-import { authenticateToken, requireAdmin, requireTeacherOrAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAdminOrSuperAdmin, requireTeacherAdminOrSuperAdmin } from '../middleware/auth';
 import { validateCourseCreation, validatePagination } from '../middleware/validation';
 
 const router = Router();
@@ -54,18 +54,19 @@ router.use(authenticateToken);
 // Specific routes first (before parameterized routes)
 router.get('/student/enrollments', courseController.getMyEnrollments);
 router.get('/instructor/my-courses', requireTeacherOrAdmin, validatePagination, courseController.getMyCourses);
-router.get('/admin/stats', requireTeacherOrAdmin, courseController.getCourseStats);
+router.get('/admin/stats', requireTeacherAdminOrSuperAdmin, courseController.getCourseStats);
 
 router.put('/enrollments/:enrollmentId/progress', courseController.updateProgress);
 
 // Teacher/Admin routes
-router.post('/', requireTeacherOrAdmin, validateCourseCreation, courseController.createCourse);
+// Restrict creation to Admin only
+router.post('/', requireAdmin, validateCourseCreation, courseController.createCourse);
 
 // Parameterized routes last
 router.get('/:courseId', courseController.getCourseById);
 router.post('/:courseId/enroll', courseController.enrollInCourse);
 router.put('/:courseId', requireTeacherOrAdmin, courseController.updateCourse);
-router.get('/:courseId/enrollments', requireTeacherOrAdmin, courseController.getCourseEnrollments);
+router.get('/:courseId/enrollments', requireTeacherAdminOrSuperAdmin, courseController.getCourseEnrollments);
 
 
 // Admin only routes

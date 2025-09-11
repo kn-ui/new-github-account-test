@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, User, MessageSquare } from 'lucide-react';
-import { supportTicketService } from '@/lib/firestore';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -54,14 +54,8 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
-      // Create support ticket
-      await supportTicketService.createTicket({
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
-        status: 'open'
-      });
+      // Send message via backend email endpoint
+      await api.sendContactMessage(formData as any);
       
       // Show success message
       toast.success('Message sent successfully! We will get back to you soon.');

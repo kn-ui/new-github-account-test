@@ -4,7 +4,8 @@ import { Request } from 'express';
 export enum UserRole {
   STUDENT = 'student',
   TEACHER = 'teacher',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin'
 }
 
 // User interface

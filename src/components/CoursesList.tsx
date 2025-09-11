@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface CourseWithApproval extends FirestoreCourse {
   needsApproval?: boolean;
@@ -18,6 +19,7 @@ interface CoursesListProps {
 }
 
 export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
+  const { t } = useI18n();
   const [courses, setCourses] = useState<CourseWithApproval[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseWithApproval[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,23 +34,19 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
     const filtered = courses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'pending' && !course.isActive) ||
-                           (statusFilter === 'approved' && course.isActive);
+      // Only active courses are shown now
+      const matchesStatus = course.isActive;
       return matchesSearch && matchesStatus;
     });
     setFilteredCourses(filtered);
-  }, [searchTerm, courses, statusFilter]);
+  }, [searchTerm, courses]);
 
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const [activeCourses, pendingCourses] = await Promise.all([
-        courseService.getCourses(1000),
-        courseService.getPendingCourses(1000),
-      ]);
-      setCourses([...(activeCourses as CourseWithApproval[]), ...(pendingCourses as CourseWithApproval[])]);
-      setFilteredCourses([...(activeCourses as CourseWithApproval[]), ...(pendingCourses as CourseWithApproval[])]);
+      const activeCourses = await courseService.getCourses(1000);
+      setCourses(activeCourses as CourseWithApproval[]);
+      setFilteredCourses(activeCourses as CourseWithApproval[]);
     } catch (error) {
       console.error('Error loading courses:', error);
     } finally {
@@ -57,17 +55,17 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
   };
 
   const getStatusColor = (course: CourseWithApproval) => {
-    return course.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+    return 'bg-green-100 text-green-800';
   };
 
   const getStatusText = (course: CourseWithApproval) => {
-    return course.isActive ? 'Approved' : 'Pending Approval';
+    return 'Approved';
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading courses...</div>
+        <div className="text-gray-600">{t('blog.loading')}</div>
       </div>
     );
   }
@@ -78,31 +76,19 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2 block">Search Courses</Label>
+              <Label htmlFor="search" className="text-sm font-medium text-gray-700 mb-2 block">{t('courses.searchLabel')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title or instructor..."
+                  placeholder={t('courses.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
-            <div className="md:w-48">
-              <Label htmlFor="status" className="text-sm font-medium text-gray-700 mb-2 block">Status Filter</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Status filter removed per requirements (only Admin creates courses; no pending state) */}
           </div>
         </CardContent>
       </Card>
@@ -122,7 +108,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          Instructor: {course.instructorName}
+                          {t('courses.instructor')}: {course.instructorName}
                         </span>
                         <span className="flex items-center gap-1">
                           <Target className="h-4 w-4" />
@@ -130,7 +116,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
                         </span>
                         <span className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4" />
-                          {course.duration} hours
+                          {course.duration} {t('courses.hours')}
                         </span>
                       </div>
                     </div>
@@ -142,7 +128,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
                     variant="outline" 
                     className={`px-3 py-1 text-sm font-medium ${getStatusColor(course)}`}
                   >
-                    {getStatusText(course)}
+                    {course.isActive ? t('courses.approved') : t('courses.pendingApproval')}
                   </Badge>
                 </div>
               </div>

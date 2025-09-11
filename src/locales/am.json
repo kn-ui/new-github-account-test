@@ -198,4 +198,69 @@
     "pinned": "ተሰናክሏል",
     "by": "በ"
   }
+  ,
+  "common": {
+    "dashboard": "ዳሽቦርድ"
+  },
+  "search": {
+    "placeholder": "ተጠቃሚዎችን፣ ኮርሶችን፣ ክስተቶችን ፈልግ..."
+  },
+  "notifications": {
+    "announcements": "ማስታወቂያዎች",
+    "none": "ማስታወቂያ የለም"
+  },
+  "language": {
+    "label": "ቋንቋ"
+  },
+  "users": {
+    "all": "ሁሉም ተጠቃሚዎች",
+    "searchPlaceholder": "ተጠቃሚዎችን በስም፣ ኢሜይል ወይም ሚና ፈልግ...",
+    "filterByRole": "በሚና አጣራ",
+    "roles": {
+      "all": "ሁሉም ሚናዎች",
+      "student": "ተማሪ",
+      "teacher": "አስተማሪ",
+      "admin": "አስተዳዳሪ",
+      "super_admin": "ሱፐር አስተዳዳሪ"
+    },
+    "table": {
+      "user": "ተጠቃሚ",
+      "role": "ሚና",
+      "status": "ሁኔታ",
+      "created": "ተፈጠረ"
+    },
+    "status": {
+      "active": "ንቁ",
+      "inactive": "ባልንቁ"
+    }
+  },
+  "courses": {
+    "searchLabel": "ኮርሶች ፈልግ",
+    "searchPlaceholder": "በርእስ ወይም በአስተማሪ ፈልግ...",
+    "statusFilter": "የሁኔታ ማጣሪያ",
+    "allStatus": "ሁሉም ሁኔታ",
+    "approved": "አጽድቋል",
+    "pending": "በመጠባበቅ ላይ",
+    "pendingApproval": "የማጽደቅ መጠባበቂያ",
+    "instructor": "አስተማሪ",
+    "hours": "ሰዓታት"
+  },
+  "events": {
+    "searchPlaceholder": "ክስተቶችን በርእስ፣ መግለጫ ወይም ቦታ ፈልግ...",
+    "allStatus": "ሁሉም ሁኔታ",
+    "status": {
+      "upcoming": "በቅርቡ",
+      "ongoing": "በመካከል",
+      "completed": "ተጠናቀቀ"
+    },
+    "attendees": "ተሳታፊዎች"
+  },
+  "superadmin": {
+    "title": "የሱፐር አስተዳዳሪ ዳሽቦርድ",
+    "subtitle": "የስርዓት ደረጃ ትንታኔ እና እይታ.",
+    "completionRate": "የመጨረሻ መጠን",
+    "roleDistribution": "የሚና መመዝገብ",
+    "courseCompletion": "የኮርስ መጨረሻ",
+    "userActivity": "የተጠቃሚ እንቅስቃሴ"
+  }
 }

@@ -198,4 +198,69 @@
     "pinned": "Pinned",
     "by": "By"
   }
+  ,
+  "common": {
+    "dashboard": "Dashboard"
+  },
+  "search": {
+    "placeholder": "Search users, courses, events..."
+  },
+  "notifications": {
+    "announcements": "Announcements",
+    "none": "No announcements"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "users": {
+    "all": "All Users",
+    "searchPlaceholder": "Search users by name, email, or role...",
+    "filterByRole": "Filter by Role",
+    "roles": {
+      "all": "All Roles",
+      "student": "Student",
+      "teacher": "Teacher",
+      "admin": "Admin",
+      "super_admin": "Super Admin"
+    },
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "status": "Status",
+      "created": "Created"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+  "courses": {
+    "searchLabel": "Search Courses",
+    "searchPlaceholder": "Search by title or instructor...",
+    "statusFilter": "Status Filter",
+    "allStatus": "All Status",
+    "approved": "Approved",
+    "pending": "Pending",
+    "pendingApproval": "Pending Approval",
+    "instructor": "Instructor",
+    "hours": "hours"
+  },
+  "events": {
+    "searchPlaceholder": "Search events by title, description, or location...",
+    "allStatus": "All Status",
+    "status": {
+      "upcoming": "Upcoming",
+      "ongoing": "Ongoing",
+      "completed": "Completed"
+    },
+    "attendees": "attendees"
+  },
+  "superadmin": {
+    "title": "Super Admin Dashboard",
+    "subtitle": "System-wide analytics and overview.",
+    "completionRate": "Completion Rate",
+    "roleDistribution": "Role Distribution",
+    "courseCompletion": "Course Completion",
+    "userActivity": "User Activity"
+  }
 }

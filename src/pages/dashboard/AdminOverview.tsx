@@ -19,6 +19,7 @@ import {
   Zap
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
+import { useI18n } from '@/contexts/I18nContext';
 import { courseService } from '@/lib/firestore';
 import { eventService } from '@/lib/firestore';
 import { analyticsService } from '@/lib/firestore';
@@ -47,6 +48,7 @@ interface Event {
 }
 
 const AdminOverview = () => {
+  const { t } = useI18n();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -104,8 +106,8 @@ const AdminOverview = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="Admin Dashboard"
-        subtitle="Monitor users, courses, and events at a glance."
+        title={t('admin.title')}
+        subtitle={t('admin.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -115,14 +117,14 @@ const AdminOverview = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Total Users
+                {t('admin.systemStats.totalUsers')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
               <div className="text-blue-100 text-sm flex items-center gap-1">
                 <Activity className="h-4 w-4" />
-                Active accounts
+                {t('admin.analytics.realtime')}
               </div>
             </CardContent>
           </Card>
@@ -131,14 +133,14 @@ const AdminOverview = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Active Courses
+                {t('admin.systemStats.activeCourses')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalCourses}</div>
               <div className="text-green-100 text-sm flex items-center gap-1">
                 <Target className="h-4 w-4" />
-                Published courses
+                {t('admin.quickActions.createCourse')}
               </div>
             </CardContent>
           </Card>
@@ -147,14 +149,14 @@ const AdminOverview = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
                 <Zap className="h-5 w-5" />
-                System Health
+                {t('admin.systemStats.systemHealth')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">98%</div>
               <div className="text-purple-100 text-sm flex items-center gap-1">
                 <Activity className="h-4 w-4" />
-                All systems operational
+                {t('admin.analytics.placeholder')}
               </div>
             </CardContent>
           </Card>
@@ -163,14 +165,14 @@ const AdminOverview = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Pending Reviews
+                {t('admin.pendingApprovals')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.pendingReviews}</div>
               <div className="text-orange-100 text-sm flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                Awaiting approval
+                {t('admin.pendingApprovals')}
               </div>
             </CardContent>
           </Card>
@@ -184,10 +186,10 @@ const AdminOverview = () => {
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
-                Recent Users
+                {t('admin.recentUsers.title')}
               </CardTitle>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/dashboard/users">View all users</Link>
+                <Link to="/dashboard/users">{t('admin.recentUsers.viewAll')}</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-6">
@@ -218,8 +220,8 @@ const AdminOverview = () => {
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <User className="h-8 w-8 text-blue-600" />
                   </div>
-                  <p className="text-lg font-medium">Recent users will be shown here</p>
-                  <p className="text-sm text-gray-400">New user registrations will appear in this section</p>
+                  <p className="text-lg font-medium">{t('admin.recentUsers.noUsers')}</p>
+                  <p className="text-sm text-gray-400">{t('admin.recentUsers.subtitle')}</p>
                 </div>
               )}
             </CardContent>
@@ -232,10 +234,10 @@ const AdminOverview = () => {
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Clock className="h-6 w-6 text-green-600" />
                 </div>
-                Recently Added Courses
+                {t('admin.pendingApprovals')}
               </CardTitle>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/dashboard/courses">View all courses</Link>
+                <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
               </Button>
             </CardHeader>
             <CardContent className="p-6">
@@ -250,12 +252,12 @@ const AdminOverview = () => {
                         <div>
                           <p className="font-semibold text-gray-900 text-lg">{course.title}</p>
                           <p className="text-sm text-gray-600">
-                            Created {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}
+                            {t('calendar.loading').replace('Loading events...', 'Created')} {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                       <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 px-3 py-1">
-                        Active
+                        {t('teacher.myCourses.complete')}
                       </Badge>
                     </div>
                   ))}
@@ -265,8 +267,8 @@ const AdminOverview = () => {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpenIcon className="h-8 w-8 text-green-600" />
                   </div>
-                  <p className="text-lg font-medium">Recently added courses will be shown here</p>
-                  <p className="text-sm text-gray-400">New courses will appear in this section</p>
+                  <p className="text-lg font-medium">{t('admin.pendingApprovals')}</p>
+                  <p className="text-sm text-gray-400">{t('admin.analytics.subtitle')}</p>
                 </div>
               )}
             </CardContent>
@@ -280,10 +282,10 @@ const AdminOverview = () => {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Calendar className="h-6 w-6 text-purple-600" />
               </div>
-              Recent Events
+              {t('nav.events')}
             </CardTitle>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard/events">View all events</Link>
+              <Link to="/dashboard/events">{t('admin.recentUsers.viewAll')}</Link>
             </Button>
           </CardHeader>
           <CardContent className="p-6">
@@ -313,8 +315,8 @@ const AdminOverview = () => {
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="h-8 w-8 text-purple-600" />
                 </div>
-                <p className="text-lg font-medium">Recent events will be shown here</p>
-                <p className="text-sm text-gray-400">New events will appear in this section</p>
+                <p className="text-lg font-medium">{t('calendar.loading')}</p>
+                <p className="text-sm text-gray-400">{t('blog.noPosts')}</p>
               </div>
             )}
           </CardContent>
@@ -327,7 +329,7 @@ const AdminOverview = () => {
               <div className="p-2 bg-gray-100 rounded-lg">
                 <Zap className="h-6 w-6 text-gray-600" />
               </div>
-              Quick Actions
+              {t('admin.quickActions.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -335,13 +337,13 @@ const AdminOverview = () => {
               <Link to="/dashboard/reports">
                 <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                   <FileText className="h-5 w-5 mr-3" />
-                  View Reports
+                  {t('nav.reports')}
                 </Button>
               </Link>
               <Link to="/dashboard/settings">
                 <Button variant="outline" className="border-2 hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1">
                   <Settings className="h-5 w-5 mr-3" />
-                  System Settings
+                  {t('nav.settings')}
                 </Button>
               </Link>
             </div>

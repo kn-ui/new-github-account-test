@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { lang, setLang } = useI18n();
 
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
@@ -276,6 +278,16 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              {/* Language Switcher */}
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as any)}
+                className="border rounded px-2 py-1 text-sm"
+                aria-label="Language"
+              >
+                <option value="en">English</option>
+                <option value="am">አማርኛ</option>
+              </select>
             </div>
           </div>
         </div>

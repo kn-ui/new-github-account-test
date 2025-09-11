@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface User {
   id: string;
@@ -37,6 +38,7 @@ interface UsersListProps {
 }
 
 export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
+  const { t } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
           <div className="p-2 bg-gray-100 rounded-lg">
             <Users className="h-6 w-6 text-gray-600" />
           </div>
-          All Users ({filteredUsers.length})
+          {t('users.all')} ({filteredUsers.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -93,7 +95,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search users by name, email, or role..."
+                placeholder={t('users.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -101,14 +103,14 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
             </div>
             <Select value={filterRole} onValueChange={setFilterRole}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by Role" />
+                <SelectValue placeholder={t('users.filterByRole')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="student">Student</SelectItem>
-                <SelectItem value="teacher">Teacher</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="all">{t('users.roles.all')}</SelectItem>
+                <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -116,10 +118,10 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-900">User</TableHead>
-              <TableHead className="font-semibold text-gray-900">Role</TableHead>
-              <TableHead className="font-semibold text-gray-900">Status</TableHead>
-              <TableHead className="font-semibold text-gray-900">Created</TableHead>
+              <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
+              <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
+              <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
+              <TableHead className="font-semibold text-gray-900">{t('users.table.created')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,7 +150,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                     {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
                     {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
                     {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
-                    {user.role}
+                    {t(`users.roles.${user.role}`)}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -156,7 +158,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                     variant={user.isActive ? 'default' : 'secondary'}
                     className={user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}
                   >
-                    {user.isActive ? 'Active' : 'Inactive'}
+                    {user.isActive ? t('users.status.active') : t('users.status.inactive')}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-gray-500">

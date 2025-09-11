@@ -208,7 +208,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 <p className="text-sm font-medium text-gray-900 capitalize">
                   {userRole}
                 </p>
-                <p className="text-xs text-gray-500">Dashboard</p>
+                <p className="text-xs text-gray-500">{t('common.dashboard')}</p>
               </div>
             </div>
             <Button
@@ -218,7 +218,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {t('auth.logout')}
             </Button>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <form className="relative max-w-md w-full" onSubmit={handleSearchSubmit}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search users, courses, events..."
+                  placeholder={t('search.placeholder')}
                   className="pl-10 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -265,10 +265,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Announcements</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('notifications.announcements')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {announcements.length === 0 && (
-                    <div className="p-3 text-sm text-gray-600">No announcements</div>
+                    <div className="p-3 text-sm text-gray-600">{t('notifications.none')}</div>
                   )}
                   {announcements.map((a) => (
                     <DropdownMenuItem key={a.id} className="block whitespace-normal">
@@ -285,7 +285,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 value={lang}
                 onChange={(e) => setLang(e.target.value as any)}
                 className="border rounded px-2 py-1 text-sm"
-                aria-label="Language"
+                aria-label={t('language.label')}
               >
                 <option value="en">English</option>
                 <option value="am">አማርኛ</option>

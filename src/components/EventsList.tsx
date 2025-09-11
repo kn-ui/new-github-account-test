@@ -13,6 +13,7 @@ import {
 import { eventService, Timestamp } from '@/lib/firestore';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface Event {
   id: string;
@@ -32,6 +33,7 @@ interface EventsListProps {
 }
 
 export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
+  const { t } = useI18n();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +100,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search events by title, description, or location..."
+                placeholder={t('events.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -109,10 +111,10 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
             >
-              <option value="all">All Status</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="ongoing">Ongoing</option>
-              <option value="completed">Completed</option>
+              <option value="all">{t('events.allStatus')}</option>
+              <option value="upcoming">{t('events.status.upcoming')}</option>
+              <option value="ongoing">{t('events.status.ongoing')}</option>
+              <option value="completed">{t('events.status.completed')}</option>
             </select>
           </div>
         </CardContent>
@@ -176,7 +178,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                         )}
                         <span className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          {event.currentAttendees}/{event.maxAttendees} attendees
+                          {event.currentAttendees}/{event.maxAttendees} {t('events.attendees')}
                         </span>
                       </div>
                     </div>

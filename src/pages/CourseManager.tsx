@@ -69,8 +69,9 @@ export default function CourseManager() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const activeCoursesList = await courseService.getCourses(1000);
-      setCourses([...(activeCoursesList as CourseWithApproval[])]);
+
+      const courses = await courseService.getCourses(1000);
+      setCourses(courses); // Added this line
       // compute total enrolled students across all courses
       try {
         const enrollments = await enrollmentService.getAllEnrollments();
@@ -86,9 +87,6 @@ export default function CourseManager() {
     }
   };
 
-  // Approval flow removed
-
-  // Rejection flow removed
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
@@ -175,18 +173,9 @@ export default function CourseManager() {
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'approved' && course.isActive);
-    return matchesSearch && matchesStatus;
+
+    return matchesSearch;
   });
-
-  const getStatusColor = (course: CourseWithApproval) => {
-    return course.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-  };
-
-  const getStatusText = (course: CourseWithApproval) => {
-    return course.isActive ? 'Active' : 'Inactive';
-  };
 
   if (loading) {
     return (
@@ -202,6 +191,7 @@ export default function CourseManager() {
         title="Course Management"
         subtitle="Manage courses, approvals, and content."
       >
+        {userProfile?.role === 'admin' && (
             <div className="mt-4 lg:mt-0">
               <Button 
                 onClick={startCreate} 
@@ -211,7 +201,7 @@ export default function CourseManager() {
                 Create Course
               </Button>
             </div>
-
+        )}
       </DashboardHero>
 
 
@@ -244,19 +234,8 @@ export default function CourseManager() {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recently Added
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{totalCourses}</div>
-              <div className="text-orange-100 text-sm">In the last period</div>
-            </CardContent>
-          </Card>
-          
+
+                    
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
@@ -296,8 +275,6 @@ export default function CourseManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -340,9 +317,9 @@ export default function CourseManager() {
                   <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
                     <Badge 
                       variant="outline" 
-                      className={`px-3 py-1 text-sm font-medium ${getStatusColor(course)}`}
+                      className={`px-3 py-1 text-sm font-medium ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
                     >
-                      {getStatusText(course)}
+                      {course.isActive ? 'Active' : 'Pending Approval'}
                     </Badge>
                     
                     <div className="flex items-center gap-2">
@@ -413,15 +390,9 @@ export default function CourseManager() {
             <p className="text-gray-500 mb-4">
               {searchTerm || statusFilter !== 'all' 
                 ? 'Try adjusting your search or filters'
-                : 'Get started by creating your first course'
+                : 'No courses available.'
               }
             </p>
-            {!searchTerm && statusFilter === 'all' && (
-              <Button onClick={() => navigate('/create-course')} className="bg-green-600 hover:bg-green-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Course
-              </Button>
-            )}
           </Card>
         )}
       </div>
@@ -505,75 +476,76 @@ export default function CourseManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Course Wizard */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-green-600" />
-              Create Course
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {createStep === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <Label>Title</Label>
-                  <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+      {userProfile?.role === 'admin' && (
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-green-600" />
+                Create Course
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {createStep === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+                  </div>
+                  <div>
+                    <Label>Category</Label>
+                    <Input value={String(createForm.category || '')} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value } as any)} />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+                  </div>
                 </div>
-                <div>
-                  <Label>Category</Label>
-                  <Input value={String(createForm.category || '')} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value } as any)} />
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
-                </div>
-              </div>
-            )}
-            {createStep === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <Label>Duration (hours)</Label>
-                  <Input type="number" value={Number(createForm.duration || 1)} onChange={(e) => setCreateForm({ ...createForm, duration: Number(e.target.value) as any } as any)} />
-                </div>
-                <div>
-                  <Label>Max Students</Label>
-                  <Input type="number" value={Number(createForm.maxStudents || 1)} onChange={(e) => setCreateForm({ ...createForm, maxStudents: Number(e.target.value) as any } as any)} />
-                </div>
-                <div>
-                  <Label>Syllabus</Label>
-                  <Textarea value={String(createForm.syllabus || '')} onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value } as any)} />
-                </div>
-              </div>
-            )}
-            {createStep === 3 && (
-              <div className="space-y-2 text-sm text-gray-700">
-                <div><span className="font-medium">Title:</span> {String(createForm.title || '')}</div>
-                <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
-                <div><span className="font-medium">Duration:</span> {Number(createForm.duration || 1)} hours</div>
-                <div><span className="font-medium">Max Students:</span> {Number(createForm.maxStudents || 1)}</div>
-                <div><span className="font-medium">Active:</span> {userProfile?.role === 'admin' ? 'Yes' : 'No (awaiting approval)'}</div>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="flex justify-between">
-            <div className="flex gap-2">
-              {createStep > 1 && (
-                <Button variant="outline" onClick={() => setCreateStep((s) => Math.max(1, s - 1))}>Back</Button>
               )}
-            </div>
-            <div className="flex gap-2">
-              {createStep < 3 && (
-                <Button onClick={() => setCreateStep((s) => Math.min(3, s + 1))}>Next</Button>
+              {createStep === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Duration (hours)</Label>
+                    <Input type="number" value={Number(createForm.duration || 1)} onChange={(e) => setCreateForm({ ...createForm, duration: Number(e.target.value) as any } as any)} />
+                  </div>
+                  <div>
+                    <Label>Max Students</Label>
+                    <Input type="number" value={Number(createForm.maxStudents || 1)} onChange={(e) => setCreateForm({ ...createForm, maxStudents: Number(e.target.value) as any } as any)} />
+                  </div>
+                  <div>
+                    <Label>Syllabus</Label>
+                    <Textarea value={String(createForm.syllabus || '')} onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value } as any)} />
+                  </div>
+                </div>
               )}
               {createStep === 3 && (
-                <Button className="bg-green-600 hover:bg-green-700" onClick={submitCreate}>Create</Button>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div><span className="font-medium">Title:</span> {String(createForm.title || '')}</div>
+                  <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
+                  <div><span className="font-medium">Duration:</span> {Number(createForm.duration || 1)} hours</div>
+                  <div><span className="font-medium">Max Students:</span> {Number(createForm.maxStudents || 1)}</div>
+                  <div><span className="font-medium">Active:</span> {userProfile?.role === 'admin' ? 'Yes' : 'No (awaiting approval)'}</div>
+                </div>
               )}
             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="flex justify-between">
+              <div className="flex gap-2">
+                {createStep > 1 && (
+                  <Button variant="outline" onClick={() => setCreateStep((s) => Math.max(1, s - 1))}>Back</Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {createStep < 3 && (
+                  <Button onClick={() => setCreateStep((s) => Math.min(3, s + 1))}>Next</Button>
+                )}
+                {createStep === 3 && (
+                  <Button className="bg-green-600 hover:bg-green-700" onClick={submitCreate}>Create</Button>
+                )}
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

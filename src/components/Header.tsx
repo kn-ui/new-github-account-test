@@ -5,6 +5,8 @@ import { Menu, X, BookOpen, User, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
+import logo from '@/assets/logo.jpg';
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentUser, userProfile, logout } = useAuth();
@@ -54,6 +56,13 @@ const Header = () => {
       { label: t('nav.calendar'), to: '/calendar' },
       { label: t('nav.contact'), to: '/contact' },
     ],
+    super_admin: [
+      { label: t('nav.dashboard'), to: '/dashboard' },
+      { label: t('nav.academic'), to: '/academic' },
+      { label: t('nav.forum'), to: '/forum' },
+      { label: t('nav.calendar'), to: '/calendar' },
+      { label: t('nav.contact'), to: '/contact' },
+    ],
   };
 
   const navItems = currentUser && userRole ? privateNavItems[userRole] : publicNavItems;
@@ -65,7 +74,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <Link to="/" className="cursor-pointer">
-              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto" />
+              <img src={logo} alt="St. Raguel Church Logo" className="h-16 w-auto" />
             </Link>
           </div>
 

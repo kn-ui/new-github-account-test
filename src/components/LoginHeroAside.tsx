@@ -1,6 +1,8 @@
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import logo from '@/assets/logo.jpg';
+
 const LoginHeroAside = () => {
   return (
     <aside className="hidden lg:block w-1/2 bg-[#0e4fb9] relative overflow-hidden">
@@ -9,7 +11,7 @@ const LoginHeroAside = () => {
       </div>
       <div className="relative z-10 h-full flex flex-col justify-center p-16 text-white">
         <div className="flex items-center gap-3">
-          <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-16 w-auto rounded-lg" />
+          <img src={logo} alt="St. Raguel Church Logo" className="h-16 w-auto rounded-lg" />
           <div>
             <h3 className="text-2xl font-bold">St. Raguel Church</h3>
             <p className="text-sm text-white/80">Spiritual School</p>

@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 import LoginHeroAside from '@/components/LoginHeroAside';
 
+import logo from '@/assets/logo.jpg';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,7 +50,7 @@ const Login = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <img src="/raguel logo.jpg" alt="St. Raguel Church Logo" className="h-20 w-auto" />
+              <img src={logo} alt="St. Raguel Church Logo" className="h-20 w-auto" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">
               {t('auth.welcomeBack') || 'Welcome Back'}

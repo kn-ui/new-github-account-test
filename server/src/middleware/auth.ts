@@ -81,11 +81,15 @@ export const authorizeRoles = (...roles: UserRole[]) => {
 // Check if user is admin
 export const requireAdmin = authorizeRoles(UserRole.ADMIN);
 
-// Admin or Super Admin (read-only contexts should still be enforced by route/controller)
+
+// Check if user is super admin
+export const requireSuperAdmin = authorizeRoles(UserRole.SUPER_ADMIN);
+
+// Check if user is admin or super admin
 export const requireAdminOrSuperAdmin = authorizeRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN);
 
 // Check if user is teacher or admin
-export const requireTeacherOrAdmin = authorizeRoles(UserRole.TEACHER, UserRole.ADMIN);
+export const requireTeacherOrAdmin = authorizeRoles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPER_ADMIN);
 
 // Teacher, Admin, or Super Admin (for read-only stats endpoints)
 export const requireTeacherAdminOrSuperAdmin = authorizeRoles(
@@ -95,9 +99,5 @@ export const requireTeacherAdminOrSuperAdmin = authorizeRoles(
 );
 
 // Check if user is student, teacher, or admin (authenticated users)
-export const requireAuth = authorizeRoles(
-  UserRole.STUDENT,
-  UserRole.TEACHER,
-  UserRole.ADMIN,
-  UserRole.SUPER_ADMIN
-);
+
+export const requireAuth = authorizeRoles(UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPER_ADMIN);

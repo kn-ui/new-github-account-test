@@ -54,19 +54,26 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
-      // Send message via backend email endpoint
-      await api.sendContactMessage(formData as any);
-      
-      // Show success message
-      toast.success('Message sent successfully! We will get back to you soon.');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Message sent successfully! We will get back to you soon.');
+      } else {
+        toast.error(result.message || 'Failed to send message. Please try again.');
+      }
       
     } catch (error) {
       console.error('Failed to send message:', error);

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // Use env vars; do not ship real keys in code. The fallbacks are non-functional placeholders.
@@ -18,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+setPersistence(auth, browserSessionPersistence);
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);

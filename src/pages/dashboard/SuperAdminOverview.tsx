@@ -1,0 +1,194 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Users, 
+  BookOpen, 
+  TrendingUp, 
+  Activity,
+  Target,
+  Zap
+} from 'lucide-react';
+import { analyticsService } from '@/lib/firestore';
+import { 
+  RoleDistributionChart, 
+  CourseCompletionChart, 
+  UserActivityChart, 
+  ChartData 
+} from '@/components/ui/AnalyticsChart';
+import DashboardHero from '@/components/DashboardHero';
+
+const SuperAdminOverview = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    completionRate: 0,
+    systemHealth: 0,
+    totalStudents: 0,
+    totalTeachers: 0,
+    activeCourses: 0,
+    pendingCourses: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [roleDistributionData, setRoleDistributionData] = useState<ChartData[]>([]);
+  const [courseCompletionData, setCourseCompletionData] = useState<ChartData[]>([]);
+  const [userActivityData, setUserActivityData] = useState<ChartData[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const adminStats = await analyticsService.getAdminStats();
+
+        setStats(adminStats);
+
+        setRoleDistributionData([
+          { name: 'Students', value: adminStats.totalStudents, fill: '#8884d8' },
+          { name: 'Teachers', value: adminStats.totalTeachers, fill: '#82ca9d' },
+        ]);
+
+        setCourseCompletionData([
+          { name: 'Completed', value: adminStats.completionRate, fill: '#82ca9d' },
+          { name: 'In Progress', value: 100 - adminStats.completionRate, fill: '#ffc658' },
+        ]);
+
+        setUserActivityData([
+          { name: 'Active Courses', value: adminStats.activeCourses, fill: '#8884d8' },
+          { name: 'Pending Courses', value: adminStats.pendingCourses, fill: '#ffc658' },
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <DashboardHero 
+        title="Super Admin Dashboard"
+        subtitle="System-wide analytics and overview."
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Total Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
+              <div className="text-blue-100 text-sm flex items-center gap-1">
+                <Activity className="h-4 w-4" />
+                Active accounts
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Active Courses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-2">{stats.activeCourses}</div>
+              <div className="text-green-100 text-sm flex items-center gap-1">
+                <Target className="h-4 w-4" />
+                Published courses
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                System Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-2">{stats.systemHealth}%</div>
+              <div className="text-purple-100 text-sm flex items-center gap-1">
+                <Activity className="h-4 w-4" />
+                All systems operational
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Completion Rate
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-2">{stats.completionRate}%</div>
+              <div className="text-orange-100 text-sm flex items-center gap-1">
+                <TrendingUp className="h-4 w-4" />
+                Course completion rate
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+              <CardTitle className="flex items-center gap-3 text-blue-900">
+                <Users className="h-6 w-6 text-blue-600" />
+                Role Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <RoleDistributionChart data={roleDistributionData} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b">
+              <CardTitle className="flex items-center gap-3 text-green-900">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+                Course Completion
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <CourseCompletionChart data={courseCompletionData} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
+            <CardTitle className="flex items-center gap-3 text-purple-900">
+              <Activity className="h-6 w-6 text-purple-600" />
+              User Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <UserActivityChart data={userActivityData} />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default SuperAdminOverview;

@@ -34,8 +34,10 @@ export class CourseController {
         duration: parseInt(duration) || 8,
         maxStudents: parseInt(maxStudents) || 50,
         thumbnail,
-        // Only admins can create; default to true if unspecified
-        isActive: (typeof isActive === 'boolean' ? isActive : true)
+
+        // Teachers' courses should be pending approval by default
+        // Admins can choose, defaulting to true if unspecified
+        isActive: typeof isActive === 'boolean' ? isActive : true
       };
 
       const newCourse = await courseService.createCourse(courseData, instructorId, instructor.displayName);
@@ -55,6 +57,7 @@ export class CourseController {
       const instructorId = req.query.instructor as string;
 
       const result = await courseService.getAllCourses(page, limit, category, instructorId, true);
+      console.log('CourseController - getAllCourses result:', result);
 
       sendPaginatedResponse(
         res,

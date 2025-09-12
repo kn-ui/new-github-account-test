@@ -263,4 +263,12 @@
     "courseCompletion": "የኮርስ መጨረሻ",
     "userActivity": "የተጠቃሚ እንቅስቃሴ"
   }
+  ,
+  "common": {
+    "dashboard": "ዳሽቦርድ",
+    "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ"
+  },
+  "studentProgress": {
+    "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
+  }
 }

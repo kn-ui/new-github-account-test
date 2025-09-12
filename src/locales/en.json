@@ -263,4 +263,12 @@
     "courseCompletion": "Course Completion",
     "userActivity": "User Activity"
   }
+  ,
+  "common": {
+    "dashboard": "Dashboard",
+    "viewAllSubmissions": "View All Submissions"
+  },
+  "studentProgress": {
+    "highest": "Students with highest progress"
+  }
 }

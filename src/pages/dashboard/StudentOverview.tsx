@@ -21,9 +21,11 @@ import { Link } from 'react-router-dom';
 import CertificateCard from '@/components/CertificateCard';
 import { evaluateAndAwardCertificates } from '@/lib/certificates';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
   
 export default function StudentOverview() {
+  const { t } = useI18n();
   const [stats, setStats] = useState<any>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
@@ -118,8 +120,8 @@ export default function StudentOverview() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="Student Dashboard"
-        subtitle="Track your learning progress"
+        title={t('student.title')}
+        subtitle={t('student.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
@@ -129,13 +131,13 @@ export default function StudentOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Enrolled Courses
+              {t('student.stats.enrolledCourses')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.enrolledCourses || enrolledCourses.length}</div>
             <p className="text-xs text-blue-100">
-              Active enrollments
+              {t('student.myCourses.subtitle')}
             </p>
           </CardContent>
         </Card>
@@ -144,13 +146,13 @@ export default function StudentOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Average Progress
+              {t('student.stats.averageProgress')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{Math.round(averageProgress)}%</div>
             <p className="text-xs text-green-100">
-              Across all courses
+              {t('student.myCourses.subtitle')}
             </p>
           </CardContent>
         </Card>
@@ -159,13 +161,13 @@ export default function StudentOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Pending Assignments
+              {t('student.stats.pendingAssignments')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.pendingAssignments || upcomingAssignments.length}</div>
             <p className="text-xs text-orange-100">
-              To complete
+              {t('student.upcomingAssignments.title')}
             </p>
           </CardContent>
         </Card>
@@ -174,13 +176,13 @@ export default function StudentOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
               <Award className="h-5 w-5" />
-              Certificates
+              {t('student.stats.certificates')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.certificates || certificates.length}</div>
             <p className="text-xs text-purple-100">
-              Earned achievements
+              {t('student.quickActions.myCertificates')}
             </p>
           </CardContent>
         </Card>
@@ -193,9 +195,9 @@ export default function StudentOverview() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5" />
-              <span>My Courses</span>
+              <span>{t('student.myCourses.title')}</span>
             </CardTitle>
-            <CardDescription>Your enrolled courses</CardDescription>
+            <CardDescription>{t('student.myCourses.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -207,7 +209,7 @@ export default function StudentOverview() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">{course.title}</p>
-                      <p className="text-xs text-gray-500">by {course.instructor}</p>
+                      <p className="text-xs text-gray-500">{t('admin.common.by')} {course.instructor}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -223,7 +225,7 @@ export default function StudentOverview() {
               {enrolledCourses.length > 3 && (
 
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/dashboard/courses">View All Courses</Link>
+                  <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
                 </Button>
               )}
             </div>
@@ -235,9 +237,9 @@ export default function StudentOverview() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
-              <span>Recent Announcements</span>
+              <span>{t('student.announcements')}</span>
             </CardTitle>
-            <CardDescription>Latest updates</CardDescription>
+            <CardDescription>{t('forum.categories.announcements')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -249,7 +251,7 @@ export default function StudentOverview() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">{announcement.title}</p>
-                      <p className="text-xs text-gray-500">{announcement.courseTitle || 'General'}</p>
+                      <p className="text-xs text-gray-500">{announcement.courseTitle || t('forum.categories.all')}</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
@@ -261,7 +263,7 @@ export default function StudentOverview() {
               ))}
               {announcements.length > 3 && (
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/dashboard/announcements">View All Announcements</Link>
+                  <Link to="/dashboard/announcements">{t('admin.recentUsers.viewAll')}</Link>
                 </Button>
               )}
             </div>
@@ -276,9 +278,9 @@ export default function StudentOverview() {
             <div>
               <CardTitle className="flex items-center space-x-2">
                 <Award className="h-5 w-5" />
-                <span>My Certificates</span>
+                <span>{t('student.quickActions.myCertificates')}</span>
               </CardTitle>
-              <CardDescription>Your earned achievements</CardDescription>
+              <CardDescription>{t('student.quickActions.title')}</CardDescription>
             </div>
             <Button
               onClick={async () => {
@@ -289,7 +291,7 @@ export default function StudentOverview() {
               }}
               size="sm"
             >
-              Check for new
+              {t('blog.loading')}
             </Button>
           </div>
         </CardHeader>
@@ -300,7 +302,7 @@ export default function StudentOverview() {
                 <CertificateCard
                   key={cert.id}
                   type={cert.type}
-                  studentName={currentUser?.email || 'Student'}
+                  studentName={currentUser?.email || t('nav.students')}
                   awardedAt={cert.awardedAt.toDate()}
                   details={cert.details}
                 />
@@ -309,14 +311,14 @@ export default function StudentOverview() {
           ) : (
             <div className="text-center py-8 text-gray-500">
               <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No certificates yet</p>
-              <p className="text-sm">Complete courses and assignments to earn certificates</p>
+              <p>{t('blog.noPosts')}</p>
+              <p className="text-sm">{t('teacher.myCourses.complete')}</p>
             </div>
           )}
           {certificates.length > 2 && (
             <div className="mt-4">
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/certificates">View All Certificates</Link>
+                <Link to="/dashboard/certificates">{t('admin.recentUsers.viewAll')}</Link>
               </Button>
             </div>
           )}
@@ -326,33 +328,33 @@ export default function StudentOverview() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common student tasks</CardDescription>
+          <CardTitle>{t('admin.quickActions.title')}</CardTitle>
+          <CardDescription>{t('student.quickActions.title')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/courses">
                 <BookOpen className="h-6 w-6 mb-2" />
-                My Courses
+                {t('nav.myCourses')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/assignments">
                 <FileText className="h-6 w-6 mb-2" />
-                View Assignments
+                {t('nav.assignments')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/progress">
                 <TrendingUp className="h-6 w-6 mb-2" />
-                Track Progress
+                {t('nav.progress')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/certificates">
                 <Award className="h-6 w-6 mb-2" />
-                My Certificates
+                {t('student.quickActions.myCertificates')}
               </Link>
             </Button>
           </div>

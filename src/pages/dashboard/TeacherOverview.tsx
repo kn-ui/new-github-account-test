@@ -19,8 +19,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function TeacherOverview() {
+  const { t } = useI18n();
   const [stats, setStats] = useState<any>(null);
   const [myCourses, setMyCourses] = useState<any[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
@@ -128,8 +130,8 @@ export default function TeacherOverview() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="Teacher Dashboard"
-        subtitle="Manage your courses and students"
+        title={t('teacher.title')}
+        subtitle={t('teacher.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
@@ -139,13 +141,13 @@ export default function TeacherOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Active Courses
+              {t('teacher.stats.activeCourses')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.activeCourses || 0}</div>
             <p className="text-xs text-blue-100">
-              {myCourses.length} total courses
+              {myCourses.length} {t('nav.courses').toLowerCase()}
             </p>
           </CardContent>
         </Card>
@@ -154,13 +156,13 @@ export default function TeacherOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Total Students
+              {t('teacher.stats.totalStudents')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.totalStudents || 0}</div>
             <p className="text-xs text-green-100">
-              Enrolled across all courses
+              {t('student.myCourses.subtitle')}
             </p>
           </CardContent>
         </Card>
@@ -169,13 +171,13 @@ export default function TeacherOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Pending Reviews
+              {t('teacher.stats.pendingReviews')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.pendingReviews || 0}</div>
             <p className="text-xs text-orange-100">
-              Submissions to grade
+              {t('teacher.recentSubmissions.title')}
             </p>
           </CardContent>
         </Card>
@@ -184,13 +186,13 @@ export default function TeacherOverview() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Average Rating
+              {t('teacher.stats.avgRating')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.avgRating || 4.8}</div>
             <p className="text-xs text-purple-100">
-              Student satisfaction
+              {t('teacher.myCourses.rating')}
             </p>
           </CardContent>
         </Card>
@@ -204,9 +206,9 @@ export default function TeacherOverview() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <FileText className="h-5 w-5" />
-              <span>Recent Submissions</span>
+              <span>{t('teacher.recentSubmissions.title')}</span>
             </CardTitle>
-            <CardDescription>Latest student submissions</CardDescription>
+            <CardDescription>{t('teacher.recentSubmissions.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -219,7 +221,7 @@ export default function TeacherOverview() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{submission.courseTitle}</p>
-                        <p className="text-xs text-gray-500">Student: {submission.studentId}</p>
+                        <p className="text-xs text-gray-500">{t('student.title').split(' ')[0]}: {submission.studentId}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -241,7 +243,7 @@ export default function TeacherOverview() {
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/submissions">View All Submissions</Link>
+                <Link to="/dashboard/submissions">{t('common.viewAllSubmissions')}</Link>
               </Button>
             </div>
           </CardContent>
@@ -252,9 +254,9 @@ export default function TeacherOverview() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Users className="h-5 w-5" />
-              <span>Top Students</span>
+              <span>{t('teacher.topStudents')}</span>
             </CardTitle>
-            <CardDescription>Students with highest progress</CardDescription>
+            <CardDescription>{t('studentProgress.highest')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -283,11 +285,11 @@ export default function TeacherOverview() {
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No student data available</p>
+                  <p>{t('blog.noPosts')}</p>
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/students">Manage Students</Link>
+                <Link to="/dashboard/students">{t('nav.students')}</Link>
               </Button>
             </div>
           </CardContent>
@@ -297,33 +299,33 @@ export default function TeacherOverview() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common teaching tasks</CardDescription>
+          <CardTitle>{t('admin.quickActions.title')}</CardTitle>
+          <CardDescription>{t('teacher.quickActions.title')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/courses">
                 <BookOpen className="h-6 w-6 mb-2" />
-                My Courses
+                {t('nav.myCourses')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/assignments">
                 <FileText className="h-6 w-6 mb-2" />
-                Create Assignment
+                {t('teacher.quickActions.createAssignment')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/announcements">
                 <Bell className="h-6 w-6 mb-2" />
-                Post Announcement
+                {t('teacher.quickActions.messageStudents')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/reports">
                 <BarChart3 className="h-6 w-6 mb-2" />
-                View Reports
+                {t('nav.reports')}
               </Link>
             </Button>
           </div>

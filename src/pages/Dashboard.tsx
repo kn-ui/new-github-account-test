@@ -22,13 +22,11 @@ export default function Dashboard() {
       case 'admin':
         return <AdminOverview />;
       case 'super_admin':
-        return <AdminOverview />;
+        return <SuperAdminOverview />;
       case 'teacher':
         return <TeacherOverview />;
       case 'student':
         return <StudentOverview />;
-      case 'super_admin':
-        return <SuperAdminOverview />;
       default:
         return <div>Unknown role</div>;
     }

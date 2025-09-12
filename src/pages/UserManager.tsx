@@ -48,6 +48,7 @@ import CSVUpload from '@/components/ui/CSVUpload';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface User {
   id: string;
@@ -59,6 +60,7 @@ interface User {
 }
 
 const UserManager = () => {
+  const { t } = useI18n();
   const { createUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -111,16 +113,16 @@ const UserManager = () => {
 
   const handleDeleteUser = async (userId: string, userRole: string) => {
     if (userRole === 'admin' || userRole === 'super_admin') {
-      alert('Cannot delete admin or super admin users');
+      alert(t('users.cannotDeleteAdmin'));
       return;
     }
     
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm(t('users.confirmDelete'))) {
       try {
         await userService.deleteUser(userId);
         fetchUsers();
       } catch (error) {
-        console.error('Error deleting user:', error);
+        console.error(t('users.errors.deleteFailed'), error);
       }
     }
   };
@@ -195,19 +197,19 @@ const UserManager = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="User Management"
-        subtitle="Manage user accounts, permissions, and system access."
+        title={t('nav.userManagement')}
+        subtitle={t('users.subtitle')}
       >
         <div className="flex gap-3 mt-4 lg:mt-0">
           <Button onClick={exportUsers} className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
             <FileSpreadsheet className="h-5 w-5 mr-2" />
-            Export Users
+            {t('users.export')}
           </Button>
           <Dialog open={isAddUserOpen} onOpenChange={(o) => { setIsAddUserOpen(o); if (!o) setMode('single'); }}>
             <DialogTrigger asChild>
               <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
                 <UserPlus className="h-5 w-5 mr-2" />
-                Add User
+                {t('users.add')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl">
@@ -215,59 +217,59 @@ const UserManager = () => {
                 <div className="flex items-center justify-between">
                   <DialogTitle className="flex items-center gap-2">
                     <UserPlus className="h-5 w-5 text-blue-600" />
-                    Add Users
+                    {t('users.addMany')}
                   </DialogTitle>
                   <div className="flex items-center gap-2 text-sm">
-                    <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>Single</button>
-                    <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>Bulk</button>
+                    <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>{t('users.mode.single')}</button>
+                    <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>{t('users.mode.bulk')}</button>
                   </div>
                 </div>
                 <DialogDescription>
-                  {mode==='single' ? 'Create a single user account with the specified role.' : 'Upload a CSV to create multiple users at once.'}
+                  {mode==='single' ? t('users.singleDescription') : t('users.bulkDescription')}
                 </DialogDescription>
               </DialogHeader>
               {mode==='single' ? (
                 <>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="displayName" className="text-right">Name</Label>
+                      <Label htmlFor="displayName" className="text-right">{t('users.form.name')}</Label>
                       <Input
                         id="displayName"
                         value={newUser.displayName}
                         onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
                         className="col-span-3"
-                        placeholder="Enter full name"
+                        placeholder={t('users.form.name_placeholder')}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">Email</Label>
+                      <Label htmlFor="email" className="text-right">{t('auth.email')}</Label>
                       <Input
                         id="email"
                         type="email"
                         value={newUser.email}
                         onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                         className="col-span-3"
-                        placeholder="Enter email address"
+                        placeholder={t('auth.email_placeholder')}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="role" className="text-right">Role</Label>
+                      <Label htmlFor="role" className="text-right">{t('users.table.role')}</Label>
                       <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
                         <SelectTrigger className="col-span-3">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                          <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                          <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                          <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <DialogFooter>
                     <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-                      Create User
+                      {t('users.create')}
                     </Button>
                   </DialogFooter>
                 </>
@@ -288,16 +290,16 @@ const UserManager = () => {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <User className="h-5 w-5 text-blue-600" />
-                  Edit User
+                  {t('users.edit')}
                 </DialogTitle>
                 <DialogDescription>
-                  Update the details for {editingUser?.displayName || 'this user'}.
+                  {t('users.updateFor', { name: editingUser?.displayName || t('users.thisUser') })}
                 </DialogDescription>
               </DialogHeader>
               {editingUser && (
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="editDisplayName" className="text-right">Name</Label>
+                    <Label htmlFor="editDisplayName" className="text-right">{t('users.form.name')}</Label>
                     <Input
                       id="editDisplayName"
                       value={editingUser.displayName}
@@ -306,7 +308,7 @@ const UserManager = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="editEmail" className="text-right">Email</Label>
+                    <Label htmlFor="editEmail" className="text-right">{t('auth.email')}</Label>
                     <Input
                       id="editEmail"
                       type="email"
@@ -316,28 +318,28 @@ const UserManager = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="editRole" className="text-right">Role</Label>
+                    <Label htmlFor="editRole" className="text-right">{t('users.table.role')}</Label>
                     <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value as any})}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="student">Student</SelectItem>
-                        <SelectItem value="teacher">Teacher</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                        <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                        <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                        <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                        <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="editIsActive" className="text-right">Status</Label>
+                    <Label htmlFor="editIsActive" className="text-right">{t('users.table.status')}</Label>
                     <Select value={editingUser.isActive ? 'active' : 'inactive'} onValueChange={(value) => setEditingUser({...editingUser, isActive: value === 'active'})}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="active">{t('users.status.active')}</SelectItem>
+                        <SelectItem value="inactive">{t('users.status.inactive')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -345,7 +347,7 @@ const UserManager = () => {
               )}
               <DialogFooter>
                 <Button type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700">
-                  Save Changes
+                  {t('users.saveChanges')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -416,7 +418,7 @@ const UserManager = () => {
               <div className="relative flex-1 max-w-md"> {/* Removed max-w-md here */}
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search users by name, email, or role..."
+                  placeholder={t('users.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -424,14 +426,14 @@ const UserManager = () => {
               </div>
               <Select value={filterRole} onValueChange={setFilterRole}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by Role" />
+                  <SelectValue placeholder={t('users.filterByRole')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="all">{t('users.roles.all')}</SelectItem>
+                  <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                  <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                  <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                  <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -445,17 +447,17 @@ const UserManager = () => {
               <div className="p-2 bg-gray-100 rounded-lg">
                 <Users className="h-6 w-6 text-gray-600" />
               </div>
-              All Users ({filteredUsers.length})
+              {t('users.all')} ({filteredUsers.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">User</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Role</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Created</TableHead>
+                  <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
+                  <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
+                  <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
+                  <TableHead className="font-semibold text-gray-900">{t('users.table.created')}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -485,7 +487,7 @@ const UserManager = () => {
                         {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
                         {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
                         {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
-                        {user.role}
+                        {t(`users.roles.${user.role}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -493,7 +495,7 @@ const UserManager = () => {
                         variant={user.isActive ? 'default' : 'secondary'}
                         className={user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}
                       >
-                        {user.isActive ? 'Active' : 'Inactive'}
+                        {user.isActive ? t('users.status.active') : t('users.status.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
@@ -509,7 +511,7 @@ const UserManager = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(user)}>
                             <User className="h-4 w-4 mr-2" />
-                            Edit
+                            {t('admin.recentUsers.edit')}
                           </DropdownMenuItem>
                           {user.role !== 'super_admin' && (
                             <DropdownMenuItem 
@@ -517,7 +519,7 @@ const UserManager = () => {
                               onClick={() => handleDeleteUser(user.id, user.role)}
                             >
                               <Shield className="h-4 w-4 mr-2" />
-                              Delete
+                              {t('users.delete')}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

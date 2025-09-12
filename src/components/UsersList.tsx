@@ -115,8 +115,9 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
             </Select>
           </div>
         </div>
+        <div className="max-h-[70vh] overflow-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-white z-10">
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
               <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
@@ -168,6 +169,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
             ))}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );

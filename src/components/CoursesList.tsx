@@ -16,9 +16,10 @@ interface CourseWithApproval extends FirestoreCourse {
 
 interface CoursesListProps {
   readOnly?: boolean;
+  showAll?: boolean;
 }
 
-export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
+export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) => {
   const { t } = useI18n();
   const [courses, setCourses] = useState<CourseWithApproval[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseWithApproval[]>([]);
@@ -34,12 +35,11 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
     const filtered = courses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
-      // Only active courses are shown now
-      const matchesStatus = course.isActive;
+      const matchesStatus = showAll ? true : course.isActive;
       return matchesSearch && matchesStatus;
     });
     setFilteredCourses(filtered);
-  }, [searchTerm, courses]);
+  }, [searchTerm, courses, showAll]);
 
   const loadCourses = async () => {
     try {
@@ -128,7 +128,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly }) => {
                     variant="outline" 
                     className={`px-3 py-1 text-sm font-medium ${getStatusColor(course)}`}
                   >
-                    {course.isActive ? t('courses.approved') : t('courses.pendingApproval')}
+                    {course.isActive ? t('courses.approved') : t('users.status.inactive')}
                   </Badge>
                 </div>
               </div>

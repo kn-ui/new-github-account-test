@@ -1,5 +1,5 @@
 import { CoursesList } from '@/components/CoursesList';
 
 export default function SuperAdminCourses() {
-  return <CoursesList readOnly />;
+  return <CoursesList readOnly showAll />;
 }

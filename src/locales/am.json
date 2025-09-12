@@ -270,5 +270,24 @@
   },
   "studentProgress": {
     "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
+  },
+  "users": {
+    "subtitle": "የተጠቃሚ መለያዎችን፣ ፈቃዶችን እና መዳረሻን አስተዳድር.",
+    "export": "ተጠቃሚዎች አስመጣ",
+    "add": "ተጠቃሚ ጨምር",
+    "addMany": "ተጠቃሚዎች ጨምር",
+    "mode": { "single": "ነጠላ", "bulk": "ብዙ" },
+    "singleDescription": "ከተወሰነ ሚና ጋር ነጠላ መለያ ፍጠር.",
+    "bulkDescription": "በአንድ ጊዜ ብዙ ተጠቃሚዎች ለመፍጠር CSV አስገባ.",
+    "form": { "name": "ስም", "name_placeholder": "ሙሉ ስም አስገባ" },
+    "create": "ተጠቃሚ ፍጠር",
+    "edit": "ተጠቃሚ አርትዕ",
+    "updateFor": "ዝርዝሮችን አስተካክል ለ {name}.",
+    "thisUser": "ይህ ተጠቃሚ",
+    "saveChanges": "ለውጦችን አስቀምጥ",
+    "cannotDeleteAdmin": "አስተዳዳሪ ወይም ሱፐር አስተዳዳሪ አይሰረዝም",
+    "confirmDelete": "ይህን ተጠቃሚ መሰረዝ እርግጠኛ ነዎት?",
+    "errors": { "deleteFailed": "ተጠቃሚን ማስወገድ ላይ ስህተት:" },
+    "delete": "ሰርዝ"
   }
 }

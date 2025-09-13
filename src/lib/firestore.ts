@@ -31,6 +31,7 @@ export interface FirestoreUser {
   email: string;
   role: 'student' | 'teacher' | 'admin' | 'super_admin';
   isActive: boolean;
+  passwordChanged?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -230,12 +231,16 @@ export const userService = {
 
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
-    const docRef = await addDoc(collections.users(), {
+    if (!userData.uid) {
+      throw new Error("User data must include a uid.");
+    }
+    const userRef = doc(db, 'users', userData.uid);
+    await setDoc(userRef, {
       ...userData,
       createdAt: now,
       updatedAt: now,
     });
-    return docRef.id;
+    return userData.uid;
   },
 
   async updateUser(uid: string, updates: Partial<FirestoreUser>): Promise<void> {
@@ -258,6 +263,16 @@ export const courseService = {
     const q = query(
       collections.courses(),
       where('isActive', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+  },
+
+  async getAllCourses(limitCount = 1000): Promise<FirestoreCourse[]> {
+    const q = query(
+      collections.courses(),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
@@ -781,6 +796,15 @@ export const eventService = {
       collections.events(),
       orderBy('date', 'asc'),
       limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));
+  },
+
+  async getAllEvents(): Promise<FirestoreEvent[]> {
+    const q = query(
+      collections.events(),
+      orderBy('date', 'asc')
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));

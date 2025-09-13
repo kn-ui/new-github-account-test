@@ -110,7 +110,7 @@ const EventsPage = () => {
 
   const fetchEvents = async () => {
     try {
-      const fetchedEvents = await eventService.getEvents();
+      const fetchedEvents = await eventService.getAllEvents();
       console.log('Fetched events:', fetchedEvents);
       setEvents(fetchedEvents);
     } catch (error) {
@@ -147,14 +147,17 @@ const EventsPage = () => {
   const saveEdit = async () => {
     if (!selectedEvent) return;
     try {
+      const date = editForm.date || new Date();
+      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
+
       await eventService.updateEvent(selectedEvent.id, {
         title: editForm.title,
         description: editForm.description,
+        date: timestampDate,
         time: editForm.time,
         location: editForm.location,
         type: editForm.type,
         maxAttendees: editForm.maxAttendees,
-        status: editForm.status,
       });
       setIsEditOpen(false);
       fetchEvents();
@@ -584,6 +587,14 @@ const EventsPage = () => {
               <label className="block text-sm font-medium mb-1">Title</label>
               <Input value={String(editForm.title || '')} onChange={(e) => setEditForm({ ...editForm, title: e.target.value } as any)} />
             </div>
+            <div>
+              <DualDateInput
+                label="Date"
+                value={editForm.date instanceof Date ? editForm.date : (editForm.date as Timestamp)?.toDate() || new Date()}
+                onChange={(d) => setEditForm({ ...editForm, date: d })}
+                defaultMode="ethiopian"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Time</label>
@@ -598,10 +609,7 @@ const EventsPage = () => {
               <label className="block text-sm font-medium mb-1">Location</label>
               <Input value={String(editForm.location || '')} onChange={(e) => setEditForm({ ...editForm, location: e.target.value } as any)} />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
-              <Input value={String(editForm.status || '')} onChange={(e) => setEditForm({ ...editForm, status: e.target.value } as any)} />
-            </div>
+            
             <div>
               <label className="block text-sm font-medium mb-1">Description</label>
               <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />

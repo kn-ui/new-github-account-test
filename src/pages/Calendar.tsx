@@ -5,7 +5,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { eventService, FirestoreEvent } from '@/lib/firestore';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { toEthiopianDate, fromEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset } from '@/lib/ethiopianCalendar'; // New import
+import { toEthiopianDate, fromEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar'; // New import
 
 const Calendar = () => {
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -113,16 +113,10 @@ const Calendar = () => {
   };
 
   const monthLabel = useMemo(() => {
-    const [y, m] = month.split('-').map(Number);
-    // Create a dummy EthiopianDate object to use formatEthiopianDate
-    const ethiopianDate = { year: y, month: m, day: 1 };
-    const formatted = formatEthiopianDate(ethiopianDate);
-    // Extract month name and year from the formatted string
-    const parts = formatted.split(', ');
-    const label = `${parts[0]} ${parts[1].split(' ')[0]} EC`; // e.g., "Meskerem 2017 EC"
-    console.log('monthLabel:', label);
-    return label;
-  }, [month]);
+    const today = new Date();
+    const ethiopianToday = toEthiopianDate(today);
+    return formatEthiopianDate(ethiopianToday);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,7 +174,7 @@ const Calendar = () => {
                       }
                     }}
                   >
-                    <div className={`font-semibold text-gray-900 mb-2 ${isToday ? 'text-blue-700' : ''}`}>{day}</div>
+                    <div className={`font-semibold text-gray-900 mb-2 ${isToday ? 'text-blue-700' : ''}`}>{toGeezNumber(day)} ({day})</div>
                     <div className="space-y-1">
                       {dayEvents.slice(0, 3).map(ev => (
                         <div key={ev.id} className="text-xs p-1 rounded truncate bg-blue-50 text-blue-800 border border-blue-200" title={ev.title}>

@@ -74,7 +74,7 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
 
   const totalEvents = events.length;
@@ -508,21 +508,37 @@ const EventsPage = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Time</label>
-                <Input value={String(createForm.time || '')} onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} />
+                <label className="block text-sm font-medium mb-1">Time (Optional)</label>
+                <Input 
+                  type="time" 
+                  value={String(createForm.time || '09:00')} 
+                  onChange={(e) => setCreateForm({ ...createForm, time: e.target.value } as any)} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <Input value={String(createForm.type || '')} onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)} />
+                <label className="block text-sm font-medium mb-1">Type (Optional)</label>
+                <Input 
+                  value={String(createForm.type || '')} 
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}
+                  placeholder="e.g., meeting, conference, workshop"
+                />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Location</label>
-              <Input value={String(createForm.location || '')} onChange={(e) => setCreateForm({ ...createForm, location: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">Location (Optional)</label>
+              <Input 
+                value={String(createForm.location || '')} 
+                onChange={(e) => setCreateForm({ ...createForm, location: e.target.value } as any)}
+                placeholder="e.g., Main Hall, Room 101"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+              <Textarea 
+                value={String(createForm.description || '')} 
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)}
+                placeholder="Event description..."
+              />
             </div>
           </div>
           <DialogFooter>

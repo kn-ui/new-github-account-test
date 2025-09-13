@@ -68,9 +68,7 @@ const EthiopianHolidays = () => {
       try {
         // Correct Ethiopian holidays for 2025-2026
         const ethiopianHolidays: Holiday[] = [
-          { name: 'Enkutatash (Ethiopian New Year)', date: '2025-09-11', type: 'National' },
           { name: 'Meskel (Finding of the True Cross)', date: '2025-09-27', type: 'Religious' },
-          { name: 'Mawlid (Prophet\'s Birthday)', date: '2025-09-15', type: 'Religious' },
           { name: 'Christmas (Genna)', date: '2026-01-07', type: 'Religious' },
           { name: 'Timkat (Epiphany)', date: '2026-01-19', type: 'Religious' },
           { name: 'Adwa Victory Day', date: '2026-03-02', type: 'National' },

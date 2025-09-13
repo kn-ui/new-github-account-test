@@ -209,28 +209,6 @@
   "language": {
     "label": "Language"
   },
-  "users": {
-    "all": "All Users",
-    "searchPlaceholder": "Search users by name, email, or role...",
-    "filterByRole": "Filter by Role",
-    "roles": {
-      "all": "All Roles",
-      "student": "Student",
-      "teacher": "Teacher",
-      "admin": "Admin",
-      "super_admin": "Super Admin"
-    },
-    "table": {
-      "user": "User",
-      "role": "Role",
-      "status": "Status",
-      "created": "Created"
-    },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
-    }
-  },
   "courses": {
     "searchLabel": "Search Courses",
     "searchPlaceholder": "Search by title or instructor...",
@@ -275,6 +253,9 @@
     "highest": "Students with highest progress"
   },
   "users": {
+    "all": "All Users",
+    "searchPlaceholder": "Search users by name, email, or role...",
+    "filterByRole": "Filter by Role",
     "subtitle": "Manage user accounts, permissions, and system access.",
     "export": "Export Users",
     "add": "Add User",
@@ -291,7 +272,24 @@
     "cannotDeleteAdmin": "Cannot delete admin or super admin users",
     "confirmDelete": "Are you sure you want to delete this user?",
     "errors": { "deleteFailed": "Error deleting user:" },
-    "delete": "Delete"
+    "delete": "Delete",
+    "roles": {
+      "all": "All Roles",
+      "student": "Student",
+      "teacher": "Teacher",
+      "admin": "Admin",
+      "super_admin": "Super Admin"
+    },
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "status": "Status",
+      "created": "Created"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    }
   },
   "settings": {
     "changePassword": "Change Password",

@@ -113,7 +113,8 @@
       "totalUsers": "ጠቅላላ ተጠቃሚዎች",
       "activeCourses": "ንቁ ኮርሶች",
       "completionRate": "የመጨረሻ መጠን",
-      "systemHealth": "የስርዓት ጤና"
+      "systemHealth": "የስርዓት ጤና",
+      "totalEvents": "ጠቅላላ ዝግጅቶች"
     },
     "recentUsers": {
       "title": "የቅርብ ጊዜ ተጠቃሚዎች",
@@ -128,6 +129,10 @@
       },
       "noUsers": "ተጠቃሚ አልተገኘም",
       "edit": "አርትዕ"
+    },
+    "recentCourses": {
+      "title": "የቅርብ ጊዜ የተጨመሩ ኮርሶች",
+      "noCourses": "ኮርስ አልተገኘም"
     },
     "analytics": {
       "title": "የስርዓት ትንታኔ",
@@ -266,7 +271,9 @@
   ,
   "common": {
     "dashboard": "ዳሽቦርድ",
-    "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ"
+    "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ",
+    "saving": "በመቀመጥ ላይ...",
+    "cancel": "ሰርዝ"
   },
   "studentProgress": {
     "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
@@ -289,5 +296,13 @@
     "confirmDelete": "ይህን ተጠቃሚ መሰረዝ እርግጠኛ ነዎት?",
     "errors": { "deleteFailed": "ተጠቃሚን ማስወገድ ላይ ስህተት:" },
     "delete": "ሰርዝ"
+  },
+  "settings": {
+    "changePassword": "የይለፍ ቃል ቀይር",
+    "changePasswordDescription": "የአሁኑን የይለፍ ቃል አስገባ እና አዲስ የይለፍ ቃል ምረጥ።",
+    "currentPassword": "የአሁኑ የይለፍ ቃል",
+    "newPassword": "አዲስ የይለፍ ቃል",
+    "confirmPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
+    "updatePassword": "የይለፍ ቃል አዘምን"
   }
 }

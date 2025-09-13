@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { PasswordChangeDialog } from '@/components/PasswordChangeDialog';
 import { Input } from '@/components/ui/input';
 import { 
   BookOpen, 
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -210,6 +212,14 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 </p>
                 <p className="text-xs text-gray-500">{t('common.dashboard')}</p>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsPasswordDialogOpen(true)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
             <Button
               variant="ghost"
@@ -301,6 +311,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           </div>
         </main>
       </div>
+      
+      {/* Password Change Dialog */}
+      <PasswordChangeDialog 
+        open={isPasswordDialogOpen} 
+        onOpenChange={setIsPasswordDialogOpen} 
+      />
     </div>
   );
 }

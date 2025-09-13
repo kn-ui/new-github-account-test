@@ -164,15 +164,15 @@ const AdminOverview = () => {
           <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                {t('admin.pendingApprovals')}
+                <Calendar className="h-5 w-5" />
+                {t('admin.systemStats.totalEvents')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.pendingReviews}</div>
+              <div className="text-3xl font-bold mb-2">{stats.totalEvents}</div>
               <div className="text-orange-100 text-sm flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {t('admin.pendingApprovals')}
+                <Calendar className="h-4 w-4" />
+                {t('admin.systemStats.totalEvents')}
               </div>
             </CardContent>
           </Card>
@@ -227,14 +227,14 @@ const AdminOverview = () => {
             </CardContent>
           </Card>
 
-          {/* Pending Courses */}
+          {/* Recently Added Courses */}
           <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-3 text-green-900">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-green-600" />
+                  <BookOpenIcon className="h-6 w-6 text-green-600" />
                 </div>
-                {t('admin.pendingApprovals')}
+                {t('admin.recentCourses.title')}
               </CardTitle>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
@@ -257,7 +257,7 @@ const AdminOverview = () => {
                         </div>
                       </div>
                       <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 px-3 py-1">
-                        {t('teacher.myCourses.complete')}
+                        {course.isActive ? t('courses.approved') : t('users.status.inactive')}
                       </Badge>
                     </div>
                   ))}
@@ -267,7 +267,7 @@ const AdminOverview = () => {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpenIcon className="h-8 w-8 text-green-600" />
                   </div>
-                  <p className="text-lg font-medium">{t('admin.pendingApprovals')}</p>
+                  <p className="text-lg font-medium">{t('admin.recentCourses.noCourses')}</p>
                   <p className="text-sm text-gray-400">{t('admin.analytics.subtitle')}</p>
                 </div>
               )}

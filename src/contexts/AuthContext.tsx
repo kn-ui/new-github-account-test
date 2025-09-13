@@ -95,12 +95,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Create user function - for admin use only
   const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
-      const response = await api.createUser(userData);
-      if (response.success && response.data) {
-        toast.success('User created successfully!');
-        return response.data.uid;
-      }
-      throw new Error(response.message);
+      // Set default password based on role
+      const defaultPasswords = {
+        student: 'student123',
+        teacher: 'teacher123',
+        admin: 'admin123',
+        super_admin: 'superadmin123'
+      };
+      
+      const password = defaultPasswords[userData.role as keyof typeof defaultPasswords] || 'password123';
+      
+      // Create Firebase Auth user first
+      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
+      
+      // Create Firestore user profile
+      const userId = await userService.createUser({
+        ...userData,
+        uid: userCredential.user.uid
+      });
+      
+      toast.success(`User created successfully! Default password: ${password}`);
+      return userId;
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);
       throw error;

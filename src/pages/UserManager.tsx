@@ -370,7 +370,7 @@ const UserManager = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Total Users
+                {t('users.stats.totalUsers')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -383,7 +383,7 @@ const UserManager = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
                 <UserCheck className="h-5 w-5" />
-                Active Users
+                {t('users.stats.activeUsers')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -396,7 +396,7 @@ const UserManager = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Teachers
+                {t('users.stats.teachers')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -409,7 +409,7 @@ const UserManager = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
                 <GraduationCap className="h-5 w-5" />
-                Students
+                {t('users.stats.students')}
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, Course } from '@/lib/api';
+import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import {
 import { toast } from 'sonner';
 
 const Courses = () => {
+  const { t } = useI18n();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,9 +156,9 @@ const Courses = () => {
               <GraduationCap className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Course Catalog</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('courses.title')}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Explore our comprehensive collection of courses designed to help you grow and succeed.
+            {t('courses.subtitle')}
           </p>
         </div>
 
@@ -166,7 +168,7 @@ const Courses = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search courses, instructors, or topics..."
+                placeholder={t('courses.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -177,10 +179,10 @@ const Courses = () => {
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={t('courses.categoryFilter')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t('courses.allCategories')}</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>
                       {category}

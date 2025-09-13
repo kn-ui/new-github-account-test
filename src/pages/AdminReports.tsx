@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, Lightbulb } from 'lucide-react';
 import ReportGenerator from '@/components/ui/ReportGenerator';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function AdminReportsPage() {
+  const { t } = useI18n();
   const [message, setMessage] = useState<string | null>(null);
   
   return (

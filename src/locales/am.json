@@ -210,8 +210,12 @@
     "label": "ቋንቋ"
   },
   "courses": {
+    "title": "ኮርስ ካታሎግ",
+    "subtitle": "ለመድረስ እና ለማስተላለፍ የተነደፉ የኮርሶች ስብስብ ያስሱ።",
     "searchLabel": "ኮርሶች ፈልግ",
-    "searchPlaceholder": "በርእስ ወይም በአስተማሪ ፈልግ...",
+    "searchPlaceholder": "ኮርሶች፣ አስተማሪዎች ወይም ርዕሶች ፈልግ...",
+    "categoryFilter": "ምድብ",
+    "allCategories": "ሁሉም ምድቦች",
     "statusFilter": "የሁኔታ ማጣሪያ",
     "allStatus": "ሁሉም ሁኔታ",
     "approved": "አጽድቋል",
@@ -289,15 +293,45 @@
     "status": {
       "active": "ንቁ",
       "inactive": "ባልንቁ"
+    },
+    "stats": {
+      "totalUsers": "ጠቅላላ ተጠቃሚዎች",
+      "activeUsers": "ንቁ ተጠቃሚዎች",
+      "teachers": "አስተማሪዎች",
+      "students": "ተማሪዎች"
     }
   },
   "settings": {
+    "title": "ቅንብሮች",
+    "subtitle": "የመለያ ቅንብሮችን እና ምርጫዎችን አስተዳድር።",
     "changePassword": "የይለፍ ቃል ቀይር",
     "changePasswordDescription": "የአሁኑን የይለፍ ቃል አስገባ እና አዲስ የይለፍ ቃል ምረጥ።",
     "currentPassword": "የአሁኑ የይለፍ ቃል",
     "newPassword": "አዲስ የይለፍ ቃል",
     "confirmPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
     "updatePassword": "የይለፍ ቃል አዘምን"
+  },
+  "reports": {
+    "title": "ሪፖርቶች",
+    "subtitle": "የስርዓት ሪፖርቶችን እና ትንታኔዎችን ይፍጠሩ።",
+    "generateReport": "ሪፖርት ፍጠር",
+    "reportType": "የሪፖርት አይነት",
+    "dateRange": "የቀን ክልል",
+    "fromDate": "ከቀን",
+    "toDate": "እስከ ቀን",
+    "includeDetails": "ዝርዝሮችን አካትት",
+    "exportFormat": "የማስመጣት ቅርጸት",
+    "pdf": "PDF",
+    "excel": "Excel",
+    "csv": "CSV",
+    "userReport": "የተጠቃሚ ሪፖርት",
+    "courseReport": "የኮርስ ሪፖርት",
+    "eventReport": "የክስተት ሪፖርት",
+    "systemReport": "የስርዓት ሪፖርት",
+    "generating": "ሪፖርት እየተፈጠረ...",
+    "download": "ሪፖርት አውርድ",
+    "reportGenerated": "ሪፖርት በተሳካ ሁኔታ ተፈጥሯል!",
+    "reportError": "ሪፖርት መፍጠር አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
   },
   "events": {
     "title": "የክስተት አስተዳደር",

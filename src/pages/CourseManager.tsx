@@ -459,11 +459,33 @@ export default function CourseManager() {
             </div>
             <div>
               <Label htmlFor="duration">Duration (hours)</Label>
-              <Input id="duration" type="number" value={Number(editForm.duration || 0)} onChange={(e) => setEditForm({ ...editForm, duration: Number(e.target.value) as any })} />
+              <Input 
+                id="duration" 
+                type="text" 
+                value={editForm.duration || ''} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setEditForm({ ...editForm, duration: value as any });
+                  }
+                }}
+                placeholder="Enter duration in hours"
+              />
             </div>
             <div>
               <Label htmlFor="max">Max Students</Label>
-              <Input id="max" type="number" value={Number(editForm.maxStudents || 0)} onChange={(e) => setEditForm({ ...editForm, maxStudents: Number(e.target.value) as any })} />
+              <Input 
+                id="max" 
+                type="text" 
+                value={editForm.maxStudents || ''} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setEditForm({ ...editForm, maxStudents: value as any });
+                  }
+                }}
+                placeholder="Enter maximum number of students"
+              />
             </div>
             <div>
               <Label htmlFor="desc">Description</Label>
@@ -506,11 +528,31 @@ export default function CourseManager() {
                 <div className="space-y-4">
                   <div>
                     <Label>Duration (hours)</Label>
-                    <Input type="number" value={Number(createForm.duration || 1)} onChange={(e) => setCreateForm({ ...createForm, duration: Number(e.target.value) as any } as any)} />
+                    <Input 
+                      type="text" 
+                      value={createForm.duration || ''} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setCreateForm({ ...createForm, duration: value as any } as any);
+                        }
+                      }}
+                      placeholder="Enter duration in hours"
+                    />
                   </div>
                   <div>
                     <Label>Max Students</Label>
-                    <Input type="number" value={Number(createForm.maxStudents || 1)} onChange={(e) => setCreateForm({ ...createForm, maxStudents: Number(e.target.value) as any } as any)} />
+                    <Input 
+                      type="text" 
+                      value={createForm.maxStudents || ''} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setCreateForm({ ...createForm, maxStudents: value as any } as any);
+                        }
+                      }}
+                      placeholder="Enter maximum number of students"
+                    />
                   </div>
                   <div>
                     <Label>Syllabus</Label>

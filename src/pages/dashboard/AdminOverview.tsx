@@ -74,7 +74,7 @@ const AdminOverview = () => {
         setStats({
           totalUsers: adminStats.totalUsers,
           totalCourses: adminStats.activeCourses,
-          totalEvents: 0, // Not provided by analytics service
+          totalEvents: events.length, // Use actual events count
           pendingReviews: adminStats.pendingCourses,
           totalTeachers: adminStats.totalTeachers
         });

@@ -149,11 +149,6 @@
       "createCourse": "Create Course",
       "generateReport": "Generate Report",
       "systemSettings": "System Settings"
-    },
-    "common": {
-      "approve": "Approve",
-      "reject": "Reject",
-      "by": "by"
     }
   },
   "blog": {
@@ -204,9 +199,6 @@
     "by": "By"
   }
   ,
-  "common": {
-    "dashboard": "Dashboard"
-  },
   "search": {
     "placeholder": "Search users, courses, events..."
   },
@@ -273,7 +265,11 @@
     "dashboard": "Dashboard",
     "viewAllSubmissions": "View All Submissions",
     "saving": "Saving...",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "approve": "Approve",
+    "reject": "Reject",
+    "by": "by"
   },
   "studentProgress": {
     "highest": "Students with highest progress"
@@ -304,5 +300,30 @@
     "newPassword": "New Password",
     "confirmPassword": "Confirm New Password",
     "updatePassword": "Update Password"
+  },
+  "events": {
+    "title": "Event Management",
+    "subtitle": "Manage system events, schedules, and activities.",
+    "viewCalendar": "View Calendar",
+    "createEvent": "Create Event",
+    "totalEvents": "Total Events",
+    "upcomingEvents": "Upcoming Events",
+    "pastEvents": "Past Events",
+    "searchPlaceholder": "Search events...",
+    "filterByStatus": "Filter by Status",
+    "allStatuses": "All Statuses",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "title_label": "Title",
+    "date_label": "Date",
+    "time_label": "Time (Optional)",
+    "type_label": "Type (Optional)",
+    "location_label": "Location (Optional)",
+    "description_label": "Description (Optional)",
+    "noEvents": "No events found",
+    "createEventTitle": "Create Event"
   }
 }

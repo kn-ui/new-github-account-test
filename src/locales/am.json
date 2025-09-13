@@ -149,11 +149,6 @@
       "createCourse": "ኮርስ ፍጠር (አስተዳዳሪ)",
       "generateReport": "ሪፖርት መፍጠር",
       "systemSettings": "የስርዓት ቅንብር"
-    },
-    "common": {
-      "approve": "አጽድቅ",
-      "reject": "ተቃውም",
-      "by": "በ"
     }
   },
   "blog": {
@@ -204,9 +199,6 @@
     "by": "በ"
   }
   ,
-  "common": {
-    "dashboard": "ዳሽቦርድ"
-  },
   "search": {
     "placeholder": "ተጠቃሚዎችን፣ ኮርሶችን፣ ክስተቶችን ፈልግ..."
   },
@@ -273,7 +265,11 @@
     "dashboard": "ዳሽቦርድ",
     "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ",
     "saving": "በመቀመጥ ላይ...",
-    "cancel": "ሰርዝ"
+    "cancel": "ሰርዝ",
+    "delete": "ሰርዝ",
+    "approve": "ፀድቅ",
+    "reject": "አትቀበል",
+    "by": "በ"
   },
   "studentProgress": {
     "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
@@ -304,5 +300,30 @@
     "newPassword": "አዲስ የይለፍ ቃል",
     "confirmPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
     "updatePassword": "የይለፍ ቃል አዘምን"
+  },
+  "events": {
+    "title": "የክስተት አስተዳደር",
+    "subtitle": "የስርዓት ክስተቶችን፣ የጊዜ ሰሌዳዎችን እና እንቅስቃሴዎችን አስተዳድር።",
+    "viewCalendar": "የቀን መቁጠሪያ ይመልከቱ",
+    "createEvent": "ክስተት ፍጠር",
+    "totalEvents": "ጠቅላላ ክስተቶች",
+    "upcomingEvents": "የሚመጡ ክስተቶች",
+    "pastEvents": "የቀድሞ ክስተቶች",
+    "searchPlaceholder": "ክስተቶችን ፈልግ...",
+    "filterByStatus": "በሁኔታ አጣራ",
+    "allStatuses": "ሁሉም ሁኔታዎች",
+    "upcoming": "የሚመጣ",
+    "past": "የቀድሞ",
+    "create": "ፍጠር",
+    "edit": "አርትዕ",
+    "delete": "ሰርዝ",
+    "title_label": "ርዕስ",
+    "date_label": "ቀን",
+    "time_label": "ጊዜ (አማራጭ)",
+    "type_label": "ዓይነት (አማራጭ)",
+    "location_label": "አካባቢ (አማራጭ)",
+    "description_label": "መግለጫ (አማራጭ)",
+    "noEvents": "ክስተት አልተገኘም",
+    "createEventTitle": "ክስተት ፍጠር"
   }
 }

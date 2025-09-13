@@ -49,6 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface User {
   id: string;
@@ -71,6 +72,8 @@ const UserManager = () => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
   const [editingUser, setEditingUser] = useState<User | null>(null); // New state for user being edited
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; role: string } | null>(null);
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
@@ -111,19 +114,24 @@ const UserManager = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string, userRole: string) => {
+  const handleDeleteUser = (userId: string, userName: string, userRole: string) => {
     if (userRole === 'admin' || userRole === 'super_admin') {
       alert(t('users.cannotDeleteAdmin'));
       return;
     }
     
-    if (window.confirm(t('users.confirmDelete'))) {
-      try {
-        await userService.deleteUser(userId);
-        fetchUsers();
-      } catch (error) {
-        console.error(t('users.errors.deleteFailed'), error);
-      }
+    setUserToDelete({ id: userId, name: userName, role: userRole });
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      await userService.deleteUser(userToDelete.id);
+      fetchUsers();
+    } catch (error) {
+      console.error(t('users.errors.deleteFailed'), error);
     }
   };
 
@@ -516,7 +524,7 @@ const UserManager = () => {
                           {user.role !== 'super_admin' && (
                             <DropdownMenuItem 
                               className="text-red-600 cursor-pointer"
-                              onClick={() => handleDeleteUser(user.id, user.role)}
+                              onClick={() => handleDeleteUser(user.id, user.displayName, user.role)}
                             >
                               <Shield className="h-4 w-4 mr-2" />
                               {t('users.delete')}
@@ -532,6 +540,16 @@ const UserManager = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={confirmDeleteUser}
+        title={t('users.confirmDelete')}
+        description={`${t('users.confirmDelete')} ${userToDelete?.name}?`}
+        variant="destructive"
+      />
     </div>
   );
 };

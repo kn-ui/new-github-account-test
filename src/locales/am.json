@@ -209,28 +209,6 @@
   "language": {
     "label": "ቋንቋ"
   },
-  "users": {
-    "all": "ሁሉም ተጠቃሚዎች",
-    "searchPlaceholder": "ተጠቃሚዎችን በስም፣ ኢሜይል ወይም ሚና ፈልግ...",
-    "filterByRole": "በሚና አጣራ",
-    "roles": {
-      "all": "ሁሉም ሚናዎች",
-      "student": "ተማሪ",
-      "teacher": "አስተማሪ",
-      "admin": "አስተዳዳሪ",
-      "super_admin": "ሱፐር አስተዳዳሪ"
-    },
-    "table": {
-      "user": "ተጠቃሚ",
-      "role": "ሚና",
-      "status": "ሁኔታ",
-      "created": "ተፈጠረ"
-    },
-    "status": {
-      "active": "ንቁ",
-      "inactive": "ባልንቁ"
-    }
-  },
   "courses": {
     "searchLabel": "ኮርሶች ፈልግ",
     "searchPlaceholder": "በርእስ ወይም በአስተማሪ ፈልግ...",
@@ -275,6 +253,9 @@
     "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
   },
   "users": {
+    "all": "ሁሉም ተጠቃሚዎች",
+    "searchPlaceholder": "ተጠቃሚዎችን በስም፣ ኢሜይል ወይም ሚና ፈልግ...",
+    "filterByRole": "በሚና አጣራ",
     "subtitle": "የተጠቃሚ መለያዎችን፣ ፈቃዶችን እና መዳረሻን አስተዳድር.",
     "export": "ተጠቃሚዎች አስመጣ",
     "add": "ተጠቃሚ ጨምር",
@@ -291,7 +272,24 @@
     "cannotDeleteAdmin": "አስተዳዳሪ ወይም ሱፐር አስተዳዳሪ አይሰረዝም",
     "confirmDelete": "ይህን ተጠቃሚ መሰረዝ እርግጠኛ ነዎት?",
     "errors": { "deleteFailed": "ተጠቃሚን ማስወገድ ላይ ስህተት:" },
-    "delete": "ሰርዝ"
+    "delete": "ሰርዝ",
+    "roles": {
+      "all": "ሁሉም ሚናዎች",
+      "student": "ተማሪ",
+      "teacher": "አስተማሪ",
+      "admin": "አስተዳዳሪ",
+      "super_admin": "ሱፐር አስተዳዳሪ"
+    },
+    "table": {
+      "user": "ተጠቃሚ",
+      "role": "ሚና",
+      "status": "ሁኔታ",
+      "created": "ተፈጠረ"
+    },
+    "status": {
+      "active": "ንቁ",
+      "inactive": "ባልንቁ"
+    }
   },
   "settings": {
     "changePassword": "የይለፍ ቃል ቀይር",

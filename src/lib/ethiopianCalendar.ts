@@ -46,3 +46,19 @@ export const getEthiopianFirstWeekdayOffset = (year: number, month: number): num
   const firstDayOfMonthGregorian = fromEthiopianDate(year, month, 1);
   return firstDayOfMonthGregorian.getDay(); // 0 for Sunday, 1 for Monday, etc.
 };
+
+export const toGeezNumber = (num: number): string => {
+  if (num === 0) return '0';
+  const geezMap: { [key: number]: string } = {
+    1: '፩', 2: '፪', 3: '፫', 4: '፬', 5: '፭', 6: '፮', 7: '፯', 8: '፰', 9: '፱',
+    10: '፲', 20: '፳', 30: '፴', 40: '፵', 50: '፶', 60: '፷', 70: '፸', 80: '፹', 90: '፺'
+  };
+
+  if (num >= 1 && num <= 9) return geezMap[num];
+  if (num >= 10 && num <= 99) {
+    const tens = Math.floor(num / 10) * 10;
+    const ones = num % 10;
+    return (geezMap[tens] || '') + (geezMap[ones] || '');
+  }
+  return String(num);
+};

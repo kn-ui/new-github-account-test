@@ -64,23 +64,24 @@ const AdminOverview = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [adminStats, users, courses, events] = await Promise.all([
+        const [adminStats, users, courses, allEvents, recentEvents] = await Promise.all([
           analyticsService.getAdminStats(),
           userService.getUsers(5),
           courseService.getCourses(5),
+          eventService.getAllEvents(),
           eventService.getEvents(5)
         ]);
 
         setStats({
           totalUsers: adminStats.totalUsers,
           totalCourses: adminStats.activeCourses,
-          totalEvents: events.length, // Use actual events count
+          totalEvents: allEvents.length, // Use actual events count
           pendingReviews: adminStats.pendingCourses,
           totalTeachers: adminStats.totalTeachers
         });
         setRecentUsers(users);
         setRecentCourses(courses);
-        setRecentEvents(events);
+        setRecentEvents(recentEvents);
       } catch (error) {
         console.error('Error fetching admin data:', error);
       } finally {

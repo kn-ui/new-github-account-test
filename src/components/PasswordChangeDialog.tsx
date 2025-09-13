@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Eye, EyeOff } from 'lucide-react';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -18,15 +19,19 @@ import { toast } from 'sonner';
 interface PasswordChangeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showCancelButton?: boolean;
 }
 
-export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open, onOpenChange }) => {
+export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open, onOpenChange, showCancelButton = true }) => {
   const { t } = useI18n();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +60,11 @@ export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open
       
       // Update password
       await updatePassword(currentUser, newPassword);
+
+      // Update profile to reflect password change
+      if (userProfile && !userProfile.passwordChanged) {
+        await updateUserProfile({ passwordChanged: true });
+      }
       
       toast.success('Password updated successfully!');
       onOpenChange(false);
@@ -88,41 +98,70 @@ export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
+            <div className="grid gap-2 relative">
               <Label htmlFor="current-password">{t('settings.currentPassword')}</Label>
               <Input
                 id="current-password"
-                type="password"
+                type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 required
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-8 h-7 w-7"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-2 relative">
               <Label htmlFor="new-password">{t('settings.newPassword')}</Label>
               <Input
                 id="new-password"
-                type="password"
+                type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-8 h-7 w-7"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-2 relative">
               <Label htmlFor="confirm-password">{t('settings.confirmPassword')}</Label>
               <Input
                 id="confirm-password"
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-8 h-7 w-7"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t('common.cancel')}
-            </Button>
+            {showCancelButton && (
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t('common.cancel')}
+              </Button>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? t('common.saving') : t('settings.updatePassword')}
             </Button>

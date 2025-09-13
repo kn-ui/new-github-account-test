@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CSVUser {
   displayName: string;
@@ -14,6 +14,7 @@ interface CSVUploadProps {
 }
 
 export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
+  const { createUser } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -120,7 +121,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       
       for (const user of preview) {
         try {
-          await userService.createUser({
+          await createUser({
             displayName: user.displayName,
             email: user.email,
             role: user.role,

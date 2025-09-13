@@ -21,7 +21,7 @@ interface AuthContextType {
   signup: (email: string, password: string, displayName: string, role?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
-  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>) => Promise<string>;
+  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,28 +94,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Create user function - for admin use only
-  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
-      // Set default password based on role
-      const defaultPasswords = {
-        student: 'student123',
-        teacher: 'teacher123',
-        admin: 'admin123',
-        super_admin: 'superadmin123'
-      };
-      
-      const password = defaultPasswords[userData.role as keyof typeof defaultPasswords] || 'password123';
+      // Set default password based on role if not provided
+      const finalPassword = password || (() => {
+        const defaultPasswords = {
+          student: 'student123',
+          teacher: 'teacher123',
+          admin: 'admin123',
+          super_admin: 'superadmin123'
+        };
+        return defaultPasswords[userData.role as keyof typeof defaultPasswords] || 'password123';
+      })();
       
       // Create Firebase Auth user first
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, finalPassword);
       
       // Create Firestore user profile
       const userId = await userService.createUser({
         ...userData,
-        uid: userCredential.user.uid
+        uid: userCredential.user.uid,
+        passwordChanged: false // New users must change their password
       });
       
-      toast.success(`User created successfully! Default password: ${password}`);
+      toast.success(`User created successfully! Default password: ${finalPassword}`);
       return userId;
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);

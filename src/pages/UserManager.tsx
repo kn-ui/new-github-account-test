@@ -137,12 +137,21 @@ const UserManager = () => {
 
   const handleAddUser = async () => {
     try {
+      const defaultPasswords = {
+        student: 'student123',
+        teacher: 'teacher123',
+        admin: 'admin123',
+        super_admin: 'superadmin123'
+      };
+      const password = defaultPasswords[newUser.role];
+
       await createUser({
         displayName: newUser.displayName,
         email: newUser.email,
         role: newUser.role,
         isActive: true
-      });
+      }, password);
+      
       setIsAddUserOpen(false);
       setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();

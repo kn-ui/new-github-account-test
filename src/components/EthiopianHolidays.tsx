@@ -25,31 +25,7 @@ const CardContent = ({ className = '', children }) => (
   <div className={`p-6 pt-0 ${className}`}>{children}</div>
 );
 
-// --- Ethiopian Calendar Utility Functions ---
-const ethiopianEpoch = 8;
-const ethiopianMonthLengths = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 5, 6];
-const ethiopianMonths = ["መስከረም", "ጥቅምት", "ህዳር", "ታህሣሥ", "ጥር", "የካቲት", "መጋቢት", "ሚያዝያ", "ግንቦት", "ሰኔ", "ሐምሌ", "ነሐሴ", "ጳጉሜን"];
-
-const toEthiopianDate = (date) => {
-  const gDay = Math.floor((date.getTime() / 86400000) - ethiopianEpoch);
-  const year = Math.floor(gDay / 365.25) + 1;
-  const isLeap = (year) => year % 4 === 3;
-  const daysInYear = isLeap(year) ? 366 : 365;
-  let dayOfYear = gDay % daysInYear;
-  if (dayOfYear < 0) {
-    dayOfYear += daysInYear;
-  }
-  let month = 1;
-  while (dayOfYear > ethiopianMonthLengths[month - 1]) {
-    dayOfYear -= ethiopianMonthLengths[month - 1];
-    month++;
-  }
-  return { year, month, day: dayOfYear + 1 };
-};
-
-const formatEthiopianDate = (date) => {
-  return `${ethiopianMonths[date.month - 1]} ${date.day}, ${date.year}`;
-};
+import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 
 // --- Main Component ---
 interface Holiday {

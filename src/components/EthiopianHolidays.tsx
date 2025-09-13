@@ -66,21 +66,21 @@ const EthiopianHolidays = () => {
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        // Correct Ethiopian holidays for 2024-2025
+        // Correct Ethiopian holidays for 2025-2026
         const ethiopianHolidays: Holiday[] = [
-          { name: 'Enkutatash (Ethiopian New Year)', date: '2024-09-11', type: 'National' },
-          { name: 'Meskel (Finding of the True Cross)', date: '2024-09-27', type: 'Religious' },
-          { name: 'Mawlid (Prophet\'s Birthday)', date: '2024-09-15', type: 'Religious' },
-          { name: 'Christmas (Genna)', date: '2025-01-07', type: 'Religious' },
-          { name: 'Timkat (Epiphany)', date: '2025-01-19', type: 'Religious' },
-          { name: 'Adwa Victory Day', date: '2025-03-02', type: 'National' },
-          { name: 'Good Friday', date: '2025-04-18', type: 'Religious' },
-          { name: 'Easter (Fasika)', date: '2025-04-20', type: 'Religious' },
-          { name: 'Labour Day', date: '2025-05-01', type: 'National' },
-          { name: 'Patriots\' Victory Day', date: '2025-05-05', type: 'National' },
-          { name: 'Downfall of Derg Day', date: '2025-05-28', type: 'National' },
-          { name: 'Eid al-Fitr', date: '2025-03-30', type: 'Religious' },
-          { name: 'Eid al-Adha', date: '2025-06-06', type: 'Religious' },
+          { name: 'Enkutatash (Ethiopian New Year)', date: '2025-09-11', type: 'National' },
+          { name: 'Meskel (Finding of the True Cross)', date: '2025-09-27', type: 'Religious' },
+          { name: 'Mawlid (Prophet\'s Birthday)', date: '2025-09-15', type: 'Religious' },
+          { name: 'Christmas (Genna)', date: '2026-01-07', type: 'Religious' },
+          { name: 'Timkat (Epiphany)', date: '2026-01-19', type: 'Religious' },
+          { name: 'Adwa Victory Day', date: '2026-03-02', type: 'National' },
+          { name: 'Good Friday', date: '2026-04-18', type: 'Religious' },
+          { name: 'Easter (Fasika)', date: '2026-04-20', type: 'Religious' },
+          { name: 'Labour Day', date: '2026-05-01', type: 'National' },
+          { name: 'Patriots\' Victory Day', date: '2026-05-05', type: 'National' },
+          { name: 'Downfall of Derg Day', date: '2026-05-28', type: 'National' },
+          { name: 'Eid al-Fitr', date: '2026-03-30', type: 'Religious' },
+          { name: 'Eid al-Adha', date: '2026-06-06', type: 'Religious' },
         ];
 
         // Filter for upcoming holidays

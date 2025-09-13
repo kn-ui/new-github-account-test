@@ -548,6 +548,7 @@ const UserManager = () => {
         onConfirm={confirmDeleteUser}
         title={t('users.confirmDelete')}
         description={`${t('users.confirmDelete')} ${userToDelete?.name}?`}
+        confirmText={t('users.delete')}
         variant="destructive"
       />
     </div>

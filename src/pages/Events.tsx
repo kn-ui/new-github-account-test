@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
@@ -65,6 +66,7 @@ interface Event {
 }
 
 const EventsPage = () => {
+  const { t } = useI18n();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -254,19 +256,19 @@ const EventsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
       <DashboardHero 
-        title="Event Management"
-        subtitle="Manage system events, schedules, and activities."
+        title={t('events.title')}
+        subtitle={t('events.subtitle')}
       >
         <div className="flex gap-3 mt-4 lg:mt-0">
           <Link to="/calendar">
             <Button  className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
               <CalendarIcon className="h-5 w-5 mr-2" />
-              View Calendar
+              {t('events.viewCalendar')}
             </Button>
           </Link>
           <Button onClick={() => setIsCreateOpen(true)} className="bg-white text-purple-600 hover:bg-purple-50 transition-all duration-300">
             <Plus className="h-5 w-5 mr-2" />
-            Create Event
+            {t('events.createEvent')}
           </Button>
         </div>
       </DashboardHero>
@@ -277,7 +279,7 @@ const EventsPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Total Events
+                {t('events.totalEvents')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -290,7 +292,7 @@ const EventsPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                Upcoming Events
+                {t('events.upcomingEvents')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -303,7 +305,7 @@ const EventsPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-100 flex items-center gap-2">
                 <Zap className="h-5 w-5" />
-                Past Events
+                {t('events.pastEvents')}
               </CardTitle>
             </CardHeader>
             <CardContent>

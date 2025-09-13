@@ -210,8 +210,12 @@
     "label": "Language"
   },
   "courses": {
+    "title": "Course Catalog",
+    "subtitle": "Explore our comprehensive collection of courses designed to help you grow and succeed.",
     "searchLabel": "Search Courses",
-    "searchPlaceholder": "Search by title or instructor...",
+    "searchPlaceholder": "Search courses, instructors, or topics...",
+    "categoryFilter": "Category",
+    "allCategories": "All Categories",
     "statusFilter": "Status Filter",
     "allStatus": "All Status",
     "approved": "Approved",
@@ -289,15 +293,45 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "teachers": "Teachers",
+      "students": "Students"
     }
   },
   "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account settings and preferences.",
     "changePassword": "Change Password",
     "changePasswordDescription": "Enter your current password and choose a new password.",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm New Password",
     "updatePassword": "Update Password"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Generate comprehensive system reports and analytics.",
+    "generateReport": "Generate Report",
+    "reportType": "Report Type",
+    "dateRange": "Date Range",
+    "fromDate": "From Date",
+    "toDate": "To Date",
+    "includeDetails": "Include Details",
+    "exportFormat": "Export Format",
+    "pdf": "PDF",
+    "excel": "Excel",
+    "csv": "CSV",
+    "userReport": "User Report",
+    "courseReport": "Course Report",
+    "eventReport": "Event Report",
+    "systemReport": "System Report",
+    "generating": "Generating Report...",
+    "download": "Download Report",
+    "reportGenerated": "Report generated successfully!",
+    "reportError": "Failed to generate report. Please try again."
   },
   "events": {
     "title": "Event Management",

@@ -80,54 +80,7 @@ export default function TeacherGrades() {
       const courseIds = teacherCourses.map(course => course.id);
       
       if (courseIds.length === 0) {
-        // Add some mock data for demonstration using real IDs
-        const mockSubmissions: SubmissionWithDetails[] = [
-          {
-            id: 'sub1',
-            assignmentId: 'assign1',
-            studentId: 'Bu4LUIMp9scCoMPqp31ZR7CG1y02',
-            studentName: 'John Doe',
-            courseId: '848emeF22B0qN1TnYZMg',
-            courseTitle: 'React Development Fundamentals',
-            assignmentTitle: 'Introduction to React',
-            submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            status: 'submitted',
-            maxScore: 100,
-            content: 'Here is my React component implementation...',
-            attachments: []
-          },
-          {
-            id: 'sub2',
-            assignmentId: 'assign2',
-            studentId: 'HhrOtnxV7BfZhkrUqJJ0009tKZD3',
-            studentName: 'Jane Smith',
-            courseId: '848emeF22B0qN1TnYZMg',
-            courseTitle: 'React Development Fundamentals',
-            assignmentTitle: 'JavaScript Fundamentals',
-            submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            status: 'graded',
-            grade: 85,
-            feedback: 'Good implementation! Consider adding error handling.',
-            maxScore: 100,
-            content: 'My JavaScript implementation...',
-            attachments: []
-          },
-          {
-            id: 'sub3',
-            assignmentId: 'assign3',
-            studentId: 'N5DSrzHPDu00J4XM3MZmdWYf1gZ2',
-            studentName: 'Mike Johnson',
-            courseId: 'course-001',
-            courseTitle: 'Database Design and Management',
-            assignmentTitle: 'Database Design',
-            submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            status: 'submitted',
-            maxScore: 100,
-            content: 'Database schema design document...',
-            attachments: []
-          }
-        ];
-        setSubmissions(mockSubmissions);
+        setSubmissions([]);
         return;
       }
 

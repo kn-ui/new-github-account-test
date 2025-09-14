@@ -64,7 +64,8 @@ export default function TeacherAnnouncements() {
     body: '',
     courseId: '',
     isGeneral: false,
-    priority: 'normal'
+    priority: 'normal',
+    recipientStudentId: ''
   });
 
   useEffect(() => {
@@ -123,46 +124,7 @@ export default function TeacherAnnouncements() {
         setCourses(teacherCourses);
       }
       
-      // If no announcements, add mock data with real IDs
-      if (teacherAnnouncements.length === 0) {
-        const mockAnnouncements = [
-          {
-            id: 'ann1',
-            title: 'Welcome to React Development Course',
-            body: 'Welcome everyone! This course will cover React fundamentals and advanced concepts. Please review the syllabus and prepare for our first assignment.',
-            courseId: '848emeF22B0qN1TnYZMg',
-            authorId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
-            createdAt: { toDate: () => new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
-          },
-          {
-            id: 'ann2',
-            title: 'Assignment Due Date Extended',
-            body: 'Due to technical issues, the JavaScript assignment due date has been extended by 2 days. Please use this extra time to improve your submissions.',
-            courseId: '848emeF22B0qN1TnYZMg',
-            authorId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
-            createdAt: { toDate: () => new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
-          },
-          {
-            id: 'ann3',
-            title: 'Database Design Guidelines',
-            body: 'Please review the database design guidelines before submitting your assignment. Focus on normalization and proper relationships.',
-            courseId: 'course-001',
-            authorId: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
-            createdAt: { toDate: () => new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) }
-          },
-          {
-            id: 'ann4',
-            title: 'Advanced React Patterns Workshop',
-            body: 'Join us for a hands-on workshop on advanced React patterns this Friday. We\'ll cover HOCs, Render Props, and Custom Hooks.',
-            courseId: 'course-002',
-            authorId: 'VVz08cRZMedJsACARMvU4ApCH821',
-            createdAt: { toDate: () => new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) }
-          }
-        ];
-        setAnnouncements(mockAnnouncements);
-      } else {
-        setAnnouncements(teacherAnnouncements);
-      }
+      setAnnouncements(teacherAnnouncements);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load data');
@@ -181,8 +143,8 @@ export default function TeacherAnnouncements() {
     }
 
 
-    if (!formData.isGeneral && !formData.courseId) {
-      toast.error('Please select a course or mark as general announcement');
+    if (!formData.isGeneral && !formData.courseId && !formData.recipientStudentId) {
+      toast.error('Select a course or a recipient student, or mark as general');
       return;
     }
 
@@ -190,7 +152,8 @@ export default function TeacherAnnouncements() {
       const announcementData = {
         title: formData.title,
         body: formData.body,
-        courseId: formData.isGeneral ? undefined : formData.courseId,
+        courseId: formData.isGeneral ? undefined : (formData.recipientStudentId ? undefined : formData.courseId),
+        recipientStudentId: formData.recipientStudentId || undefined,
         authorId: currentUser!.uid,
         createdAt: new Date()
       };
@@ -220,8 +183,9 @@ export default function TeacherAnnouncements() {
       title: announcement.title,
       body: announcement.body,
       courseId: announcement.courseId || '',
-      isGeneral: !announcement.courseId,
-      priority: 'normal' // Default priority for existing announcements
+      isGeneral: !announcement.courseId && !('recipientStudentId' in (announcement as any) && (announcement as any).recipientStudentId),
+      priority: 'normal',
+      recipientStudentId: (announcement as any).recipientStudentId || ''
     });
     setShowCreateDialog(true);
   };
@@ -244,7 +208,8 @@ export default function TeacherAnnouncements() {
       body: '',
       courseId: '',
       isGeneral: false,
-      priority: 'normal'
+      priority: 'normal',
+      recipientStudentId: ''
     });
   };
 
@@ -498,7 +463,7 @@ export default function TeacherAnnouncements() {
                 <Label htmlFor="isGeneral">General announcement (not tied to a specific course)</Label>
               </div>
               
-              {!formData.isGeneral && (
+              {!formData.isGeneral && !formData.recipientStudentId && (
                 <div>
                   <Label htmlFor="courseId">Course</Label>
                   <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
@@ -513,6 +478,20 @@ export default function TeacherAnnouncements() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Announce to specific student */}
+              {!formData.isGeneral && (
+                <div>
+                  <Label htmlFor="recipientStudentId">Specific Student (optional)</Label>
+                  <Input
+                    id="recipientStudentId"
+                    value={formData.recipientStudentId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, recipientStudentId: e.target.value }))}
+                    placeholder="Enter student ID"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave empty to announce to all students in the course.</p>
                 </div>
               )}
 

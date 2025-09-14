@@ -67,136 +67,12 @@ export default function TeacherAnalytics() {
       // Load teacher's courses
       const teacherCourses = await courseService.getCoursesByInstructor(currentUser!.uid);
       
-      // If no courses, add mock data with real IDs
+      // If no courses, keep lists empty
       if (teacherCourses.length === 0) {
-        const mockCourses = [
-          {
-            id: '848emeF22B0qN1TnYZMg',
-            title: 'React Development Fundamentals',
-            description: 'Learn React from the ground up with hands-on projects and real-world examples.',
-            instructor: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
-            category: 'Web Development',
-            duration: 40,
-            isActive: true,
-            createdAt: { toDate: () => new Date() },
-            updatedAt: { toDate: () => new Date() }
-          },
-          {
-            id: 'course-001',
-            title: 'Database Design and Management',
-            description: 'Master database design principles, normalization, and SQL queries.',
-            instructor: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
-            category: 'Database',
-            duration: 35,
-            isActive: true,
-            createdAt: { toDate: () => new Date() },
-            updatedAt: { toDate: () => new Date() }
-          },
-          {
-            id: 'course-002',
-            title: 'Advanced React Patterns',
-            description: 'Deep dive into advanced React patterns including HOCs, Render Props, and Custom Hooks.',
-            instructor: 'VVz08cRZMedJsACARMvU4ApCH821',
-            category: 'Web Development',
-            duration: 30,
-            isActive: true,
-            createdAt: { toDate: () => new Date() },
-            updatedAt: { toDate: () => new Date() }
-          }
-        ];
-        setCourses(mockCourses);
-        
-        // Set mock overall stats
-        setOverallStats({
-          myCourses: 3,
-          activeCourses: 3,
-          totalStudents: 18,
-          pendingReviews: 12,
-          avgRating: 4.6
-        });
-        
-        // Set mock course analytics
-        const mockCourseAnalytics = [
-          {
-            courseId: '848emeF22B0qN1TnYZMg',
-            courseTitle: 'React Development Fundamentals',
-            totalStudents: 8,
-            averageProgress: 75,
-            averageGrade: 85,
-            completionRate: 60,
-            totalAssignments: 5,
-            totalSubmissions: 12,
-            gradedSubmissions: 8
-          },
-          {
-            courseId: 'course-001',
-            courseTitle: 'Database Design and Management',
-            totalStudents: 6,
-            averageProgress: 65,
-            averageGrade: 80,
-            completionRate: 45,
-            totalAssignments: 4,
-            totalSubmissions: 10,
-            gradedSubmissions: 6
-          },
-          {
-            courseId: 'course-002',
-            courseTitle: 'Advanced React Patterns',
-            totalStudents: 4,
-            averageProgress: 70,
-            averageGrade: 88,
-            completionRate: 50,
-            totalAssignments: 3,
-            totalSubmissions: 8,
-            gradedSubmissions: 5
-          }
-        ];
-        setCourseAnalytics(mockCourseAnalytics);
-        
-        // Set mock student performance
-        const mockStudentPerformance = [
-          {
-            studentId: 'Bu4LUIMp9scCoMPqp31ZR7CG1y02',
-            studentName: 'John Doe',
-            courseTitle: 'React Development Fundamentals',
-            progress: 90,
-            averageGrade: 92,
-            totalAssignments: 5,
-            completedAssignments: 4,
-            lastActivity: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-          },
-          {
-            studentId: 'HhrOtnxV7BfZhkrUqJJ0009tKZD3',
-            studentName: 'Jane Smith',
-            courseTitle: 'React Development Fundamentals',
-            progress: 85,
-            averageGrade: 88,
-            totalAssignments: 5,
-            completedAssignments: 4,
-            lastActivity: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-          },
-          {
-            studentId: 'N5DSrzHPDu00J4XM3MZmdWYf1gZ2',
-            studentName: 'Mike Johnson',
-            courseTitle: 'Database Design and Management',
-            progress: 70,
-            averageGrade: 82,
-            totalAssignments: 4,
-            completedAssignments: 3,
-            lastActivity: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-          },
-          {
-            studentId: 'mQtPrxzkIAT7hNf4cGf880DnsAE3',
-            studentName: 'Sarah Wilson',
-            courseTitle: 'Advanced React Patterns',
-            progress: 80,
-            averageGrade: 90,
-            totalAssignments: 3,
-            completedAssignments: 2,
-            lastActivity: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-          }
-        ];
-        setStudentPerformance(mockStudentPerformance);
+        setCourses([]);
+        setOverallStats(await analyticsService.getTeacherStats(currentUser!.uid));
+        setCourseAnalytics([]);
+        setStudentPerformance([]);
         setLoading(false);
         return;
       }
@@ -297,7 +173,7 @@ export default function TeacherAnalytics() {
                 averageGrade: Math.round(averageGrade),
                 totalAssignments: assignments.length,
                 completedAssignments,
-                lastActivity: enrollment.lastAccessed?.toDate() || new Date()
+                lastActivity: (enrollment as any).lastAccessedAt?.toDate ? (enrollment as any).lastAccessedAt.toDate() : new Date()
               };
             } catch (error) {
               console.error(`Error loading student performance for ${enrollment.studentId}:`, error);

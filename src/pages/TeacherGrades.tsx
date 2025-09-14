@@ -80,14 +80,14 @@ export default function TeacherGrades() {
       const courseIds = teacherCourses.map(course => course.id);
       
       if (courseIds.length === 0) {
-        // Add some mock data for demonstration
+        // Add some mock data for demonstration using real IDs
         const mockSubmissions: SubmissionWithDetails[] = [
           {
             id: 'sub1',
             assignmentId: 'assign1',
-            studentId: 'student1',
+            studentId: 'Bu4LUIMp9scCoMPqp31ZR7CG1y02',
             studentName: 'John Doe',
-            courseId: 'course1',
+            courseId: '848emeF22B0qN1TnYZMg',
             courseTitle: 'React Development Fundamentals',
             assignmentTitle: 'Introduction to React',
             submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -99,9 +99,9 @@ export default function TeacherGrades() {
           {
             id: 'sub2',
             assignmentId: 'assign2',
-            studentId: 'student2',
+            studentId: 'HhrOtnxV7BfZhkrUqJJ0009tKZD3',
             studentName: 'Jane Smith',
-            courseId: 'course1',
+            courseId: '848emeF22B0qN1TnYZMg',
             courseTitle: 'React Development Fundamentals',
             assignmentTitle: 'JavaScript Fundamentals',
             submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -115,9 +115,9 @@ export default function TeacherGrades() {
           {
             id: 'sub3',
             assignmentId: 'assign3',
-            studentId: 'student3',
+            studentId: 'N5DSrzHPDu00J4XM3MZmdWYf1gZ2',
             studentName: 'Mike Johnson',
-            courseId: 'course2',
+            courseId: 'course-001',
             courseTitle: 'Database Design and Management',
             assignmentTitle: 'Database Design',
             submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),

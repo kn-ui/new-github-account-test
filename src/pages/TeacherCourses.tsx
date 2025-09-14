@@ -33,6 +33,9 @@ export default function TeacherCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('title-asc');
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [courseToEdit, setCourseToEdit] = useState<FirestoreCourse | null>(null);
+  const [editForm, setEditForm] = useState({ description: '', syllabus: '' });
     
 
   useEffect(() => {
@@ -54,6 +57,30 @@ export default function TeacherCourses() {
     }
   };
 
+
+  const openEditDialog = (course: FirestoreCourse) => {
+    setCourseToEdit(course);
+    setEditForm({ description: course.description, syllabus: course.syllabus });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseToEdit) return;
+    try {
+      await courseService.updateCourse(courseToEdit.id, {
+        description: editForm.description,
+        syllabus: editForm.syllabus,
+      });
+      toast.success('Course updated');
+      setShowEditDialog(false);
+      setCourseToEdit(null);
+      await loadCourses();
+    } catch (error) {
+      console.error('Error updating course:', error);
+      toast.error('Failed to update course');
+    }
+  };
 
   const getStatusColor = (course: FirestoreCourse) => {
     if (course.isActive) {
@@ -229,7 +256,7 @@ export default function TeacherCourses() {
                           size="sm"
                           asChild
                         >
-                          <Link to={`/courses/${course.id}`}>
+                          <Link to={`/dashboard/my-courses/${course.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
                             {t('teacher.courses.view')}
                           </Link>
@@ -237,12 +264,10 @@ export default function TeacherCourses() {
                         <Button
                           variant="outline"
                           size="sm"
-                          asChild
+                          onClick={() => openEditDialog(course)}
                         >
-                          <Link to={`/dashboard/courses/${course.id}/edit`}>
-                            <Edit className="h-4 w-4 mr-1" />
-                            {t('teacher.courses.edit')}
-                          </Link>
+                          <Edit className="h-4 w-4 mr-1" />
+                          {t('teacher.courses.edit')}
                         </Button>
                       </div>
                     </td>
@@ -259,8 +284,46 @@ export default function TeacherCourses() {
             </table>
           </div>
         </div>
+        {/* Edit Course Dialog (syllabus & description only) */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Course</DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleUpdateCourse} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    placeholder="Update course description"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="syllabus">Syllabus</Label>
+                  <Textarea
+                    id="syllabus"
+                    value={editForm.syllabus}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, syllabus: e.target.value }))}
+                    rows={8}
+                    placeholder="Update course syllabus"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit">Save Changes</Button>
+                <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
-            
+
     </div>
   );
 }

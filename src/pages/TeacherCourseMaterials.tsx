@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,6 +73,7 @@ export default function TeacherCourseMaterials() {
     fileUrl: '',
     externalLink: ''
   });
+  const [fileObj, setFileObj] = useState<File | null>(null);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -109,10 +111,7 @@ export default function TeacherCourseMaterials() {
       return;
     }
 
-    if (formData.type === 'document' && !formData.fileUrl) {
-      toast.error('Please provide a file URL for document materials');
-      return;
-    }
+    // For document type, either file upload or direct URL
 
     if (formData.type === 'link' && !formData.externalLink) {
       toast.error('Please provide an external link for link materials');
@@ -120,13 +119,22 @@ export default function TeacherCourseMaterials() {
     }
 
     try {
+      let uploadedUrl: string | undefined = undefined;
+      if (formData.type === 'document' && fileObj) {
+        const storage = getStorage();
+        const path = `materials/${formData.courseId}/${Date.now()}_${fileObj.name}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, fileObj);
+        uploadedUrl = await getDownloadURL(storageRef);
+      }
+
       const materialData = {
         title: formData.title,
         description: formData.description,
         courseId: formData.courseId,
         type: formData.type,
-        fileUrl: formData.type === 'document' ? formData.fileUrl : undefined,
-        externalLink: formData.type === 'link' ? formData.externalLink : undefined
+        fileUrl: formData.type === 'document' ? (uploadedUrl || formData.fileUrl) : undefined,
+        externalLink: formData.type === 'link' || formData.type === 'video' ? formData.externalLink : undefined
       };
 
       if (editingMaterial) {
@@ -182,6 +190,7 @@ export default function TeacherCourseMaterials() {
       fileUrl: '',
       externalLink: ''
     });
+    setFileObj(null);
   };
 
   const openCreateDialog = () => {
@@ -633,26 +642,21 @@ export default function TeacherCourseMaterials() {
 
             {formData.type === 'document' && (
               <div>
-                <Label htmlFor="fileUrl">File URL *</Label>
-                <Input
-                  id="fileUrl"
-                  value={formData.fileUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))}
-                  placeholder="https://example.com/file.pdf"
-                  type="url"
-                  required
-                />
+                <Label htmlFor="file">Upload File (PDF/Doc)</Label>
+                <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
+                <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
               </div>
             )}
 
-            {formData.type === 'link' && (
+            {(formData.type === 'link' || formData.type === 'video') && (
               <div>
                 <Label htmlFor="externalLink">External Link *</Label>
                 <Input
                   id="externalLink"
                   value={formData.externalLink}
                   onChange={(e) => setFormData(prev => ({ ...prev, externalLink: e.target.value }))}
-                  placeholder="https://example.com/resource"
+                  placeholder="https://example.com/resource-or-video"
                   type="url"
                   required
                 />

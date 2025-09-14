@@ -38,8 +38,9 @@ export default function SubmissionsPage() {
           return;
         }
         const myCourses = await courseService.getCoursesByInstructor(currentUser.uid);
-        const lists = await Promise.all(myCourses.map((c) => submissionService.getSubmissionsByCourse(c.id)));
-        const flat = lists.flat().map((s: any) => ({
+        const lists = await Promise.allSettled(myCourses.map((c) => submissionService.getSubmissionsByCourse(c.id)));
+        const okLists = lists.flatMap((res: any) => res.status === 'fulfilled' ? res.value : []);
+        const flat = okLists.flat().map((s: any) => ({
           id: s.id,
           courseTitle: myCourses.find((c) => c.id === s.courseId)?.title || '—',
           studentId: s.studentId,

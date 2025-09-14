@@ -44,7 +44,6 @@ export default function TeacherCourseDetail() {
 
   useEffect(() => {
     if (!courseId) return;
-    if (!userProfile || userProfile.role !== 'teacher') return;
     const load = async () => {
       try {
         setLoading(true);
@@ -68,7 +67,7 @@ export default function TeacherCourseDetail() {
       }
     };
     load();
-  }, [courseId, userProfile?.role]);
+  }, [courseId]);
 
   const studentsCount = enrollments.length;
   const assignmentsCount = assignments.length;

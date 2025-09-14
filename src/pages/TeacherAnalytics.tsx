@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, courseService, enrollmentService, submissionService, assignmentService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService, assignmentService, userService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -165,9 +165,16 @@ export default function TeacherAnalytics() {
 
               const completedAssignments = courseSubmissions.filter(s => s.status === 'graded').length;
               
+              // Get student display name
+              let displayName = enrollment.studentId;
+              try {
+                const u = await userService.getUserById(enrollment.studentId);
+                if (u?.displayName) displayName = u.displayName;
+              } catch {}
+
               return {
                 studentId: enrollment.studentId,
-                studentName: enrollment.studentId, // In a real app, you'd fetch student names
+                studentName: displayName,
                 courseTitle: course.title,
                 progress: enrollment.progress || 0,
                 averageGrade: Math.round(averageGrade),

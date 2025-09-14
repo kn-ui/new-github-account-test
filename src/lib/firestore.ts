@@ -82,8 +82,7 @@ export interface FirestoreAssignment {
   title: string;
   description: string;
   dueDate: Timestamp;
-  // Merged maxScore and maxPoints from duplicate interfaces
-  maxPoints: number; 
+  maxScore: number;
   instructions?: string;
   teacherId: string;
   createdAt: Timestamp;
@@ -135,6 +134,7 @@ export interface FirestoreBlog {
 export interface FirestoreAnnouncement {
   id: string;
   courseId?: string;
+  recipientStudentId?: string;
   title: string;
   body: string;
   authorId: string;
@@ -628,7 +628,7 @@ export const announcementService = {
     
     // Get announcements for all teacher's courses plus general announcements by the teacher
     const courseAnnouncementsPromises = courseIds.map(courseId => 
-      this.getAnnouncements(courseId, 1000)
+      announcementService.getAnnouncements(courseId, 1000)
     );
     const courseAnnouncementsArrays = await Promise.all(courseAnnouncementsPromises);
     const allCourseAnnouncements = courseAnnouncementsArrays.flat();
@@ -665,6 +665,7 @@ export const assignmentService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.assignments(), {
       ...assignmentData,
+      dueDate: (assignmentData as any).dueDate instanceof Date ? Timestamp.fromDate((assignmentData as any).dueDate) : (assignmentData as any).dueDate,
       createdAt: now,
       updatedAt: now,
     });
@@ -675,11 +676,18 @@ export const assignmentService = {
     const q = query(
       collections.assignments(),
       where('courseId', '==', courseId),
-      orderBy('dueDate', 'asc'),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+    const list = snapshot.docs.map(doc => {
+      const data: any = doc.data();
+      const normalized: any = {
+        ...data,
+        maxScore: typeof data.maxScore === 'number' ? data.maxScore : (typeof data.maxPoints === 'number' ? data.maxPoints : 100),
+      };
+      return { id: doc.id, ...normalized } as FirestoreAssignment;
+    });
+    return list.sort((a, b) => a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime());
   },
   
   async getAssignmentsByIds(ids: string[]): Promise<Record<string, FirestoreAssignment | null>> {
@@ -699,17 +707,28 @@ export const assignmentService = {
   async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
     const q = query(
       collections.assignments(),
-      where('teacherId', '==', teacherId),
-      orderBy('createdAt', 'desc')
+      where('teacherId', '==', teacherId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignment));
+    const list = snapshot.docs.map(doc => {
+      const data: any = doc.data();
+      const normalized: any = {
+        ...data,
+        maxScore: typeof data.maxScore === 'number' ? data.maxScore : (typeof data.maxPoints === 'number' ? data.maxPoints : 100),
+      };
+      return { id: doc.id, ...normalized } as FirestoreAssignment;
+    });
+    return list.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
   },
 
   async updateAssignment(assignmentId: string, updates: Partial<FirestoreAssignment>): Promise<void> {
     const docRef = doc(db, 'assignments', assignmentId);
+    const next: any = { ...updates };
+    if ((updates as any).dueDate instanceof Date) {
+      next.dueDate = Timestamp.fromDate((updates as any).dueDate);
+    }
     await updateDoc(docRef, {
-      ...updates,
+      ...next,
       updatedAt: Timestamp.now(),
     });
   },
@@ -765,7 +784,7 @@ export const courseMaterialService = {
     
     // Get materials for all teacher's courses
     const materialsPromises = courseIds.map(courseId => 
-      this.getCourseMaterialsByCourse(courseId, 1000)
+      courseMaterialService.getCourseMaterialsByCourse(courseId, 1000)
     );
     const materialsArrays = await Promise.all(materialsPromises);
     const allMaterials = materialsArrays.flat();

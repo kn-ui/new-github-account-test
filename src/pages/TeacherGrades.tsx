@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { submissionService, assignmentService, courseService, enrollmentService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ interface SubmissionWithDetails {
 }
 
 export default function TeacherGrades() {
+  const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);

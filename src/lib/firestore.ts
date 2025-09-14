@@ -466,7 +466,25 @@ export const submissionService = {
       grade,
       feedback,
       status: 'graded',
+      updatedAt: Timestamp.now(),
     });
+  },
+
+  async updateSubmission(submissionId: string, updates: Partial<FirestoreSubmission>): Promise<void> {
+    const docRef = doc(db, 'submissions', submissionId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async getSubmission(submissionId: string): Promise<FirestoreSubmission | null> {
+    const docRef = doc(db, 'submissions', submissionId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as FirestoreSubmission;
+    }
+    return null;
   },
 };
 

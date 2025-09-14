@@ -81,14 +81,14 @@ export default function TeacherAnnouncements() {
         announcementService.getAnnouncementsByTeacher(currentUser!.uid)
       ]);
       
-      // If no courses, add mock data
+      // If no courses, add mock data with real IDs
       if (teacherCourses.length === 0) {
         const mockCourses = [
           {
-            id: 'course1',
+            id: '848emeF22B0qN1TnYZMg',
             title: 'React Development Fundamentals',
-            description: 'Learn React from the ground up',
-            instructor: currentUser!.uid,
+            description: 'Learn React from the ground up with hands-on projects and real-world examples.',
+            instructor: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             category: 'Web Development',
             duration: 40,
             isActive: true,
@@ -96,12 +96,23 @@ export default function TeacherAnnouncements() {
             updatedAt: { toDate: () => new Date() }
           },
           {
-            id: 'course2',
+            id: 'course-001',
             title: 'Database Design and Management',
-            description: 'Master database design principles',
-            instructor: currentUser!.uid,
+            description: 'Master database design principles, normalization, and SQL queries.',
+            instructor: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
             category: 'Database',
             duration: 35,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'course-002',
+            title: 'Advanced React Patterns',
+            description: 'Deep dive into advanced React patterns including HOCs, Render Props, and Custom Hooks.',
+            instructor: 'VVz08cRZMedJsACARMvU4ApCH821',
+            category: 'Web Development',
+            duration: 30,
             isActive: true,
             createdAt: { toDate: () => new Date() },
             updatedAt: { toDate: () => new Date() }
@@ -112,32 +123,40 @@ export default function TeacherAnnouncements() {
         setCourses(teacherCourses);
       }
       
-      // If no announcements, add mock data
+      // If no announcements, add mock data with real IDs
       if (teacherAnnouncements.length === 0) {
         const mockAnnouncements = [
           {
             id: 'ann1',
-            title: 'Welcome to React Course',
-            body: 'Welcome everyone! This course will cover React fundamentals and advanced concepts.',
-            courseId: 'course1',
-            authorId: currentUser!.uid,
+            title: 'Welcome to React Development Course',
+            body: 'Welcome everyone! This course will cover React fundamentals and advanced concepts. Please review the syllabus and prepare for our first assignment.',
+            courseId: '848emeF22B0qN1TnYZMg',
+            authorId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             createdAt: { toDate: () => new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
           },
           {
             id: 'ann2',
             title: 'Assignment Due Date Extended',
-            body: 'Due to technical issues, the JavaScript assignment due date has been extended by 2 days.',
-            courseId: 'course1',
-            authorId: currentUser!.uid,
+            body: 'Due to technical issues, the JavaScript assignment due date has been extended by 2 days. Please use this extra time to improve your submissions.',
+            courseId: '848emeF22B0qN1TnYZMg',
+            authorId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             createdAt: { toDate: () => new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
           },
           {
             id: 'ann3',
             title: 'Database Design Guidelines',
-            body: 'Please review the database design guidelines before submitting your assignment.',
-            courseId: 'course2',
-            authorId: currentUser!.uid,
+            body: 'Please review the database design guidelines before submitting your assignment. Focus on normalization and proper relationships.',
+            courseId: 'course-001',
+            authorId: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
             createdAt: { toDate: () => new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) }
+          },
+          {
+            id: 'ann4',
+            title: 'Advanced React Patterns Workshop',
+            body: 'Join us for a hands-on workshop on advanced React patterns this Friday. We\'ll cover HOCs, Render Props, and Custom Hooks.',
+            courseId: 'course-002',
+            authorId: 'VVz08cRZMedJsACARMvU4ApCH821',
+            createdAt: { toDate: () => new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) }
           }
         ];
         setAnnouncements(mockAnnouncements);

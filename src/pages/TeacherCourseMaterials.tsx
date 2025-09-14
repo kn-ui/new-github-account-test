@@ -87,14 +87,14 @@ export default function TeacherCourseMaterials() {
         courseMaterialService.getMaterialsByTeacher(currentUser!.uid)
       ]);
       
-      // If no courses, add mock data
+      // If no courses, add mock data with real IDs
       if (teacherCourses.length === 0) {
         const mockCourses = [
           {
-            id: 'course1',
+            id: '848emeF22B0qN1TnYZMg',
             title: 'React Development Fundamentals',
-            description: 'Learn React from the ground up',
-            instructor: currentUser!.uid,
+            description: 'Learn React from the ground up with hands-on projects and real-world examples.',
+            instructor: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             category: 'Web Development',
             duration: 40,
             isActive: true,
@@ -102,12 +102,23 @@ export default function TeacherCourseMaterials() {
             updatedAt: { toDate: () => new Date() }
           },
           {
-            id: 'course2',
+            id: 'course-001',
             title: 'Database Design and Management',
-            description: 'Master database design principles',
-            instructor: currentUser!.uid,
+            description: 'Master database design principles, normalization, and SQL queries.',
+            instructor: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
             category: 'Database',
             duration: 35,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'course-002',
+            title: 'Advanced React Patterns',
+            description: 'Deep dive into advanced React patterns including HOCs, Render Props, and Custom Hooks.',
+            instructor: 'VVz08cRZMedJsACARMvU4ApCH821',
+            category: 'Web Development',
+            duration: 30,
             isActive: true,
             createdAt: { toDate: () => new Date() },
             updatedAt: { toDate: () => new Date() }
@@ -118,7 +129,7 @@ export default function TeacherCourseMaterials() {
         setCourses(teacherCourses);
       }
       
-      // If no materials, add mock data
+      // If no materials, add mock data with real IDs
       if (teacherMaterials.length === 0) {
         const mockMaterials = [
           {
@@ -127,8 +138,8 @@ export default function TeacherCourseMaterials() {
             type: 'link',
             description: 'Official React documentation for reference',
             url: 'https://reactjs.org/docs/getting-started.html',
-            courseId: 'course1',
-            teacherId: currentUser!.uid,
+            courseId: '848emeF22B0qN1TnYZMg',
+            teacherId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             createdAt: { toDate: () => new Date() },
             updatedAt: { toDate: () => new Date() }
           },
@@ -136,9 +147,9 @@ export default function TeacherCourseMaterials() {
             id: 'mat2',
             title: 'JavaScript ES6 Cheat Sheet',
             type: 'document',
-            description: 'Comprehensive guide to JavaScript ES6 features',
-            courseId: 'course1',
-            teacherId: currentUser!.uid,
+            description: 'Comprehensive guide to JavaScript ES6 features including arrow functions, destructuring, and modules',
+            courseId: '848emeF22B0qN1TnYZMg',
+            teacherId: '7E4dj9z3tzgKtRwURyfR11dz0YG3',
             createdAt: { toDate: () => new Date() },
             updatedAt: { toDate: () => new Date() }
           },
@@ -146,10 +157,20 @@ export default function TeacherCourseMaterials() {
             id: 'mat3',
             title: 'Database Design Principles',
             type: 'video',
-            description: 'Video lecture covering database normalization',
+            description: 'Video lecture covering database normalization and design principles',
             url: 'https://example.com/database-design-video',
-            courseId: 'course2',
-            teacherId: currentUser!.uid,
+            courseId: 'course-001',
+            teacherId: 'HNSFVjZzngUyJvcrn7N8nrcCHNM2',
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'mat4',
+            title: 'Advanced React Patterns Guide',
+            type: 'document',
+            description: 'Comprehensive guide to advanced React patterns including HOCs, Render Props, and Custom Hooks',
+            courseId: 'course-002',
+            teacherId: 'VVz08cRZMedJsACARMvU4ApCH821',
             createdAt: { toDate: () => new Date() },
             updatedAt: { toDate: () => new Date() }
           }

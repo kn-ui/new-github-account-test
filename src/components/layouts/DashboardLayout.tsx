@@ -91,9 +91,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.students'), href: '/dashboard/students', icon: Users },
           { label: t('nav.assignments'), href: '/dashboard/assignments', icon: FileText },
           { label: t('nav.submissions'), href: '/dashboard/submissions', icon: ClipboardList },
+          { label: 'Grades', href: '/dashboard/teacher-grades', icon: Award },
+          { label: 'Analytics', href: '/dashboard/teacher-analytics', icon: BarChart3 },
           { label: t('nav.announcements'), href: '/dashboard/announcements', icon: Bell },
           { label: t('nav.materials'), href: '/dashboard/materials', icon: FolderOpen },
-          { label: t('nav.reports'), href: '/dashboard/teacher-reports', icon: BarChart3 },
         ];
       
       case 'student':
@@ -102,9 +103,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.myCourses'), href: '/dashboard/student-courses', icon: BookOpen },
           { label: t('nav.assignments'), href: '/dashboard/student-assignments', icon: FileText },
           { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
+          { label: 'My Grades', href: '/dashboard/student-grades', icon: Award },
+          { label: t('nav.progress'), href: '/dashboard/progress', icon: TrendingUp },
           { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },
           { label: t('nav.announcements'), href: '/dashboard/student-announcements', icon: Bell },
-          { label: t('nav.progress'), href: '/dashboard/progress', icon: TrendingUp },
         ];
       
       default:

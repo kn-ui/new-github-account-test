@@ -20,7 +20,15 @@ import {
   FileText,
   Video,
   Link,
-  Paperclip
+  Paperclip,
+  Download,
+  Eye,
+  SortAsc,
+  SortDesc,
+  Filter,
+  Grid,
+  List,
+  Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -50,6 +58,8 @@ export default function TeacherCourseMaterials() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<FirestoreCourseMaterial | null>(null);
   const [formData, setFormData] = useState({
@@ -174,13 +184,34 @@ export default function TeacherCourseMaterials() {
     setShowCreateDialog(true);
   };
 
-  const filteredMaterials = materials.filter(material => {
-    const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         material.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = courseFilter === 'all' || material.courseId === courseFilter;
-    const matchesType = typeFilter === 'all' || material.type === typeFilter;
-    return matchesSearch && matchesCourse && matchesType;
-  });
+  const filteredAndSortedMaterials = materials
+    .filter(material => {
+      const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           material.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCourse = courseFilter === 'all' || material.courseId === courseFilter;
+      const matchesType = typeFilter === 'all' || material.type === typeFilter;
+      return matchesSearch && matchesCourse && matchesType;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+        case 'oldest':
+          return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime();
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        case 'type':
+          return a.type.localeCompare(b.type);
+        case 'course':
+          const aCourse = getCourseName(a.courseId);
+          const bCourse = getCourseName(b.courseId);
+          return aCourse.localeCompare(bCourse);
+        default:
+          return 0;
+      }
+    });
 
   const getCourseName = (courseId: string) => {
     const course = courses.find(c => c.id === courseId);
@@ -247,8 +278,8 @@ export default function TeacherCourseMaterials() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2">
               <Label htmlFor="search">Search Materials</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -292,100 +323,229 @@ export default function TeacherCourseMaterials() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label htmlFor="sort">Sort By</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="title-asc">Title A→Z</SelectItem>
+                  <SelectItem value="title-desc">Title Z→A</SelectItem>
+                  <SelectItem value="type">Type</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              {filteredAndSortedMaterials.length} material{filteredAndSortedMaterials.length !== 1 ? 's' : ''} found
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">View:</span>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Materials List */}
-        <div className="grid gap-4">
-          {filteredMaterials.map(material => (
-            <div key={material.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    {getTypeIcon(material.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium text-gray-900">{material.title}</h3>
-                      <Badge className={getTypeColor(material.type)}>
-                        {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
-                      </Badge>
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid gap-4'}>
+          {filteredAndSortedMaterials.map(material => (
+            <div key={material.id} className={`bg-white border rounded-lg p-4 ${viewMode === 'grid' ? 'h-full flex flex-col' : ''}`}>
+              {viewMode === 'grid' ? (
+                // Grid View
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      {getTypeIcon(material.type)}
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{material.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
+                    <Badge className={getTypeColor(material.type)}>
+                      {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{material.title}</h3>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-3">{material.description}</p>
+                    
+                    <div className="space-y-2 text-xs text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {material.createdAt.toDate().toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
+                      </div>
+                      <div className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
                         {getCourseName(material.courseId)}
-                      </span>
-                    </div>
-                    {material.fileUrl && (
-                      <div className="mt-2">
-                        <a 
-                          href={material.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                        >
-                          <FileText className="h-3 w-3" />
-                          View Document
-                        </a>
                       </div>
-                    )}
-                    {material.externalLink && (
-                      <div className="mt-2">
-                        <a 
-                          href={material.externalLink} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
-                        >
-                          <Link className="h-3 w-3" />
-                          Visit Link
-                        </a>
+                    </div>
+                    
+                    {(material.fileUrl || material.externalLink) && (
+                      <div className="space-y-2 mb-4">
+                        {material.fileUrl && (
+                          <a 
+                            href={material.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                          >
+                            <FileText className="h-3 w-3" />
+                            View Document
+                          </a>
+                        )}
+                        {material.externalLink && (
+                          <a 
+                            href={material.externalLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
+                          >
+                            <Link className="h-3 w-3" />
+                            Visit Link
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
+                  
+                  <div className="flex items-center gap-2 mt-auto">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(material)} className="flex-1">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this material?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently remove the material
+                            "{material.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => handleDelete(material.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(material)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this material?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently remove the material
-                          "{material.title}".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => handleDelete(material.id)}
-                        >
+              ) : (
+                // List View
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      {getTypeIcon(material.type)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-medium text-gray-900">{material.title}</h3>
+                        <Badge className={getTypeColor(material.type)}>
+                          {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {material.createdAt.toDate().toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FolderOpen className="h-3 w-3" />
+                          {getCourseName(material.courseId)}
+                        </span>
+                      </div>
+                      {material.fileUrl && (
+                        <div className="mt-2">
+                          <a 
+                            href={material.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                          >
+                            <FileText className="h-3 w-3" />
+                            View Document
+                          </a>
+                        </div>
+                      )}
+                      {material.externalLink && (
+                        <div className="mt-2">
+                          <a 
+                            href={material.externalLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
+                          >
+                            <Link className="h-3 w-3" />
+                            Visit Link
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(material)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-1" />
                           Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this material?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently remove the material
+                            "{material.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => handleDelete(material.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
-          {filteredMaterials.length === 0 && (
+          {filteredAndSortedMaterials.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No materials found</p>

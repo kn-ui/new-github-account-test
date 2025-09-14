@@ -7,7 +7,13 @@ import {
   Users,
   MessageSquare,
   Pin,
-  Star
+  Star,
+  Search,
+  Filter,
+  SortAsc,
+  SortDesc,
+  Clock,
+  Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { announcementService, enrollmentService, courseService, FirestoreAnnouncement } from '@/lib/firestore';
@@ -32,6 +38,8 @@ export default function StudentAnnouncements() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'course' | 'general'>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
   useEffect(() => {
     loadAnnouncements();
@@ -108,20 +116,51 @@ export default function StudentAnnouncements() {
     }
   };
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    const matchesSearch = 
-      announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.course?.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCourse = selectedCourse === 'all' || announcement.courseId === selectedCourse;
-    
-    const matchesType = selectedType === 'all' || 
-      (selectedType === 'course' && announcement.courseId) ||
-      (selectedType === 'general' && !announcement.courseId);
-    
-    return matchesSearch && matchesCourse && matchesType;
-  });
+  const filteredAndSortedAnnouncements = announcements
+    .filter(announcement => {
+      const matchesSearch = 
+        announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        announcement.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        announcement.course?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCourse = selectedCourse === 'all' || announcement.courseId === selectedCourse;
+      
+      const matchesType = selectedType === 'all' || 
+        (selectedType === 'course' && announcement.courseId) ||
+        (selectedType === 'general' && !announcement.courseId);
+      
+      const matchesReadStatus = !showUnreadOnly || !announcement.isRead;
+      
+      return matchesSearch && matchesCourse && matchesType && matchesReadStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        case 'oldest':
+          const dateAOld = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+          const dateBOld = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          return dateAOld.getTime() - dateBOld.getTime();
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        case 'course':
+          const aCourse = a.course?.title || 'General';
+          const bCourse = b.course?.title || 'General';
+          return aCourse.localeCompare(bCourse);
+        case 'important':
+          if (a.isImportant && !b.isImportant) return -1;
+          if (!a.isImportant && b.isImportant) return 1;
+          const dateAImp = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+          const dateBImp = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          return dateBImp.getTime() - dateAImp.getTime();
+        default:
+          return 0;
+      }
+    });
 
   const formatDate = (date: any) => {
     if (!date) return 'Unknown';
@@ -169,14 +208,18 @@ export default function StudentAnnouncements() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters and Search */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <Input
-                placeholder="Search announcements..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search announcements..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div>
@@ -210,17 +253,46 @@ export default function StudentAnnouncements() {
               </Select>
             </div>
             
-            <div className="flex items-end">
-              <span className="text-sm text-gray-500">
-                {filteredAnnouncements.length} announcement{filteredAnnouncements.length !== 1 ? 's' : ''} found
-              </span>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="important">Important First</SelectItem>
+                  <SelectItem value="title-asc">Title A→Z</SelectItem>
+                  <SelectItem value="title-desc">Title Z→A</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={showUnreadOnly}
+                  onChange={(e) => setShowUnreadOnly(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm text-gray-700">Show unread only</span>
+              </label>
+            </div>
+            
+            <div className="text-sm text-gray-500">
+              {filteredAndSortedAnnouncements.length} announcement{filteredAndSortedAnnouncements.length !== 1 ? 's' : ''} found
             </div>
           </div>
         </div>
 
         {/* Announcements List */}
         <div className="space-y-4">
-          {filteredAnnouncements.length === 0 ? (
+          {filteredAndSortedAnnouncements.length === 0 ? (
             <div className="text-center py-12">
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No announcements found</h3>
@@ -238,7 +310,7 @@ export default function StudentAnnouncements() {
               )}
             </div>
           ) : (
-            filteredAnnouncements.map((announcement) => (
+            filteredAndSortedAnnouncements.map((announcement) => (
               <div 
                 key={announcement.id} 
                 className={`bg-white border rounded-lg p-6 hover:shadow-md transition-shadow ${

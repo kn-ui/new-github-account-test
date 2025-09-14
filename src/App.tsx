@@ -43,6 +43,9 @@ import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 import TeacherCourses from "./pages/TeacherCourses";
 import StudentCourses from "./pages/StudentCourses";
+import TeacherGrades from "./pages/TeacherGrades";
+import TeacherAnalytics from "./pages/TeacherAnalytics";
+import StudentGrades from "./pages/StudentGrades";
 import SearchResults from "./pages/SearchResults";
 
 // import Catalog from "./pages/Catalog";
@@ -279,6 +282,46 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <StudentCourses />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-grades" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <StudentGrades />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-submissions/:assignmentId/:action" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <StudentSubmissions />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/teacher-grades" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherGrades />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/teacher-analytics" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherAnalytics />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

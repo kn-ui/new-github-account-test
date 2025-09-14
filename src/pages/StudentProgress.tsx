@@ -1,405 +1,451 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { enrollmentService, courseService, submissionService, assignmentService } from '@/lib/firestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { 
   TrendingUp, 
   BookOpen, 
-  Calendar, 
+  Target,
   Award,
+  Calendar,
   Clock,
   CheckCircle,
-  XCircle,
-  Target,
-  BarChart3
+  AlertCircle,
+  BarChart3,
+  Star
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { enrollmentService, courseService, assignmentService, submissionService } from '@/lib/firestore';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-  import DashboardHero from '@/components/DashboardHero';
+import { Link } from 'react-router-dom';
+import DashboardHero from '@/components/DashboardHero';
 
 interface CourseProgress {
-  id: string;
-  title: string;
+  courseId: string;
+  courseTitle: string;
   instructorName: string;
   progress: number;
+  enrolledAt: Date;
+  lastAccessed?: Date;
   totalAssignments: number;
   completedAssignments: number;
   averageGrade: number;
-  lastActivity: any;
-  enrollmentDate: any;
-  estimatedCompletion: any;
+  totalHours: number;
+  estimatedHours: number;
+}
+
+interface LearningGoal {
+  id: string;
+  title: string;
+  description: string;
+  targetDate: Date;
+  progress: number;
+  status: 'not-started' | 'in-progress' | 'completed';
 }
 
 export default function StudentProgress() {
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
+  const { currentUser, userProfile } = useAuth();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
-  const [overallStats, setOverallStats] = useState({
-    totalCourses: 0,
-    averageProgress: 0,
-    totalAssignments: 0,
-    completedAssignments: 0,
-    averageGrade: 0,
-    studyStreak: 0
-  });
+  const [learningGoals, setLearningGoals] = useState<LearningGoal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'semester'>('semester');
 
   useEffect(() => {
-    loadProgress();
-  }, [currentUser?.uid]);
+    if (currentUser?.uid && userProfile?.role === 'student') {
+      loadProgressData();
+    }
+  }, [currentUser?.uid, userProfile?.role]);
 
-  const loadProgress = async () => {
-    if (!currentUser?.uid) return;
-    
+  const loadProgressData = async () => {
     try {
       setLoading(true);
       
       // Get student's enrollments
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
       
-      // Get detailed progress for each course
-      const progressData = await Promise.all(
-        enrollments.map(async (enrollment: any) => {
-          try {
-            const course = await courseService.getCourseById(enrollment.courseId);
-            const assignments = await assignmentService.getAssignmentsByCourse(enrollment.courseId);
-            const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
-            
-            // Filter submissions for this course
-            const courseSubmissions = submissions.filter((s: any) => s.courseId === enrollment.courseId);
-            const completedAssignments = courseSubmissions.filter((s: any) => s.status === 'graded').length;
-            
-            // Calculate average grade
-            const gradedSubmissions = courseSubmissions.filter((s: any) => s.grade !== undefined);
-            const averageGrade = gradedSubmissions.length > 0 
-              ? gradedSubmissions.reduce((sum: number, s: any) => sum + (s.grade || 0), 0) / gradedSubmissions.length
-              : 0;
-            
-            // Calculate progress based on completed assignments
-            const progress = assignments.length > 0 
-              ? Math.round((completedAssignments / assignments.length) * 100)
-              : enrollment.progress || 0;
-            
-            // Estimate completion date
-            const enrollmentDate = enrollment.enrolledAt?.toDate ? enrollment.enrolledAt.toDate() : new Date();
-            const estimatedCompletion = new Date(enrollmentDate);
-            estimatedCompletion.setDate(estimatedCompletion.getDate() + (assignments.length * 7)); // Rough estimate
-            
-            return {
-              id: enrollment.courseId,
-              title: course?.title || 'Unknown Course',
-              instructorName: course?.instructorName || 'Unknown Instructor',
-              progress: Math.max(progress, enrollment.progress || 0),
-              totalAssignments: assignments.length,
-              completedAssignments,
-              averageGrade: Math.round(averageGrade),
-              lastActivity: enrollment.lastActivity || enrollment.enrolledAt,
-              enrollmentDate,
-              estimatedCompletion
-            };
-          } catch (error) {
-            console.warn(`Failed to load progress for course ${enrollment.courseId}:`, error);
-            return {
-              id: enrollment.courseId,
-              title: 'Unknown Course',
-              instructorName: 'Unknown Instructor',
-              progress: enrollment.progress || 0,
-              totalAssignments: 0,
-              completedAssignments: 0,
-              averageGrade: 0,
-              lastActivity: enrollment.enrolledAt,
-              enrollmentDate: enrollment.enrolledAt,
-              estimatedCompletion: null
-            };
-          }
-        })
-      );
-      
-      setCourseProgress(progressData);
-      
-      // Calculate overall statistics
-      const totalCourses = progressData.length;
-      const averageProgress = progressData.length > 0 
-        ? Math.round(progressData.reduce((sum, course) => sum + course.progress, 0) / progressData.length)
-        : 0;
-      const totalAssignments = progressData.reduce((sum, course) => sum + course.totalAssignments, 0);
-      const completedAssignments = progressData.reduce((sum, course) => sum + course.completedAssignments, 0);
-      const averageGrade = progressData.filter(c => c.averageGrade > 0).length > 0
-        ? Math.round(progressData.filter(c => c.averageGrade > 0).reduce((sum, course) => sum + course.averageGrade, 0) / progressData.filter(c => c.averageGrade > 0).length)
-        : 0;
-      
-      setOverallStats({
-        totalCourses,
-        averageProgress,
-        totalAssignments,
-        completedAssignments,
-        averageGrade,
-        studyStreak: Math.floor(Math.random() * 7) + 1 // Mock data for now
+      if (enrollments.length === 0) {
+        setCourseProgress([]);
+        return;
+      }
+
+      // Load detailed progress for each course
+      const progressPromises = enrollments.map(async (enrollment) => {
+        try {
+          const course = await courseService.getCourse(enrollment.courseId);
+          if (!course) return null;
+
+          // Get assignments for this course
+          const assignments = await assignmentService.getAssignmentsByCourse(enrollment.courseId);
+          
+          // Get student's submissions for this course
+          const submissions = await submissionService.getSubmissionsByStudent(currentUser!.uid);
+          const courseSubmissions = submissions.filter(s => 
+            assignments.some(a => a.id === s.assignmentId)
+          );
+          
+          const completedAssignments = courseSubmissions.filter(s => s.status === 'graded').length;
+          const gradedSubmissions = courseSubmissions.filter(s => s.status === 'graded' && s.grade !== undefined);
+          const averageGrade = gradedSubmissions.length > 0
+            ? gradedSubmissions.reduce((sum, s) => sum + (s.grade || 0), 0) / gradedSubmissions.length
+            : 0;
+
+          // Calculate estimated hours (simplified - in real app, this would be more sophisticated)
+          const estimatedHours = assignments.length * 2; // 2 hours per assignment
+          const totalHours = Math.round((enrollment.progress || 0) / 100 * estimatedHours);
+
+          return {
+            courseId: enrollment.courseId,
+            courseTitle: course.title,
+            instructorName: course.instructorName,
+            progress: enrollment.progress || 0,
+            enrolledAt: enrollment.enrolledAt.toDate(),
+            lastAccessed: enrollment.lastAccessed?.toDate(),
+            totalAssignments: assignments.length,
+            completedAssignments,
+            averageGrade: Math.round(averageGrade),
+            totalHours,
+            estimatedHours
+          };
+        } catch (error) {
+          console.error(`Error loading progress for course ${enrollment.courseId}:`, error);
+          return null;
+        }
       });
-      
+
+      const progressResults = await Promise.all(progressPromises);
+      const validProgress = progressResults.filter(result => result !== null) as CourseProgress[];
+      setCourseProgress(validProgress);
+
+      // Load learning goals (mock data for now)
+      const mockGoals: LearningGoal[] = [
+        {
+          id: '1',
+          title: 'Complete 3 courses this semester',
+          description: 'Finish at least 3 courses with 80% or higher grade',
+          targetDate: new Date('2024-06-30'),
+          progress: 67,
+          status: 'in-progress'
+        },
+        {
+          id: '2',
+          title: 'Improve assignment submission rate',
+          description: 'Submit all assignments on time',
+          targetDate: new Date('2024-05-31'),
+          progress: 85,
+          status: 'in-progress'
+        },
+        {
+          id: '3',
+          title: 'Master Biblical Studies',
+          description: 'Achieve 90% or higher in Biblical Studies course',
+          targetDate: new Date('2024-04-30'),
+          progress: 100,
+          status: 'completed'
+        }
+      ];
+      setLearningGoals(mockGoals);
+
     } catch (error) {
-      console.error('Failed to load progress:', error);
-      toast.error('Failed to load progress data');
+      console.error('Error loading progress data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (date: any) => {
-    if (!date) return 'Unknown';
-    
-    try {
-      const d = date.toDate ? date.toDate() : new Date(date);
-      return d.toLocaleDateString();
-    } catch {
-      return 'Invalid date';
-    }
-  };
-
   const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'text-green-600';
-    if (progress >= 60) return 'text-blue-600';
-    if (progress >= 40) return 'text-yellow-600';
-    return 'text-red-600';
+    if (progress >= 80) return 'bg-green-500';
+    if (progress >= 60) return 'bg-blue-500';
+    if (progress >= 40) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return 'text-green-600';
     if (grade >= 80) return 'text-blue-600';
     if (grade >= 70) return 'text-yellow-600';
-    if (grade >= 60) return 'text-orange-600';
     return 'text-red-600';
   };
 
-  if (loading) {
+  const getGoalStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in-progress': return 'bg-blue-100 text-blue-800';
+      case 'not-started': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getGoalStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="h-4 w-4" />;
+      case 'in-progress': return <Clock className="h-4 w-4" />;
+      case 'not-started': return <AlertCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
+    }
+  };
+
+  const overallStats = useMemo(() => {
+    if (courseProgress.length === 0) {
+      return { averageProgress: 0, totalCourses: 0, completedCourses: 0, averageGrade: 0 };
+    }
+
+    const averageProgress = courseProgress.reduce((sum, course) => sum + course.progress, 0) / courseProgress.length;
+    const completedCourses = courseProgress.filter(course => course.progress === 100).length;
+    const averageGrade = courseProgress.reduce((sum, course) => sum + course.averageGrade, 0) / courseProgress.length;
+
+    return {
+      averageProgress: Math.round(averageProgress),
+      totalCourses: courseProgress.length,
+      completedCourses,
+      averageGrade: Math.round(averageGrade)
+    };
+  }, [courseProgress]);
+
+  if (!userProfile || userProfile.role !== 'student') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading progress...</div>
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only students can access this page.</div>
+        </div>
       </div>
     );
   }
 
-
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading progress data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
         title="My Progress"
-        subtitle="Track your learning journey across all courses"
+        subtitle="Track your learning journey and achievements"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overall Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        {/* Overall Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Total Courses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{overallStats.totalCourses}</div>
-              <p className="text-xs text-blue-100">
-                Enrolled courses
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Average Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{overallStats.averageProgress}%</div>
-              <p className="text-xs text-green-100">
-                Across all courses
-              </p>
+              <div className="text-3xl font-bold text-blue-600">{overallStats.averageProgress}%</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Assignments
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Total Courses
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{overallStats.completedAssignments}/{overallStats.totalAssignments}</div>
-              <p className="text-xs text-orange-100">
-                Completed assignments
-              </p>
+              <div className="text-3xl font-bold text-green-600">{overallStats.totalCourses}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
-                <Award className="h-5 w-5" />
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Completed
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{overallStats.completedCourses}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Star className="h-5 w-5" />
                 Average Grade
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{overallStats.averageGrade}%</div>
-              <p className="text-xs text-purple-100">
-                Overall performance
-              </p>
+              <div className="text-3xl font-bold text-orange-600">{overallStats.averageGrade}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Timeframe Selector */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Progress Timeline</h2>
-            <div className="flex space-x-2">
-              {(['week', 'month', 'semester'] as const).map((timeframe) => (
-                <Button
-                  key={timeframe}
-                  variant={selectedTimeframe === timeframe ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedTimeframe(timeframe)}
-                  className="capitalize"
-                >
-                  {timeframe}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            View your progress over the selected time period
-          </p>
-        </div>
-
-        {/* Course Progress */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Course Progress</h2>
-          
-          {courseProgress.length === 0 ? (
-            <div className="text-center py-12">
-              <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No courses enrolled</h3>
-              <p className="text-gray-600 mb-4">Enroll in courses to start tracking your progress</p>
-              <Button onClick={() => navigate('/courses')}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                Browse Courses
-              </Button>
-            </div>
-          ) : (
-            courseProgress.map((course) => (
-              <Card key={course.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{course.title}</CardTitle>
-                      <CardDescription>by {course.instructorName}</CardDescription>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold ${getProgressColor(course.progress)}`}>
-                        {course.progress}%
-                      </div>
-                      <div className="text-sm text-gray-500">Complete</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Progress Bar */}
-                    <div>
-                      <div className="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>Progress</span>
-                        <span>{course.progress}%</span>
-                      </div>
-                      <Progress value={course.progress} className="h-2" />
-                    </div>
-                    
-                    {/* Course Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-medium text-gray-900">{course.totalAssignments}</div>
-                        <div className="text-gray-500">Total Assignments</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium text-gray-900">{course.completedAssignments}</div>
-                        <div className="text-gray-500">Completed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className={`font-medium ${getGradeColor(course.averageGrade)}`}>
-                          {course.averageGrade > 0 ? `${course.averageGrade}%` : 'N/A'}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Course Progress */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Course Progress
+                </CardTitle>
+                <CardDescription>Your progress in enrolled courses</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {courseProgress.map(course => (
+                    <div key={course.courseId} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{course.courseTitle}</h3>
+                          <p className="text-sm text-gray-600">by {course.instructorName}</p>
                         </div>
-                        <div className="text-gray-500">Average Grade</div>
+                        <Badge variant="outline">{course.progress}%</Badge>
                       </div>
-                      <div className="text-center">
-                        <div className="font-medium text-gray-900">
-                          {course.estimatedCompletion ? formatDate(course.estimatedCompletion) : 'N/A'}
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress</span>
+                          <span>{course.progress}%</span>
                         </div>
-                        <div className="text-gray-500">Est. Completion</div>
+                        <Progress value={course.progress} className="h-2" />
                       </div>
-                    </div>
-                    
-                    {/* Course Actions */}
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="text-sm text-gray-500">
-                        Enrolled: {formatDate(course.enrollmentDate)}
+                      
+                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Assignments:</span>
+                          <span className="ml-2 font-medium">
+                            {course.completedAssignments}/{course.totalAssignments}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Average Grade:</span>
+                          <span className={`ml-2 font-medium ${getGradeColor(course.averageGrade)}`}>
+                            {course.averageGrade}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Hours:</span>
+                          <span className="ml-2 font-medium">
+                            {course.totalHours}/{course.estimatedHours}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Last Accessed:</span>
+                          <span className="ml-2 font-medium">
+                            {course.lastAccessed?.toLocaleDateString() || 'Never'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/courses/${course.id}`)}>
-                          <BookOpen className="h-4 w-4 mr-1" />
-                          View Course
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/student-assignments')}>
-                          <Target className="h-4 w-4 mr-1" />
-                          View Assignments
+                      
+                      <div className="mt-4">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/courses/${course.courseId}`}>
+                            Continue Learning
+                          </Link>
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-
-        {/* Study Streak */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5" />
-                <span>Study Streak</span>
-              </CardTitle>
-              <CardDescription>Keep up the momentum!</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {overallStats.studyStreak} days
-                </div>
-                <p className="text-gray-600 mb-4">
-                  You've been studying consistently for {overallStats.studyStreak} day{overallStats.studyStreak !== 1 ? 's' : ''}!
-                </p>
-                <div className="flex justify-center space-x-1">
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <div
-                      key={i}
-                      className={`w-3 h-3 rounded-full ${
-                        i < overallStats.studyStreak ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
-                    />
                   ))}
+                  
+                  {courseProgress.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No courses enrolled</p>
+                      <Button asChild className="mt-2">
+                        <Link to="/courses">Browse Courses</Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">This week's activity</p>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Learning Goals */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Learning Goals
+                </CardTitle>
+                <CardDescription>Track your personal learning objectives</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {learningGoals.map(goal => (
+                    <div key={goal.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{goal.title}</h3>
+                          <p className="text-sm text-gray-600">{goal.description}</p>
+                        </div>
+                        <Badge className={getGoalStatusColor(goal.status)}>
+                          <div className="flex items-center gap-1">
+                            {getGoalStatusIcon(goal.status)}
+                            {goal.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </div>
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress</span>
+                          <span>{goal.progress}%</span>
+                        </div>
+                        <Progress value={goal.progress} className="h-2" />
+                      </div>
+                      
+                      <div className="mt-3 text-sm text-gray-600">
+                        <span>Target Date: {goal.targetDate.toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {learningGoals.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No learning goals set</p>
+                      <Button variant="outline" className="mt-2">
+                        Set Goals
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link to="/dashboard/student-assignments">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      View Assignments
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link to="/dashboard/student-grades">
+                      <Award className="h-4 w-4 mr-2" />
+                      View Grades
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link to="/courses">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Browse Courses
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

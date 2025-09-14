@@ -95,8 +95,8 @@ export default function TeacherOverview() {
               progress: en.progress || 0,
             })));
           } catch (error) {
-          console.warn(`Failed to load submissions for course ${course.id}:`, error);
-        }
+            console.warn(`Failed to load enrollments:`, error);
+          }
         }
       } catch (error) {
         console.error('Failed to load teacher dashboard data:', error);

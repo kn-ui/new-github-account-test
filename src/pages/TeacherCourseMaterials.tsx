@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function TeacherCourseMaterials() {
+  const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);

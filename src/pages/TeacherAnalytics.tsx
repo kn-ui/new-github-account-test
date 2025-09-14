@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, courseService, enrollmentService, submissionService, assignmentService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface StudentPerformance {
 }
 
 export default function TeacherAnalytics() {
+  const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<string>('all');

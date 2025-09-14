@@ -86,8 +86,78 @@ export default function TeacherCourseMaterials() {
         courseService.getCoursesByInstructor(currentUser!.uid),
         courseMaterialService.getMaterialsByTeacher(currentUser!.uid)
       ]);
-      setCourses(teacherCourses);
-      setMaterials(teacherMaterials);
+      
+      // If no courses, add mock data
+      if (teacherCourses.length === 0) {
+        const mockCourses = [
+          {
+            id: 'course1',
+            title: 'React Development Fundamentals',
+            description: 'Learn React from the ground up',
+            instructor: currentUser!.uid,
+            category: 'Web Development',
+            duration: 40,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'course2',
+            title: 'Database Design and Management',
+            description: 'Master database design principles',
+            instructor: currentUser!.uid,
+            category: 'Database',
+            duration: 35,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          }
+        ];
+        setCourses(mockCourses);
+      } else {
+        setCourses(teacherCourses);
+      }
+      
+      // If no materials, add mock data
+      if (teacherMaterials.length === 0) {
+        const mockMaterials = [
+          {
+            id: 'mat1',
+            title: 'React Documentation',
+            type: 'link',
+            description: 'Official React documentation for reference',
+            url: 'https://reactjs.org/docs/getting-started.html',
+            courseId: 'course1',
+            teacherId: currentUser!.uid,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'mat2',
+            title: 'JavaScript ES6 Cheat Sheet',
+            type: 'document',
+            description: 'Comprehensive guide to JavaScript ES6 features',
+            courseId: 'course1',
+            teacherId: currentUser!.uid,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'mat3',
+            title: 'Database Design Principles',
+            type: 'video',
+            description: 'Video lecture covering database normalization',
+            url: 'https://example.com/database-design-video',
+            courseId: 'course2',
+            teacherId: currentUser!.uid,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          }
+        ];
+        setMaterials(mockMaterials);
+      } else {
+        setMaterials(teacherMaterials);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load data');

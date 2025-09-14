@@ -1,25 +1,11 @@
-import { initializeApp } from 'firebase/app';
 import { 
-  getFirestore, 
   collection, 
   addDoc, 
   Timestamp,
-  connectFirestoreEmulator
+  doc,
+  setDoc
 } from 'firebase/firestore';
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyBtIY1wVdePkWCJ84bSr7alOMcI2aihVqw",
-  authDomain: "school-management-system-67b85.firebaseapp.com",
-  projectId: "school-management-system-67b85",
-  storageBucket: "school-management-system-67b85.appspot.com",
-  messagingSenderId: "103441012203195276037",
-  appId: "1:103441012203195276037:web:abc123def456ghi789"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from '../lib/firebase';
 
 // Sample data for seeding
 const sampleAssignments = [
@@ -209,7 +195,7 @@ const sampleEnrollments = [
   }
 ];
 
-async function seedDatabase() {
+export async function seedDatabase() {
   try {
     console.log('Starting database seeding...');
 
@@ -296,11 +282,7 @@ async function seedDatabase() {
   }
 }
 
-// Run the seeding
-seedDatabase().then(() => {
-  console.log('Seeding completed!');
-  process.exit(0);
-}).catch((error) => {
-  console.error('Seeding failed:', error);
-  process.exit(1);
-});
+// Run the seeding function if this file is executed directly
+if (typeof window === 'undefined') {
+  seedDatabase();
+}

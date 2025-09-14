@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,27 +16,16 @@ import {
   Plus, 
   Edit, 
   Eye, 
-  Trash2,
   Filter,
   SortAsc,
   SortDesc
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import DashboardHero from '@/components/DashboardHero';
 
 export default function TeacherCourses() {
+  const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<FirestoreCourse[]>([]);
@@ -64,16 +54,6 @@ export default function TeacherCourses() {
     }
   };
 
-  const handleDeleteCourse = async (courseId: string) => {
-    try {
-      await courseService.deleteCourse(courseId);
-      toast.success('Course deleted successfully');
-      loadCourses(); // Refresh the list
-    } catch (error) {
-      console.error('Error deleting course:', error);
-      toast.error('Failed to delete course');
-    }
-  };
 
   const getStatusColor = (course: FirestoreCourse) => {
     if (course.isActive) {
@@ -84,7 +64,7 @@ export default function TeacherCourses() {
 
   const getStatusText = (course: FirestoreCourse) => {
     if (course.isActive) {
-      return 'Active';
+      return t('teacher.courses.active');
     }
     return 'Pending Approval';
   };
@@ -135,7 +115,7 @@ export default function TeacherCourses() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading courses...</div>
+        <div className="text-gray-600">{t('teacher.courses.loading')}</div>
       </div>
     );
   }
@@ -143,8 +123,8 @@ export default function TeacherCourses() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="My Courses"
-        subtitle="Manage your courses"
+        title={t('teacher.courses.title')}
+        subtitle={t('teacher.courses.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -152,12 +132,12 @@ export default function TeacherCourses() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Courses</Label>
+              <Label htmlFor="search">{t('teacher.courses.searchPlaceholder')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title or category..."
+                  placeholder={t('teacher.courses.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -165,27 +145,27 @@ export default function TeacherCourses() {
               </div>
             </div>
             <div>
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">{t('teacher.courses.filterByStatus')}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="all">{t('teacher.courses.allStatuses')}</SelectItem>
+                  <SelectItem value="active">{t('teacher.courses.active')}</SelectItem>
                   <SelectItem value="pending">Pending Approval</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="sort">Sort By</Label>
+              <Label htmlFor="sort">{t('teacher.courses.sortBy')}</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="title-asc">Title: A → Z</SelectItem>
-                  <SelectItem value="title-desc">Title: Z → A</SelectItem>
+                  <SelectItem value="title-asc">{t('teacher.courses.titleAsc')}</SelectItem>
+                  <SelectItem value="title-desc">{t('teacher.courses.titleDesc')}</SelectItem>
                   <SelectItem value="date-newest">Date: Newest</SelectItem>
                   <SelectItem value="date-oldest">Date: Oldest</SelectItem>
                   <SelectItem value="category">Category</SelectItem>
@@ -211,21 +191,21 @@ export default function TeacherCourses() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.course')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.duration')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.created')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.courses.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredAndSortedCourses.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                        <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                    <td className="px-6 py-4">
+                      <div className="max-w-md">
+                        <p className="text-sm font-medium text-gray-900 mb-2">{course.title}</p>
+                        <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">{course.description}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -237,7 +217,7 @@ export default function TeacherCourses() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {course.duration} weeks
+                      {course.duration} {t('teacher.courses.weeks')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {course.createdAt.toDate().toLocaleDateString()}
@@ -251,7 +231,7 @@ export default function TeacherCourses() {
                         >
                           <Link to={`/courses/${course.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
-                            View
+                            {t('teacher.courses.view')}
                           </Link>
                         </Button>
                         <Button
@@ -261,35 +241,9 @@ export default function TeacherCourses() {
                         >
                           <Link to={`/dashboard/courses/${course.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            {t('teacher.courses.edit')}
                           </Link>
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this course?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently remove the course
-                                "{course.title}" and all associated data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                className="bg-red-600 hover:bg-red-700"
-                                onClick={() => handleDeleteCourse(course.id)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </td>
                   </tr>
@@ -297,7 +251,7 @@ export default function TeacherCourses() {
                 {filteredAndSortedCourses.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                      {searchTerm || statusFilter !== 'all' ? 'No courses match your filters' : 'No courses found'}
+                      {searchTerm || statusFilter !== 'all' ? 'No courses match your filters' : t('teacher.courses.noCourses')}
                     </td>
                   </tr>
                 )}

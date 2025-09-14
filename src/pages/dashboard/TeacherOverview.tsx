@@ -27,7 +27,6 @@ export default function TeacherOverview() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [recentAnnouncements, setRecentAnnouncements] = useState<any[]>([]);
-  const [topStudents, setTopStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
@@ -79,24 +78,7 @@ export default function TeacherOverview() {
           );
           setRecentAnnouncements(allAnnouncements.slice(0, 5));
 
-          // Derive top students from enrollments (highest progress across the teacher's courses)
-          try {
-            const allEnrollments = await Promise.all(
-              courses.map(async (course) => {
-                const list = await enrollmentService.getEnrollmentsByCourse(course.id);
-                return list.map((en: any) => ({ ...en, courseTitle: course.title }));
-              })
-            );
-            const flatEnrollments = allEnrollments.flat();
-            const sortedByProgress = flatEnrollments.sort((a, b) => (b.progress || 0) - (a.progress || 0));
-            setTopStudents(sortedByProgress.slice(0, 3).map((en) => ({
-              name: en.studentId,
-              course: en.courseTitle,
-              progress: en.progress || 0,
-            })));
-          } catch (error) {
-            console.warn(`Failed to load enrollments:`, error);
-          }
+          // No longer deriving top students here; replaced with My Courses section
         }
       } catch (error) {
         console.error('Failed to load teacher dashboard data:', error);
@@ -249,33 +231,32 @@ export default function TeacherOverview() {
           </CardContent>
         </Card>
 
-        {/* Top Students */}
+        {/* My Courses */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Users className="h-5 w-5" />
-              <span>{t('teacher.topStudents')}</span>
+              <BookOpen className="h-5 w-5" />
+              <span>{t('nav.myCourses')}</span>
             </CardTitle>
-            <CardDescription>{t('studentProgress.highest')}</CardDescription>
+            <CardDescription>{t('teacher.courses.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topStudents.length > 0 ? (
-                topStudents.map((student, index) => (
-                  <div key={index} className="flex items-center justify-between">
+              {myCourses.length > 0 ? (
+                myCourses.slice(0, 5).map((course) => (
+                  <div key={course.id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-green-600">{index + 1}</span>
+                      <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <BookOpen className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{student.name}</p>
-                        <p className="text-xs text-gray-500">{student.course}</p>
+                        <p className="font-medium text-sm">{course.title}</p>
+                        <p className="text-xs text-gray-500">{course.category}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-green-600">{student.progress}%</span>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to="/dashboard/students">
+                        <Link to={`/courses/${course.id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -284,12 +265,12 @@ export default function TeacherOverview() {
                 ))
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>{t('blog.noPosts')}</p>
+                  <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>{t('teacher.courses.noCourses')}</p>
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/students">{t('nav.students')}</Link>
+                <Link to="/dashboard/courses">{t('common.viewAll')}</Link>
               </Button>
             </div>
           </CardContent>
@@ -304,12 +285,6 @@ export default function TeacherOverview() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/courses">
-                <BookOpen className="h-6 w-6 mb-2" />
-                {t('nav.myCourses')}
-              </Link>
-            </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/assignments">
                 <FileText className="h-6 w-6 mb-2" />

@@ -33,15 +33,18 @@ export default function SubmissionsPage() {
     const load = async () => {
       try {
         setLoading(true);
-        if (!currentUser?.uid) return;
+        if (!currentUser?.uid) {
+          setSubmissions([]);
+          return;
+        }
         const myCourses = await courseService.getCoursesByInstructor(currentUser.uid);
-        const lists = await Promise.all(myCourses.map(c => submissionService.getSubmissionsByCourse(c.id)));
+        const lists = await Promise.all(myCourses.map((c) => submissionService.getSubmissionsByCourse(c.id)));
         const flat = lists.flat().map((s: any) => ({
           id: s.id,
-          courseTitle: myCourses.find(c => c.id === s.courseId)?.title || '—',
+          courseTitle: myCourses.find((c) => c.id === s.courseId)?.title || '—',
           studentId: s.studentId,
           status: s.status,
-          submittedAt: s.submittedAt.toDate(),
+          submittedAt: s.submittedAt?.toDate ? s.submittedAt.toDate() : new Date(),
         }));
         setSubmissions(flat);
       } catch (e) {

@@ -99,13 +99,11 @@ export default function TeacherAssignments() {
         title: formData.title,
         description: formData.description,
         courseId: formData.courseId,
-        dueDate: dueDate,
+        dueDate,
         maxScore: formData.maxScore,
         instructions: formData.instructions,
         teacherId: currentUser!.uid,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      } as any;
 
       if (editingAssignment) {
         await assignmentService.updateAssignment(editingAssignment.id, assignmentData);

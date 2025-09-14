@@ -42,6 +42,7 @@ import StudentProgress from "./pages/StudentProgress";
 import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 import TeacherCourses from "./pages/TeacherCourses";
+import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import StudentCourses from "./pages/StudentCourses";
 import TeacherGrades from "./pages/TeacherGrades";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
@@ -272,6 +273,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <TeacherCourses />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/my-courses/:courseId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherCourseDetail />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

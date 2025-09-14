@@ -18,7 +18,13 @@ import {
   Edit, 
   Trash2,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  Users,
+  Eye,
+  Clock,
+  Filter,
+  SortAsc,
+  SortDesc
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -48,13 +54,15 @@ export default function TeacherAnnouncements() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     body: '',
     courseId: '',
-    isGeneral: false
+    isGeneral: false,
+    priority: 'normal'
   });
 
   useEffect(() => {
@@ -129,7 +137,8 @@ export default function TeacherAnnouncements() {
       title: announcement.title,
       body: announcement.body,
       courseId: announcement.courseId || '',
-      isGeneral: !announcement.courseId
+      isGeneral: !announcement.courseId,
+      priority: 'normal' // Default priority for existing announcements
     });
     setShowCreateDialog(true);
   };
@@ -151,7 +160,8 @@ export default function TeacherAnnouncements() {
       title: '',
       body: '',
       courseId: '',
-      isGeneral: false
+      isGeneral: false,
+      priority: 'normal'
     });
   };
 
@@ -161,14 +171,33 @@ export default function TeacherAnnouncements() {
     setShowCreateDialog(true);
   };
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         announcement.body.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = courseFilter === 'all' || 
-                         (courseFilter === 'general' && !announcement.courseId) ||
-                         announcement.courseId === courseFilter;
-    return matchesSearch && matchesCourse;
-  });
+  const filteredAndSortedAnnouncements = announcements
+    .filter(announcement => {
+      const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           announcement.body.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCourse = courseFilter === 'all' || 
+                           (courseFilter === 'general' && !announcement.courseId) ||
+                           announcement.courseId === courseFilter;
+      return matchesSearch && matchesCourse;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+        case 'oldest':
+          return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime();
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        case 'course':
+          const aCourse = getCourseName(a.courseId);
+          const bCourse = getCourseName(b.courseId);
+          return aCourse.localeCompare(bCourse);
+        default:
+          return 0;
+      }
+    });
 
   const getCourseName = (courseId?: string) => {
     if (!courseId) return 'General Announcement';
@@ -215,8 +244,8 @@ export default function TeacherAnnouncements() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
               <Label htmlFor="search">Search Announcements</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -246,12 +275,27 @@ export default function TeacherAnnouncements() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label htmlFor="sort">Sort By</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="title-asc">Title A→Z</SelectItem>
+                  <SelectItem value="title-desc">Title Z→A</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
         {/* Announcements List */}
         <div className="grid gap-4">
-          {filteredAnnouncements.map(announcement => (
+          {filteredAndSortedAnnouncements.map(announcement => (
             <div key={announcement.id} className="bg-white border rounded-lg p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -313,7 +357,7 @@ export default function TeacherAnnouncements() {
               </div>
             </div>
           ))}
-          {filteredAnnouncements.length === 0 && (
+          {filteredAndSortedAnnouncements.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No announcements found</p>
@@ -388,6 +432,21 @@ export default function TeacherAnnouncements() {
                   </Select>
                 </div>
               )}
+
+              <div>
+                <Label htmlFor="priority">Priority</Label>
+                <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex space-x-3 pt-4">

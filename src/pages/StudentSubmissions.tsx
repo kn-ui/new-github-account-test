@@ -1,200 +1,273 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { assignmentService, submissionService, FirestoreAssignment, FirestoreSubmission } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService } from '@/lib/firestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
-  Save, 
-  Upload, 
-  ArrowLeft,
-  Calendar,
+  Search, 
+  Plus, 
+  Edit, 
+  Eye, 
+  CheckCircle,
   Clock,
   AlertCircle,
-  CheckCircle,
-  X
+  Calendar,
+  BookOpen,
+  Upload
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-  import DashboardHero from '@/components/DashboardHero';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import DashboardHero from '@/components/DashboardHero';
 
-interface SubmissionFormData {
+interface SubmissionWithDetails {
+  id: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  courseId: string;
+  courseTitle: string;
+  instructorName: string;
+  submittedAt: Date;
+  status: 'draft' | 'submitted' | 'graded';
+  grade?: number;
+  maxScore: number;
+  feedback?: string;
   content: string;
-  attachments: File[];
-  notes: string;
+  attachments?: string[];
 }
 
 export default function StudentSubmissions() {
-  const { assignmentId, action } = useParams<{ assignmentId: string; action: string }>();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [assignment, setAssignment] = useState<FirestoreAssignment | null>(null);
-  const [submission, setSubmission] = useState<FirestoreSubmission | null>(null);
+  const { assignmentId, action } = useParams();
+  const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<SubmissionFormData>({
-    content: '',
-    attachments: [],
-    notes: ''
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
+  
+  // Submission form states
+  const [showSubmissionDialog, setShowSubmissionDialog] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [submissionContent, setSubmissionContent] = useState('');
+  const [submissionAttachments, setSubmissionAttachments] = useState<string[]>([]);
 
   useEffect(() => {
-    if (currentUser?.uid && userProfile?.role === 'student' && assignmentId) {
-      loadAssignmentAndSubmission();
+    if (currentUser?.uid && userProfile?.role === 'student') {
+      loadSubmissions();
     }
-  }, [currentUser?.uid, userProfile?.role, assignmentId]);
+  }, [currentUser?.uid, userProfile?.role]);
 
-  const loadAssignmentAndSubmission = async () => {
+  useEffect(() => {
+    if (assignmentId && action) {
+      handleSubmissionAction(assignmentId, action);
+    }
+  }, [assignmentId, action]);
+
+  const loadSubmissions = async () => {
     try {
       setLoading(true);
       
-      // Load assignment
-      const assignmentData = await assignmentService.getAssignmentById(assignmentId!);
-      if (!assignmentData) {
-        toast.error('Assignment not found');
-        navigate('/dashboard/student-assignments');
+      // Get student's enrollments
+      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
+      const courseIds = enrollments.map(enrollment => enrollment.courseId);
+      
+      if (courseIds.length === 0) {
+        setSubmissions([]);
         return;
       }
-      setAssignment(assignmentData);
 
-      // Load existing submission if editing
-      if (action === 'edit') {
-        const submissions = await submissionService.getSubmissionsByStudent(currentUser!.uid);
-        const existingSubmission = submissions.find(s => s.assignmentId === assignmentId);
-        if (existingSubmission) {
-          setSubmission(existingSubmission);
-          setFormData({
-            content: existingSubmission.content || '',
-            attachments: [],
-            notes: existingSubmission.notes || ''
-          });
+      // Get all assignments for enrolled courses
+      const assignmentsPromises = courseIds.map(async (courseId) => {
+        try {
+          const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
+          const course = await courseService.getCourse(courseId);
+          return courseAssignments.map(assignment => ({
+            ...assignment,
+            courseTitle: course?.title || 'Unknown Course',
+            instructorName: course?.instructorName || 'Unknown Instructor'
+          }));
+        } catch (error) {
+          console.error(`Error loading assignments for course ${courseId}:`, error);
+          return [];
         }
-      }
+      });
+
+      const assignmentsArrays = await Promise.all(assignmentsPromises);
+      const allAssignments = assignmentsArrays.flat();
+
+      // Get student's submissions for all assignments
+      const submissionsPromises = allAssignments.map(async (assignment) => {
+        try {
+          const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
+          const studentSubmissions = submissions.filter(s => s.studentId === currentUser!.uid);
+          
+          return studentSubmissions.map(submission => ({
+            id: submission.id,
+            assignmentId: submission.assignmentId,
+            assignmentTitle: assignment.title,
+            courseId: assignment.courseId,
+            courseTitle: assignment.courseTitle,
+            instructorName: assignment.instructorName,
+            submittedAt: submission.submittedAt.toDate(),
+            status: submission.status,
+            grade: submission.grade,
+            maxScore: assignment.maxScore,
+            feedback: submission.feedback,
+            content: submission.content,
+            attachments: submission.attachments
+          }));
+        } catch (error) {
+          console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
+          return [];
+        }
+      });
+
+      const submissionsArrays = await Promise.all(submissionsPromises);
+      const allSubmissions = submissionsArrays.flat();
+      setSubmissions(allSubmissions);
+
     } catch (error) {
-      console.error('Error loading assignment:', error);
-      toast.error('Failed to load assignment');
+      console.error('Error loading submissions:', error);
+      toast.error('Failed to load submissions');
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleInputChange = (field: keyof SubmissionFormData, value: string | File[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setFormData(prev => ({
-      ...prev,
-      attachments: [...prev.attachments, ...files]
-    }));
-  };
-
-  const removeFile = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      attachments: prev.attachments.filter((_, i) => i !== index)
-    }));
-  };
-
-  const validateForm = (): boolean => {
-    if (!formData.content.trim()) {
-      toast.error('Please provide assignment content');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSaveDraft = async () => {
-    if (!validateForm()) return;
-    
+  const handleSubmissionAction = async (assignmentId: string, action: string) => {
     try {
-      setSaving(true);
+      // Find the assignment
+      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
+      const courseIds = enrollments.map(enrollment => enrollment.courseId);
       
-      const submissionData: Partial<FirestoreSubmission> = {
-        assignmentId: assignmentId!,
-        studentId: currentUser!.uid,
-        content: formData.content,
-        notes: formData.notes,
-        status: 'draft',
-        submittedAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      if (submission) {
-        // Update existing submission
-        await submissionService.updateSubmission(submission.id, submissionData);
-        toast.success('Draft saved successfully');
-      } else {
-        // Create new submission
-        await submissionService.createSubmission(submissionData);
-        toast.success('Draft saved successfully');
+      let assignment = null;
+      for (const courseId of courseIds) {
+        try {
+          const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+          assignment = assignments.find(a => a.id === assignmentId);
+          if (assignment) break;
+        } catch (error) {
+          continue;
+        }
       }
-      
-      // Reload submission data
-      await loadAssignmentAndSubmission();
+
+      if (!assignment) {
+        toast.error('Assignment not found');
+        return;
+      }
+
+      setSelectedAssignment(assignment);
+      setShowSubmissionDialog(true);
     } catch (error) {
-      console.error('Error saving draft:', error);
-      toast.error('Failed to save draft');
-    } finally {
-      setSaving(false);
+      console.error('Error handling submission action:', error);
+      toast.error('Failed to load assignment');
     }
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    
+  const handleSubmitSubmission = async () => {
+    if (!selectedAssignment || !submissionContent.trim()) {
+      toast.error('Please provide submission content');
+      return;
+    }
+
     try {
-      setSaving(true);
-      
-      const submissionData: Partial<FirestoreSubmission> = {
-        assignmentId: assignmentId!,
+      const submissionData = {
+        assignmentId: selectedAssignment.id,
         studentId: currentUser!.uid,
-        content: formData.content,
-        notes: formData.notes,
+        content: submissionContent,
+        attachments: submissionAttachments,
         status: 'submitted',
         submittedAt: new Date(),
+        createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      if (submission) {
-        // Update existing submission
-        await submissionService.updateSubmission(submission.id, submissionData);
-        toast.success('Assignment submitted successfully');
-      } else {
-        // Create new submission
-        await submissionService.createSubmission(submissionData);
-        toast.success('Assignment submitted successfully');
-      }
-      
-      // Navigate back to assignments
-      navigate('/dashboard/student-assignments');
+      await submissionService.createSubmission(submissionData);
+      toast.success('Submission submitted successfully');
+      setShowSubmissionDialog(false);
+      setSelectedAssignment(null);
+      setSubmissionContent('');
+      setSubmissionAttachments([]);
+      loadSubmissions();
     } catch (error) {
       console.error('Error submitting assignment:', error);
       toast.error('Failed to submit assignment');
-    } finally {
-      setSaving(false);
     }
   };
 
-  const getDueDateStatus = (dueDate: Date) => {
-    const now = new Date();
-    const due = dueDate.toDate();
-    if (due < now) {
-      return { text: 'Overdue', color: 'text-red-600', bgColor: 'bg-red-50' };
-    } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
-      return { text: 'Due Soon', color: 'text-yellow-600', bgColor: 'bg-yellow-50' };
+  const filteredAndSortedSubmissions = useMemo(() => {
+    let filtered = submissions.filter(submission => {
+      const matchesSearch = submission.assignmentTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           submission.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           submission.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || submission.status === statusFilter;
+      const matchesCourse = courseFilter === 'all' || submission.courseTitle === courseFilter;
+      
+      return matchesSearch && matchesStatus && matchesCourse;
+    });
+
+    // Sort submissions
+    switch (sortBy) {
+      case 'recent':
+        filtered.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime());
+        break;
+      case 'assignment':
+        filtered.sort((a, b) => a.assignmentTitle.localeCompare(b.assignmentTitle));
+        break;
+      case 'course':
+        filtered.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
+        break;
     }
-    return { text: 'Active', color: 'text-green-600', bgColor: 'bg-green-50' };
+
+    return filtered;
+  }, [submissions, searchTerm, statusFilter, courseFilter, sortBy]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'submitted': return 'bg-blue-100 text-blue-800';
+      case 'graded': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'draft': return <Edit className="h-4 w-4" />;
+      case 'submitted': return <Clock className="h-4 w-4" />;
+      case 'graded': return <CheckCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
+    }
+  };
+
+  const getGradeColor = (grade: number, maxScore: number) => {
+    const percentage = (grade / maxScore) * 100;
+    if (percentage >= 90) return 'text-green-600';
+    if (percentage >= 80) return 'text-blue-600';
+    if (percentage >= 70) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getUniqueCourses = () => {
+    return Array.from(new Set(submissions.map(submission => submission.courseTitle)));
   };
 
   if (!userProfile || userProfile.role !== 'student') {
@@ -211,214 +284,231 @@ export default function StudentSubmissions() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-
-        <div className="text-gray-600">Loading assignment...</div>
+        <div className="text-gray-600">Loading submissions...</div>
       </div>
     );
   }
-
-  if (!assignment) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Assignment Not Found</div>
-          <div className="text-gray-600">The assignment you're looking for doesn't exist.</div>
-        </div>
-      </div>
-    );
-  }
-
-
-  const dueDateStatus = getDueDateStatus(assignment.dueDate);
-  const isOverdue = assignment.dueDate.toDate() < new Date();
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title={action === 'edit' ? 'Edit Submission' : 'Submit Assignment'}
-        subtitle={action === 'edit' ? 'Update your assignment submission' : 'Complete and submit your assignment'}
+        title="My Submissions"
+        subtitle="View and manage your assignment submissions"
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-6">
-          {/* Assignment Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                {assignment.title}
-              </CardTitle>
-              <CardDescription>{assignment.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Due: {assignment.dueDate.toDate().toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="h-4 w-4" />
-                  <span>Max Score: {assignment.maxScore}</span>
-                </div>
-              </div>
-              
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${dueDateStatus.bgColor} ${dueDateStatus.color}`}>
-                {dueDateStatus.text === 'Overdue' ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
-                  <CheckCircle className="h-4 w-4" />
-                )}
-                {dueDateStatus.text}
-              </div>
-
-              {assignment.instructions && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Instructions:</h4>
-                  <p className="text-blue-800 text-sm">{assignment.instructions}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Submission Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Submission</CardTitle>
-              <CardDescription>
-                {action === 'edit' 
-                  ? 'Update your assignment submission below'
-                  : 'Complete your assignment and submit it below'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Content */}
-              <div>
-                <Label htmlFor="content" className="text-base font-medium">
-                  Assignment Content *
-                </Label>
-                <Textarea
-                  id="content"
-                  placeholder="Write your assignment content here..."
-                  value={formData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
-                  className="min-h-[200px] mt-2"
-                  required
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="search">Search Submissions</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Search by assignment, course, or instructor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  This is the main content of your assignment submission.
-                </p>
               </div>
+            </div>
+            <div>
+              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="graded">Graded</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {getUniqueCourses().map(courseTitle => (
+                    <SelectItem key={courseTitle} value={courseTitle}>
+                      {courseTitle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
 
-              {/* Notes */}
-              <div>
-                <Label htmlFor="notes" className="text-base font-medium">
-                  Additional Notes (Optional)
-                </Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add any additional notes or comments..."
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  className="mt-2"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Include any additional context or notes for your instructor.
-                </p>
-              </div>
+        {/* Sort Options */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="sort">Sort By</Label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most Recent</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="assignment">Assignment</SelectItem>
+                <SelectItem value="course">Course</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-              {/* File Attachments */}
-              <div>
-                <Label htmlFor="attachments" className="text-base font-medium">
-                  File Attachments (Optional)
-                </Label>
-                <div className="mt-2">
-                  <Input
-                    id="attachments"
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="cursor-pointer"
-                  />
-                </div>
-                {formData.attachments.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {formData.attachments.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-700">{file.name}</span>
-                          <span className="text-xs text-gray-500">
-                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="h-6 w-6 p-0 text-gray-500 hover:text-red-600"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+        {/* Submissions List */}
+        <div className="grid gap-4">
+          {filteredAndSortedSubmissions.map(submission => (
+            <Card key={submission.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{submission.assignmentTitle}</h3>
+                        <Badge className={getStatusColor(submission.status)}>
+                          <div className="flex items-center gap-1">
+                            {getStatusIcon(submission.status)}
+                            {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                          </div>
+                        </Badge>
                       </div>
-                    ))}
+                      <p className="text-sm text-gray-600 mb-2">{submission.courseTitle}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          {submission.instructorName}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Submitted: {submission.submittedAt.toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          Max Score: {submission.maxScore}
+                        </span>
+                      </div>
+                      
+                      {submission.status === 'graded' && submission.grade !== undefined && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium">Grade:</span>
+                            <span className={`font-bold ${getGradeColor(submission.grade, submission.maxScore)}`}>
+                              {submission.grade}/{submission.maxScore}
+                            </span>
+                          </div>
+                          {submission.feedback && (
+                            <p className="text-sm text-gray-700">
+                              <strong>Feedback:</strong> {submission.feedback}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                )}
-                <p className="text-sm text-gray-500 mt-1">
-                  You can attach supporting files to your submission.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                  disabled={saving}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Draft
-                </Button>
-                
-                <Button
-                  onClick={handleSubmit}
-                  disabled={saving || isOverdue}
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  {action === 'edit' ? 'Update Submission' : 'Submit Assignment'}
-                </Button>
-
-                {isOverdue && (
-                  <div className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    Assignment is overdue
-                  </div>
-                )}
-              </div>
-
-              {submission && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Submission Status</h4>
-                  <div className="flex items-center gap-2 text-sm text-blue-800">
-                    <Badge variant="outline" className="text-blue-700">
-                      {submission.status === 'draft' ? 'Draft' : 'Submitted'}
-                    </Badge>
-                    <span>
-                      Last updated: {submission.updatedAt.toDate().toLocaleString()}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/courses/${submission.courseId}`}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Course
+                      </Link>
+                    </Button>
+                    {submission.status === 'draft' && (
+                      <Button size="sm" onClick={() => handleSubmissionAction(submission.assignmentId, 'edit')}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Continue
+                      </Button>
+                    )}
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
+          {filteredAndSortedSubmissions.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions yet</h3>
+                <p className="text-gray-600 mb-4">
+                  {searchTerm || statusFilter !== 'all' || courseFilter !== 'all'
+                    ? 'No submissions match your current filters'
+                    : 'You haven\'t submitted any assignments yet. Start by viewing your assignments.'
+                  }
+                </p>
+                {!searchTerm && statusFilter === 'all' && courseFilter === 'all' && (
+                  <Button asChild>
+                    <Link to="/dashboard/student-assignments">View Assignments</Link>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
+
+      {/* Submission Dialog */}
+      <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submit Assignment</DialogTitle>
+          </DialogHeader>
+          
+          {selectedAssignment && (
+            <div className="space-y-4">
+              <div>
+                <Label>Assignment: {selectedAssignment.title}</Label>
+                <p className="text-sm text-gray-600">{selectedAssignment.description}</p>
+                <p className="text-sm text-gray-600">Max Score: {selectedAssignment.maxScore}</p>
+                {selectedAssignment.instructions && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm"><strong>Instructions:</strong> {selectedAssignment.instructions}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <Label htmlFor="content">Your Submission *</Label>
+                <Textarea
+                  id="content"
+                  value={submissionContent}
+                  onChange={(e) => setSubmissionContent(e.target.value)}
+                  placeholder="Write your assignment submission here..."
+                  rows={8}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label>Attachments (Optional)</Label>
+                <div className="mt-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600">Click to upload files or drag and drop</p>
+                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT files only</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitSubmission} disabled={!submissionContent.trim()}>
+              Submit Assignment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,53 +1,49 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { enrollmentService, submissionService, FirestoreSubmission } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService } from '@/lib/firestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Award, 
   Search, 
   TrendingUp, 
   BookOpen,
   Calendar,
-  CheckCircle,
-  Clock,
-  AlertCircle,
+  Star,
+  Target,
   BarChart3,
-  Target
+  CheckCircle,
+  Clock
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import DashboardHero from '@/components/DashboardHero';
 
-interface GradeData {
+interface GradeWithDetails {
+  id: string;
+  assignmentId: string;
+  assignmentTitle: string;
   courseId: string;
   courseTitle: string;
   instructorName: string;
-  assignments: {
-    id: string;
-    title: string;
-    maxScore: number;
-    grade?: number;
-    feedback?: string;
-    submittedAt: Date;
-    gradedAt?: Date;
-  }[];
-  totalScore: number;
-  maxPossibleScore: number;
-  averageGrade: number;
-  completedAssignments: number;
-  totalAssignments: number;
+  submittedAt: Date;
+  gradedAt: Date;
+  grade: number;
+  maxScore: number;
+  feedback: string;
+  status: 'graded';
 }
 
 export default function StudentGrades() {
   const { currentUser, userProfile } = useAuth();
-  const [grades, setGrades] = useState<GradeData[]>([]);
+  const [grades, setGrades] = useState<GradeWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('average-grade');
+  const [sortBy, setSortBy] = useState<string>('recent');
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -68,51 +64,59 @@ export default function StudentGrades() {
         return;
       }
 
-      // Get submissions for all enrolled courses
-      const submissions = await submissionService.getSubmissionsByStudent(currentUser!.uid);
-      const gradedSubmissions = submissions.filter(s => s.status === 'graded');
-
-      // Group submissions by course and calculate grades
-      const gradesData: GradeData[] = enrollments.map(enrollment => {
-        const courseSubmissions = gradedSubmissions.filter(s => s.assignmentId && 
-          enrollment.course?.assignments?.some(a => a.id === s.assignmentId));
-        
-        const assignments = courseSubmissions.map(submission => {
-          const assignment = enrollment.course?.assignments?.find(a => a.id === submission.assignmentId);
-          return {
-            id: submission.id,
-            title: assignment?.title || 'Unknown Assignment',
-            maxScore: assignment?.maxScore || 0,
-            grade: submission.grade,
-            feedback: submission.feedback,
-            submittedAt: submission.submittedAt,
-            gradedAt: submission.gradedAt
-          };
-        });
-
-        const totalScore = assignments.reduce((sum, a) => sum + (a.grade || 0), 0);
-        const maxPossibleScore = assignments.reduce((sum, a) => sum + a.maxScore, 0);
-        const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
-        const completedAssignments = assignments.length;
-        const totalAssignments = enrollment.course?.assignments?.length || 0;
-
-        return {
-          courseId: enrollment.courseId,
-          courseTitle: enrollment.course?.title || 'Unknown Course',
-          instructorName: enrollment.course?.instructorName || 'Unknown Instructor',
-          assignments,
-          totalScore,
-          maxPossibleScore,
-          averageGrade,
-          completedAssignments,
-          totalAssignments
-        };
+      // Get all assignments for enrolled courses
+      const assignmentsPromises = courseIds.map(async (courseId) => {
+        try {
+          const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
+          const course = await courseService.getCourse(courseId);
+          return courseAssignments.map(assignment => ({
+            ...assignment,
+            courseTitle: course?.title || 'Unknown Course',
+            instructorName: course?.instructorName || 'Unknown Instructor'
+          }));
+        } catch (error) {
+          console.error(`Error loading assignments for course ${courseId}:`, error);
+          return [];
+        }
       });
 
-      setGrades(gradesData);
+      const assignmentsArrays = await Promise.all(assignmentsPromises);
+      const allAssignments = assignmentsArrays.flat();
+
+      // Get graded submissions for all assignments
+      const submissionsPromises = allAssignments.map(async (assignment) => {
+        try {
+          const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
+          const studentSubmissions = submissions.filter(s => 
+            s.studentId === currentUser!.uid && s.status === 'graded' && s.grade !== undefined
+          );
+          
+          return studentSubmissions.map(submission => ({
+            id: submission.id,
+            assignmentId: submission.assignmentId,
+            assignmentTitle: assignment.title,
+            courseId: assignment.courseId,
+            courseTitle: assignment.courseTitle,
+            instructorName: assignment.instructorName,
+            submittedAt: submission.submittedAt.toDate(),
+            gradedAt: submission.gradedAt?.toDate() || submission.submittedAt.toDate(),
+            grade: submission.grade || 0,
+            maxScore: assignment.maxScore,
+            feedback: submission.feedback || '',
+            status: 'graded' as const
+          }));
+        } catch (error) {
+          console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
+          return [];
+        }
+      });
+
+      const submissionsArrays = await Promise.all(submissionsPromises);
+      const allGrades = submissionsArrays.flat();
+      setGrades(allGrades);
+
     } catch (error) {
       console.error('Error loading grades:', error);
-      toast.error('Failed to load grades');
     } finally {
       setLoading(false);
     }
@@ -120,8 +124,10 @@ export default function StudentGrades() {
 
   const filteredAndSortedGrades = useMemo(() => {
     let filtered = grades.filter(grade => {
-      const matchesSearch = grade.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = grade.assignmentTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           grade.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            grade.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+      
       const matchesCourse = courseFilter === 'all' || grade.courseTitle === courseFilter;
       
       return matchesSearch && matchesCourse;
@@ -129,66 +135,70 @@ export default function StudentGrades() {
 
     // Sort grades
     switch (sortBy) {
-      case 'average-grade':
-        filtered.sort((a, b) => b.averageGrade - a.averageGrade);
+      case 'recent':
+        filtered.sort((a, b) => b.gradedAt.getTime() - a.gradedAt.getTime());
         break;
-      case 'average-grade-asc':
-        filtered.sort((a, b) => a.averageGrade - b.averageGrade);
+      case 'oldest':
+        filtered.sort((a, b) => a.gradedAt.getTime() - b.gradedAt.getTime());
         break;
-      case 'course-name':
+      case 'grade-high':
+        filtered.sort((a, b) => b.grade - a.grade);
+        break;
+      case 'grade-low':
+        filtered.sort((a, b) => a.grade - b.grade);
+        break;
+      case 'course':
         filtered.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
         break;
-      case 'completed-assignments':
-        filtered.sort((a, b) => b.completedAssignments - a.completedAssignments);
+      case 'assignment':
+        filtered.sort((a, b) => a.assignmentTitle.localeCompare(b.assignmentTitle));
         break;
     }
 
     return filtered;
   }, [grades, searchTerm, courseFilter, sortBy]);
 
-  const getGradeColor = (grade: number) => {
-    if (grade >= 90) return 'text-green-600';
-    if (grade >= 80) return 'text-blue-600';
-    if (grade >= 70) return 'text-yellow-600';
-    if (grade >= 60) return 'text-orange-600';
-    return 'text-red-600';
+  const getGradeColor = (grade: number, maxScore: number) => {
+    const percentage = (grade / maxScore) * 100;
+    if (percentage >= 90) return 'text-green-600 bg-green-100';
+    if (percentage >= 80) return 'text-blue-600 bg-blue-100';
+    if (percentage >= 70) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
   };
 
-  const getGradeBadgeColor = (grade: number) => {
-    if (grade >= 90) return 'bg-green-100 text-green-800';
-    if (grade >= 80) return 'bg-blue-100 text-blue-800';
-    if (grade >= 70) return 'bg-yellow-100 text-yellow-800';
-    if (grade >= 60) return 'bg-orange-100 text-orange-800';
-    return 'bg-red-100 text-red-800';
-  };
-
-  const getLetterGrade = (grade: number) => {
-    if (grade >= 90) return 'A';
-    if (grade >= 80) return 'B';
-    if (grade >= 70) return 'C';
-    if (grade >= 60) return 'D';
+  const getGradeLetter = (grade: number, maxScore: number) => {
+    const percentage = (grade / maxScore) * 100;
+    if (percentage >= 90) return 'A';
+    if (percentage >= 80) return 'B';
+    if (percentage >= 70) return 'C';
+    if (percentage >= 60) return 'D';
     return 'F';
-  };
-
-  const getOverallStats = () => {
-    if (grades.length === 0) return null;
-
-    const totalAssignments = grades.reduce((sum, g) => sum + g.completedAssignments, 0);
-    const totalScore = grades.reduce((sum, g) => sum + g.totalScore, 0);
-    const totalMaxScore = grades.reduce((sum, g) => sum + g.maxPossibleScore, 0);
-    const overallAverage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
-
-    return {
-      totalCourses: grades.length,
-      totalAssignments,
-      overallAverage,
-      letterGrade: getLetterGrade(overallAverage)
-    };
   };
 
   const getUniqueCourses = () => {
     return Array.from(new Set(grades.map(grade => grade.courseTitle)));
   };
+
+  const getStats = () => {
+    if (grades.length === 0) {
+      return { averageGrade: 0, totalAssignments: 0, highestGrade: 0, lowestGrade: 0 };
+    }
+
+    const totalPoints = grades.reduce((sum, grade) => sum + grade.grade, 0);
+    const maxPoints = grades.reduce((sum, grade) => sum + grade.maxScore, 0);
+    const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+    const highestGrade = Math.max(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
+    const lowestGrade = Math.min(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
+
+    return {
+      averageGrade: Math.round(averageGrade),
+      totalAssignments: grades.length,
+      highestGrade: Math.round(highestGrade),
+      lowestGrade: Math.round(lowestGrade)
+    };
+  };
+
+  const stats = getStats();
 
   if (!userProfile || userProfile.role !== 'student') {
     return (
@@ -209,97 +219,75 @@ export default function StudentGrades() {
     );
   }
 
-  const overallStats = getOverallStats();
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Grades</h1>
-              <p className="text-gray-600">View your academic performance and feedback</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHero 
+        title="My Grades"
+        subtitle="View your assignment grades and feedback"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overall Stats */}
-        {overallStats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <BookOpen className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Courses</p>
-                    <p className="text-xl font-semibold text-gray-900">{overallStats.totalCourses}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Average Grade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{stats.averageGrade}%</div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Completed Assignments</p>
-                    <p className="text-xl font-semibold text-gray-900">{overallStats.totalAssignments}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Total Assignments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">{stats.totalAssignments}</div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Overall Average</p>
-                    <p className={`text-xl font-semibold ${getGradeColor(overallStats.overallAverage)}`}>
-                      {overallStats.overallAverage.toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Highest Grade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{stats.highestGrade}%</div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Award className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Letter Grade</p>
-                    <p className={`text-xl font-semibold ${getGradeColor(overallStats.overallAverage)}`}>
-                      {overallStats.letterGrade}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Lowest Grade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">{stats.lowestGrade}%</div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="search">Search Courses</Label>
-              <div className="relative mt-1">
+              <Label htmlFor="search">Search Grades</Label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by course or instructor..."
+                  placeholder="Search by assignment, course, or instructor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -309,7 +297,7 @@ export default function StudentGrades() {
             <div>
               <Label htmlFor="course-filter">Filter by Course</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -325,129 +313,94 @@ export default function StudentGrades() {
             <div>
               <Label htmlFor="sort">Sort By</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="average-grade">Highest Grade First</SelectItem>
-                  <SelectItem value="average-grade-asc">Lowest Grade First</SelectItem>
-                  <SelectItem value="course-name">Course Name</SelectItem>
-                  <SelectItem value="completed-assignments">Most Assignments</SelectItem>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="grade-high">Grade: High to Low</SelectItem>
+                  <SelectItem value="grade-low">Grade: Low to High</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
+                  <SelectItem value="assignment">Assignment</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
 
-        {/* Course Grades */}
-        <div className="grid gap-6">
-          {filteredAndSortedGrades.map(courseGrade => (
-            <Card key={courseGrade.courseId}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                      {courseGrade.courseTitle}
-                    </CardTitle>
-                    <CardDescription>
-                      Instructor: {courseGrade.instructorName}
-                    </CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold ${getGradeColor(courseGrade.averageGrade)}`}>
-                      {courseGrade.averageGrade.toFixed(1)}%
-                    </div>
-                    <Badge className={getGradeBadgeColor(courseGrade.averageGrade)}>
-                      {getLetterGrade(courseGrade.averageGrade)}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Total Score</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {courseGrade.totalScore}/{courseGrade.maxPossibleScore}
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Completed</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {courseGrade.completedAssignments}/{courseGrade.totalAssignments}
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Completion Rate</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {courseGrade.totalAssignments > 0 
-                        ? Math.round((courseGrade.completedAssignments / courseGrade.totalAssignments) * 100)
-                        : 0}%
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Status</p>
-                    <Badge variant="outline" className="mt-1">
-                      {courseGrade.completedAssignments === courseGrade.totalAssignments ? 'Complete' : 'In Progress'}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Assignment Details */}
-                {courseGrade.assignments.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Assignment Details</h4>
-                    <div className="space-y-3">
-                      {courseGrade.assignments.map(assignment => (
-                        <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900">{assignment.title}</h5>
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                              <span>Max Score: {assignment.maxScore}</span>
-                              <span>Submitted: {assignment.submittedAt.toDate().toLocaleDateString()}</span>
-                              {assignment.gradedAt && (
-                                <span>Graded: {assignment.gradedAt.toDate().toLocaleDateString()}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            {assignment.grade !== undefined ? (
-                              <div>
-                                <div className={`text-lg font-semibold ${getGradeColor(assignment.grade)}`}>
-                                  {assignment.grade}/{assignment.maxScore}
-                                </div>
-                                <div className={`text-sm ${getGradeColor(assignment.grade)}`}>
-                                  {((assignment.grade / assignment.maxScore) * 100).toFixed(1)}%
-                                </div>
-                              </div>
-                            ) : (
-                              <Badge variant="outline">Not Graded</Badge>
-                            )}
-                          </div>
+        {/* Grades List */}
+        <div className="grid gap-4">
+          {filteredAndSortedGrades.map(grade => {
+            const percentage = (grade.grade / grade.maxScore) * 100;
+            const gradeLetter = getGradeLetter(grade.grade, grade.maxScore);
+            
+            return (
+              <Card key={grade.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Award className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{grade.assignmentTitle}</h3>
+                          <Badge className={getGradeColor(grade.grade, grade.maxScore)}>
+                            {gradeLetter}
+                          </Badge>
                         </div>
-                      ))}
+                        <p className="text-sm text-gray-600 mb-2">{grade.courseTitle}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="h-3 w-3" />
+                            {grade.instructorName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Graded: {grade.gradedAt.toLocaleDateString()}
+                          </span>
+                        </div>
+                        {grade.feedback && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-700">
+                              <strong>Feedback:</strong> {grade.feedback}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-3xl font-bold ${getGradeColor(grade.grade, grade.maxScore).split(' ')[0]}`}>
+                        {grade.grade}/{grade.maxScore}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {percentage.toFixed(1)}%
+                      </div>
                     </div>
                   </div>
-                )}
-
-                {courseGrade.assignments.length === 0 && (
-                  <div className="text-center py-6 text-gray-500">
-                    <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No graded assignments yet</p>
-                    <p className="text-sm">Complete assignments to see your grades here</p>
-                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {filteredAndSortedGrades.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No grades yet</h3>
+                <p className="text-gray-600 mb-4">
+                  {searchTerm || courseFilter !== 'all' 
+                    ? 'No grades match your current filters'
+                    : 'You haven\'t received any grades yet. Complete assignments to see your grades here.'
+                  }
+                </p>
+                {!searchTerm && courseFilter === 'all' && (
+                  <Button asChild>
+                    <Link to="/dashboard/student-assignments">View Assignments</Link>
+                  </Button>
                 )}
               </CardContent>
             </Card>
-          ))}
-
-          {filteredAndSortedGrades.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No grades found</p>
-              <p className="text-sm">Complete assignments to see your grades</p>
-            </div>
           )}
         </div>
       </div>

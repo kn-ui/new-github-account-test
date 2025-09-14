@@ -480,6 +480,32 @@
       "materialError": "Failed to save material. Please try again.",
       "deleteConfirm": "Are you sure you want to delete this material?",
       "deleteConfirmTitle": "Delete Material"
+    },
+    "courses": {
+      "title": "My Courses",
+      "subtitle": "Manage your courses and track student progress.",
+      "searchPlaceholder": "Search courses...",
+      "filterByStatus": "Filter by Status",
+      "allStatuses": "All Statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sortBy": "Sort by",
+      "titleAsc": "Title A-Z",
+      "titleDesc": "Title Z-A",
+      "dateAsc": "Date (Oldest)",
+      "dateDesc": "Date (Newest)",
+      "course": "Course",
+      "category": "Category",
+      "status": "Status",
+      "duration": "Duration",
+      "created": "Created",
+      "actions": "Actions",
+      "view": "View",
+      "edit": "Edit",
+      "noCourses": "No courses found",
+      "loading": "Loading courses...",
+      "createNew": "Create New Course",
+      "weeks": "weeks"
     }
   },
   "events": {

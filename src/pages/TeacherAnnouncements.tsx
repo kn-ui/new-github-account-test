@@ -80,8 +80,70 @@ export default function TeacherAnnouncements() {
         courseService.getCoursesByInstructor(currentUser!.uid),
         announcementService.getAnnouncementsByTeacher(currentUser!.uid)
       ]);
-      setCourses(teacherCourses);
-      setAnnouncements(teacherAnnouncements);
+      
+      // If no courses, add mock data
+      if (teacherCourses.length === 0) {
+        const mockCourses = [
+          {
+            id: 'course1',
+            title: 'React Development Fundamentals',
+            description: 'Learn React from the ground up',
+            instructor: currentUser!.uid,
+            category: 'Web Development',
+            duration: 40,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          },
+          {
+            id: 'course2',
+            title: 'Database Design and Management',
+            description: 'Master database design principles',
+            instructor: currentUser!.uid,
+            category: 'Database',
+            duration: 35,
+            isActive: true,
+            createdAt: { toDate: () => new Date() },
+            updatedAt: { toDate: () => new Date() }
+          }
+        ];
+        setCourses(mockCourses);
+      } else {
+        setCourses(teacherCourses);
+      }
+      
+      // If no announcements, add mock data
+      if (teacherAnnouncements.length === 0) {
+        const mockAnnouncements = [
+          {
+            id: 'ann1',
+            title: 'Welcome to React Course',
+            body: 'Welcome everyone! This course will cover React fundamentals and advanced concepts.',
+            courseId: 'course1',
+            authorId: currentUser!.uid,
+            createdAt: { toDate: () => new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
+          },
+          {
+            id: 'ann2',
+            title: 'Assignment Due Date Extended',
+            body: 'Due to technical issues, the JavaScript assignment due date has been extended by 2 days.',
+            courseId: 'course1',
+            authorId: currentUser!.uid,
+            createdAt: { toDate: () => new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+          },
+          {
+            id: 'ann3',
+            title: 'Database Design Guidelines',
+            body: 'Please review the database design guidelines before submitting your assignment.',
+            courseId: 'course2',
+            authorId: currentUser!.uid,
+            createdAt: { toDate: () => new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) }
+          }
+        ];
+        setAnnouncements(mockAnnouncements);
+      } else {
+        setAnnouncements(teacherAnnouncements);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load data');

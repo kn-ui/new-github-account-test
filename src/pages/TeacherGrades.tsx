@@ -80,7 +80,54 @@ export default function TeacherGrades() {
       const courseIds = teacherCourses.map(course => course.id);
       
       if (courseIds.length === 0) {
-        setSubmissions([]);
+        // Add some mock data for demonstration
+        const mockSubmissions: SubmissionWithDetails[] = [
+          {
+            id: 'sub1',
+            assignmentId: 'assign1',
+            studentId: 'student1',
+            studentName: 'John Doe',
+            courseId: 'course1',
+            courseTitle: 'React Development Fundamentals',
+            assignmentTitle: 'Introduction to React',
+            submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            status: 'submitted',
+            maxScore: 100,
+            content: 'Here is my React component implementation...',
+            attachments: []
+          },
+          {
+            id: 'sub2',
+            assignmentId: 'assign2',
+            studentId: 'student2',
+            studentName: 'Jane Smith',
+            courseId: 'course1',
+            courseTitle: 'React Development Fundamentals',
+            assignmentTitle: 'JavaScript Fundamentals',
+            submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            status: 'graded',
+            grade: 85,
+            feedback: 'Good implementation! Consider adding error handling.',
+            maxScore: 100,
+            content: 'My JavaScript implementation...',
+            attachments: []
+          },
+          {
+            id: 'sub3',
+            assignmentId: 'assign3',
+            studentId: 'student3',
+            studentName: 'Mike Johnson',
+            courseId: 'course2',
+            courseTitle: 'Database Design and Management',
+            assignmentTitle: 'Database Design',
+            submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            status: 'submitted',
+            maxScore: 100,
+            content: 'Database schema design document...',
+            attachments: []
+          }
+        ];
+        setSubmissions(mockSubmissions);
         return;
       }
 

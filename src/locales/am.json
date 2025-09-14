@@ -480,6 +480,32 @@
       "materialError": "ቁሳቁስ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
       "deleteConfirm": "ይህን ቁሳቁስ መሰረዝ እርግጠኛ ነዎት?",
       "deleteConfirmTitle": "ቁሳቁስ ሰርዝ"
+    },
+    "courses": {
+      "title": "የእኔ ኮርሶች",
+      "subtitle": "ኮርሶችዎን አስተዳድሩ እና የተማሪ እድገትን ተከታትሉ።",
+      "searchPlaceholder": "ኮርሶችን ፈልግ...",
+      "filterByStatus": "በሁኔታ አጣራ",
+      "allStatuses": "ሁሉም ሁኔታዎች",
+      "active": "ንቁ",
+      "inactive": "አልተንቀሳቀሰ",
+      "sortBy": "በዚህ አይነት አደራጅ",
+      "titleAsc": "ርእስ አ-ዘ",
+      "titleDesc": "ርእስ ዘ-አ",
+      "dateAsc": "ቀን (አሮጌ)",
+      "dateDesc": "ቀን (አዲስ)",
+      "course": "ኮርስ",
+      "category": "ምድብ",
+      "status": "ሁኔታ",
+      "duration": "ጊዜ",
+      "created": "ተፈጥሯል",
+      "actions": "እንቅስቃሴዎች",
+      "view": "ይመልከቱ",
+      "edit": "አርትዕ",
+      "noCourses": "ምንም ኮርስ አልተገኘም",
+      "loading": "ኮርሶች እየተጫነ...",
+      "createNew": "አዲስ ኮርስ ፍጠር",
+      "weeks": "ሳምንታት"
     }
   },
   "events": {

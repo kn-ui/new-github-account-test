@@ -591,7 +591,6 @@ export const announcementService = {
     } else {
       q = query(
         collections.announcements(),
-        where('courseId', '==', null),
         orderBy('createdAt', 'desc'),
         limit(limitCount)
       );

@@ -270,7 +270,7 @@ export default function TeacherOverview() {
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/courses">{t('common.viewAll')}</Link>
+                <Link to="/dashboard/my-courses">{t('common.viewAll') || 'View All'}</Link>
               </Button>
             </div>
           </CardContent>

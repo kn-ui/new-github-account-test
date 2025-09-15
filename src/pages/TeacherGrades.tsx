@@ -60,6 +60,7 @@ export default function TeacherGrades() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionWithDetails | null>(null);
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
   const [grade, setGrade] = useState<number>(0);
@@ -385,27 +386,34 @@ export default function TeacherGrades() {
           </div>
         </div>
 
-        {/* Sort Options */}
+        {/* Sort & View */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">Sort By</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="student">Student Name</SelectItem>
-                <SelectItem value="course">Course</SelectItem>
-                <SelectItem value="assignment">Assignment</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center space-x-3">
+              <Label htmlFor="sort">Sort By</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="student">Student Name</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
+                  <SelectItem value="assignment">Assignment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">View:</span>
+              <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
+              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
+            </div>
           </div>
         </div>
 
         {/* Submissions List */}
-        <div className="grid gap-4">
+        <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
           {filteredAndSortedSubmissions.map(submission => (
             <div key={submission.id} className="bg-white border rounded-lg p-4">
               <div className="flex items-start justify-between">

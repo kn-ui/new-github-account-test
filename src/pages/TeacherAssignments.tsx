@@ -45,6 +45,7 @@ export default function TeacherAssignments() {
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
@@ -267,10 +268,32 @@ export default function TeacherAssignments() {
               </Select>
             </div>
           </div>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              {filteredAssignments.length} assignment{filteredAssignments.length !== 1 ? 's' : ''} found
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">View:</span>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                List
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                Grid
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Assignments List */}
-        <div className="grid gap-4">
+        <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
           {filteredAssignments.map(assignment => (
             <div key={assignment.id} className="bg-white border rounded-lg p-4">
               <div className="flex items-start justify-between">

@@ -59,6 +59,7 @@ export default function TeacherAnnouncements() {
   const [sortBy, setSortBy] = useState<string>('recent');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -341,48 +342,107 @@ export default function TeacherAnnouncements() {
               </Select>
             </div>
           </div>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">{filteredAndSortedAnnouncements.length} announcement{filteredAndSortedAnnouncements.length !== 1 ? 's' : ''} found</div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">View:</span>
+              <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
+              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
+            </div>
+          </div>
         </div>
 
         {/* Announcements List */}
-        <div className="grid gap-4">
-          {filteredAndSortedAnnouncements.map(announcement => (
-            <div key={announcement.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-blue-600" />
+        {viewMode === 'list' ? (
+          <div className="grid gap-4">
+            {filteredAndSortedAnnouncements.map(announcement => (
+              <div key={announcement.id} className="bg-white border rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Bell className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                        <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                          {announcement.courseId ? 'Course' : 'General'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{announcement.body}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {announcement.createdAt.toDate().toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {getCourseName(announcement.courseId)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium text-gray-900">{announcement.title}</h3>
-                      <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                        {announcement.courseId ? 'Course' : 'General'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{announcement.body}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {announcement.createdAt.toDate().toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {getCourseName(announcement.courseId)}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently remove the announcement
+                            "{announcement.title}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => handleDelete(announcement.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {filteredAndSortedAnnouncements.map(announcement => (
+              <div key={announcement.id} className="bg-white border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-blue-600" />
+                    <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                  </div>
+                  <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                    {announcement.courseId ? 'Course' : 'General'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 mb-3 line-clamp-3">{announcement.body}</p>
+                <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.createdAt.toDate().toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {getCourseName(announcement.courseId)}</span>
+                </div>
+                <div className="flex items-center justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    <Edit className="h-4 w-4 mr-1" /> Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <Button variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -394,19 +454,15 @@ export default function TeacherAnnouncements() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => handleDelete(announcement.id)}
-                        >
-                          Delete
-                        </AlertDialogAction>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)}>Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
           {filteredAndSortedAnnouncements.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />

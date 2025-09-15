@@ -41,6 +41,7 @@ export default function TeacherCourseDetail() {
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
   const [submissions, setSubmissions] = useState<FirestoreSubmission[]>([]);
   const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!courseId) return;
@@ -59,6 +60,18 @@ export default function TeacherCourseDetail() {
         setAssignments(asgs);
         setSubmissions(subs);
         setMaterials(mats);
+        // resolve student names
+        try {
+          const ids = Array.from(new Set(ens.map(e => e.studentId)));
+          const nameMap: Record<string, string> = {};
+          await Promise.all(ids.map(async (id) => {
+            try {
+              const u = await (await import('@/lib/firestore')).userService.getUserById(id);
+              if (u?.displayName) nameMap[id] = u.displayName;
+            } catch {}
+          }));
+          setStudentNames(nameMap);
+        } catch {}
       } catch (e) {
         console.error(e);
         toast.error('Failed to load course details');
@@ -269,7 +282,7 @@ export default function TeacherCourseDetail() {
                   <div className="divide-y">
                     {enrollments.map(e => (
                       <div key={e.id} className="py-2 flex items-center justify-between">
-                        <div className="text-sm text-gray-700">{e.studentId}</div>
+                        <div className="text-sm text-gray-700">{studentNames[e.studentId] || e.studentId}</div>
                         <Badge variant="secondary" className="capitalize">{e.status}</Badge>
                       </div>
                     ))}
@@ -294,7 +307,7 @@ export default function TeacherCourseDetail() {
                       <tbody className="divide-y">
                         {submissions.filter(s => s.status === 'graded').map(s => (
                           <tr key={s.id}>
-                            <td className="px-4 py-2">{s.studentId}</td>
+                            <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
                             <td className="px-4 py-2">{typeof s.grade === 'number' ? s.grade : '-'}</td>
                             <td className="px-4 py-2 capitalize">{s.status}</td>
                             <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>

@@ -33,6 +33,7 @@ export default function TeacherCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('title-asc');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [courseToEdit, setCourseToEdit] = useState<FirestoreCourse | null>(null);
   const [editForm, setEditForm] = useState({ description: '', syllabus: '' });
@@ -200,11 +201,20 @@ export default function TeacherCourses() {
               </Select>
             </div>
           </div>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">{filteredAndSortedCourses.length} course{filteredAndSortedCourses.length !== 1 ? 's' : ''} found</div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">View:</span>
+              <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>Table</Button>
+              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
+            </div>
+          </div>
         </div>
 
         
 
-        {/* Courses Table */}
+        {/* Courses */}
+        {viewMode === 'table' ? (
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6 border-b">
             <div className="flex items-center space-x-2">
@@ -284,6 +294,33 @@ export default function TeacherCourses() {
             </table>
           </div>
         </div>
+        ) : (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {filteredAndSortedCourses.map(course => (
+              <div key={course.id} className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-semibold text-gray-900">{course.title}</h3>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-3 mb-3">{course.description}</p>
+                <div className="text-xs text-gray-500 mb-3">{course.category} • {course.duration} {t('teacher.courses.weeks')}</div>
+                <div className="flex items-center justify-between">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(course)}`}>{getStatusText(course)}</span>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/dashboard/my-courses/${course.id}`}>
+                        <Eye className="h-4 w-4 mr-1" /> View
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(course)}>
+                      <Edit className="h-4 w-4 mr-1" /> Edit
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {/* Edit Course Dialog (syllabus & description only) */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-2xl">

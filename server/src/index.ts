@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
+import devRoutes from './routes/devRoutes';
 
 
 const app = express();
@@ -74,6 +75,9 @@ try {
   app.use('/api/courses', courseRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
+  if ((process.env.NODE_ENV || 'development') !== 'production') {
+    app.use('/api/dev/seed', devRoutes);
+  }
   console.log('✅ Routes loaded successfully');
 } catch (error) {
   console.error('❌ Error loading routes:', error);

@@ -26,6 +26,13 @@ const Hero = () => {
                   Explore Programs
                 </button>
               </Link>
+              {import.meta.env.DEV && (
+                <Link to="/seed" className="inline-flex">
+                  <button className="bg-white text-[#0e4fb9] px-6 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors">
+                    Seed Dev Data
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
           <div className="relative rounded-xl overflow-hidden ring-4 ring-white/20">

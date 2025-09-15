@@ -48,6 +48,7 @@ import TeacherGrades from "./pages/TeacherGrades";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
 import StudentGrades from "./pages/StudentGrades";
 import SearchResults from "./pages/SearchResults";
+import SeedDatabase from "./pages/SeedDatabase";
 
 // import Catalog from "./pages/Catalog";
 
@@ -79,6 +80,7 @@ const App = () => (
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/seed" element={<SeedDatabase />} />
             <Route 
               path="/dashboard" 
               element={

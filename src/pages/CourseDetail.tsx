@@ -44,7 +44,8 @@ const CourseDetail = () => {
     if (courseId) {
       loadCourseDetails();
     }
-  }, [courseId, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   const loadCourseDetails = async () => {
     try {

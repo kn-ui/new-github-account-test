@@ -44,23 +44,25 @@ export default function TeacherOverview() {
           const courses = await courseService.getCoursesByInstructor(currentUser.uid);
           setMyCourses(courses);
 
-          // Load recent submissions for my courses
-          const allSubmissions = await Promise.all(
+          // Load recent submissions for my courses (resilient)
+          const allRes = await Promise.allSettled(
             courses.map(async (course) => {
-              try {
-                const submissions = await submissionService.getSubmissionsByCourse(course.id);
-                return submissions.map((submission: any) => ({
-                  ...submission,
-                  courseTitle: course.title,
-                }));
-              } catch {
-                return [];
-              }
+              const submissions = await submissionService.getSubmissionsByCourse(course.id);
+              return submissions.map((submission: any) => ({
+                ...submission,
+                courseTitle: course.title,
+              }));
             })
           );
-          const flatSubmissions = allSubmissions.flat().sort((a: any, b: any) => 
-            b.submittedAt.toDate() - a.submittedAt.toDate()
-          );
+          const ok = allRes.flatMap((r: any) => (r.status === 'fulfilled' ? r.value : []));
+          const flatSubmissions = ok
+            .flat()
+            .filter((s: any) => !!s?.submittedAt)
+            .sort((a: any, b: any) => {
+              const at = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(0);
+              const bt = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(0);
+              return bt - at;
+            });
           setRecentSubmissions(flatSubmissions.slice(0, 5));
 
           // Load announcements for my courses
@@ -256,7 +258,7 @@ export default function TeacherOverview() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/courses/${course.id}`}>
+                        <Link to={`/dashboard/my-courses/${course.id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -270,7 +272,7 @@ export default function TeacherOverview() {
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/my-courses">{t('common.viewAll') || 'View All'}</Link>
+                <Link to="/dashboard/my-courses">{'View All'}</Link>
               </Button>
             </div>
           </CardContent>

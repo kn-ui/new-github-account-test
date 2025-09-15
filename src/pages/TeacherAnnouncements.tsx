@@ -149,17 +149,19 @@ export default function TeacherAnnouncements() {
     }
 
     try {
-      const announcementData = {
+      const announcementData: any = {
         title: formData.title,
         body: formData.body,
-        courseId: formData.isGeneral ? undefined : (formData.recipientStudentId ? undefined : formData.courseId),
+        courseId: formData.isGeneral ? null : (formData.recipientStudentId ? null : formData.courseId),
         recipientStudentId: formData.recipientStudentId || undefined,
         authorId: currentUser!.uid,
         createdAt: new Date()
       };
 
       if (editingAnnouncement) {
-        await announcementService.updateAnnouncement(editingAnnouncement.id, announcementData);
+        const updates: any = { ...announcementData };
+        delete updates.createdAt;
+        await announcementService.updateAnnouncement(editingAnnouncement.id, updates);
         toast.success('Announcement updated successfully');
       } else {
         await announcementService.createAnnouncement(announcementData);
@@ -280,15 +282,15 @@ export default function TeacherAnnouncements() {
       <DashboardHero 
         title="Announcements"
         subtitle="Create and manage course announcements"
-      />
+      >
+        <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Create Announcement
+        </Button>
+      </DashboardHero>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-end mb-6">
-          <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Announcement
-          </Button>
-        </div>
+        
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">

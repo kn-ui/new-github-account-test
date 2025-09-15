@@ -169,8 +169,10 @@ export default function TeacherAnalytics() {
               let displayName = enrollment.studentId;
               try {
                 const u = await userService.getUserById(enrollment.studentId);
-                if (u?.displayName) displayName = u.displayName;
-              } catch {}
+                if (u && (u as any).displayName) displayName = (u as any).displayName;
+              } catch {
+                // fallback remains id
+              }
 
               return {
                 studentId: enrollment.studentId,

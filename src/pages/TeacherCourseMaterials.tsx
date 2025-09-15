@@ -112,6 +112,10 @@ export default function TeacherCourseMaterials() {
     }
 
     // For document type, either file upload or direct URL
+    if (formData.type === 'document' && !fileObj && !formData.fileUrl) {
+      toast.error('Please upload a file or provide a file URL for documents');
+      return;
+    }
 
     if (formData.type === 'link' && !formData.externalLink) {
       toast.error('Please provide an external link for link materials');
@@ -128,17 +132,24 @@ export default function TeacherCourseMaterials() {
         uploadedUrl = await getDownloadURL(storageRef);
       }
 
-      const materialData = {
+      const materialData: any = {
         title: formData.title,
         description: formData.description,
         courseId: formData.courseId,
         type: formData.type,
-        fileUrl: formData.type === 'document' ? (uploadedUrl || formData.fileUrl) : undefined,
-        externalLink: formData.type === 'link' || formData.type === 'video' ? formData.externalLink : undefined
+      };
+      if (formData.type === 'document') {
+        materialData.fileUrl = uploadedUrl || formData.fileUrl || '';
+      }
+      if (formData.type === 'link' || formData.type === 'video') {
+        materialData.externalLink = formData.externalLink || '';
       };
 
       if (editingMaterial) {
-        await courseMaterialService.updateCourseMaterial(editingMaterial.id, materialData);
+        const updates: any = { title: materialData.title, description: materialData.description, courseId: materialData.courseId, type: materialData.type };
+        if (materialData.fileUrl !== undefined) updates.fileUrl = materialData.fileUrl;
+        if (materialData.externalLink !== undefined) updates.externalLink = materialData.externalLink;
+        await courseMaterialService.updateCourseMaterial(editingMaterial.id, updates);
         toast.success('Material updated successfully');
       } else {
         await courseMaterialService.createCourseMaterial(materialData);

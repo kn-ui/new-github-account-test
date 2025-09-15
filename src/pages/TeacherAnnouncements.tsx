@@ -150,22 +150,30 @@ export default function TeacherAnnouncements() {
     }
 
     try {
-      const announcementData: any = {
+      // Build payload without undefined fields
+      const isGeneral = formData.isGeneral || !!formData.recipientStudentId;
+      const base: any = {
         title: formData.title,
         body: formData.body,
-        courseId: formData.isGeneral ? null : (formData.recipientStudentId ? null : formData.courseId),
-        recipientStudentId: formData.recipientStudentId || undefined,
         authorId: currentUser!.uid,
-        createdAt: new Date()
       };
+      if (!editingAnnouncement) {
+        base.createdAt = new Date();
+      }
+      if (isGeneral) {
+        base.courseId = null;
+      } else if (formData.courseId) {
+        base.courseId = formData.courseId;
+      }
+      if (formData.recipientStudentId) {
+        base.recipientStudentId = formData.recipientStudentId;
+      }
 
       if (editingAnnouncement) {
-        const updates: any = { ...announcementData };
-        delete updates.createdAt;
-        await announcementService.updateAnnouncement(editingAnnouncement.id, updates);
+        await announcementService.updateAnnouncement(editingAnnouncement.id, base);
         toast.success('Announcement updated successfully');
       } else {
-        await announcementService.createAnnouncement(announcementData);
+        await announcementService.createAnnouncement(base);
         toast.success('Announcement created successfully');
       }
 

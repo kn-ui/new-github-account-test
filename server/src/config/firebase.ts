@@ -13,9 +13,7 @@ const requiredEnvVars = [
 
 const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
-if (missingVars.length > 0) {
-  console.log(`⚠️  Missing Firebase environment variables: ${missingVars.join(', ')}`);
-} else {
+if (missingVars.length === 0) {
   const serviceAccount: ServiceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID!,
     privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
@@ -35,6 +33,21 @@ if (missingVars.length > 0) {
       console.error('❌ Firebase initialization failed:', error);
       throw error;
     }
+  }
+} else {
+  // Attempt application default credentials in development
+  try {
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: process.env.FIREBASE_PROJECT_ID || undefined,
+      });
+      firebaseInitialized = true;
+      console.log('✅ Firebase initialized using application default credentials');
+    }
+  } catch (err) {
+    console.log(`⚠️  Missing Firebase env vars: ${missingVars.join(', ')} and application default credentials unavailable.`);
+    firebaseInitialized = false;
   }
 }
 

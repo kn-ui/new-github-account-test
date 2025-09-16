@@ -295,63 +295,56 @@ export default function TeacherAssignments() {
         {/* Assignments List */}
         <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
           {filteredAssignments.map(assignment => (
-            <div key={assignment.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{assignment.title}</h3>
-                    <p className="text-sm text-gray-600">{assignment.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {assignment.dueDate.toDate().toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Max Score: {assignment.maxScore}
-                      </span>
-                      <span>{getCourseName(assignment.courseId)}</span>
-                    </div>
+            <div key={assignment.id} className="bg-white border rounded-lg p-4 flex flex-col h-full">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">{assignment.title}</h3>
+                  <p className="text-sm text-gray-600">{assignment.description}</p>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {assignment.dueDate.toDate().toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Max Score: {assignment.maxScore}
+                    </span>
+                    <span>{getCourseName(assignment.courseId)}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(assignment.dueDate.toDate())}>
-                    {getStatusText(assignment.dueDate.toDate())}
-                  </Badge>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this assignment?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently remove the assignment
-                          "{assignment.title}" and all associated submissions.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => handleDelete(assignment.id)}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                <Badge className={getStatusColor(assignment.dueDate.toDate())}>
+                  {getStatusText(assignment.dueDate.toDate())}
+                </Badge>
+              </div>
+              <div className="mt-auto pt-4 flex items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this assignment?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently remove the assignment
+                        "{assignment.title}" and all associated submissions.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(assignment.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ))}

@@ -56,10 +56,13 @@ export default function TeacherAssignments() {
     description: '',
     courseId: '',
     dueDate: '',
-
+    dueTime: '',
     maxScore: 100,
-    instructions: ''
+    instructions: '',
+    linkTitle: '',
+    linkUrl: ''
   });
+  const [fileObj, setFileObj] = useState<File | null>(null);
 
   useEffect(() => {
 
@@ -95,7 +98,23 @@ export default function TeacherAssignments() {
     }
 
     try {
-      const dueDate = new Date(formData.dueDate);
+      const dueDate = new Date(formData.dueDate || new Date().toISOString().slice(0,10));
+      if (formData.dueTime) {
+        const [hh, mm] = formData.dueTime.split(':');
+        if (!isNaN(parseInt(hh)) && !isNaN(parseInt(mm))) dueDate.setHours(parseInt(hh), parseInt(mm), 0, 0);
+      }
+
+      const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
+      if (fileObj) {
+        const storage = getStorage();
+        const path = `assignments/${formData.courseId}/${Date.now()}_${fileObj.name}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, fileObj);
+        const url = await getDownloadURL(storageRef);
+        attachments.push({ type: 'file', url, title: fileObj.name });
+      }
+      if (formData.linkUrl) attachments.push({ type: 'link', url: formData.linkUrl, title: formData.linkTitle || undefined });
+
       const assignmentData = {
         title: formData.title,
         description: formData.description,
@@ -104,6 +123,7 @@ export default function TeacherAssignments() {
         maxScore: formData.maxScore,
         instructions: formData.instructions,
         teacherId: currentUser!.uid,
+        ...(attachments.length ? { attachments } : {})
       } as any;
 
       if (editingAssignment) {
@@ -418,6 +438,13 @@ export default function TeacherAssignments() {
                 />
               </div>
               <div>
+                <Label htmlFor="dueTime">Due Time</Label>
+                <Input id="dueTime" type="time" value={formData.dueTime} onChange={(e) => setFormData(prev => ({ ...prev, dueTime: e.target.value }))} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="maxScore">Max Score</Label>
                 <Input
                   id="maxScore"
@@ -427,6 +454,10 @@ export default function TeacherAssignments() {
                   min="1"
                   max="1000"
                 />
+              </div>
+              <div>
+                <Label htmlFor="file">Attachment (optional)</Label>
+                <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
               </div>
             </div>
 
@@ -440,6 +471,17 @@ export default function TeacherAssignments() {
                 placeholder="Detailed instructions for students"
                 rows={4}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="linkTitle">Resource Title (optional)</Label>
+                <Input id="linkTitle" value={formData.linkTitle} onChange={(e) => setFormData(prev => ({ ...prev, linkTitle: e.target.value }))} placeholder="Syllabus link" />
+              </div>
+              <div>
+                <Label htmlFor="linkUrl">Resource URL (optional)</Label>
+                <Input id="linkUrl" value={formData.linkUrl} onChange={(e) => setFormData(prev => ({ ...prev, linkUrl: e.target.value }))} placeholder="https://example.com/resource" />
+              </div>
             </div>
 
             <div className="flex space-x-3 pt-4">

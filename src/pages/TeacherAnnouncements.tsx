@@ -60,6 +60,8 @@ export default function TeacherAnnouncements() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [courseStudents, setCourseStudents] = useState<{ id: string; name: string }[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -200,6 +202,25 @@ export default function TeacherAnnouncements() {
     });
     setShowCreateDialog(true);
   };
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        if (!formData.courseId) { setCourseStudents([]); return; }
+        const enrollments = await (await import('@/lib/firestore')).enrollmentService.getEnrollmentsByCourse(formData.courseId);
+        const ids = Array.from(new Set(enrollments.map((e: any) => e.studentId)));
+        const list: { id: string; name: string }[] = [];
+        await Promise.all(ids.map(async (id) => {
+          try { const u = await (await import('@/lib/firestore')).userService.getUserById(id); list.push({ id, name: (u as any)?.displayName || id }); } catch {}
+        }));
+        list.sort((a,b) => a.name.localeCompare(b.name));
+        setCourseStudents(list);
+      } catch (e) {
+        setCourseStudents([]);
+      }
+    };
+    loadStudents();
+  }, [formData.courseId]);
 
   const handleDelete = async (announcementId: string) => {
     try {
@@ -546,12 +567,21 @@ export default function TeacherAnnouncements() {
             {!formData.isGeneral && (
               <div>
                 <Label htmlFor="recipientStudentId">Specific Student (optional)</Label>
-                <Input
-                  id="recipientStudentId"
-                  value={formData.recipientStudentId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, recipientStudentId: e.target.value }))}
-                  placeholder="Enter student ID"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Search student" value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} />
+                  <Select value={formData.recipientStudentId} onValueChange={(v) => setFormData(prev => ({ ...prev, recipientStudentId: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a student" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courseStudents
+                        .filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
+                        .map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <p className="text-xs text-gray-500 mt-1">Leave empty to announce to all students in the course.</p>
               </div>
             )}

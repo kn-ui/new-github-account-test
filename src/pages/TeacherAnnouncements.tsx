@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-  import DashboardHero from '@/components/DashboardHero';
+import DashboardHero from '@/components/DashboardHero';
 
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -235,8 +235,8 @@ export default function TeacherAnnouncements() {
       const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            announcement.body.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCourse = courseFilter === 'all' || 
-                           (courseFilter === 'general' && !announcement.courseId) ||
-                           announcement.courseId === courseFilter;
+                            (courseFilter === 'general' && !announcement.courseId) ||
+                            announcement.courseId === courseFilter;
       return matchesSearch && matchesCourse;
     })
     .sort((a, b) => {
@@ -283,9 +283,6 @@ export default function TeacherAnnouncements() {
     );
   }
 
-
-
-
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
@@ -300,7 +297,6 @@ export default function TeacherAnnouncements() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -471,128 +467,127 @@ export default function TeacherAnnouncements() {
             ))}
           </div>
         )}
-          {filteredAndSortedAnnouncements.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No announcements found</p>
-            </div>
-          )}
-        </div>
+        {filteredAndSortedAnnouncements.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>No announcements found</p>
+          </div>
+        )}
       </div>
+      
+    {/* Create/Edit Announcement Dialog */}
+    <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
+          </DialogTitle>
+        </DialogHeader>
 
-      {/* Create/Edit Announcement Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
-            </DialogTitle>
-          </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Announcement title"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="body">Content *</Label>
+            <Textarea
+              id="body"
+              value={formData.body}
+              onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
+              placeholder="Announcement content"
+              rows={4}
+              required
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Announcement title"
-                required
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isGeneral"
+                checked={formData.isGeneral}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  isGeneral: e.target.checked,
+                  courseId: e.target.checked ? '' : prev.courseId
+                }))}
+                className="rounded border-gray-300"
               />
+              <Label htmlFor="isGeneral">General announcement (not tied to a specific course)</Label>
             </div>
             
-            <div>
-              <Label htmlFor="body">Content *</Label>
-              <Textarea
-                id="body"
-                value={formData.body}
-                onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
-                placeholder="Announcement content"
-                rows={4}
-                required
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="isGeneral"
-                  checked={formData.isGeneral}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    isGeneral: e.target.checked,
-                    courseId: e.target.checked ? '' : prev.courseId
-                  }))}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="isGeneral">General announcement (not tied to a specific course)</Label>
-              </div>
-              
-              {!formData.isGeneral && !formData.recipientStudentId && (
-                <div>
-                  <Label htmlFor="courseId">Course</Label>
-                  <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map(course => (
-                        <SelectItem key={course.id} value={course.id}>
-                          {course.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Announce to specific student */}
-              {!formData.isGeneral && (
-                <div>
-                  <Label htmlFor="recipientStudentId">Specific Student (optional)</Label>
-                  <Input
-                    id="recipientStudentId"
-                    value={formData.recipientStudentId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recipientStudentId: e.target.value }))}
-                    placeholder="Enter student ID"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Leave empty to announce to all students in the course.</p>
-                </div>
-              )}
-
+            {!formData.isGeneral && !formData.recipientStudentId && (
               <div>
-                <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+                <Label htmlFor="courseId">Course</Label>
+                <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    {courses.map(course => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            )}
 
-            <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1">
-                {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowCreateDialog(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
+            {/* Announce to specific student */}
+            {!formData.isGeneral && (
+              <div>
+                <Label htmlFor="recipientStudentId">Specific Student (optional)</Label>
+                <Input
+                  id="recipientStudentId"
+                  value={formData.recipientStudentId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recipientStudentId: e.target.value }))}
+                  placeholder="Enter student ID"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to announce to all students in the course.</p>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <Button type="submit" className="flex-1">
+              {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowCreateDialog(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 }

@@ -94,23 +94,14 @@ export default function StudentDashboard() {
           });
           setUpcomingAssignments(enriched);
 
-          // Load announcements for enrolled courses and general announcements
-          const [courseAnnouncements, generalAnnouncements] = await Promise.all([
-            Promise.all(
-              enrollments.map(async (enrollment) => {
-                const courseAnnouncements = await announcementService.getAnnouncements(enrollment.courseId, 3);
-                return courseAnnouncements.map((announcement: any) => ({
-                  ...announcement,
-                  courseTitle: enrollment.course?.title || 'Course',
-                }));
-              })
-            ),
-            announcementService.getAllAnnouncements(5)
-          ]);
-          
-          const allAnnouncements = [...courseAnnouncements.flat(), ...generalAnnouncements]
-            .sort((a: any, b: any) => b.createdAt.toDate() - a.createdAt.toDate())
-          setAnnouncements(allAnnouncements);
+          // Load announcements filtered for this student
+          const enrolledIds = enrollments.map((e: any) => e.courseId);
+          const filteredAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledIds, 50);
+          const withCourseTitles = filteredAnns.map((a: any) => ({
+            ...a,
+            courseTitle: a.courseId ? (enrollments.find((e: any) => e.courseId === a.courseId)?.course?.title || 'Course') : 'General'
+          }));
+          setAnnouncements(withCourseTitles);
 
           const certs = await certificateService.getCertificatesForUser(currentUser.uid);
           setCertificates(certs);

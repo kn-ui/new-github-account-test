@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { analyticsService, courseService, enrollmentService, submissionService, announcementService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ export default function TeacherOverview() {
   const [myCourses, setMyCourses] = useState<any[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [recentAnnouncements, setRecentAnnouncements] = useState<any[]>([]);
+  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
@@ -65,20 +66,19 @@ export default function TeacherOverview() {
             });
           setRecentSubmissions(flatSubmissions.slice(0, 5));
 
-          // Load announcements for my courses
-          const courseAnnouncements = await Promise.all(
-            courses.map(async (course) => {
-              const courseAnnouncements = await announcementService.getAnnouncements(course.id, 3);
-              return courseAnnouncements.map((announcement: any) => ({
-                ...announcement,
-                courseTitle: course.title,
-              }));
-            })
-          );
-          const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
-            b.createdAt.toDate() - a.createdAt.toDate()
-          );
-          setRecentAnnouncements(allAnnouncements.slice(0, 5));
+          // Resolve student names
+          try {
+            const ids = Array.from(new Set(flatSubmissions.map((s: any) => s.studentId)));
+            const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(ids);
+            const nameMap: Record<string, string> = {};
+            Object.entries(usersMap).forEach(([id, user]: any) => {
+              if (user?.displayName) nameMap[id] = user.displayName;
+            });
+            setStudentNames(nameMap);
+          } catch {}
+
+          // Announcements moved elsewhere; keeping placeholder empty list
+          setRecentAnnouncements([]);
 
           // No longer deriving top students here; replaced with My Courses section
         }
@@ -205,7 +205,7 @@ export default function TeacherOverview() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{submission.courseTitle}</p>
-                        <p className="text-xs text-gray-500">{t('student.title').split(' ')[0]}: {submission.studentId}</p>
+                        <p className="text-xs text-gray-500">{t('student.title').split(' ')[0]}: {studentNames[submission.studentId] || submission.studentId}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">

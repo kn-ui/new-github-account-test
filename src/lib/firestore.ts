@@ -241,6 +241,20 @@ export const userService = {
     return null;
   },
 
+  async getUsersByIds(uids: string[]): Promise<Record<string, FirestoreUser | null>> {
+    const result: Record<string, FirestoreUser | null> = {};
+    const unique = Array.from(new Set(uids.filter(Boolean)));
+    await Promise.all(unique.map(async (uid) => {
+      try {
+        const found = await this.getUserById(uid);
+        result[uid] = found;
+      } catch {
+        result[uid] = null;
+      }
+    }));
+    return result;
+  },
+
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     if (!userData.uid) {
@@ -609,6 +623,32 @@ export const announcementService = {
     }
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+  },
+  async getAnnouncementsForStudent(studentId: string, enrolledCourseIds: string[], limitCount = 20): Promise<FirestoreAnnouncement[]> {
+    // General announcements
+    const generalQ = query(collections.announcements(), where('courseId', '==', null), orderBy('createdAt','desc'), limit(limitCount));
+    const generalSnap = await getDocs(generalQ);
+    const general = generalSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement));
+
+    // Course announcements targeted to course (no recipient) for enrolled courses
+    const courseAnnouncements: FirestoreAnnouncement[] = [];
+    await Promise.all(enrolledCourseIds.map(async (cid) => {
+      const q1 = query(collections.announcements(), where('courseId','==', cid), orderBy('createdAt','desc'), limit(limitCount));
+      const snap1 = await getDocs(q1);
+      courseAnnouncements.push(...snap1.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement)));
+    }));
+
+    // Direct announcements to this student
+    const directQ = query(collections.announcements(), where('recipientStudentId','==', studentId), orderBy('createdAt','desc'), limit(limitCount));
+    const directSnap = await getDocs(directQ);
+    const direct = directSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement));
+
+    const combined = [...general, ...courseAnnouncements, ...direct]
+      .sort((a,b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+    // De-duplicate by id
+    const seen = new Set<string>();
+    const unique = combined.filter(a => (seen.has(a.id) ? false : (seen.add(a.id), true)));
+    return unique;
   },
 
   async getAllAnnouncements(limitCount = 20): Promise<FirestoreAnnouncement[]> {

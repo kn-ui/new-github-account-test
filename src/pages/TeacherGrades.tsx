@@ -112,7 +112,7 @@ export default function TeacherGrades() {
             courseTitle: assignment.courseTitle,
             courseId: assignment.courseId,
             maxScore: assignment.maxScore,
-            studentName: submission.studentId // In a real app, you'd fetch student names
+            studentName: submission.studentId
           }));
         } catch (error) {
           console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
@@ -124,11 +124,15 @@ export default function TeacherGrades() {
       const allSubmissions = submissionsArrays.flat();
 
       // Convert to our interface
+      // Resolve unique student IDs to names
+      const uniqueIds = Array.from(new Set(allSubmissions.map((s: any) => s.studentId)));
+      const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(uniqueIds);
+
       const submissionsWithDetails: SubmissionWithDetails[] = allSubmissions.map(submission => ({
         id: submission.id,
         assignmentId: submission.assignmentId,
         studentId: submission.studentId,
-        studentName: submission.studentName,
+        studentName: (usersMap[submission.studentId] as any)?.displayName || submission.studentId,
         courseId: submission.courseId,
         courseTitle: submission.courseTitle,
         assignmentTitle: submission.assignmentTitle,

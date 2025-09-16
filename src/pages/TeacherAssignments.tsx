@@ -107,12 +107,17 @@ export default function TeacherAssignments() {
 
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
-        const storage = getStorage();
-        const path = `assignments/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, fileObj);
-        const url = await getDownloadURL(storageRef);
-        attachments.push({ type: 'file', url, title: fileObj.name });
+        try {
+          const storage = getStorage();
+          const path = `assignments/${formData.courseId}/${Date.now()}_${fileObj.name}`;
+          const storageRef = ref(storage, path);
+          await uploadBytes(storageRef, fileObj, { contentType: fileObj.type || undefined });
+          const url = await getDownloadURL(storageRef);
+          attachments.push({ type: 'file', url, title: fileObj.name });
+        } catch (err) {
+          console.error('Attachment upload failed', err);
+          toast.error('Failed to upload attachment');
+        }
       }
       if (formData.linkUrl) attachments.push({ type: 'link', url: formData.linkUrl, title: formData.linkTitle || undefined });
 

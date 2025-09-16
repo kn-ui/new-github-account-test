@@ -8,23 +8,25 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { courseService, submissionService } from '@/lib/firestore';
+import { courseService, submissionService, assignmentService } from '@/lib/firestore';
   import DashboardHero from '@/components/DashboardHero';
 
 
-interface SubmissionRow {
+interface AssignmentRow {
   id: string;
+  title: string;
+  courseId: string;
   courseTitle: string;
-  studentId: string;
-  status: string;
-  submittedAt: Date;
+  dueDate: Date;
+  pendingCount: number;
+  gradedCount: number;
 }
 
 export default function SubmissionsPage() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'graded'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
@@ -39,19 +41,28 @@ export default function SubmissionsPage() {
           return;
         }
         const myCourses = await courseService.getCoursesByInstructor(currentUser.uid);
-        const lists = await Promise.allSettled(myCourses.map((c) => submissionService.getSubmissionsByCourse(c.id)));
-        const okLists = lists.flatMap((res: any) => res.status === 'fulfilled' ? res.value : []);
-        // resolve student names
-        const studentIds = Array.from(new Set(okLists.flat().map((s: any) => s.studentId)));
-        const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(studentIds);
-        const flat = okLists.flat().map((s: any) => ({
-          id: s.id,
-          courseTitle: myCourses.find((c) => c.id === s.courseId)?.title || '—',
-          studentId: (usersMap[s.studentId] as any)?.displayName || s.studentId,
-          status: s.status,
-          submittedAt: s.submittedAt?.toDate ? s.submittedAt.toDate() : new Date(),
+        const perCourse = await Promise.all(myCourses.map(async (c) => {
+          const asgs = await assignmentService.getAssignmentsByCourse(c.id, 1000);
+          return asgs.map(a => ({ ...a, courseTitle: c.title }));
         }));
-        setSubmissions(flat);
+        const allAsgs = perCourse.flat();
+        const counts = await Promise.all(allAsgs.map(async (a: any) => {
+          const subs = await submissionService.getSubmissionsByAssignment(a.id);
+          const pending = subs.filter((s: any) => s.status === 'submitted').length;
+          const graded = subs.filter((s: any) => s.status === 'graded').length;
+          return { id: a.id, pending, graded };
+        }));
+        const countMap = Object.fromEntries(counts.map(c => [c.id, c] as const));
+        const rows: AssignmentRow[] = allAsgs.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          courseId: a.courseId,
+          courseTitle: a.courseTitle,
+          dueDate: a.dueDate?.toDate ? a.dueDate.toDate() : new Date(),
+          pendingCount: countMap[a.id]?.pending || 0,
+          gradedCount: countMap[a.id]?.graded || 0,
+        }));
+        setAssignments(rows);
       } catch (e) {
         console.error(e);
         toast.error('Failed to load submissions');
@@ -63,15 +74,14 @@ export default function SubmissionsPage() {
   }, [currentUser?.uid]);
 
   const filtered = useMemo(() => {
-    let list = submissions.filter(s =>
-      [s.courseTitle, s.studentId].some(v => v.toLowerCase().includes(search.toLowerCase())) &&
-      (statusFilter === 'all' || s.status === statusFilter)
+    let list = assignments.filter(a =>
+      [a.courseTitle, a.title].some(v => v.toLowerCase().includes(search.toLowerCase()))
     );
-    list = list.sort((a, b) => sortBy === 'newest' ? b.submittedAt.getTime() - a.submittedAt.getTime() : a.submittedAt.getTime() - b.submittedAt.getTime());
+    list = list.sort((a, b) => sortBy === 'newest' ? b.dueDate.getTime() - a.dueDate.getTime() : a.dueDate.getTime() - b.dueDate.getTime());
     return list;
-  }, [submissions, search, statusFilter, sortBy]);
+  }, [assignments, search, sortBy]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading submissions...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading assignments...</div>;
 
 
 
@@ -134,30 +144,30 @@ export default function SubmissionsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignment</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted / Graded</th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filtered.map(s => (
-                  <tr key={s.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">{s.courseTitle}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{s.studentId}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 capitalize">{s.status}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{s.submittedAt.toLocaleString()}</td>
+                {filtered.map(a => (
+                  <tr key={a.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">{a.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{a.courseTitle}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{a.dueDate.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{a.pendingCount + a.gradedCount} / {a.gradedCount} graded</td>
                     <td className="px-6 py-4 text-right">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/dashboard/submissions/${s.id}`}>View</Link>
+                        <Link to={`/dashboard/assignments/${a.id}/submissions`}>View submissions</Link>
                       </Button>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No submissions found</td>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No assignments found</td>
                   </tr>
                 )}
               </tbody>
@@ -165,15 +175,15 @@ export default function SubmissionsPage() {
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map(s => (
-              <div key={s.id} className="bg-white border rounded-lg p-4">
-                <div className="font-medium text-gray-900 mb-1">{s.courseTitle}</div>
-                <div className="text-sm text-gray-600 mb-2">Student: {s.studentId}</div>
-                <div className="text-xs text-gray-500 mb-2">Submitted: {s.submittedAt.toLocaleString()}</div>
+            {filtered.map(a => (
+              <div key={a.id} className="bg-white border rounded-lg p-4">
+                <div className="font-medium text-gray-900 mb-1">{a.title}</div>
+                <div className="text-sm text-gray-600 mb-2">Course: {a.courseTitle}</div>
+                <div className="text-xs text-gray-500 mb-2">Due: {a.dueDate.toLocaleString()}</div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs capitalize px-2 py-1 border rounded">{s.status}</span>
+                  <span className="text-xs capitalize px-2 py-1 border rounded">{a.pendingCount + a.gradedCount} submissions</span>
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/dashboard/submissions/${s.id}`}>View</Link>
+                    <Link to={`/dashboard/assignments/${a.id}/submissions`}>View submissions</Link>
                   </Button>
                 </div>
               </div>

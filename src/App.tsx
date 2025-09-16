@@ -50,6 +50,7 @@ import StudentGrades from "./pages/StudentGrades";
 import SearchResults from "./pages/SearchResults";
 import SeedDatabase from "./pages/SeedDatabase";
 import SubmissionDetail from "./pages/SubmissionDetail";
+import AssignmentSubmissions from "./pages/AssignmentSubmissions";
 
 // import Catalog from "./pages/Catalog";
 
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route path="/seed" element={<SeedDatabase />} />
             <Route path="/dashboard/submissions/:submissionId" element={<SubmissionDetail />} />
+            <Route path="/dashboard/assignments/:assignmentId/submissions" element={<ProtectedRoute><DashboardWrapper><AssignmentSubmissions /></DashboardWrapper></ProtectedRoute>} />
             <Route 
               path="/dashboard" 
               element={

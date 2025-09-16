@@ -343,6 +343,9 @@ export default function TeacherCourseDetail() {
                               <div className="text-xs text-gray-500 flex items-center gap-2">
                                 <Calendar className="h-3 w-3" /> Due {a.dueDate.toDate().toLocaleDateString()}
                               </div>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link to={`/dashboard/assignments/${a.id}/submissions`}>View submissions</Link>
+                              </Button>
                               <Button variant="outline" size="sm" onClick={() => { setSelectedAssignment(a); setSubmissionsForAssignment(submissions.filter(s => s.assignmentId === a.id)); setSubmissionsDialogOpen(true); }}>Grade submissions</Button>
                               <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
                               <Button variant="destructive" size="sm" onClick={() => { setAssignmentToDelete(a); setShowDeleteConfirm(true); }}>Delete</Button>

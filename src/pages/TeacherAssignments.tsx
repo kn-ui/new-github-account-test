@@ -38,6 +38,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function TeacherAssignments() {
   const { currentUser, userProfile } = useAuth();
@@ -152,8 +153,11 @@ export default function TeacherAssignments() {
       description: assignment.description,
       courseId: assignment.courseId,
       dueDate: assignment.dueDate.toDate().toISOString().split('T')[0],
+      dueTime: '',
       maxScore: assignment.maxScore,
-      instructions: assignment.instructions || ''
+      instructions: assignment.instructions || '',
+      linkTitle: '',
+      linkUrl: ''
     });
     setShowCreateDialog(true);
   };
@@ -176,9 +180,13 @@ export default function TeacherAssignments() {
       description: '',
       courseId: '',
       dueDate: '',
+      dueTime: '',
       maxScore: 100,
-      instructions: ''
+      instructions: '',
+      linkTitle: '',
+      linkUrl: ''
     });
+    setFileObj(null);
   };
 
   const openCreateDialog = () => {

@@ -8,11 +8,13 @@ import {
   assignmentService,
   submissionService,
   courseMaterialService,
+  examService,
   FirestoreCourse,
   FirestoreEnrollment,
   FirestoreAssignment,
   FirestoreCourseMaterial,
   FirestoreSubmission,
+  FirestoreExam,
 } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +35,12 @@ import {
   BarChart3,
   Award,
   Calendar,
+  Edit,
+  Eye,
+  Trash2,
+  Download,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -56,6 +63,11 @@ export default function TeacherCourseDetail() {
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
     { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }
   );
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] = useState<FirestoreAssignment | null>(null);
+  const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
+  const [submissionsForAssignment, setSubmissionsForAssignment] = useState<FirestoreSubmission[]>([]);
+  const [selectedAssignment, setSelectedAssignment] = useState<FirestoreAssignment | null>(null);
   const [assignSort, setAssignSort] = useState<'due-asc' | 'due-desc' | 'title-asc' | 'title-desc'>('due-asc');
   const [studentSort, setStudentSort] = useState<'name-asc' | 'name-desc'>('name-asc');
   const [gradeDialogOpen, setGradeDialogOpen] = useState(false);
@@ -63,24 +75,31 @@ export default function TeacherCourseDetail() {
   const [gradeValue, setGradeValue] = useState<number>(0);
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
   const [gradeSort, setGradeSort] = useState<'recent' | 'oldest' | 'grade-desc' | 'grade-asc'>('recent');
+  const [examDialogOpen, setExamDialogOpen] = useState(false);
+  const [editingExam, setEditingExam] = useState<FirestoreExam | null>(null);
+  const [examForm, setExamForm] = useState<{ title: string; description: string; date: string }>({ title: '', description: '', date: new Date().toISOString().slice(0,16) });
+  const [showExamDeleteConfirm, setShowExamDeleteConfirm] = useState(false);
+  const [examToDelete, setExamToDelete] = useState<FirestoreExam | null>(null);
 
   useEffect(() => {
     if (!courseId) return;
     const load = async () => {
       try {
         setLoading(true);
-        const [c, ens, asgs, subs, mats] = await Promise.all([
+        const [c, ens, asgs, subs, mats, exs] = await Promise.all([
           courseService.getCourseById(courseId),
           enrollmentService.getEnrollmentsByCourse(courseId),
           assignmentService.getAssignmentsByCourse(courseId, 1000),
           submissionService.getSubmissionsByCourse(courseId),
           courseMaterialService.getCourseMaterialsByCourse(courseId, 1000),
+          examService.getExamsByCourse(courseId),
         ]);
         setCourse(c);
         setEnrollments(ens);
         setAssignments(asgs);
         setSubmissions(subs);
         setMaterials(mats);
+        setExams(exs);
         // resolve student names
         try {
           const ids = Array.from(new Set(ens.map(e => e.studentId)));
@@ -105,7 +124,8 @@ export default function TeacherCourseDetail() {
 
   const studentsCount = enrollments.length;
   const assignmentsCount = assignments.length;
-  const examsCount = 0; // No exam entity available yet
+  const [exams, setExams] = useState<FirestoreExam[]>([]);
+  const examsCount = exams.length;
   const averageGrade = useMemo(() => {
     const graded = submissions.filter(s => typeof s.grade === 'number');
     if (graded.length === 0) return 0;
@@ -309,29 +329,57 @@ export default function TeacherCourseDetail() {
                           case 'title-desc': return b.title.localeCompare(a.title);
                         }
                       })
-                      .map(a => (
-                      <div key={a.id} className="py-3 flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-gray-900">{a.title}</div>
-                          <div className="text-sm text-gray-600">{a.description}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs text-gray-500 flex items-center gap-2">
-                            <Calendar className="h-3 w-3" /> Due {a.dueDate.toDate().toLocaleDateString()}
+                      .map(a => {
+                        const submittedCount = submissions.filter(s => s.assignmentId === a.id).length;
+                        const total = enrollments.length;
+                        return (
+                          <div key={a.id} className="py-3 flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900">{a.title}</div>
+                              <div className="text-sm text-gray-600">{a.description}</div>
+                              <div className="text-xs text-gray-500 mt-1">{submittedCount}/{total} submitted</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-xs text-gray-500 flex items-center gap-2">
+                                <Calendar className="h-3 w-3" /> Due {a.dueDate.toDate().toLocaleDateString()}
+                              </div>
+                              <Button variant="outline" size="sm" onClick={() => { setSelectedAssignment(a); setSubmissionsForAssignment(submissions.filter(s => s.assignmentId === a.id)); setSubmissionsDialogOpen(true); }}>Grade submissions</Button>
+                              <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
+                              <Button variant="destructive" size="sm" onClick={() => { setAssignmentToDelete(a); setShowDeleteConfirm(true); }}>Delete</Button>
+                            </div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
-                          <Button variant="destructive" size="sm" onClick={async () => { try { await (await import('@/lib/firestore')).assignmentService.deleteAssignment(a.id); toast.success('Assignment deleted'); const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000); setAssignments(latest); } catch { toast.error('Failed to delete'); } }}>Delete</Button>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 ) : (
                   <div className="text-gray-500 text-sm">No assignments yet.</div>
                 ))}
               </TabsContent>
 
-              <TabsContent value="exams" className="mt-4">
-                <div className="text-gray-500 text-sm">No exams configured for this course.</div>
+              <TabsContent value="exams" className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Exams</div>
+                  <Button onClick={() => setExamDialogOpen(true)}>Create Exam</Button>
+                </div>
+                {exams.length > 0 ? (
+                  <div className="divide-y">
+                    {exams.map(exam => (
+                      <div key={exam.id} className="py-3 flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-900">{exam.title}</div>
+                          <div className="text-sm text-gray-600">{exam.description}</div>
+                          <div className="text-xs text-gray-500 mt-1">{exam.date.toDate().toLocaleString()}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => { setEditingExam(exam); setExamForm({ title: exam.title, description: exam.description || '', date: exam.date.toDate().toISOString().slice(0,16) }); setExamDialogOpen(true); }}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={() => { setExamToDelete(exam); setShowExamDeleteConfirm(true); }}>Delete</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-sm">No exams configured for this course.</div>
+                )}
               </TabsContent>
 
               <TabsContent value="students" className="mt-4 space-y-3">
@@ -344,6 +392,17 @@ export default function TeacherCourseDetail() {
                       <SelectItem value="name-desc">Name Z→A</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const rows = [['Student','Student ID']];
+                    enrollments.forEach(e => rows.push([studentNames[e.studentId] || e.studentId, e.studentId]));
+                    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `${course.title}-students.csv`; a.click(); URL.revokeObjectURL(url);
+                  }}>
+                    <Download className="h-4 w-4 mr-2" /> Export Students
+                  </Button>
                 </div>
                 {enrollments.length > 0 ? (
                   <div className="divide-y">
@@ -378,6 +437,60 @@ export default function TeacherCourseDetail() {
                       <SelectItem value="grade-asc">Grade Low→High</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    // export CSV for graded submissions
+                    const rows = [['Student','Assignment','Grade','Submitted At']];
+                    submissions.filter(s => s.status === 'graded').forEach(s => {
+                      const student = studentNames[s.studentId] || s.studentId;
+                      const asg = assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId;
+                      rows.push([student, asg, String(s.grade ?? ''), s.submittedAt.toDate().toISOString()]);
+                    });
+                    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `${course.title}-grades.csv`; a.click(); URL.revokeObjectURL(url);
+                  }}>
+                    <Download className="h-4 w-4 mr-2" /> Export CSV
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Class Average</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{averageGrade}</div></CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Highest Grade</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{Math.max(0, ...submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number)) || 0}</div></CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Lowest Grade</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{(submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number).sort((a,b)=>a-b)[0]) ?? 0}</div></CardContent>
+                  </Card>
+                </div>
+                <div className="bg-white border rounded p-3">
+                  <div className="text-sm font-medium mb-2">Grade distribution</div>
+                  {(() => {
+                    const graded = submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number);
+                    const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
+                    graded.forEach(g => {
+                      if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
+                    });
+                    const items = Object.entries(dist);
+                    return (
+                      <div className="grid grid-cols-5 gap-2">
+                        {items.map(([k,v]) => (
+                          <div key={k} className="text-center">
+                            <div className="text-xs text-gray-500 mb-1">{k}</div>
+                            <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
+                              <div className="w-full bg-blue-500 rounded-b" style={{ height: `${graded.length? (v/graded.length)*100 : 0}%` }} />
+                            </div>
+                            <div className="text-xs mt-1">{v} students</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 {submissions.filter(s => s.status === 'graded').length > 0 ? (
                   <div className="overflow-x-auto">
@@ -429,6 +542,62 @@ export default function TeacherCourseDetail() {
           </Link>
         </div>
       </div>
+
+      {/* Delete Assignment Confirm */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete assignment?"
+        description="This action cannot be undone. The assignment and its submissions will remain but unlinking may affect grading workflows."
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!assignmentToDelete) return;
+          try {
+            await (await import('@/lib/firestore')).assignmentService.deleteAssignment(assignmentToDelete.id);
+            toast.success('Assignment deleted');
+            const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course!.id, 1000);
+            setAssignments(latest);
+          } catch { toast.error('Failed to delete'); }
+        }}
+      />
+
+      {/* Submissions Dialog for an Assignment */}
+      <Dialog open={submissionsDialogOpen} onOpenChange={setSubmissionsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submissions{selectedAssignment ? ` - ${selectedAssignment.title}` : ''}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            {submissionsForAssignment.length > 0 ? (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-4 py-2">Student</th>
+                    <th className="text-left px-4 py-2">Status</th>
+                    <th className="text-left px-4 py-2">Submitted</th>
+                    <th className="text-left px-4 py-2">Grade</th>
+                    <th className="text-left px-4 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {submissionsForAssignment.map(s => (
+                    <tr key={s.id}>
+                      <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
+                      <td className="px-4 py-2 capitalize">{s.status}</td>
+                      <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
+                      <td className="px-4 py-2">{typeof s.grade==='number' ? s.grade : '-'}</td>
+                      <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-gray-500">No submissions yet.</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Material Dialog */}
       <Dialog open={materialDialogOpen} onOpenChange={setMaterialDialogOpen}>
@@ -548,6 +717,67 @@ export default function TeacherCourseDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Exam Dialog */}
+      <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingExam ? 'Edit Exam' : 'Create Exam'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="e-title">Title</Label>
+              <Input id="e-title" value={examForm.title} onChange={(e) => setExamForm({ ...examForm, title: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="e-desc">Description</Label>
+              <Input id="e-desc" value={examForm.description} onChange={(e) => setExamForm({ ...examForm, description: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="e-date">Date & Time</Label>
+              <Input id="e-date" type="datetime-local" value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
+            <Button onClick={async () => {
+              try {
+                const payload: any = { courseId: course!.id, title: examForm.title, description: examForm.description, date: new Date(examForm.date) };
+                if (editingExam) {
+                  await examService.updateExam(editingExam.id, payload);
+                  toast.success('Exam updated');
+                } else {
+                  await examService.createExam(payload);
+                  toast.success('Exam created');
+                }
+                const latest = await examService.getExamsByCourse(course!.id);
+                setExams(latest);
+                setExamDialogOpen(false);
+                setEditingExam(null);
+              } catch { toast.error('Failed to save exam'); }
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Exam Confirm */}
+      <ConfirmDialog
+        open={showExamDeleteConfirm}
+        onOpenChange={setShowExamDeleteConfirm}
+        title="Delete exam?"
+        description="This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!examToDelete) return;
+          try {
+            await examService.deleteExam(examToDelete.id);
+            toast.success('Exam deleted');
+            const latest = await examService.getExamsByCourse(course!.id);
+            setExams(latest);
+          } catch { toast.error('Failed to delete exam'); }
+        }}
+      />
 
       {/* Grade Dialog */}
       <Dialog open={gradeDialogOpen} onOpenChange={setGradeDialogOpen}>

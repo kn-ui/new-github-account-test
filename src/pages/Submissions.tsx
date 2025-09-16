@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { FileText, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,7 +155,9 @@ export default function SubmissionsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900 capitalize">{s.status}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{s.submittedAt.toLocaleString()}</td>
                     <td className="px-6 py-4 text-right">
-                      <Button variant="outline" size="sm">View</Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/dashboard/submissions/${s.id}`}>View</Link>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -176,7 +178,9 @@ export default function SubmissionsPage() {
                 <div className="text-xs text-gray-500 mb-2">Submitted: {s.submittedAt.toLocaleString()}</div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs capitalize px-2 py-1 border rounded">{s.status}</span>
-                  <Button variant="outline" size="sm">View</Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/dashboard/submissions/${s.id}`}>View</Link>
+                  </Button>
                 </div>
               </div>
             ))}

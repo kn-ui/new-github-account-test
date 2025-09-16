@@ -415,66 +415,64 @@ export default function TeacherGrades() {
         {/* Submissions List */}
         <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
           {filteredAndSortedSubmissions.map(submission => (
-            <div key={submission.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium text-gray-900">{submission.assignmentTitle}</h3>
-                      <Badge className={getStatusColor(submission.status)}>
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(submission.status)}
-                          {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                        </div>
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">Student: {submission.studentName}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        {submission.courseTitle}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Submitted: {submission.submittedAt.toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        Max Score: {submission.maxScore}
-                      </span>
-                    </div>
-                    {submission.status === 'graded' && submission.grade !== undefined && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className={`font-medium ${getGradeColor(submission.grade, submission.maxScore)}`}>
-                          Grade: {submission.grade}/{submission.maxScore}
-                        </span>
-                        {submission.feedback && (
-                          <span className="text-gray-600">
-                            Feedback: {submission.feedback}
-                          </span>
-                        )}
+            <div key={submission.id} className="bg-white border rounded-lg p-4 flex flex-col h-full">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium text-gray-900">{submission.assignmentTitle}</h3>
+                    <Badge className={getStatusColor(submission.status)}>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(submission.status)}
+                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                       </div>
-                    )}
+                    </Badge>
                   </div>
+                  <p className="text-sm text-gray-600 mb-2">Student: {submission.studentName}</p>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      {submission.courseTitle}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Submitted: {submission.submittedAt.toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Max Score: {submission.maxScore}
+                    </span>
+                  </div>
+                  {submission.status === 'graded' && submission.grade !== undefined && (
+                    <div className="flex items-center gap-2 text-sm mt-2">
+                      <span className={`font-medium ${getGradeColor(submission.grade, submission.maxScore)}`}>
+                        Grade: {submission.grade}/{submission.maxScore}
+                      </span>
+                      {submission.feedback && (
+                        <span className="text-gray-600">
+                          Feedback: {submission.feedback}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/courses/${submission.courseId}`}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Course
-                    </Link>
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => openGradingDialog(submission)}
-                    variant={submission.status === 'graded' ? 'outline' : 'default'}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    {submission.status === 'graded' ? 'Update Grade' : 'Grade'}
-                  </Button>
-                </div>
+              </div>
+              <div className="mt-auto pt-4 flex items-center justify-between">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/courses/${submission.courseId}`}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Course
+                  </Link>
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => openGradingDialog(submission)}
+                  variant={submission.status === 'graded' ? 'outline' : 'default'}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {submission.status === 'graded' ? 'Update Grade' : 'Grade'}
+                </Button>
               </div>
             </div>
           ))}

@@ -41,10 +41,19 @@ export default function SubmissionsPage() {
         const myCourses = await courseService.getCoursesByInstructor(currentUser.uid);
         const lists = await Promise.allSettled(myCourses.map((c) => submissionService.getSubmissionsByCourse(c.id)));
         const okLists = lists.flatMap((res: any) => res.status === 'fulfilled' ? res.value : []);
+        // resolve student names
+        const studentIds = Array.from(new Set(okLists.flat().map((s: any) => s.studentId)));
+        const userMap: Record<string,string> = {};
+        await Promise.all(studentIds.map(async (id) => {
+          try {
+            const u = await (await import('@/lib/firestore')).userService.getUserById(id);
+            if (u && (u as any).displayName) userMap[id] = (u as any).displayName;
+          } catch {}
+        }));
         const flat = okLists.flat().map((s: any) => ({
           id: s.id,
           courseTitle: myCourses.find((c) => c.id === s.courseId)?.title || '—',
-          studentId: s.studentId,
+          studentId: userMap[s.studentId] || s.studentId,
           status: s.status,
           submittedAt: s.submittedAt?.toDate ? s.submittedAt.toDate() : new Date(),
         }));

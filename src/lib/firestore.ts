@@ -85,6 +85,7 @@ export interface FirestoreAssignment {
   maxScore: number;
   instructions?: string;
   teacherId: string;
+  attachments?: { type: 'file' | 'link'; url: string; title?: string }[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -98,6 +99,16 @@ export interface FirestoreCourseMaterial {
   type: 'document' | 'video' | 'link' | 'other';
   fileUrl?: string;
   externalLink?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface FirestoreExam {
+  id: string;
+  courseId: string;
+  title: string;
+  description?: string;
+  date: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -187,6 +198,7 @@ const collections = {
   forumThreads: () => collection(db, 'forum_threads'),
   forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
   courseMaterials: () => collection(db, 'courseMaterials'),
+  exams: () => collection(db, 'exams'),
 };
 
 // User operations
@@ -790,6 +802,28 @@ export const courseMaterialService = {
     
     // Sort by creation date (newest first)
     return allMaterials.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+  },
+};
+
+// Exams service
+export const examService = {
+  async createExam(exam: Omit<FirestoreExam, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(collections.exams(), { ...exam, createdAt: now, updatedAt: now });
+    return ref.id;
+  },
+  async getExamsByCourse(courseId: string): Promise<FirestoreExam[]> {
+    const q = query(collections.exams(), where('courseId', '==', courseId), orderBy('date', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreExam));
+  },
+  async updateExam(examId: string, updates: Partial<FirestoreExam>): Promise<void> {
+    const ref = doc(db, 'exams', examId);
+    await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);
+  },
+  async deleteExam(examId: string): Promise<void> {
+    const ref = doc(db, 'exams', examId);
+    await deleteDoc(ref);
   },
 };
 

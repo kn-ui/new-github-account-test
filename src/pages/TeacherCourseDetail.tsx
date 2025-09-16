@@ -21,6 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
   Users,
@@ -42,6 +46,23 @@ export default function TeacherCourseDetail() {
   const [submissions, setSubmissions] = useState<FirestoreSubmission[]>([]);
   const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [materialForm, setMaterialForm] = useState<{ title: string; description: string; type: 'document' | 'video' | 'link' | 'other'; fileUrl: string; externalLink: string; }>(
+    { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
+  );
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
+  const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
+    { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }
+  );
+  const [assignSort, setAssignSort] = useState<'due-asc' | 'due-desc' | 'title-asc' | 'title-desc'>('due-asc');
+  const [studentSort, setStudentSort] = useState<'name-asc' | 'name-desc'>('name-asc');
+  const [gradeDialogOpen, setGradeDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<FirestoreSubmission | null>(null);
+  const [gradeValue, setGradeValue] = useState<number>(0);
+  const [gradeFeedback, setGradeFeedback] = useState<string>('');
+  const [gradeSort, setGradeSort] = useState<'recent' | 'oldest' | 'grade-desc' | 'grade-asc'>('recent');
 
   useEffect(() => {
     if (!courseId) return;
@@ -222,27 +243,35 @@ export default function TeacherCourseDetail() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="resources" className="mt-4">
+              <TabsContent value="resources" className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Resources</div>
+                  <Button onClick={() => { setEditingMaterial(null); setMaterialForm({ title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }); setMaterialDialogOpen(true); }}>Add Material</Button>
+                </div>
                 {materials.length > 0 ? (
                   <div className="space-y-3">
                     {materials.map(m => (
-                      <div key={m.id} className="flex items-start justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium text-gray-900">{m.title}</div>
-                          <div className="text-sm text-gray-600">{m.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">{m.type}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {m.fileUrl && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">View</a>
-                            </Button>
-                          )}
-                          {m.externalLink && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={m.externalLink} target="_blank" rel="noopener noreferrer">Visit Link</a>
-                            </Button>
-                          )}
+                      <div key={m.id} className="p-3 border rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-medium text-gray-900">{m.title}</div>
+                            <div className="text-sm text-gray-600">{m.description}</div>
+                            <div className="text-xs text-gray-500 mt-1">{m.type}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {m.fileUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">View</a>
+                              </Button>
+                            )}
+                            {m.externalLink && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={m.externalLink} target="_blank" rel="noopener noreferrer">Visit Link</a>
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => { setEditingMaterial(m); setMaterialForm({ title: m.title, description: m.description, type: m.type, fileUrl: m.fileUrl || '', externalLink: m.externalLink || '' }); setMaterialDialogOpen(true); }}>Edit</Button>
+                            <Button variant="destructive" size="sm" onClick={async () => { try { await (await import('@/lib/firestore')).courseMaterialService.deleteCourseMaterial(m.id); toast.success('Material deleted'); const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id); setMaterials(latest); } catch (e) { toast.error('Failed to delete'); } }}>Delete</Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -252,35 +281,80 @@ export default function TeacherCourseDetail() {
                 )}
               </TabsContent>
 
-              <TabsContent value="assignments" className="mt-4">
-                {assignments.length > 0 ? (
+              <TabsContent value="assignments" className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600">Sort:</span>
+                    <Select value={assignSort} onValueChange={(v) => setAssignSort(v as any)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="due-asc">Due Date ↑</SelectItem>
+                        <SelectItem value="due-desc">Due Date ↓</SelectItem>
+                        <SelectItem value="title-asc">Title A→Z</SelectItem>
+                        <SelectItem value="title-desc">Title Z→A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={() => { setEditingAssignment(null); setAssignmentForm({ title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }); setAssignmentDialogOpen(true); }}>Create Assignment</Button>
+                </div>
+                {(assignments.length > 0 ? (
                   <div className="divide-y">
-                    {assignments.map(a => (
+                    {assignments
+                      .slice()
+                      .sort((a,b) => {
+                        switch (assignSort) {
+                          case 'due-asc': return a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime();
+                          case 'due-desc': return b.dueDate.toDate().getTime() - a.dueDate.toDate().getTime();
+                          case 'title-asc': return a.title.localeCompare(b.title);
+                          case 'title-desc': return b.title.localeCompare(a.title);
+                        }
+                      })
+                      .map(a => (
                       <div key={a.id} className="py-3 flex items-center justify-between">
                         <div>
                           <div className="font-medium text-gray-900">{a.title}</div>
                           <div className="text-sm text-gray-600">{a.description}</div>
                         </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
-                          <Calendar className="h-3 w-3" />
-                          Due {a.dueDate.toDate().toLocaleDateString()}
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-gray-500 flex items-center gap-2">
+                            <Calendar className="h-3 w-3" /> Due {a.dueDate.toDate().toLocaleDateString()}
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
+                          <Button variant="destructive" size="sm" onClick={async () => { try { await (await import('@/lib/firestore')).assignmentService.deleteAssignment(a.id); toast.success('Assignment deleted'); const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000); setAssignments(latest); } catch { toast.error('Failed to delete'); } }}>Delete</Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-gray-500 text-sm">No assignments yet.</div>
-                )}
+                ))}
               </TabsContent>
 
               <TabsContent value="exams" className="mt-4">
                 <div className="text-gray-500 text-sm">No exams configured for this course.</div>
               </TabsContent>
 
-              <TabsContent value="students" className="mt-4">
+              <TabsContent value="students" className="mt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Sort:</span>
+                  <Select value={studentSort} onValueChange={(v) => setStudentSort(v as any)}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name-asc">Name A→Z</SelectItem>
+                      <SelectItem value="name-desc">Name Z→A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {enrollments.length > 0 ? (
                   <div className="divide-y">
-                    {enrollments.map(e => (
+                    {enrollments
+                      .slice()
+                      .sort((a,b) => {
+                        const an = studentNames[a.studentId] || a.studentId;
+                        const bn = studentNames[b.studentId] || b.studentId;
+                        return studentSort === 'name-asc' ? an.localeCompare(bn) : bn.localeCompare(an);
+                      })
+                      .map(e => (
                       <div key={e.id} className="py-2 flex items-center justify-between">
                         <div className="text-sm text-gray-700">{studentNames[e.studentId] || e.studentId}</div>
                         <Badge variant="secondary" className="capitalize">{e.status}</Badge>
@@ -292,7 +366,19 @@ export default function TeacherCourseDetail() {
                 )}
               </TabsContent>
 
-              <TabsContent value="grades" className="mt-4">
+              <TabsContent value="grades" className="mt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Sort:</span>
+                  <Select value={gradeSort} onValueChange={(v) => setGradeSort(v as any)}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recent">Most Recent</SelectItem>
+                      <SelectItem value="oldest">Oldest</SelectItem>
+                      <SelectItem value="grade-desc">Grade High→Low</SelectItem>
+                      <SelectItem value="grade-asc">Grade Low→High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {submissions.filter(s => s.status === 'graded').length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -302,15 +388,28 @@ export default function TeacherCourseDetail() {
                           <th className="text-left px-4 py-2">Grade</th>
                           <th className="text-left px-4 py-2">Status</th>
                           <th className="text-left px-4 py-2">Submitted</th>
+                          <th className="text-left px-4 py-2"></th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {submissions.filter(s => s.status === 'graded').map(s => (
+                        {submissions
+                          .filter(s => s.status === 'graded')
+                          .slice()
+                          .sort((a,b) => {
+                            switch (gradeSort) {
+                              case 'recent': return b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime();
+                              case 'oldest': return a.submittedAt.toDate().getTime() - b.submittedAt.toDate().getTime();
+                              case 'grade-desc': return (b.grade || 0) - (a.grade || 0);
+                              case 'grade-asc': return (a.grade || 0) - (b.grade || 0);
+                            }
+                          })
+                          .map(s => (
                           <tr key={s.id}>
                             <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
                             <td className="px-4 py-2">{typeof s.grade === 'number' ? s.grade : '-'}</td>
                             <td className="px-4 py-2 capitalize">{s.status}</td>
                             <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
+                            <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -330,6 +429,157 @@ export default function TeacherCourseDetail() {
           </Link>
         </div>
       </div>
+
+      {/* Material Dialog */}
+      <Dialog open={materialDialogOpen} onOpenChange={setMaterialDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingMaterial ? 'Edit Material' : 'Add Material'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="m-title">Title</Label>
+              <Input id="m-title" value={materialForm.title} onChange={(e) => setMaterialForm({ ...materialForm, title: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="m-desc">Description</Label>
+              <Input id="m-desc" value={materialForm.description} onChange={(e) => setMaterialForm({ ...materialForm, description: e.target.value })} />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <Select value={materialForm.type} onValueChange={(v) => setMaterialForm({ ...materialForm, type: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="document">Document</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="link">Link</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {materialForm.type === 'document' && (
+              <div>
+                <Label htmlFor="m-file">File URL</Label>
+                <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
+              </div>
+            )}
+            {(materialForm.type === 'video' || materialForm.type === 'link') && (
+              <div>
+                <Label htmlFor="m-link">External Link</Label>
+                <Input id="m-link" value={materialForm.externalLink} onChange={(e) => setMaterialForm({ ...materialForm, externalLink: e.target.value })} placeholder="https://example.com/resource" />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMaterialDialogOpen(false)}>Cancel</Button>
+            <Button onClick={async () => {
+              try {
+                const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
+                if (materialForm.type === 'document') payload.fileUrl = materialForm.fileUrl || '';
+                if (materialForm.type === 'video' || materialForm.type === 'link') payload.externalLink = materialForm.externalLink || '';
+                if (editingMaterial) {
+                  await (await import('@/lib/firestore')).courseMaterialService.updateCourseMaterial(editingMaterial.id, payload);
+                  toast.success('Material updated');
+                } else {
+                  await (await import('@/lib/firestore')).courseMaterialService.createCourseMaterial(payload);
+                  toast.success('Material added');
+                }
+                const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id, 1000);
+                setMaterials(latest);
+                setMaterialDialogOpen(false);
+                setEditingMaterial(null);
+              } catch (e) { toast.error('Failed to save material'); }
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assignment Dialog */}
+      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingAssignment ? 'Edit Assignment' : 'Create Assignment'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="a-title">Title</Label>
+              <Input id="a-title" value={assignmentForm.title} onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="a-desc">Description</Label>
+              <Input id="a-desc" value={assignmentForm.description} onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="a-due">Due Date</Label>
+                <Input id="a-due" type="date" value={assignmentForm.dueDate} onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="a-max">Max Score</Label>
+                <Input id="a-max" type="number" value={assignmentForm.maxScore} onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: parseInt(e.target.value) || 0 })} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignmentDialogOpen(false)}>Cancel</Button>
+            <Button onClick={async () => {
+              try {
+                const payload: any = {
+                  title: assignmentForm.title,
+                  description: assignmentForm.description,
+                  courseId: course.id,
+                  dueDate: new Date(assignmentForm.dueDate),
+                  maxScore: assignmentForm.maxScore,
+                };
+                if (editingAssignment) {
+                  await (await import('@/lib/firestore')).assignmentService.updateAssignment(editingAssignment.id, payload);
+                  toast.success('Assignment updated');
+                } else {
+                  payload.teacherId = course.instructor;
+                  await (await import('@/lib/firestore')).assignmentService.createAssignment(payload);
+                  toast.success('Assignment created');
+                }
+                const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000);
+                setAssignments(latest);
+                setAssignmentDialogOpen(false);
+                setEditingAssignment(null);
+              } catch (e) { toast.error('Failed to save assignment'); }
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grade Dialog */}
+      <Dialog open={gradeDialogOpen} onOpenChange={setGradeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Grade</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="g-grade">Grade</Label>
+              <Input id="g-grade" type="number" value={gradeValue} onChange={(e) => setGradeValue(parseInt(e.target.value) || 0)} />
+            </div>
+            <div>
+              <Label htmlFor="g-feedback">Feedback</Label>
+              <Input id="g-feedback" value={gradeFeedback} onChange={(e) => setGradeFeedback(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGradeDialogOpen(false)}>Cancel</Button>
+            <Button onClick={async () => {
+              if (!selectedSubmission) return;
+              try {
+                await (await import('@/lib/firestore')).submissionService.updateSubmission(selectedSubmission.id, { grade: gradeValue, feedback: gradeFeedback, status: 'graded' });
+                toast.success('Grade updated');
+                const latest = await (await import('@/lib/firestore')).submissionService.getSubmissionsByCourse(course.id);
+                setSubmissions(latest);
+                setGradeDialogOpen(false);
+              } catch { toast.error('Failed to update grade'); }
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

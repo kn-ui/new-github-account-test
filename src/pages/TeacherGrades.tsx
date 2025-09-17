@@ -171,19 +171,14 @@ export default function TeacherGrades() {
   };
 
   const getUniqueCourses = () => {
-    return Array.from(new Set(submissions.map(submission => submission.courseTitle)));
+    return Array.from(new Set(assignments.map(a => a.courseTitle)));
   };
 
   const getStats = () => {
-    const total = submissions.length;
-    const graded = submissions.filter(s => s.status === 'graded').length;
-    const pending = submissions.filter(s => s.status === 'submitted').length;
-    const averageGrade = graded > 0 
-      ? submissions
-          .filter(s => s.status === 'graded' && s.grade !== undefined)
-          .reduce((sum, s) => sum + (s.grade || 0), 0) / graded
-      : 0;
-
+    const total = assignments.reduce((acc, a) => acc + a.pending + a.graded, 0);
+    const graded = assignments.reduce((acc, a) => acc + a.graded, 0);
+    const pending = assignments.reduce((acc, a) => acc + a.pending, 0);
+    const averageGrade = assignments.length ? Math.round((assignments.reduce((acc, a) => acc + (a.avg || 0), 0) / assignments.length) * 10) / 10 : 0;
     return { total, graded, pending, averageGrade };
   };
 
@@ -249,7 +244,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.pending}</p>
-                <p className="text-sm text-gray-600">Pending Review</p>
+                <p className="text-sm text-gray-600">Pending Grade</p>
               </div>
             </div>
           </div>
@@ -291,7 +286,7 @@ export default function TeacherGrades() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="submitted">Pending Review</SelectItem>
+                  <SelectItem value="submitted">Pending Grade</SelectItem>
                   <SelectItem value="graded">Graded</SelectItem>
                 </SelectContent>
               </Select>

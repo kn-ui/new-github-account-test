@@ -129,14 +129,30 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   useEffect(() => {
     const loadAnnouncements = async () => {
       try {
-        const list = await announcementService.getAllAnnouncements(5);
-        setAnnouncements(list);
+        // Basic role-aware notifications: teachers see own course/general; students see filtered ones
+        if (userRole === 'teacher') {
+          const my = await announcementService.getAnnouncementsByTeacher((await import('@/contexts/AuthContext')).useAuth().currentUser?.uid || '');
+          setAnnouncements(my.slice(0, 5));
+        } else if (userRole === 'student') {
+          const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
+          if (currentUser?.uid) {
+            // For dropdown brevity we won’t fetch enrollments here; student pages already show full feed
+            const all = await announcementService.getAllAnnouncements(20);
+            const direct = all.filter((a: any) => a.recipientStudentId === currentUser.uid);
+            const general = all.filter((a: any) => !a.recipientStudentId && !a.courseId);
+            setAnnouncements([...direct, ...general].slice(0, 5));
+          } else {
+            setAnnouncements([]);
+          }
+        } else {
+          setAnnouncements(await announcementService.getAllAnnouncements(5));
+        }
       } catch {
-        // ignore
+        setAnnouncements([]);
       }
     };
     loadAnnouncements();
-  }, []);
+  }, [userRole]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();

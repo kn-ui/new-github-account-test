@@ -62,6 +62,7 @@ export default function TeacherAnnouncements() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [courseStudents, setCourseStudents] = useState<{ id: string; name: string }[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
+  const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -129,6 +130,21 @@ export default function TeacherAnnouncements() {
       }
       
       setAnnouncements(teacherAnnouncements);
+
+      // Resolve recipient student names for direct messages
+      const ids = Array.from(new Set((teacherAnnouncements as any[])
+        .map(a => (a as any).recipientStudentId)
+        .filter(Boolean)));
+      if (ids.length) {
+        try {
+          const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(ids as string[]);
+          const nameMap: Record<string, string> = {};
+          Object.entries(usersMap).forEach(([id, u]: any) => { if (u?.displayName) nameMap[id] = u.displayName; });
+          setRecipientNames(nameMap);
+        } catch {}
+      } else {
+        setRecipientNames({});
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load data');
@@ -393,9 +409,15 @@ export default function TeacherAnnouncements() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-medium text-gray-900">{announcement.title}</h3>
-                        <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                          {announcement.courseId ? 'Course' : 'General'}
-                        </Badge>
+                        {announcement.recipientStudentId ? (
+                          <Badge variant="outline">
+                            Message to {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                          </Badge>
+                        ) : (
+                          <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                            {announcement.courseId ? 'Course' : 'General'}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600 mb-2">{announcement.body}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -455,9 +477,15 @@ export default function TeacherAnnouncements() {
                     <Bell className="h-4 w-4 text-blue-600" />
                     <h3 className="font-medium text-gray-900">{announcement.title}</h3>
                   </div>
-                  <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                    {announcement.courseId ? 'Course' : 'General'}
-                  </Badge>
+                  {announcement.recipientStudentId ? (
+                    <Badge variant="outline">
+                      Message to {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                    </Badge>
+                  ) : (
+                    <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                      {announcement.courseId ? 'Course' : 'General'}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-3">{announcement.body}</p>
                 <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">

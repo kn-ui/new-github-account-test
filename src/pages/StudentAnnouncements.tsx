@@ -47,67 +47,25 @@ export default function StudentAnnouncements() {
 
   const loadAnnouncements = async () => {
     if (!currentUser?.uid) return;
-    
     try {
       setLoading(true);
-      
-      // Get student's enrollments
       const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
       const courseIds = enrollments.map((e: any) => e.courseId);
-      
-      // Get course details for enrolled courses
-      const courses = await Promise.all(
-        courseIds.map(async (courseId) => {
-          try {
-            return await courseService.getCourseById(courseId);
-          } catch (error) {
-            console.warn(`Failed to load course ${courseId}:`, error);
-            return null;
-          }
-        })
-      );
-      
+      const courses = await Promise.all(courseIds.map(async (courseId) => {
+        try { return await courseService.getCourseById(courseId); } catch { return null; }
+      }));
       const validCourses = courses.filter(Boolean);
       setEnrolledCourses(validCourses);
-      
-      // Get all announcements (course-specific and general)
-      const allAnnouncements = await announcementService.getAllAnnouncements();
-      
-      // Filter announcements for enrolled courses and general ones
-      const relevantAnnouncements = allAnnouncements.filter((announcement: any) => {
-        // Include general announcements
-        if (!announcement.courseId) return true;
-        
-        // Include course-specific announcements for enrolled courses
-        return courseIds.includes(announcement.courseId);
-      });
-      
-      // Enrich announcements with course details
-      const announcementsWithDetails = relevantAnnouncements.map((announcement: any) => {
-        const course = announcement.courseId 
-          ? validCourses.find(c => c?.id === announcement.courseId)
-          : null;
-        
-        return {
-          ...announcement,
-          course,
-          isRead: false // In a real app, this would track read status
-        };
-      });
-      
-      // Sort by creation date (newest first) and importance
-      announcementsWithDetails.sort((a, b) => {
-        // Important announcements first
-        if (a.isImportant && !b.isImportant) return -1;
-        if (!a.isImportant && b.isImportant) return 1;
-        
-        // Then by date
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-        return dateB.getTime() - dateA.getTime();
-      });
-      
-      setAnnouncements(announcementsWithDetails);
+
+      // Use filtered API that includes: general, enrolled courses, and direct-recipient announcements
+      const filtered = await announcementService.getAnnouncementsForStudent(currentUser.uid, courseIds, 100);
+      const withDetails = filtered.map((a: any) => ({
+        ...a,
+        course: a.courseId ? validCourses.find((c: any) => c?.id === a.courseId) : null,
+        isRead: false,
+      }));
+      withDetails.sort((a: any, b: any) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+      setAnnouncements(withDetails);
     } catch (error) {
       console.error('Failed to load announcements:', error);
       toast.error('Failed to load announcements');
@@ -333,7 +291,7 @@ export default function StudentAnnouncements() {
                           </Badge>
                         )}
                         <Badge variant="outline">
-                          {announcement.courseId ? 'Course-specific' : 'General'}
+                          {announcement.recipientStudentId ? 'Direct' : (announcement.courseId ? 'Course-specific' : 'General')}
                         </Badge>
                       </div>
                       

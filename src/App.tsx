@@ -83,7 +83,16 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route path="/seed" element={<SeedDatabase />} />
-            <Route path="/dashboard/submissions/:submissionId" element={<SubmissionDetail />} />
+            <Route
+              path="/dashboard/submissions/:submissionId"
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <SubmissionDetail />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/dashboard/assignments/:assignmentId/submissions" element={<ProtectedRoute><DashboardWrapper><AssignmentSubmissions /></DashboardWrapper></ProtectedRoute>} />
             <Route 
               path="/dashboard" 

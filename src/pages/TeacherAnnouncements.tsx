@@ -68,7 +68,8 @@ export default function TeacherAnnouncements() {
     courseId: '',
     isGeneral: false,
     priority: 'normal',
-    recipientStudentId: ''
+    recipientStudentId: '',
+    externalLink: ''
   });
 
   useEffect(() => {
@@ -153,7 +154,7 @@ export default function TeacherAnnouncements() {
 
     try {
       // Build payload without undefined fields
-      const isGeneral = formData.isGeneral || !!formData.recipientStudentId;
+      const isGeneral = formData.isGeneral;
       const base: any = {
         title: formData.title,
         body: formData.body,
@@ -162,14 +163,16 @@ export default function TeacherAnnouncements() {
       if (!editingAnnouncement) {
         base.createdAt = new Date();
       }
-      if (isGeneral) {
+      // direct > course > general
+      if (formData.recipientStudentId) {
+        base.recipientStudentId = formData.recipientStudentId;
         base.courseId = null;
       } else if (formData.courseId) {
         base.courseId = formData.courseId;
+      } else if (isGeneral) {
+        base.courseId = null;
       }
-      if (formData.recipientStudentId) {
-        base.recipientStudentId = formData.recipientStudentId;
-      }
+      if (formData.externalLink) base.externalLink = formData.externalLink;
 
       if (editingAnnouncement) {
         await announcementService.updateAnnouncement(editingAnnouncement.id, base);
@@ -583,6 +586,13 @@ export default function TeacherAnnouncements() {
                   </Select>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Leave empty to announce to all students in the course.</p>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <Label htmlFor="ext">Attach Link (optional)</Label>
+                    <Input id="ext" placeholder="https://..." value={formData.externalLink} onChange={(e) => setFormData(prev => ({ ...prev, externalLink: e.target.value }))} />
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-end">If provided, the student sees the link with the message.</div>
+                </div>
               </div>
             )}
 

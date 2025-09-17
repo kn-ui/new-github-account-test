@@ -150,6 +150,7 @@ export interface FirestoreAnnouncement {
   body: string;
   authorId: string;
   createdAt: Timestamp;
+  externalLink?: string;
 }
 
 export interface FirestoreEvent {
@@ -625,20 +626,25 @@ export const announcementService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
   },
   async getAnnouncementsForStudent(studentId: string, enrolledCourseIds: string[], limitCount = 20): Promise<FirestoreAnnouncement[]> {
-    // General announcements
+    // General announcements (no course, no recipient)
     const generalQ = query(collections.announcements(), where('courseId', '==', null), orderBy('createdAt','desc'), limit(limitCount));
     const generalSnap = await getDocs(generalQ);
-    const general = generalSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement));
+    const general = generalSnap.docs
+      .map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement))
+      .filter(a => !a.recipientStudentId);
 
-    // Course announcements targeted to course (no recipient) for enrolled courses
+    // Course announcements broadcast to course (no recipient)
     const courseAnnouncements: FirestoreAnnouncement[] = [];
     await Promise.all(enrolledCourseIds.map(async (cid) => {
       const q1 = query(collections.announcements(), where('courseId','==', cid), orderBy('createdAt','desc'), limit(limitCount));
       const snap1 = await getDocs(q1);
-      courseAnnouncements.push(...snap1.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement)));
+      courseAnnouncements.push(...snap1.docs
+        .map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement))
+        .filter(a => !a.recipientStudentId)
+      );
     }));
 
-    // Direct announcements to this student
+    // Direct announcements to this student (any courseId including null)
     const directQ = query(collections.announcements(), where('recipientStudentId','==', studentId), orderBy('createdAt','desc'), limit(limitCount));
     const directSnap = await getDocs(directQ);
     const direct = directSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAnnouncement));

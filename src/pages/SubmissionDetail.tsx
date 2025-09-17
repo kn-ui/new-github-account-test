@@ -71,26 +71,40 @@ export default function SubmissionDetail() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero title={title} subtitle={course?.title || ''} />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Submission Details</CardTitle>
             <CardDescription>Review the submission and update grade if needed.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-600">Course:</span><span>{course?.title}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Assignment:</span><span>{assignment?.title}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Student:</span><span>{studentName || submission.studentId}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Status:</span><span className="capitalize">{submission.status}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Submitted:</span><span>{submission.submittedAt.toDate().toLocaleString()}</span></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-gray-600">Course:</span><span>{course?.title}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Assignment:</span><span>{assignment?.title}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Student:</span><span>{studentName || submission.studentId}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Status:</span><span className="capitalize">{submission.status}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Submitted:</span><span>{submission.submittedAt.toDate().toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Max Score:</span><span>{(assignment as any)?.maxScore ?? '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Grade:</span><span>{submission.grade ?? '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Feedback:</span><span>{submission.feedback ?? '—'}</span></div>
+              </div>
+              <div>
+                <div className="font-medium mb-2">Content</div>
+                <div className="p-4 border rounded bg-white text-sm prose prose-sm max-w-none whitespace-pre-wrap">{(submission as any).content || '—'}</div>
+                {(submission as any).attachments?.length > 0 && (
+                  <div className="mt-4">
+                    <div className="font-medium mb-2">Attachments</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {(submission as any).attachments.map((url: string, idx: number) => (
+                        <li key={idx}><a className="text-blue-600 hover:underline" href={url} target="_blank" rel="noopener noreferrer">Attachment {idx + 1}</a></li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="mt-6">
-              <div className="font-medium mb-2">Content</div>
-              <div className="p-3 border rounded bg-white text-sm whitespace-pre-wrap">{(submission as any).content || '—'}</div>
-            </div>
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm">Grade: {submission.grade ?? '—'}</div>
+            <div className="mt-6 flex items-center justify-end">
               <Button onClick={() => setGradeDialog(true)}>Edit Grade</Button>
             </div>
           </CardContent>

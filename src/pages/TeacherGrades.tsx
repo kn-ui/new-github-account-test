@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { submissionService, assignmentService, courseService, enrollmentService } from '@/lib/firestore';
+import { submissionService, assignmentService, courseService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,28 +33,13 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 
-interface SubmissionWithDetails {
-  id: string;
-  assignmentId: string;
-  studentId: string;
-  studentName: string;
-  courseId: string;
-  courseTitle: string;
-  assignmentTitle: string;
-  submittedAt: Date;
-  status: 'submitted' | 'graded';
-  grade?: number;
-  maxScore: number;
-  feedback?: string;
-  content: string;
-  attachments?: string[];
-}
+interface AssignmentRow { id: string; title: string; courseId: string; courseTitle: string; dueDate: Date; pending: number; graded: number; avg?: number; }
 
 export default function TeacherGrades() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -80,10 +65,7 @@ export default function TeacherGrades() {
       const teacherCourses = await courseService.getCoursesByInstructor(currentUser!.uid);
       const courseIds = teacherCourses.map(course => course.id);
       
-      if (courseIds.length === 0) {
-        setSubmissions([]);
-        return;
-      }
+      if (courseIds.length === 0) { setAssignments([]); return; }
 
       // Get all assignments for teacher's courses
       const assignmentsPromises = courseIds.map(async (courseId) => {
@@ -103,49 +85,15 @@ export default function TeacherGrades() {
       const allAssignments = assignmentsArrays.flat();
 
       // Get submissions for all assignments
-      const submissionsPromises = allAssignments.map(async (assignment) => {
-        try {
-          const assignmentSubmissions = await submissionService.getSubmissionsByAssignment(assignment.id);
-          return assignmentSubmissions.map(submission => ({
-            ...submission,
-            assignmentTitle: assignment.title,
-            courseTitle: assignment.courseTitle,
-            courseId: assignment.courseId,
-            maxScore: assignment.maxScore,
-            studentName: submission.studentId
-          }));
-        } catch (error) {
-          console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
-          return [];
-        }
-      });
-
-      const submissionsArrays = await Promise.all(submissionsPromises);
-      const allSubmissions = submissionsArrays.flat();
-
-      // Convert to our interface
-      // Resolve unique student IDs to names
-      const uniqueIds = Array.from(new Set(allSubmissions.map((s: any) => s.studentId)));
-      const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(uniqueIds);
-
-      const submissionsWithDetails: SubmissionWithDetails[] = allSubmissions.map(submission => ({
-        id: submission.id,
-        assignmentId: submission.assignmentId,
-        studentId: submission.studentId,
-        studentName: (usersMap[submission.studentId] as any)?.displayName || submission.studentId,
-        courseId: submission.courseId,
-        courseTitle: submission.courseTitle,
-        assignmentTitle: submission.assignmentTitle,
-        submittedAt: submission.submittedAt.toDate(),
-        status: submission.status,
-        grade: submission.grade,
-        maxScore: submission.maxScore,
-        feedback: submission.feedback,
-        content: submission.content,
-        attachments: submission.attachments
-      }));
-
-      setSubmissions(submissionsWithDetails);
+      const rows: AssignmentRow[] = [];
+      for (const a of allAssignments) {
+        const subs = await submissionService.getSubmissionsByAssignment(a.id);
+        const pending = subs.filter((s: any) => s.status === 'submitted').length;
+        const graded = subs.filter((s: any) => s.status === 'graded');
+        const avg = graded.length ? (graded.reduce((acc: number, s: any) => acc + (s.grade || 0), 0) / graded.length) : 0;
+        rows.push({ id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 });
+      }
+      setAssignments(rows);
     } catch (error) {
       console.error('Error loading submissions:', error);
       toast.error('Failed to load submissions');
@@ -187,39 +135,16 @@ export default function TeacherGrades() {
     setGradingDialogOpen(true);
   };
 
-  const filteredAndSortedSubmissions = useMemo(() => {
-    let filtered = submissions.filter(submission => {
-      const matchesSearch = submission.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           submission.assignmentTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           submission.courseTitle.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || submission.status === statusFilter;
-      const matchesCourse = courseFilter === 'all' || submission.courseTitle === courseFilter;
-      
-      return matchesSearch && matchesStatus && matchesCourse;
-    });
-
-    // Sort submissions
+  const filteredAssignments = useMemo(() => {
+    let list = assignments.filter(a => [a.title, a.courseTitle].some(v => v.toLowerCase().includes(searchTerm.toLowerCase())));
     switch (sortBy) {
-      case 'recent':
-        filtered.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
-        break;
-      case 'oldest':
-        filtered.sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime());
-        break;
-      case 'student':
-        filtered.sort((a, b) => a.studentName.localeCompare(b.studentName));
-        break;
-      case 'course':
-        filtered.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
-        break;
-      case 'assignment':
-        filtered.sort((a, b) => a.assignmentTitle.localeCompare(b.assignmentTitle));
-        break;
+      case 'recent': list = list.sort((a,b) => b.dueDate.getTime() - a.dueDate.getTime()); break;
+      case 'oldest': list = list.sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()); break;
+      case 'course': list = list.sort((a,b) => a.courseTitle.localeCompare(b.courseTitle)); break;
+      case 'assignment': list = list.sort((a,b) => a.title.localeCompare(b.title)); break;
     }
-
-    return filtered;
-  }, [submissions, searchTerm, statusFilter, courseFilter, sortBy]);
+    return list;
+  }, [assignments, searchTerm, sortBy]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -416,74 +341,47 @@ export default function TeacherGrades() {
           </div>
         </div>
 
-        {/* Submissions List */}
+        {/* Assignments List */}
         <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
-          {filteredAndSortedSubmissions.map(submission => (
-            <div key={submission.id} className="bg-white border rounded-lg p-4 flex flex-col h-full">
+          {filteredAssignments.map(a => (
+            <div key={a.id} className="bg-white border rounded-lg p-4 flex flex-col h-full">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-medium text-gray-900">{submission.assignmentTitle}</h3>
-                    <Badge className={getStatusColor(submission.status)}>
+                    <h3 className="font-medium text-gray-900">{a.title}</h3>
+                    <Badge className={getStatusColor(a.pending ? 'submitted' : 'graded')}>
                       <div className="flex items-center gap-1">
-                        {getStatusIcon(submission.status)}
-                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                        {getStatusIcon(a.pending ? 'submitted' : 'graded')}
+                        {a.pending ? 'Pending' : 'All Graded'}
                       </div>
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">Student: {submission.studentName}</p>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3" />
-                      {submission.courseTitle}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Submitted: {submission.submittedAt.toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      Max Score: {submission.maxScore}
-                    </span>
+                    <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Due: {a.dueDate.toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1">Avg: {typeof a.avg === 'number' ? a.avg : '-'}</span>
                   </div>
-                  {submission.status === 'graded' && submission.grade !== undefined && (
-                    <div className="flex items-center gap-2 text-sm mt-2">
-                      <span className={`font-medium ${getGradeColor(submission.grade, submission.maxScore)}`}>
-                        Grade: {submission.grade}/{submission.maxScore}
-                      </span>
-                      {submission.feedback && (
-                        <span className="text-gray-600">
-                          Feedback: {submission.feedback}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <div className="mt-2 text-sm text-gray-700">{a.pending + a.graded} submissions, {a.graded} graded</div>
                 </div>
               </div>
               <div className="mt-auto pt-4 flex items-center justify-between">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to={`/courses/${submission.courseId}`}>
+                  <Link to={`/dashboard/assignments/${a.id}/submissions`}>
                     <Eye className="h-4 w-4 mr-2" />
-                    View Course
+                    View grades
                   </Link>
                 </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => openGradingDialog(submission)}
-                  variant={submission.status === 'graded' ? 'outline' : 'default'}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  {submission.status === 'graded' ? 'Update Grade' : 'Grade'}
-                </Button>
+                <div />
               </div>
             </div>
           ))}
-          {filteredAndSortedSubmissions.length === 0 && (
+          {filteredAssignments.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No submissions found</p>
+              <p>No assignments found</p>
             </div>
           )}
         </div>

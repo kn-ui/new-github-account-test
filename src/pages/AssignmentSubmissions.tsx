@@ -152,6 +152,9 @@ export default function AssignmentSubmissions() {
                         <Button size="sm" variant={s.status === 'graded' ? 'outline' : 'default'} onClick={() => setGrading({ id: s.id, grade: s.grade || 0, feedback: s.feedback || '' })}>
                           <Edit className="h-4 w-4 mr-1" />{s.status === 'graded' ? 'Update Grade' : 'Grade'}
                         </Button>
+                        <Link to={`/dashboard/submissions/${s.id}`} className="ml-2">
+                          <Button size="sm" variant="outline">View</Button>
+                        </Link>
                       </div>
                     </div>
                   )}

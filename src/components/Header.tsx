@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, LogIn, User } from 'lucide-react';
+import { Menu, X, Globe, LogIn, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -23,9 +23,8 @@ const Header = () => {
   };
 
   const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || t('auth.user');
-  const userRole = userProfile?.role as 'student' | 'teacher' | 'admin' | 'super_admin' | undefined;
 
-  const publicNavItems = [
+  const baseNavItems = [
     { label: t('nav.home'), to: '/' },
     { label: t('nav.academic'), to: '/academic' },
     { label: t('nav.admissions'), to: '/admissions' },
@@ -36,44 +35,12 @@ const Header = () => {
     { label: t('nav.contact'), to: '/contact' },
   ];
 
-  const privateNavItems: Record<string, Array<{ label: string; to: string }>> = {
-    student: [
-      { label: t('nav.dashboard'), to: '/dashboard' },
-      { label: t('nav.courses'), to: '/courses' },
-      { label: t('nav.forum'), to: '/forum' },
-      { label: t('nav.calendar'), to: '/calendar' },
-      { label: t('nav.contact'), to: '/contact' },
-    ],
-    teacher: [
-      { label: t('nav.dashboard'), to: '/dashboard' },
-      { label: t('nav.courses'), to: '/courses' },
-      { label: t('nav.forum'), to: '/forum' },
-      { label: t('nav.calendar'), to: '/calendar' },
-      { label: t('nav.contact'), to: '/contact' },
-    ],
-    admin: [
-      { label: t('nav.dashboard'), to: '/dashboard' },
-      { label: t('nav.academic'), to: '/academic' },
-      { label: t('nav.forum'), to: '/forum' },
-      { label: t('nav.calendar'), to: '/calendar' },
-      { label: t('nav.contact'), to: '/contact' },
-    ],
-    super_admin: [
-      { label: t('nav.dashboard'), to: '/dashboard' },
-      { label: t('nav.academic'), to: '/academic' },
-      { label: t('nav.forum'), to: '/forum' },
-      { label: t('nav.calendar'), to: '/calendar' },
-      { label: t('nav.contact'), to: '/contact' },
-    ],
-  };
-
-  const navItems = currentUser && userRole ? privateNavItems[userRole] : publicNavItems;
+  const navItems = currentUser ? [{ label: t('nav.dashboard'), to: '/dashboard' }, ...baseNavItems] : baseNavItems;
 
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto pt-2 pb-2 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <div className="w-[70px] h-[70px] rounded-full flex items-center justify-center">
               <img src={mainLogo} alt="St. Raguel Church" className="w-[70px] h-[70px] rounded-full" />
@@ -84,7 +51,6 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link key={item.label} to={item.to} className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
@@ -93,7 +59,6 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Right side - language and auth */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="relative">
               <select
@@ -107,23 +72,26 @@ const Header = () => {
               </select>
               <Globe className="w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
-            {currentUser ? (
-              <Link to="/dashboard" className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                <User className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">{userName}</span>
-              </Link>
+            {!currentUser ? (
+              <>
+                <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  {t('auth.getStarted')}
+                </Link>
+              </>
             ) : (
-              <Link
-                to="/login"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                {t('auth.login')}
-              </Link>
+              <>
+                <Link to="/dashboard" className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">{userName}</span>
+                </Link>
+                <button onClick={handleLogout} className="text-gray-700 hover:text-gray-900 flex items-center text-sm font-medium">
+                  <LogOut className="w-4 h-4 mr-1" /> {t('auth.logout')}
+                </button>
+              </>
             )}
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
             {!currentUser && (
               <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
@@ -136,7 +104,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">

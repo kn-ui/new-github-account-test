@@ -103,6 +103,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.myCourses'), href: '/dashboard/student-courses', icon: BookOpen },
           { label: t('nav.assignments'), href: '/dashboard/student-assignments', icon: FileText },
           { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
+          { label: 'Exams', href: '/dashboard/student-exams', icon: ClipboardList },
           { label: 'My Grades', href: '/dashboard/student-grades', icon: Award },
           { label: t('nav.progress'), href: '/dashboard/progress', icon: TrendingUp },
           { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },

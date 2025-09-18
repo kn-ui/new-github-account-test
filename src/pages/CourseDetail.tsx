@@ -106,56 +106,9 @@ const CourseDetail = () => {
     }
   };
 
-  const handleEnrollment = async () => {
-    if (!currentUser || !courseId) {
-      navigate('/login');
-      return;
-    }
+  // Enrollment by students removed; only admin can enroll students.
 
-    if (userProfile?.role !== 'student') {
-      toast.error('Only students can enroll in courses');
-      return;
-    }
-
-    try {
-      setEnrolling(true);
-      
-      const enrollmentData = {
-        courseId,
-        studentId: currentUser.uid,
-        status: 'active' as const,
-        progress: 0,
-        completedLessons: []
-      };
-
-      const enrollmentId = await enrollmentService.createEnrollment(enrollmentData);
-      
-      // Update local state
-      setIsEnrolled(true);
-      setEnrollment({
-        id: enrollmentId,
-        ...enrollmentData,
-        enrolledAt: new Date() as any, // Will be set by Firestore
-        lastAccessedAt: new Date() as any
-      });
-      
-      toast.success('Successfully enrolled in course!');
-    } catch (error) {
-      console.error('Enrollment error:', error);
-      toast.error('Failed to enroll in course');
-    } finally {
-      setEnrolling(false);
-    }
-  };
-
-  const canEnroll = () => {
-    if (!course || !currentUser || !userProfile) return false;
-    if (userProfile.role !== 'student') return false;
-    if (isEnrolled) return false;
-    if (!course.isActive) return false;
-    
-    return true;
-  };
+  const canEnroll = () => false;
 
   const getEnrollmentStatus = () => {
     if (!course) return null;
@@ -164,11 +117,7 @@ const CourseDetail = () => {
       return { message: 'Login required to enroll', variant: 'default' as const };
     }
     
-    if (userProfile?.role !== 'student') {
-      return { message: 'Only students can enroll', variant: 'default' as const };
-    }
-    
-    if (isEnrolled) {
+    if (userProfile?.role === 'student' && isEnrolled) {
       return { message: 'You are enrolled in this course', variant: 'default' as const };
     }
     
@@ -176,7 +125,7 @@ const CourseDetail = () => {
       return { message: 'This course is not currently available', variant: 'destructive' as const };
     }
     
-    return null;
+    return { message: 'Enrollment is managed by administrators. Please contact your admin.', variant: 'default' as const };
   };
 
   if (loading) {
@@ -423,22 +372,7 @@ const CourseDetail = () => {
                           Continue Learning
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <BookMarked className="h-12 w-12 text-blue-600 mx-auto" />
-                        <h3 className="font-semibold text-lg">Ready to Start?</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Join this course and start your learning journey
-                        </p>
-                        <Button 
-                          className="w-full" 
-                          onClick={handleEnrollment}
-                          disabled={!canEnroll() || enrolling}
-                        >
-                          {enrolling ? 'Enrolling...' : 'Enroll Now'}
-                        </Button>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>

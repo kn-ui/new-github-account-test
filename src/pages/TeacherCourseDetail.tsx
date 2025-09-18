@@ -77,7 +77,7 @@ export default function TeacherCourseDetail() {
   const [gradeSort, setGradeSort] = useState<'recent' | 'oldest' | 'grade-desc' | 'grade-asc'>('recent');
   const [examDialogOpen, setExamDialogOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<FirestoreExam | null>(null);
-  const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; questions: any[] }>({ title: '', description: '', date: new Date().toISOString().slice(0,16), questions: [] });
+  const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; startTime: string; durationMinutes: number; questions: any[] }>({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] });
   const [showExamDeleteConfirm, setShowExamDeleteConfirm] = useState(false);
   const [examToDelete, setExamToDelete] = useState<FirestoreExam | null>(null);
 
@@ -736,9 +736,19 @@ export default function TeacherCourseDetail() {
               <Label htmlFor="e-desc">Description</Label>
               <Input id="e-desc" value={examForm.description} onChange={(e) => setExamForm({ ...examForm, description: e.target.value })} />
             </div>
-            <div>
+              <div>
               <Label htmlFor="e-date">Date & Time</Label>
               <Input id="e-date" type="datetime-local" value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="e-start">Start Time</Label>
+                <Input id="e-start" type="datetime-local" value={examForm.startTime} onChange={(e) => setExamForm({ ...examForm, startTime: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="e-dur">Duration (minutes)</Label>
+                <Input id="e-dur" type="number" value={examForm.durationMinutes} onChange={(e) => setExamForm({ ...examForm, durationMinutes: parseInt(e.target.value) || 0 })} />
+              </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -819,7 +829,7 @@ export default function TeacherCourseDetail() {
             <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
             <Button onClick={async () => {
               try {
-                const payload: any = { courseId: course!.id, title: examForm.title, description: examForm.description, date: new Date(examForm.date), questions: examForm.questions };
+                const payload: any = { courseId: course!.id, title: examForm.title, description: examForm.description, date: new Date(examForm.date), startTime: new Date(examForm.startTime), durationMinutes: examForm.durationMinutes, questions: examForm.questions };
                 if (editingExam) {
                   await examService.updateExam(editingExam.id, payload);
                   toast.success('Exam updated');

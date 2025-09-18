@@ -105,7 +105,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
           { label: 'Exams', href: '/dashboard/student-exams', icon: ClipboardList },
           { label: 'My Grades', href: '/dashboard/student-grades', icon: Award },
-          { label: t('nav.progress'), href: '/dashboard/progress', icon: TrendingUp },
+          // removed progress per requirements
           { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },
           { label: t('nav.announcements'), href: '/dashboard/student-announcements', icon: Bell },
         ];

@@ -25,11 +25,7 @@ export default function TakeExam() {
       if (!examId || !currentUser?.uid) return;
       try {
         setLoading(true);
-        const e = await examService.getExamsByCourse(''); // placeholder call
-        const byId = (await import('@/lib/firestore')).examService;
-        // No direct get by id; reuse list via attempt or course relation. For simplicity, assume teacher stored questions in exam.questions
-        const exams = await byId.getExamsByCourse('placeholder');
-        const found = exams.find((x: any) => x.id === examId);
+        const found = await examService.getExamById(examId);
         if (found) setExam(found);
         let attempt = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
         if (!attempt) {
@@ -85,11 +81,25 @@ export default function TakeExam() {
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
   if (!exam) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Exam not found</div>;
 
+  const now = new Date();
+  const start = (exam as any).startTime?.toDate ? (exam as any).startTime.toDate() : null;
+  const end = start && (exam as any).durationMinutes ? new Date(start.getTime() + (exam as any).durationMinutes * 60000) : null;
+  const beforeStart = start ? now < start : false;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero title={exam.title} subtitle="Answer all questions and submit" />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-4">
-        {questions.map((q: any, idx: number) => (
+        {beforeStart && (
+          <Card>
+            <CardContent className="p-6 text-sm text-gray-700">
+              <div><strong>Start Time:</strong> {start?.toLocaleString() || '-'}</div>
+              <div><strong>Duration:</strong> {(exam as any).durationMinutes || 0} minutes</div>
+              <div className="mt-2">Questions will appear when the exam starts.</div>
+            </CardContent>
+          </Card>
+        )}
+        {!beforeStart && questions.map((q: any, idx: number) => (
           <Card key={q.id}>
             <CardHeader>
               <CardTitle className="text-sm">Q{idx+1}. {q.prompt}</CardTitle>
@@ -120,13 +130,15 @@ export default function TakeExam() {
             </CardContent>
           </Card>
         ))}
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={saveProgress}>Save progress</Button>
-          <div className="space-x-2">
-            <Link to="/dashboard/student-exams"><Button variant="outline">Cancel</Button></Link>
-            <Button onClick={submit}>Submit exam</Button>
+        {!beforeStart && (
+          <div className="flex items-center justify-between">
+            <Button variant="outline" onClick={saveProgress}>Save progress</Button>
+            <div className="space-x-2">
+              <Link to="/dashboard/student-exams"><Button variant="outline">Cancel</Button></Link>
+              <Button onClick={submit} disabled={end ? now > end : false}>Submit exam</Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -108,7 +108,9 @@ export interface FirestoreExam {
   courseId: string;
   title: string;
   description?: string;
-  date: Timestamp;
+  date: Timestamp; // legacy/scheduled date
+  startTime?: Timestamp; // when exam becomes visible to students
+  durationMinutes?: number; // how long the exam is available after start
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -874,6 +876,11 @@ export const examService = {
     const now = Timestamp.now();
     const ref = await addDoc(collections.exams(), { ...exam, createdAt: now, updatedAt: now });
     return ref.id;
+  },
+  async getExamById(examId: string): Promise<FirestoreExam | null> {
+    const ref = doc(db, 'exams', examId);
+    const snap = await getDoc(ref);
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as FirestoreExam) : null;
   },
   async getExamsByCourse(courseId: string): Promise<FirestoreExam[]> {
     const q = query(collections.exams(), where('courseId', '==', courseId), orderBy('date', 'asc'));

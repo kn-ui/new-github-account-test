@@ -12,8 +12,6 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Department removed per requirements
-
   const contactInfo = [
     {
       icon: Phone,
@@ -50,31 +48,16 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setIsSubmitting(true);
-    
     try {
-
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/contact`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
-
-      if (result.success) {
-        toast.success('Message sent successfully! We will get back to you soon.');
-      } else {
-        toast.error(result.message || 'Failed to send message. Please try again.');
-      }
-      
+      result.success ? toast.success('Message sent!') : toast.error(result.message || 'Failed to send');
     } catch (error) {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message. Please try again.');
@@ -84,16 +67,14 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-r from-blue-600 to-[#13A0E2]">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
+      <div className="relative text-white">
+        <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">Contact Us</h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">
-              We're here to help and answer any questions you may have
-            </p>
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">We're here to help and answer any questions you may have</p>
           </div>
         </div>
       </div>
@@ -128,103 +109,35 @@ export default function ContactPage() {
             <div className="bg-white rounded-xl shadow-lg p-8">
               <div className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">Send us a Message</h2>
-                <p className="text-gray-600">
-                  Fill out the form below and we'll get back to you as soon as possible.
-                </p>
+                <p className="text-gray-600">Fill out the form below and we'll get back to you as soon as possible.</p>
               </div>
-
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name Field */}
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
-                  </label>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your full name"
-                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><User className="h-5 w-5 text-gray-400" /></div>
+                    <input type="text" id="name" name="name" required value={formData.name} onChange={handleInputChange} className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your full name" />
                   </div>
                 </div>
-
-                {/* Email Field */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your email address"
-                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-gray-400" /></div>
+                    <input type="email" id="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your email address" />
                   </div>
                 </div>
-
-                {/* Department removed */}
-
-                {/* Subject Field */}
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject *
-                  </label>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    required
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter the subject of your message"
-                  />
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
+                  <input type="text" id="subject" name="subject" required value={formData.subject} onChange={handleInputChange} className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter the subject of your message" />
                 </div>
-
-                {/* Message Field */}
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
-                  </label>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
                   <div className="relative">
-                    <div className="absolute top-3 left-3 pointer-events-none">
-                      <MessageSquare className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <textarea
-                      id="message"
-                      name="message"
-                      required
-                      rows={6}
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      placeholder="Enter your message here..."
-                    />
+                    <div className="absolute top-3 left-3 pointer-events-none"><MessageSquare className="h-5 w-5 text-gray-400" /></div>
+                    <textarea id="message" name="message" required rows={6} value={formData.message} onChange={handleInputChange} className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" placeholder="Enter your message here..." />
                   </div>
                 </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   <Send className="h-5 w-5" />
                   <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
                 </button>
@@ -233,7 +146,6 @@ export default function ContactPage() {
 
             {/* Map and Additional Info */}
             <div className="space-y-8">
-              {/* Map Placeholder */}
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="h-64 bg-gray-200 flex items-center justify-center">
                   <div className="text-center text-gray-500">
@@ -244,9 +156,7 @@ export default function ContactPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Visit Our Campus</h3>
-                  <p className="text-gray-600 mb-4">
-                    Our main campus is located in the heart of Addis Ababa, easily accessible by public transportation.
-                  </p>
+                  <p className="text-gray-600 mb-4">Our main campus is located in the heart of Addis Ababa, easily accessible by public transportation.</p>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p><strong>Address:</strong> St. Raguel Church Spiritual School</p>
                     <p><strong>City:</strong> Addis Ababa, Ethiopia</p>
@@ -255,7 +165,6 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Quick Contact */}
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
                 <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Contact</h3>
                 <div className="space-y-3">
@@ -276,15 +185,10 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* FAQ Link */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
-                <p className="text-gray-600 mb-4">
-                  Before contacting us, you might find the answer to your question in our FAQ section.
-                </p>
-                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                  View FAQ
-                </button>
+                <p className="text-gray-600 mb-4">Before contacting us, you might find the answer to your question in our FAQ section.</p>
+                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium">View FAQ</button>
               </div>
             </div>
           </div>

@@ -181,6 +181,59 @@ const Admission: React.FC = () => {
         </div>
       </div>
 
+      {/* Registration Requirements - per provided rules */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Registration Requirements</h2>
+            <p className="text-lg text-gray-600">
+              Please review the exact requirements for each applicant group before registration.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Extension, Online and Regular */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Extension, Online and Regular</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>Photo</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>Registration fee</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>Academic Document (more than grade 10)</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>Pre-exam pass point</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>From other Sunday school Equivalent Document and letter of transfer</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>From different religion should bring Certificate of baptism</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span><span>Age more than 18</span></li>
+              </ul>
+            </div>
+
+            {/* Children and Adolescent */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Children and Adolescent</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Photo</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Registration fee</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Academic Document (more than grade 10)</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Pre-exam pass point</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>From other Sunday school Equivalent Document and letter of transfer</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Birth certificate</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Family Profile</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-yellow-600 rounded-full mt-1.5"></span><span>Age less than 18</span></li>
+              </ul>
+            </div>
+
+            {/* Youth */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Youth</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-green-600 rounded-full mt-1.5"></span><span>Certificate of continuum education</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-green-600 rounded-full mt-1.5"></span><span>Member of Sunday school</span></li>
+                <li className="flex items-start space-x-2"><span className="w-2 h-2 bg-green-600 rounded-full mt-1.5"></span><span>Age more than 18 years</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Admission Requirements */}
       <div className="bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

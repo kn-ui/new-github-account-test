@@ -32,9 +32,17 @@ export default function StudentExams() {
         const attempts = await examAttemptService.getAttemptsByStudent(currentUser.uid);
         const attemptMap = new Map<string, FirestoreExamAttempt>(attempts.map(a => [a.examId, a]));
         const courseTitleMap = new Map<string, string>(courses.filter(Boolean).map((c: any) => [c.id, c.title]));
+        const now = new Date();
         const normalized = examsList.map((e: any) => {
           const at = attemptMap.get(e.id);
-          const status: 'not_started' | 'in_progress' | 'completed' = !at ? 'not_started' : (at.status === 'in_progress' ? 'in_progress' : 'completed');
+          const start = e.startTime?.toDate ? e.startTime.toDate() : null;
+          const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
+          let status: 'not_started' | 'in_progress' | 'completed' = !at ? 'not_started' : (at.status === 'in_progress' ? 'in_progress' : 'completed');
+          if (!at && start) {
+            if (now < start) status = 'not_started';
+            else if (end && now > end) status = 'completed';
+            else status = 'not_started';
+          }
           const score = typeof at?.autoScore === 'number' || typeof at?.manualScore === 'number' ? (Number(at?.autoScore || 0) + Number(at?.manualScore || 0)) : undefined;
           return { ...e, courseTitle: courseTitleMap.get(e.courseId), status, score };
         });

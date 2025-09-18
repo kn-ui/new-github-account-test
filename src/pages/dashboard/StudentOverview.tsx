@@ -262,56 +262,30 @@ export default function StudentOverview() {
         </Card>
       </div>
 
-      {/* Certificates Section */}
+      {/* Upcoming Assignments Section (replaces Certificates) */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
-                <Award className="h-5 w-5" />
-                <span>{t('student.quickActions.myCertificates')}</span>
-              </CardTitle>
-              <CardDescription>{t('student.quickActions.title')}</CardDescription>
-            </div>
-            <Button
-              onClick={async () => {
-                if (!currentUser) return;
-                await evaluateAndAwardCertificates(currentUser.uid);
-                const list = await certificateService.getCertificatesForUser(currentUser.uid);
-                setCertificates(list);
-              }}
-              size="sm"
-            >
-              {t('blog.loading')}
-            </Button>
-          </div>
+          <CardTitle className="flex items-center space-x-2">
+            <FileText className="h-5 w-5" />
+            <span>Upcoming Assignments</span>
+          </CardTitle>
+          <CardDescription>Next deadlines from your enrolled courses</CardDescription>
         </CardHeader>
         <CardContent>
-          {certificates.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-4">
-              {certificates.slice(0, 2).map((cert) => (
-                <CertificateCard
-                  key={cert.id}
-                  type={cert.type}
-                  studentName={currentUser?.email || t('nav.students')}
-                  awardedAt={cert.awardedAt.toDate()}
-                  details={cert.details}
-                />
+          {upcomingAssignments.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingAssignments.slice(0, 4).map((a: any) => (
+                <div key={a.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium text-gray-900">{a.title || 'Assignment'}</div>
+                    <div className="text-xs text-gray-600">{a.courseTitle || 'Course'}</div>
+                  </div>
+                  <div className="text-xs text-gray-500">Due: {a.dueDate || '-'}</div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t('blog.noPosts')}</p>
-              <p className="text-sm">{t('teacher.myCourses.complete')}</p>
-            </div>
-          )}
-          {certificates.length > 2 && (
-            <div className="mt-4">
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/certificates">{t('admin.recentUsers.viewAll')}</Link>
-              </Button>
-            </div>
+            <div className="text-center py-6 text-gray-500">No upcoming assignments</div>
           )}
         </CardContent>
       </Card>
@@ -336,12 +310,7 @@ export default function StudentOverview() {
                 {t('nav.assignments')}
               </Link>
             </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/progress">
-                <TrendingUp className="h-6 w-6 mb-2" />
-                {t('nav.progress')}
-              </Link>
-            </Button>
+            {/* Progress quick action removed */}
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/certificates">
                 <Award className="h-6 w-6 mb-2" />

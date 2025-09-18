@@ -56,7 +56,7 @@ export default function StudentCourses() {
       const coursesWithDetails = await Promise.all(
         enrollments.map(async (enrollment: any) => {
           try {
-            const course = await courseService.getCourse(enrollment.courseId);
+            const course = await courseService.getCourseById(enrollment.courseId);
             if (course) {
               return {
                 id: course.id,

@@ -82,7 +82,8 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:threadId" element={<ForumThread />} />
-            {/* Development-only routes removed */}
+            {/* Public events page */}
+            <Route path="/events" element={<Events />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
@@ -139,12 +140,10 @@ const App = () => (
               } 
             />
             <Route 
-
               path="/dashboard/events" 
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-
                     <SuperAdminRoute page="events" />
                   </DashboardWrapper>
                 </ProtectedRoute>
@@ -246,7 +245,6 @@ const App = () => (
               } 
             />
             <Route 
-
               path="/dashboard/student-submissions" 
               element={
                 <ProtectedRoute>
@@ -407,50 +405,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CourseManager />
-                </ProtectedRoute>
-              } 
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-
-
-            <Route 
-              path="/events" 
-              element={
-                <ProtectedRoute>
-                  <Events />
-                </ProtectedRoute>
-              } 
-            />
-            {/* create-event deprecated in favor of modal */}
-            <Route 
-              path="/students" 
-              element={
-                <ProtectedRoute>
-                  <Students />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/submissions" 
-              element={
-                <ProtectedRoute>
-                  <Submissions />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/teacher-reports" 
-              element={
-                <ProtectedRoute>
-                  <TeacherReports />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/certificates" 
-              element={
-                <ProtectedRoute>
-                  <Certificates />
                 </ProtectedRoute>
               } 
             />

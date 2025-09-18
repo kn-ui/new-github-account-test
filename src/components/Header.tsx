@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, LogIn, User, LogOut } from 'lucide-react';
+import { Menu, X, Globe, LogIn, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -12,6 +12,7 @@ const Header = () => {
   const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useI18n();
+  const [academicMobileOpen, setAcademicMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -24,12 +25,9 @@ const Header = () => {
 
   const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || t('auth.user');
 
+  // Exclude Academic from base list to render a dropdown with sublinks
   const baseNavItems = [
     { label: t('nav.home'), to: '/' },
-    { label: t('nav.academic'), to: '/academic' },
-    { label: t('nav.admissions'), to: '/admissions' },
-    { label: t('nav.calendar'), to: '/calendar' },
-    { label: t('nav.rules'), to: '/rules' },
     { label: t('nav.blog'), to: '/blog' },
     { label: t('nav.forum'), to: '/forum' },
     { label: t('nav.contact'), to: '/contact' },
@@ -52,7 +50,26 @@ const Header = () => {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
+            {/* Dashboard (when logged in) */}
+            {currentUser && (
+              <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.dashboard')}</Link>
+            )}
+
+            {/* Academic dropdown */}
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
+                {t('nav.academic')} <ChevronDown className="w-4 h-4 ml-1" />
+              </button>
+              <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.academic')}</Link>
+                <Link to="/admissions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.admissions')}</Link>
+                <Link to="/calendar" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.calendar')}</Link>
+                <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.rules')}</Link>
+              </div>
+            </div>
+
+            {/* Remaining items */}
+            {baseNavItems.map((item) => (
               <Link key={item.label} to={item.to} className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
                 {item.label}
               </Link>
@@ -107,7 +124,40 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navItems.map((item) => (
+              {/* Dashboard (when logged in) */}
+              {currentUser && (
+                <Link to="/dashboard" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                  {t('nav.dashboard')}
+                </Link>
+              )}
+
+              {/* Academic mobile dropdown */}
+              <button
+                onClick={() => setAcademicMobileOpen(!academicMobileOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+              >
+                {t('nav.academic')}
+                <ChevronDown className={`w-4 h-4 transition-transform ${academicMobileOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {academicMobileOpen && (
+                <div className="pl-4 space-y-1">
+                  <Link to="/academic" className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    {t('nav.academic')}
+                  </Link>
+                  <Link to="/admissions" className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    {t('nav.admissions')}
+                  </Link>
+                  <Link to="/calendar" className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    {t('nav.calendar')}
+                  </Link>
+                  <Link to="/rules" className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    {t('nav.rules')}
+                  </Link>
+                </div>
+              )}
+
+              {/* Remaining items */}
+              {baseNavItems.map((item) => (
                 <Link key={item.label} to={item.to} className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
                   {item.label}
                 </Link>

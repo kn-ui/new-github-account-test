@@ -560,6 +560,7 @@ export default function CourseManager() {
       </Dialog>
 
       {userProfile?.role === 'admin' && (
+        <>
         <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -693,6 +694,7 @@ export default function CourseManager() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </>
       )}
     </div>
   );

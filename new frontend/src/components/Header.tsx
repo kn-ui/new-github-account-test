@@ -52,7 +52,7 @@ const Header: React.FC = () => {
                 Academic <ChevronDown className="ml-1 w-4 h-4" />
               </button>
               {academicDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
                   <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     Academic Programs
                   </Link>
@@ -63,7 +63,7 @@ const Header: React.FC = () => {
                     Calendar
                   </Link>
                   <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Rules and Regulations
+                    Rules and Regulation
                   </Link>
                 </div>
               )}
@@ -198,7 +198,7 @@ const Header: React.FC = () => {
                       className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md"
                       onClick={closeMobileMenu}
                     >
-                      Rules and Regulations
+                      Rules and Regulation
                     </Link>
                   </div>
                 )}

@@ -51,9 +51,11 @@ interface NavigationItem {
 import logo from '@/assets/logo.jpg';
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,7 +80,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       case 'super_admin':
         return [
           ...baseItems,
-
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
@@ -105,7 +106,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
           { label: 'Exams', href: '/dashboard/student-exams', icon: ClipboardList },
           { label: 'My Grades', href: '/dashboard/student-grades', icon: Award },
-          // removed progress per requirements
           { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },
           { label: t('nav.announcements'), href: '/dashboard/student-announcements', icon: Bell },
         ];
@@ -130,14 +130,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   useEffect(() => {
     const loadAnnouncements = async () => {
       try {
-        // Basic role-aware notifications: teachers see own course/general; students see filtered ones
         if (userRole === 'teacher') {
           const my = await announcementService.getAnnouncementsByTeacher((await import('@/contexts/AuthContext')).useAuth().currentUser?.uid || '');
           setAnnouncements(my.slice(0, 5));
         } else if (userRole === 'student') {
           const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
           if (currentUser?.uid) {
-            // For dropdown brevity we won’t fetch enrollments here; student pages already show full feed
             const all = await announcementService.getAllAnnouncements(20);
             const direct = all.filter((a: any) => a.recipientStudentId === currentUser.uid);
             const general = all.filter((a: any) => !a.recipientStudentId && !a.courseId);
@@ -255,7 +253,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 dashboard-main">
-{/* Top bar */}
+        {/* Top bar */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <Button

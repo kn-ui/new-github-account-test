@@ -22,6 +22,8 @@ import Admissions from "./pages/Admissions";
 import Calendar from "./pages/Calendar";
 import Rules from "./pages/Rules";
 import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
+import Updates from "./pages/Updates";
 import Contact from "./pages/Contact";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
@@ -79,6 +81,8 @@ const App = () => (
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/rules" element={<Rules />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:blogId" element={<BlogDetail />} />
+            <Route path="/updates" element={<Updates />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:threadId" element={<ForumThread />} />

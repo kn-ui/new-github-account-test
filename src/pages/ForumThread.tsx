@@ -1,13 +1,14 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { api, ForumThreadPost } from '@/lib/api';
+import { forumService, FirestoreForumPost, FirestoreForumThread } from '@/lib/firestore';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
 
 const ForumThread = () => {
   const { threadId } = useParams<{ threadId: string }>();
   const { t } = useI18n();
-  const [posts, setPosts] = useState<ForumThreadPost[]>([]);
+  const [thread, setThread] = useState<FirestoreForumThread | null>(null);
+  const [posts, setPosts] = useState<FirestoreForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
 
@@ -15,8 +16,10 @@ const ForumThread = () => {
     if (!threadId) return;
     setLoading(true);
     try {
-      const resp = await api.getForumPosts(threadId, { page: 1, limit: 100 });
-      setPosts(resp.success && Array.isArray(resp.data) ? resp.data : []);
+      const tdata = await forumService.getForumThreadById(threadId);
+      setThread(tdata);
+      const list = await forumService.getForumPosts(threadId, 200);
+      setPosts(Array.isArray(list) ? list : []);
     } finally {
       setLoading(false);
     }
@@ -30,7 +33,7 @@ const ForumThread = () => {
   const onCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!threadId || !newPost.trim()) return;
-    await api.createForumPost(threadId, { body: newPost.trim() });
+    await forumService.createForumPost(threadId, { body: newPost.trim(), authorId: 'anon', authorName: 'Anonymous' });
     setNewPost('');
     await load();
   };
@@ -41,6 +44,7 @@ const ForumThread = () => {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-4">
           <Link to="/forum" className="text-blue-600 hover:underline">{t('nav.forum')}</Link>
+          {thread && <div className="text-sm text-gray-600">{thread.title}</div>}
         </div>
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <form onSubmit={onCreatePost} className="space-y-3">

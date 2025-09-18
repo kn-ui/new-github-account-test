@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 import { eventService, FirestoreEvent } from '@/lib/firestore';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info } from 'lucide-react';
+import { EventsList } from '@/components/EventsList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toEthiopianDate, fromEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar'; // New import
 
@@ -191,6 +192,17 @@ const Calendar = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Upcoming Events List (hybrid section) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white shadow-sm border p-4 rounded mb-4">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-blue-600" />
+            <div className="font-semibold">{t('events.upcoming') ?? 'Upcoming Events'}</div>
+          </div>
+        </div>
+        <EventsList readOnly />
       </div>
 
       {/* Event Details Modal */}

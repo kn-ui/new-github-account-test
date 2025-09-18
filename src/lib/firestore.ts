@@ -1024,6 +1024,12 @@ export const forumService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreForumThread));
   },
 
+  async getForumThreadById(threadId: string): Promise<FirestoreForumThread | null> {
+    const ref = doc(db, 'forum_threads', threadId);
+    const snap = await getDoc(ref);
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as FirestoreForumThread) : null;
+  },
+
   async createForumThread(threadData: Omit<FirestoreForumThread, 'id' | 'createdAt' | 'lastActivityAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.forumThreads(), {

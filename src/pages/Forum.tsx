@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react';
 import { forumService, FirestoreForumThread } from '@/lib/firestore';
 import { Search, MessageCircle, Eye, ThumbsUp } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { api, ForumThread as ApiThread } from '@/lib/api';
 
 const Forum = () => {
-  const [threads, setThreads] = useState<FirestoreForumThread[]>([]);
+  const [threads, setThreads] = useState<Array<FirestoreForumThread | ApiThread>>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const { t } = useI18n();
+  const { currentUser } = useAuth();
 
   const categories = [
     'All Topics',
@@ -23,9 +26,14 @@ const Forum = () => {
   const reload = async () => {
     setLoading(true);
     try {
-      const allThreads = await forumService.getForumThreads(50);
-      let data = allThreads;
-      if (q) data = data.filter(ti => ti.title.toLowerCase().includes(q.toLowerCase()) || ti.body?.toLowerCase?.().includes(q.toLowerCase()));
+      let data: any[] = [];
+      if (currentUser) {
+        data = await forumService.getForumThreads(50);
+      } else {
+        const resp = await api.getForumThreads({ limit: 50 });
+        data = resp.success ? (resp.data || []) : [];
+      }
+      if (q) data = data.filter((ti: any) => String(ti.title || '').toLowerCase().includes(q.toLowerCase()) || String(ti.body || '').toLowerCase().includes(q.toLowerCase()));
       setThreads(data);
     } catch (error) {
       setThreads([]);
@@ -37,7 +45,7 @@ const Forum = () => {
   useEffect(() => {
     const id = setTimeout(reload, 200);
     return () => clearTimeout(id);
-  }, [q, selectedCategory]);
+  }, [q, selectedCategory, currentUser]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,7 +59,6 @@ const Forum = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar */}
         <aside className="lg:col-span-1">
           <div className="bg-white rounded-lg border p-4 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Search Topics</h3>
@@ -82,26 +89,25 @@ const Forum = () => {
           </div>
         </aside>
 
-        {/* Threads list */}
         <section className="lg:col-span-3">
           {loading ? (
             <div className="text-center text-gray-500">{t('forum.loading')}</div>
           ) : (
             <div className="space-y-4">
-              {threads.map((discussion) => (
+              {threads.map((discussion: any) => (
                 <a key={discussion.id} href={`/forum/${discussion.id}`} className="block bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start space-x-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-600 font-semibold text-sm">{discussion.authorName?.slice(0,2) ?? 'U'}</span>
+                      <span className="text-blue-600 font-semibold text-sm">{(discussion.authorName || discussion.createdByName || 'U').slice(0,2)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-lg font-semibold text-gray-900 hover:text-blue-600 mb-1">{discussion.title}</div>
-                      <div className="text-gray-600 line-clamp-2">{discussion.body}</div>
+                      {discussion.body && <div className="text-gray-600 line-clamp-2">{discussion.body}</div>}
                       <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
                         <div className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 0</div>
                         <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> —</div>
                         <div className="flex items-center gap-1"><ThumbsUp className="w-4 h-4" /> —</div>
-                        <span className="ml-auto">{discussion.createdAt.toDate().toLocaleString()}</span>
+                        <span className="ml-auto">{new Date((discussion.createdAt?.toDate?.() || discussion.createdAt)).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

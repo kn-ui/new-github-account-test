@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil } from 'lucide-react';
-import { courseService, FirestoreCourse, enrollmentService } from '@/lib/firestore';
+import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, Upload } from 'lucide-react';
+import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,6 +40,12 @@ export default function CourseManager() {
   const [showCourseDialog, setShowCourseDialog] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  const [enrollTab, setEnrollTab] = useState<'manual'|'csv'>('manual');
+  const [selectedCourseForEnroll, setSelectedCourseForEnroll] = useState<CourseWithApproval | null>(null);
+  const [studentQuery, setStudentQuery] = useState('');
+  const [foundStudents, setFoundStudents] = useState<any[]>([]);
+  const [csvText, setCsvText] = useState('');
   const [createStep, setCreateStep] = useState<number>(1);
   const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
   const { userProfile, currentUser } = useAuth();
@@ -102,6 +108,55 @@ export default function CourseManager() {
   const handleViewCourse = (course: CourseWithApproval) => {
     setSelectedCourse(course);
     setShowCourseDialog(true);
+  };
+
+  const openEnroll = (course: CourseWithApproval) => {
+    setSelectedCourseForEnroll(course);
+    setEnrollTab('manual');
+    setStudentQuery('');
+    setFoundStudents([]);
+    setCsvText('');
+    setShowEnrollDialog(true);
+  };
+
+  const searchStudents = async () => {
+    try {
+      const all = await userService.getUsers(500);
+      const q = studentQuery.toLowerCase();
+      setFoundStudents(all.filter(u => (u.displayName||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.id||'').toLowerCase().includes(q)).slice(0,10));
+    } catch { setFoundStudents([]); }
+  };
+
+  const enrollStudent = async (studentId: string) => {
+    if (!selectedCourseForEnroll) return;
+    try {
+      await enrollmentService.createEnrollment({ courseId: selectedCourseForEnroll.id, studentId, status: 'active', progress: 0, completedLessons: [] } as any);
+      toast.success('Student enrolled');
+    } catch { toast.error('Failed to enroll student'); }
+  };
+
+  const processCsv = async () => {
+    if (!selectedCourseForEnroll) return;
+    const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      const [emailOrId] = line.split(',').map(s => s.trim());
+      if (!emailOrId) continue;
+      try {
+        let uid = emailOrId;
+        if (!uid.includes('@')) {
+          // treat as uid
+        } else {
+          const u = await userService.getUserByEmail(emailOrId);
+          uid = u?.uid || u?.id || '';
+        }
+        if (uid) {
+          await enrollmentService.createEnrollment({ courseId: selectedCourseForEnroll.id, studentId: uid, status: 'active', progress: 0, completedLessons: [] } as any);
+          count++;
+        }
+      } catch {}
+    }
+    toast.success(`Enrolled ${count} students`);
   };
 
   const openEdit = (course: CourseWithApproval) => {
@@ -341,6 +396,12 @@ export default function CourseManager() {
                         <Pencil className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
+                      {userProfile?.role === 'admin' && (
+                        <Button variant="outline" size="sm" onClick={() => openEnroll(course)}>
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Add Students
+                        </Button>
+                      )}
                       
                       
                       
@@ -499,6 +560,51 @@ export default function CourseManager() {
       </Dialog>
 
       {userProfile?.role === 'admin' && (
+        <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-green-600" /> Enroll Students
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button variant={enrollTab==='manual'?'default':'outline'} size="sm" onClick={() => setEnrollTab('manual')}>Manual</Button>
+                <Button variant={enrollTab==='csv'?'default':'outline'} size="sm" onClick={() => setEnrollTab('csv')}>CSV Import</Button>
+              </div>
+              {enrollTab === 'manual' ? (
+                <div className="space-y-3">
+                  <Label>Search student (name/email/id)</Label>
+                  <div className="flex gap-2">
+                    <Input value={studentQuery} onChange={(e) => setStudentQuery(e.target.value)} placeholder="john@school.edu or user id" />
+                    <Button onClick={searchStudents}>Search</Button>
+                  </div>
+                  <div className="space-y-2 max-h-64 overflow-auto">
+                    {foundStudents.map(s => (
+                      <div key={s.id} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <div className="font-medium">{s.displayName}</div>
+                          <div className="text-xs text-gray-500">{s.email}</div>
+                        </div>
+                        <Button size="sm" onClick={() => enrollStudent(s.uid || s.id)}>Enroll</Button>
+                      </div>
+                    ))}
+                    {foundStudents.length === 0 && (<div className="text-sm text-gray-500">No results</div>)}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Label>Paste CSV (email or uid per line)</Label>
+                  <Textarea rows={8} value={csvText} onChange={(e) => setCsvText(e.target.value)} placeholder="student1@example.com\nstudent2@example.com" />
+                  <Button onClick={processCsv}><Upload className="h-4 w-4 mr-1" /> Import & Enroll</Button>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEnrollDialog(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>

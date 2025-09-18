@@ -74,10 +74,10 @@ const Calendar: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Calendar Section */}
+          {/* Calendar Section (smaller) */}
           <div className="lg:col-span-2">
             {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <button 
                   onClick={() => navigateMonth('prev')}
@@ -85,7 +85,7 @@ const Calendar: React.FC = () => {
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-bold text-gray-900">{currentMonth}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{currentMonth}</h2>
                 <button 
                   onClick={() => navigateMonth('next')}
                   className="p-2 hover:bg-gray-100 rounded-md"
@@ -113,11 +113,11 @@ const Calendar: React.FC = () => {
               </div>
             </div>
 
-            {/* Empty Calendar State */}
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Events This Month</h3>
-              <p className="text-gray-500">No events match your current filter for this month.</p>
+            {/* Compact Calendar Placeholder */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
+              <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-1">No Events This Month</h3>
+              <p className="text-gray-500 text-sm">No events match your current filter for this month.</p>
             </div>
           </div>
 
@@ -159,17 +159,26 @@ const Calendar: React.FC = () => {
               </div>
             </div>
 
-            {/* Orthodox Calendar */}
+            {/* Upcoming Holidays (styled like Events list) */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Orthodox Calendar</h3>
-              <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Holidays</h3>
+              <div className="space-y-4">
                 {orthodoxCalendar.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">{item.event}</span>
-                    <span className="font-medium text-gray-900">{item.date}</span>
+                  <div key={index} className="border border-gray-200 rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900">{item.event}</div>
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{item.date}</span>
+                    </div>
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Rules & Regulations quick box */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Rules & Regulations</h3>
+              <p className="text-sm text-gray-600 mb-4">Review our community standards and academic policies.</p>
+              <a href="/rules" className="inline-block text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">View Rules</a>
             </div>
           </div>
         </div>

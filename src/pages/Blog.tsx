@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react';
 import { blogService, FirestoreBlog } from '@/lib/firestore';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { api, BlogPost } from '@/lib/api';
 
 const Blog = () => {
-  const [posts, setPosts] = useState<FirestoreBlog[]>([]);
+  const [posts, setPosts] = useState<FirestoreBlog[] | BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
   const { t } = useI18n();
+  const { currentUser } = useAuth();
 
   const categories = [
     { value: 'all', label: t('blog.categories.all') },
@@ -24,16 +27,22 @@ const Blog = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const allPosts = await blogService.getBlogPosts(20);
-        let filteredPosts = allPosts;
+        let allPosts: any[] = [];
+        if (currentUser) {
+          allPosts = await blogService.getBlogPosts(20);
+        } else {
+          const resp = await api.getBlogPosts({ limit: 20, q });
+          allPosts = resp.success ? (resp.data || []) : [];
+        }
+        let filteredPosts: any[] = allPosts;
         if (q) {
-          filteredPosts = filteredPosts.filter(post => 
-            post.title.toLowerCase().includes(q.toLowerCase()) ||
-            post.content.toLowerCase().includes(q.toLowerCase())
+          filteredPosts = filteredPosts.filter((post: any) => 
+            String(post.title || '').toLowerCase().includes(q.toLowerCase()) ||
+            String(post.content || '').toLowerCase().includes(q.toLowerCase())
           );
         }
         if (category !== 'all') {
-          // category support pending in schema
+          // optional future filter by category
         }
         setPosts(filteredPosts);
       } catch (error) {
@@ -44,7 +53,15 @@ const Blog = () => {
     };
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
-  }, [q, category]);
+  }, [q, category, currentUser]);
+
+  const formatDate = (d: any) => {
+    try {
+      if (d?.toDate) return d.toDate().toLocaleDateString();
+      if (typeof d === 'string') return new Date(d).toLocaleDateString();
+      return '';
+    } catch { return ''; }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,17 +105,14 @@ const Blog = () => {
           <div className="text-center text-gray-500">{t('blog.loading')}</div>
         ) : posts.length ? (
           <div className="grid lg:grid-cols-2 gap-8">
-            {posts.map(post => (
+            {posts.map((post: any) => (
               <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
                 <div className="p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">{post.title}</h2>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{post.content.substring(0, 200)}...</p>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{String(post.content || post.excerpt || '').substring(0, 200)}...</p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>{post.authorName}</span>
-                    <span>{post.createdAt.toDate().toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className="text-sm text-gray-500">❤️ {post.likes} likes</span>
+                    <span>{formatDate(post.createdAt)}</span>
                   </div>
                 </div>
               </article>

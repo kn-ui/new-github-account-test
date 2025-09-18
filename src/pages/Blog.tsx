@@ -24,29 +24,19 @@ const Blog = () => {
     const load = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Loading blog posts...');
-        const allPosts = await blogService.getPosts(20);
-        console.log('📖 Blog posts loaded:', allPosts);
-        
-        // Filter posts based on search query and category
+        const allPosts = await blogService.getBlogPosts(20);
         let filteredPosts = allPosts;
-        
         if (q) {
           filteredPosts = filteredPosts.filter(post => 
             post.title.toLowerCase().includes(q.toLowerCase()) ||
             post.content.toLowerCase().includes(q.toLowerCase())
           );
         }
-        
         if (category !== 'all') {
-          // Note: We'll need to add category field to blog posts later
-          // For now, just show all posts
+          // category support pending in schema
         }
-        
-        console.log('🔍 Filtered posts:', filteredPosts);
         setPosts(filteredPosts);
       } catch (error) {
-        console.error('❌ Failed to load blog posts:', error);
         setPosts([]);
       } finally {
         setLoading(false);
@@ -59,13 +49,19 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow-sm border-b p-6 rounded">
+      <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
+        <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('blog.title') ?? 'Updates & Blog'}</h1>
+          <p className="text-xl mb-8">{t('blog.subtitle') ?? 'News, updates, and stories from our community'}</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white rounded-lg border p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
+            <div className="relative flex-1 max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder={t('blog.searchPlaceholder')}
@@ -88,31 +84,29 @@ const Blog = () => {
           </div>
         </div>
 
-        <section className="py-8">
-          {loading ? (
-            <div className="text-center text-gray-500">{t('blog.loading')}</div>
-          ) : posts.length ? (
-            <div className="grid lg:grid-cols-2 gap-8">
-              {posts.map(post => (
-                <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">{post.title}</h2>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{post.content.substring(0, 150)}...</p>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{post.authorName}</span>
-                      <span>{post.createdAt.toDate().toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="text-sm text-gray-500">❤️ {post.likes} likes</span>
-                    </div>
+        {loading ? (
+          <div className="text-center text-gray-500">{t('blog.loading')}</div>
+        ) : posts.length ? (
+          <div className="grid lg:grid-cols-2 gap-8">
+            {posts.map(post => (
+              <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">{post.title}</h2>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{post.content.substring(0, 200)}...</p>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>{post.authorName}</span>
+                    <span>{post.createdAt.toDate().toLocaleDateString()}</span>
                   </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500 py-12">{t('blog.noPosts')}</div>
-          )}
-        </section>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="text-sm text-gray-500">❤️ {post.likes} likes</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-12">{t('blog.noPosts')}</div>
+        )}
       </div>
     </div>
   );

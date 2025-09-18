@@ -113,6 +113,23 @@ export interface FirestoreExam {
   updatedAt: Timestamp;
 }
 
+export interface FirestoreExamAttempt {
+  id: string;
+  examId: string;
+  studentId: string;
+  startedAt: Timestamp;
+  submittedAt?: Timestamp;
+  status: 'in_progress' | 'submitted' | 'graded';
+  // Array of answers keyed by exam question id or index
+  answers: Array<{ questionId: string; response: any }>;
+  // Auto grading
+  autoScore?: number;
+  totalAutoPoints?: number;
+  // Manual grading support
+  manualScore?: number;
+  feedback?: string;
+}
+
 export interface FirestoreSupportTicket {
   id: string;
   userId?: string;
@@ -871,6 +888,50 @@ export const examService = {
     const ref = doc(db, 'exams', examId);
     await deleteDoc(ref);
   },
+};
+
+// Exam Attempts service
+export const examAttemptService = {
+  async getAttemptForStudent(examId: string, studentId: string): Promise<FirestoreExamAttempt | null> {
+    const q = query(collection(db, 'exam_attempts'), where('examId','==', examId), where('studentId','==', studentId), limit(1));
+    const snap = await getDocs(q);
+    if (snap.docs.length === 0) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as FirestoreExamAttempt;
+  },
+  async getAttemptById(attemptId: string): Promise<FirestoreExamAttempt | null> {
+    const ref = doc(db, 'exam_attempts', attemptId);
+    const snap = await getDoc(ref);
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as FirestoreExamAttempt) : null;
+  },
+  async getAttemptsByStudent(studentId: string): Promise<FirestoreExamAttempt[]> {
+    const q = query(collection(db, 'exam_attempts'), where('studentId','==', studentId), orderBy('startedAt','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreExamAttempt));
+  },
+  async createAttempt(examId: string, studentId: string): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(collection(db, 'exam_attempts'), {
+      examId,
+      studentId,
+      startedAt: now,
+      status: 'in_progress',
+      answers: [],
+    } as any);
+    return ref.id;
+  },
+  async saveProgress(attemptId: string, answers: Array<{ questionId: string; response: any }>): Promise<void> {
+    const ref = doc(db, 'exam_attempts', attemptId);
+    await updateDoc(ref, { answers, updatedAt: Timestamp.now() } as any);
+  },
+  async submitAttempt(attemptId: string, payload: Partial<FirestoreExamAttempt>): Promise<void> {
+    const ref = doc(db, 'exam_attempts', attemptId);
+    await updateDoc(ref, { ...payload, submittedAt: Timestamp.now(), status: 'submitted', updatedAt: Timestamp.now() } as any);
+  },
+  async gradeAttempt(attemptId: string, manualScore: number, feedback?: string): Promise<void> {
+    const ref = doc(db, 'exam_attempts', attemptId);
+    await updateDoc(ref, { manualScore, feedback, status: 'graded', updatedAt: Timestamp.now() } as any);
+  }
 };
 
 // Consolidated Certificates service

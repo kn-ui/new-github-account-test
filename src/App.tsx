@@ -47,6 +47,9 @@ import StudentCourses from "./pages/StudentCourses";
 import TeacherGrades from "./pages/TeacherGrades";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
 import StudentGrades from "./pages/StudentGrades";
+import StudentExams from "./pages/StudentExams";
+import TakeExam from "./pages/TakeExam";
+import StudentExamResult from "./pages/StudentExamResult";
 import SearchResults from "./pages/SearchResults";
 import SeedDatabase from "./pages/SeedDatabase";
 import SubmissionDetail from "./pages/SubmissionDetail";
@@ -268,6 +271,36 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <StudentAnnouncements />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-exams" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <StudentExams />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-exams/:examId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TakeExam />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/student-exams/:examId/result" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <StudentExamResult />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

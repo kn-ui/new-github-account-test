@@ -31,8 +31,13 @@ const Blog = () => {
         if (currentUser) {
           allPosts = await blogService.getBlogPosts(20);
         } else {
-          const resp = await api.getBlogPosts({ limit: 20, q });
-          allPosts = resp.success ? (resp.data || []) : [];
+          try {
+            const resp = await api.getBlogPosts({ limit: 20, q });
+            allPosts = resp.success ? (resp.data || []) : [];
+          } catch {
+            // Fallback to Firestore (public read) if API fails
+            allPosts = await blogService.getBlogPosts(20);
+          }
         }
         let filteredPosts: any[] = allPosts;
         if (q) {

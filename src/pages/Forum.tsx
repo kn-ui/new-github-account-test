@@ -30,8 +30,13 @@ const Forum = () => {
       if (currentUser) {
         data = await forumService.getForumThreads(50);
       } else {
-        const resp = await api.getForumThreads({ limit: 50 });
-        data = resp.success ? (resp.data || []) : [];
+        try {
+          const resp = await api.getForumThreads({ limit: 50 });
+          data = resp.success ? (resp.data || []) : [];
+        } catch {
+          // Fallback to Firestore public read if API fails
+          data = await forumService.getForumThreads(50);
+        }
       }
       if (q) data = data.filter((ti: any) => String(ti.title || '').toLowerCase().includes(q.toLowerCase()) || String(ti.body || '').toLowerCase().includes(q.toLowerCase()));
       setThreads(data);

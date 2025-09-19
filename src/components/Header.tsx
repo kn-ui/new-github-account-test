@@ -25,9 +25,8 @@ const Header = () => {
 
   const userName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || t('auth.user');
 
-  // Exclude Academic from base list to render a dropdown with sublinks
+  // Exclude Academic and Home from base list; Home will be rendered first
   const baseNavItems = [
-    { label: t('nav.home'), to: '/' },
     { label: t('nav.blog'), to: '/blog' },
     { label: t('nav.forum'), to: '/forum' },
     { label: t('nav.contact'), to: '/contact' },
@@ -50,6 +49,9 @@ const Header = () => {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-1">
+            {/* Home first */}
+            <Link to="/" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.home')}</Link>
+
             {/* Dashboard (when logged in) */}
             {currentUser && (
               <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.dashboard')}</Link>
@@ -124,6 +126,11 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
+              {/* Home first */}
+              <Link to="/" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                {t('nav.home')}
+              </Link>
+
               {/* Dashboard (when logged in) */}
               {currentUser && (
                 <Link to="/dashboard" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>

@@ -6,27 +6,43 @@ class ForumService {
   private posts = firestore?.collection('forum_posts');
 
   async listThreads(page = 1, limit = 20, category?: string): Promise<{ threads: ForumThread[]; total: number; }> {
-    if (!this.threads) return { threads: [], total: 0 };
+    try {
+      if (!this.threads) {
+        console.warn('ForumService.listThreads: firestore not initialized');
+        return { threads: [], total: 0 };
+      }
 
-    let query: FirebaseFirestore.Query = this.threads.orderBy('lastActivityAt', 'desc');
-    if (category) query = query.where('category', '==', category);
+      let query: FirebaseFirestore.Query = this.threads.orderBy('lastActivityAt', 'desc');
+      if (category) query = query.where('category', '==', category);
 
-    const snapshot = await query.get();
-    const total = snapshot.size;
-    const docs = snapshot.docs.slice((page - 1) * limit, (page - 1) * limit + limit);
-    const threads: ForumThread[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
-    return { threads, total };
+      const snapshot = await query.get();
+      const total = snapshot.size;
+      const docs = snapshot.docs.slice((page - 1) * limit, (page - 1) * limit + limit);
+      const threads: ForumThread[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+      return { threads, total };
+    } catch (e) {
+      console.error('ForumService.listThreads error:', e);
+      return { threads: [], total: 0 };
+    }
   }
 
   async listPosts(threadId: string, page = 1, limit = 50): Promise<{ posts: ForumThreadPost[]; total: number; }> {
-    if (!this.posts) return { posts: [], total: 0 };
+    try {
+      if (!this.posts) {
+        console.warn('ForumService.listPosts: firestore not initialized');
+        return { posts: [], total: 0 };
+      }
 
-    let query: FirebaseFirestore.Query = this.posts.where('threadId', '==', threadId).orderBy('createdAt', 'asc');
-    const snapshot = await query.get();
-    const total = snapshot.size;
-    const docs = snapshot.docs.slice((page - 1) * limit, (page - 1) * limit + limit);
-    const posts: ForumThreadPost[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
-    return { posts, total };
+      let query: FirebaseFirestore.Query = this.posts.where('threadId', '==', threadId).orderBy('createdAt', 'asc');
+      const snapshot = await query.get();
+      const total = snapshot.size;
+      const docs = snapshot.docs.slice((page - 1) * limit, (page - 1) * limit + limit);
+      const posts: ForumThreadPost[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+      return { posts, total };
+    } catch (e) {
+      console.error('ForumService.listPosts error:', e);
+      return { posts: [], total: 0 };
+    }
   }
 
   async createThread(params: { title: string; category: string; createdBy: string; createdByName: string; }): Promise<ForumThread> {

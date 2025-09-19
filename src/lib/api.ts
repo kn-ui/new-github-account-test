@@ -1,5 +1,12 @@
-// Prefer environment variable; fall back to localhost for development
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000';
+// Prefer environment variable; fall back to same-origin /api to avoid CORS in dev
+const API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || '';
+
+// Helper to build full URL
+const buildUrl = (endpoint: string) => {
+  if (API_BASE_URL) return `${API_BASE_URL}${endpoint}`;
+  // same-origin proxy (configure dev server to proxy /api to backend)
+  return endpoint;
+};
 
 // API Response types
 export interface ApiResponse<T = any> {
@@ -103,7 +110,7 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = buildUrl(endpoint);
     
     // Get auth token from localStorage
     const token = localStorage.getItem('authToken');

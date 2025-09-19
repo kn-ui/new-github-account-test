@@ -26,12 +26,17 @@ const Blog = () => {
       try {
         setLoading(true);
         let allPosts: any[] = [];
+        // Prefer Firestore first (works for authenticated users); if it fails or empty, try API
         try {
-          const resp = await api.getBlogPosts({ limit: 20, q });
-          allPosts = resp.success ? (resp.data || []) : [];
-        } catch {
-          // Fallback to Firestore (public read) if API fails
           allPosts = await blogService.getBlogPosts(20);
+        } catch (e) {
+          allPosts = [];
+        }
+        if (!allPosts || allPosts.length === 0) {
+          try {
+            const resp = await api.getBlogPosts({ limit: 20, q });
+            allPosts = resp.success ? (resp.data || []) : [];
+          } catch {}
         }
         let filteredPosts: any[] = allPosts;
         if (q) {

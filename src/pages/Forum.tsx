@@ -25,12 +25,17 @@ const Forum = () => {
     setLoading(true);
     try {
       let data: any[] = [];
+      // Prefer Firestore first for authenticated users; fallback to API
       try {
-        const resp = await api.getForumThreads({ limit: 50 });
-        data = resp.success ? (resp.data || []) : [];
-      } catch {
-        // Fallback to Firestore public read if API fails
         data = await forumService.getForumThreads(50);
+      } catch (e) {
+        data = [];
+      }
+      if (!data || data.length === 0) {
+        try {
+          const resp = await api.getForumThreads({ limit: 50 });
+          data = resp.success ? (resp.data || []) : [];
+        } catch {}
       }
       if (q) data = data.filter((ti: any) => String(ti.title || '').toLowerCase().includes(q.toLowerCase()) || String(ti.body || '').toLowerCase().includes(q.toLowerCase()));
       setThreads(data);

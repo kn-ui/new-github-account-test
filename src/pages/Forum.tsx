@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { forumService, FirestoreForumThread } from '@/lib/firestore';
 import { Search, MessageCircle, Eye, ThumbsUp } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
 
 const Forum = () => {
@@ -12,7 +11,6 @@ const Forum = () => {
   const [q, setQ] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const { t } = useI18n();
-  const { currentUser } = useAuth();
 
   const categories = [
     'All Topics',
@@ -27,16 +25,12 @@ const Forum = () => {
     setLoading(true);
     try {
       let data: any[] = [];
-      if (currentUser) {
+      try {
+        const resp = await api.getForumThreads({ limit: 50 });
+        data = resp.success ? (resp.data || []) : [];
+      } catch {
+        // Fallback to Firestore public read if API fails
         data = await forumService.getForumThreads(50);
-      } else {
-        try {
-          const resp = await api.getForumThreads({ limit: 50 });
-          data = resp.success ? (resp.data || []) : [];
-        } catch {
-          // Fallback to Firestore public read if API fails
-          data = await forumService.getForumThreads(50);
-        }
       }
       if (q) data = data.filter((ti: any) => String(ti.title || '').toLowerCase().includes(q.toLowerCase()) || String(ti.body || '').toLowerCase().includes(q.toLowerCase()));
       setThreads(data);
@@ -50,7 +44,7 @@ const Forum = () => {
   useEffect(() => {
     const id = setTimeout(reload, 200);
     return () => clearTimeout(id);
-  }, [q, selectedCategory, currentUser]);
+  }, [q, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-background">

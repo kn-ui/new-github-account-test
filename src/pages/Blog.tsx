@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { blogService, FirestoreBlog } from '@/lib/firestore';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { api, BlogPost } from '@/lib/api';
 
 const Blog = () => {
@@ -12,7 +11,6 @@ const Blog = () => {
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
   const { t } = useI18n();
-  const { currentUser } = useAuth();
 
   const categories = [
     { value: 'all', label: t('blog.categories.all') },
@@ -28,16 +26,12 @@ const Blog = () => {
       try {
         setLoading(true);
         let allPosts: any[] = [];
-        if (currentUser) {
+        try {
+          const resp = await api.getBlogPosts({ limit: 20, q });
+          allPosts = resp.success ? (resp.data || []) : [];
+        } catch {
+          // Fallback to Firestore (public read) if API fails
           allPosts = await blogService.getBlogPosts(20);
-        } else {
-          try {
-            const resp = await api.getBlogPosts({ limit: 20, q });
-            allPosts = resp.success ? (resp.data || []) : [];
-          } catch {
-            // Fallback to Firestore (public read) if API fails
-            allPosts = await blogService.getBlogPosts(20);
-          }
         }
         let filteredPosts: any[] = allPosts;
         if (q) {
@@ -58,7 +52,7 @@ const Blog = () => {
     };
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
-  }, [q, category, currentUser]);
+  }, [q, category]);
 
   const formatDate = (d: any) => {
     try {

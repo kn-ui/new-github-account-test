@@ -1,5 +1,5 @@
 import Header from '@/components/Header';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } from '@/lib/firestore';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
@@ -21,6 +21,13 @@ const ForumThread = () => {
     if (!id) { id = crypto?.randomUUID?.() || String(Math.random()).slice(2); localStorage.setItem(key, id); }
     return id;
   }, []);
+
+  // Mark a unique view per visitor on thread open
+  useEffect(() => {
+    if (!threadId) return;
+    forumService.markViewedOnce(threadId, (currentUser?.uid || visitorId) as string).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]);
   const [editId, setEditId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);

@@ -5,10 +5,12 @@ import { userService, courseService, eventService, courseMaterialService, announ
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, Calendar, FileText, Bell, FolderOpen } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 type Role = 'admin' | 'teacher' | 'student';
 
 export default function SearchResults() {
+  const { t } = useI18n();
   const { userProfile, currentUser } = useAuth();
   const role = (userProfile?.role as Role) || 'student';
   const [params] = useSearchParams();
@@ -119,15 +121,15 @@ export default function SearchResults() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Search Results</h1>
-          <p className="text-gray-600">Showing results for "{initialQ}"</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('searchResults.title')}</h1>
+          <p className="text-gray-600">{t('searchResults.showingFor', { q: initialQ })}</p>
         </div>
       </div>
 
       {role === 'admin' && users.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Users ({users.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> {t('searchResults.users')} ({users.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {users.slice(0, 10).map(u => (
@@ -141,7 +143,7 @@ export default function SearchResults() {
             ))}
             {users.length > 10 && (
               <Button variant="outline" asChild>
-                <Link to="/dashboard/users">View all users</Link>
+                <Link to="/dashboard/users">{t('searchResults.viewAllUsers')}</Link>
               </Button>
             )}
           </CardContent>
@@ -151,7 +153,7 @@ export default function SearchResults() {
       {courses.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" /> Courses ({courses.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" /> {t('searchResults.courses')} ({courses.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {courses.slice(0, 10).map(c => (
@@ -161,13 +163,13 @@ export default function SearchResults() {
                   <div className="text-sm text-gray-600">{c.instructorName} • {c.category}</div>
                 </div>
                 <Button variant="outline" asChild>
-                  <Link to={`/courses/${c.id}`}>Open</Link>
+                  <Link to={`/courses/${c.id}`}>{t('searchResults.open')}</Link>
                 </Button>
               </div>
             ))}
             {courses.length > 10 && (
               <Button variant="outline" asChild>
-                <Link to="/dashboard/courses">View all courses</Link>
+                <Link to="/dashboard/courses">{t('searchResults.viewAllCourses')}</Link>
               </Button>
             )}
           </CardContent>
@@ -179,14 +181,14 @@ export default function SearchResults() {
       {assignments.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Assignments ({assignments.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> {t('searchResults.assignments')} ({assignments.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {assignments.slice(0, 10).map(a => (
               <div key={a.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
                   <div className="font-medium">{a.title}</div>
-                  <div className="text-sm text-gray-600">Due: {a.dueDate?.toDate ? a.dueDate.toDate().toLocaleDateString() : ''}</div>
+                  <div className="text-sm text-gray-600">{t('searchResults.due')} {a.dueDate?.toDate ? a.dueDate.toDate().toLocaleDateString() : ''}</div>
                 </div>
               </div>
             ))}
@@ -197,7 +199,7 @@ export default function SearchResults() {
       {materials.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" /> Materials ({materials.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" /> {t('searchResults.materials')} ({materials.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {materials.slice(0, 10).map(m => (
@@ -215,7 +217,7 @@ export default function SearchResults() {
       {anns.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Announcements ({anns.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> {t('searchResults.announcements')} ({anns.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {anns.slice(0, 10).map(a => (
@@ -230,7 +232,7 @@ export default function SearchResults() {
         </Card>
       )}
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> Events ({events.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> {t('searchResults.events')} ({events.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {events.slice(0, 10).map(e => (
@@ -240,13 +242,13 @@ export default function SearchResults() {
                   <div className="text-sm text-gray-600">{(e.type || 'event')}</div>
                 </div>
                 <Button variant="outline" asChild>
-                  <Link to="/dashboard/events">Open</Link>
+                  <Link to="/dashboard/events">{t('searchResults.open')}</Link>
                 </Button>
               </div>
             ))}
             {events.length > 10 && (
               <Button variant="outline" asChild>
-                <Link to="/dashboard/events">View all events</Link>
+                <Link to="/dashboard/events">{t('searchResults.viewAllEvents')}</Link>
               </Button>
             )}
           </CardContent>
@@ -255,8 +257,8 @@ export default function SearchResults() {
 
       {!loading && normalizedQuery && users.length === 0 && courses.length === 0 && events.length === 0 && (
         <div className="text-center text-gray-500 py-12">
-          <h3 className="text-lg font-medium">No results found</h3>
-          <p className="text-sm">We couldn't find anything matching "{initialQ}".</p>
+          <h3 className="text-lg font-medium">{t('common.noResults') || 'No results found'}</h3>
+          <p className="text-sm">{t('searchResults.showingFor', { q: initialQ })}</p>
         </div>
       )}
     </div>

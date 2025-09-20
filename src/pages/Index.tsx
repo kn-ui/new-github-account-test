@@ -2,8 +2,30 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SiteFooter from "@/components/SiteFooter";
 import { Link } from "react-router-dom";
+import { CalendarDays, Clock, MapPin } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
 
 const Index = () => {
+  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await eventService.getAllEvents();
+        setEvents(list);
+      } catch {
+        setEvents([]);
+      }
+    })();
+  }, []);
+
+  const top3 = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter(ev => (ev.date as Timestamp).toDate() >= now)
+      .slice(0, 3);
+  }, [events]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -41,6 +63,25 @@ const Index = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
               <p className="text-lg text-gray-600">Stay up to date with our calendar</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              {top3.map(ev => (
+                <div key={ev.id} className="bg-white rounded-lg border p-5">
+                  <div className="flex items-center text-sm text-gray-600 mb-2">
+                    <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
+                    {(ev.date as Timestamp).toDate().toLocaleDateString()}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">{ev.title}</h3>
+                  <p className="text-gray-600 mt-1 line-clamp-3">{ev.description}</p>
+                  <div className="mt-3 space-y-1 text-sm text-gray-600">
+                    <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-gray-400" /> {ev.time || '—'}</div>
+                    <div className="flex items-center"><MapPin className="w-4 h-4 mr-2 text-gray-400" /> {ev.location || '—'}</div>
+                  </div>
+                </div>
+              ))}
+              {!top3.length && (
+                <div className="md:col-span-3 text-center text-gray-500">No upcoming events.</div>
+              )}
             </div>
             <div className="text-center">
               <Link 

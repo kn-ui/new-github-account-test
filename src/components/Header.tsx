@@ -168,7 +168,7 @@ const Header = () => {
                     {t('nav.calendar')}
                   </Link>
                   <Link to="/rules" className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
-                    {t('nav.rules')}
+                    Rules and Regulations
                   </Link>
                 </div>
               )}

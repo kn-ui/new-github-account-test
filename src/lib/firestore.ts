@@ -194,6 +194,8 @@ export interface FirestoreForumThread {
   authorName: string;
   createdAt: Timestamp;
   lastActivityAt: Timestamp;
+  category?: string;
+  likes?: number;
 }
 
 export interface FirestoreForumPost {
@@ -686,6 +688,18 @@ export const announcementService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
   },
 
+  async getPublicGeneralAnnouncements(limitCount = 30): Promise<FirestoreAnnouncement[]> {
+    const q = query(
+      collections.announcements(),
+      where('courseId', '==', null),
+      where('recipientStudentId', '==', null),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+  },
+
   async createAnnouncement(announcementData: Omit<FirestoreAnnouncement, 'id' | 'createdAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.announcements(), {
@@ -1034,6 +1048,7 @@ export const forumService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.forumThreads(), {
       ...threadData,
+      likes: 0,
       createdAt: now,
       lastActivityAt: now,
     });
@@ -1062,6 +1077,26 @@ export const forumService = {
     await updateDoc(threadRef, { lastActivityAt: now });
     
     return docRef.id;
+  },
+
+  async likeThread(threadId: string): Promise<void> {
+    const ref = doc(db, 'forum_threads', threadId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const current = snap.data() as any;
+    const nextLikes = (current.likes || 0) + 1;
+    await updateDoc(ref, { likes: nextLikes, lastActivityAt: Timestamp.now() });
+  },
+
+  async countPosts(threadId: string): Promise<number> {
+    const snap = await getDocs(collections.forumPosts(threadId));
+    return snap.size;
+  },
+
+  async countPostsSince(threadId: string, since: Timestamp): Promise<number> {
+    const q = query(collections.forumPosts(threadId), where('createdAt','>=', since));
+    const snap = await getDocs(q);
+    return snap.size;
   },
 };
 

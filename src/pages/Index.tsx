@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SiteFooter from "@/components/SiteFooter";
 import { Link } from "react-router-dom";
+import { useI18n } from "@/contexts/I18nContext";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
@@ -26,6 +27,7 @@ const Index = () => {
       .slice(0, 3);
   }, [events]);
 
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -41,10 +43,8 @@ const Index = () => {
               />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Message From The School</h2>
-              <p className="text-gray-600 mb-4">
-                For generations, we have guided students in both faith and knowledge, rooted in the traditions of the Ethiopian Orthodox Church.
-              </p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">{t('home.message.title')}</h2>
+              <p className="text-gray-600 mb-4">{t('home.message.subtitle')}</p>
               <p className="text-gray-600 mb-6">
                 We invite you to discover our community where spiritual growth and academic excellence walk hand in hand, preparing young minds for service, leadership, and lifelong learning.
               </p>
@@ -52,7 +52,7 @@ const Index = () => {
                 to="/admissions"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
               >
-                About Our Services
+                {t('home.message.cta')}
               </Link>
             </div>
           </div>
@@ -61,7 +61,7 @@ const Index = () => {
         <section className="bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Events</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('home.events.title')}</h2>
               <p className="text-lg text-gray-600">Stay up to date with our calendar</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

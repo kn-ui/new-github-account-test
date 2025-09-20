@@ -154,8 +154,8 @@ const Forum = () => {
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
         <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Discussion Forum</h1>
-          <p className="text-xl opacity-90">Engage with our community</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('forum.title')}</h1>
+          <p className="text-xl opacity-90">{t('forum.subtitle')}</p>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ const Forum = () => {
           {canCreate && (
             <div className="flex justify-end mb-4">
               <button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm">
-                <Plus className="w-4 h-4" /> New Topic
+                <Plus className="w-4 h-4" /> {t('forum.newTopic')}
               </button>
             </div>
           )}
@@ -219,8 +219,8 @@ const Forum = () => {
           {showCreate && (
             <div className="bg-white rounded-lg border p-4 mb-6">
               <div className="grid gap-3">
-                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Thread title" className="border rounded px-3 py-2 text-sm" />
-                <textarea value={newBody} onChange={(e)=>setNewBody(e.target.value)} placeholder="Thread body (details)" rows={4} className="border rounded px-3 py-2 text-sm" />
+                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder={t('forum.create.titlePlaceholder')} className="border rounded px-3 py-2 text-sm" />
+                <textarea value={newBody} onChange={(e)=>setNewBody(e.target.value)} placeholder={t('forum.create.titlePlaceholder')} rows={4} className="border rounded px-3 py-2 text-sm" />
                 <select value={newCategory} onChange={(e)=>setNewCategory(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
                   {categories.filter(c=>c!=='All Topics').map(c => (<option key={c} value={c}>{c}</option>))}
                 </select>
@@ -233,7 +233,7 @@ const Forum = () => {
                     await forumService.createForumThread({ title: newTitle.trim(), body: newBody.trim(), authorId: (userProfile?.uid||userProfile?.id) as any, authorName: userProfile?.displayName || 'Unknown', category: newCategory } as any);
                     setShowCreate(false); setNewTitle(''); setNewBody(''); await reload();
                   } finally { setCreating(false); }
-                }} className="px-3 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-60">{creating?'Creating…':'Create'}</button>
+                }} className="px-3 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-60">{creating?'Creating…':t('forum.create.post')}</button>
               </div>
             </div>
           )}
@@ -249,7 +249,7 @@ const Forum = () => {
                       <span className="text-blue-600 font-semibold text-sm">{(discussion.authorName || discussion.createdByName || 'U').slice(0,2)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-lg font-semibold text-gray-900 hover:text-blue-600 mb-1">{discussion.title}</div>
+                    <div className="text-lg font-semibold text-gray-900 hover:text-blue-600 mb-1">{discussion.title}</div>
                       {discussion.body && <div className="text-gray-600 line-clamp-2">{discussion.body}</div>}
                       <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
                         <div className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {replyCounts[discussion.id] ?? 0}</div>

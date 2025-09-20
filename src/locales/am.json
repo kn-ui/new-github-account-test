@@ -22,7 +22,9 @@
     "announcements": "ማስታወቂያዎች",
     "materials": "የኮርስ ቁሳቁሶች",
     "certificates": "ማረጋገጫዎች",
-    "progress": "እድገት"
+    "progress": "እድገት",
+    "updates": "አዳዲስ",
+    "rulesAndRegulations": "ህጎች እና መመሪያዎች"
   },
   "auth": {
     "login": "መግባት",
@@ -180,6 +182,8 @@
     "more": "+{count} ተጨማሪ"
   },
   "forum": {
+    "title": "ውይይት ፎረም",
+    "subtitle": "ከማህበረሰባችን ጋር ይተባበሩ",
     "searchPlaceholder": "ጉዳዮች ፈልግ...",
     "categories": {
       "all": "ሁሉም ጉዳዮች",
@@ -196,9 +200,52 @@
     "loading": "በመጫን ላይ...",
     "noTopics": "ጉዳይ አልተገኘም",
     "pinned": "ተሰናክሏል",
-    "by": "በ"
+    "by": "በ",
+    "newTopic": "አዲስ ጉዳይ",
+    "editThread": "ጉዳዩን አርትዕ",
+    "deleteThread": "ጉዳዩን ሰርዝ",
+    "deleteConfirm": "ይህን ጉዳይ መሰረዝ እርግጠኛ ነዎት? ይህ እርምጃ አይመለስም.",
+    "reply": "ምላሽ",
+    "publicReplyWarning": "ለህዝብ ተጠቃሚዎች ምላሽ መስጠት አይቻልም"
   }
   ,
+  "updatesPage": {
+    "title": "አዳዲስ መረጃዎች",
+    "subtitle": "የትምህርት ቤቱን ዜናዎች፣ ክስተቶች እና ግንዛቤ ይከታተሉ"
+  },
+  "home": {
+    "message": {
+      "title": "መልዕክት ከትምህርት ቤቱ",
+      "subtitle": "በተለምዶ ለትውልዶች ሁሉ በእምነት እና በእውቀት እንመራ ነበር፣ በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን ባህል ላይ የተመሰረተ.",
+      "cta": "ስለ አገልግሎታችን"
+    },
+    "events": {
+      "title": "የሚመጡ ክስተቶች"
+    }
+  },
+  "footer": {
+    "quickLinks": "ፈጣን አገናኞች",
+    "resources": "ሀብቶች",
+    "contact": "የእውቂያ መረጃ",
+    "about": "ስለ እኛ",
+    "academicPrograms": "አካዳሚክ ፕሮግራሞች",
+    "admissions": "መግቢያ",
+    "academicCalendar": "የአካዳሚክ ቀን መቁጠሪያ",
+    "rules": "ህጎች እና መመሪያዎች",
+    "latestUpdates": "የቅርብ ጊዜ አዳዲስ",
+    "discussionForum": "ውይይት ፎረም",
+    "studentPortal": "የተማሪ ፖርታል",
+    "privacy": "የግላዊነት ፖሊሲ",
+    "terms": "የአገልግሎት ውሎች",
+    "tagline": "በኦርቶዶክስ ባህል ውስጥ ጥሩ መንፈሳዊ ትምህርት መስጠት እና የትንሽ አእምሮዎችን ማሳደግ.",
+    "copyright": "የሁሉም መብት ተፈጻሚ ነው።"
+  },
+  "academicPage": {
+    "title": "አካዳሚክ ፕሮግራሞች",
+    "subtitle": "ሁሉንም ኮርሶች እና ፕሮግራሞች ይመልከቱ",
+    "apply": "ለመቀበል ይመልከቱ",
+    "contact": "አግኙን"
+  },
   "search": {
     "placeholder": "ተጠቃሚዎችን፣ ኮርሶችን፣ ክስተቶችን ፈልግ..."
   },

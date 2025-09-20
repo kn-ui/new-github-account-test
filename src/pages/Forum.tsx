@@ -2,6 +2,7 @@ import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { forumService, FirestoreForumThread, Timestamp } from '@/lib/firestore';
 import { Search, MessageCircle, Eye, ThumbsUp, Plus } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
@@ -22,8 +23,10 @@ const Forum = () => {
   const isOwner = (thread: any) => userProfile && (thread.authorId === (userProfile.uid || userProfile.id));
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newBody, setNewBody] = useState('');
   const [newCategory, setNewCategory] = useState('Theology');
   const [creating, setCreating] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [editOpenFor, setEditOpenFor] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editCategory, setEditCategory] = useState('Theology');
@@ -190,19 +193,20 @@ const Forum = () => {
 
           {showCreate && (
             <div className="bg-white rounded-lg border p-4 mb-6">
-              <div className="grid md:grid-cols-3 gap-3">
-                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Thread title" className="md:col-span-2 border rounded px-3 py-2 text-sm" />
-                <select value={newCategory} onChange={(e)=>setNewCategory(e.target.value)} className="border rounded px-3 py-2 text-sm">
+              <div className="grid gap-3">
+                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Thread title" className="border rounded px-3 py-2 text-sm" />
+                <textarea value={newBody} onChange={(e)=>setNewBody(e.target.value)} placeholder="Thread body (details)" rows={4} className="border rounded px-3 py-2 text-sm" />
+                <select value={newCategory} onChange={(e)=>setNewCategory(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
                   {categories.filter(c=>c!=='All Topics').map(c => (<option key={c} value={c}>{c}</option>))}
                 </select>
               </div>
               <div className="flex justify-end gap-2 mt-3">
-                <button onClick={()=>{setShowCreate(false); setNewTitle('');}} className="px-3 py-2 text-sm border rounded">Cancel</button>
-                <button disabled={!newTitle.trim()||creating} onClick={async ()=>{
-                  if (!newTitle.trim()) return; setCreating(true);
+                <button onClick={()=>{setShowCreate(false); setNewTitle(''); setNewBody('');}} className="px-3 py-2 text-sm border rounded">Cancel</button>
+                <button disabled={!newTitle.trim()||!newBody.trim()||creating} onClick={async ()=>{
+                  if (!newTitle.trim()||!newBody.trim()) return; setCreating(true);
                   try {
-                    await forumService.createForumThread({ title: newTitle.trim(), body: '', authorId: (userProfile?.uid||userProfile?.id) as any, authorName: userProfile?.displayName || 'Unknown', category: newCategory } as any);
-                    setShowCreate(false); setNewTitle(''); await reload();
+                    await forumService.createForumThread({ title: newTitle.trim(), body: newBody.trim(), authorId: (userProfile?.uid||userProfile?.id) as any, authorName: userProfile?.displayName || 'Unknown', category: newCategory } as any);
+                    setShowCreate(false); setNewTitle(''); setNewBody(''); await reload();
                   } finally { setCreating(false); }
                 }} className="px-3 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-60">{creating?'Creating…':'Create'}</button>
               </div>
@@ -240,7 +244,7 @@ const Forum = () => {
                       {isOwner(discussion) && canCreate && (
                         <div className="mt-3 flex gap-2 text-xs">
                           <button onClick={(e)=>{ e.preventDefault(); setEditOpenFor(discussion.id); setEditTitle(discussion.title || ''); setEditCategory(discussion.category || 'Theology'); }} className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
-                          <button onClick={async (e)=>{ e.preventDefault(); if (!confirm('Delete this thread?')) return; await forumService.deleteForumThread(discussion.id); await reload(); }} className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
+                          <button onClick={(e)=>{ e.preventDefault(); setDeleteTargetId(discussion.id); }} className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
                         </div>
                       )}
                     </div>
@@ -297,6 +301,16 @@ const Forum = () => {
           )}
         </section>
       </div>
+      <ConfirmDialog
+        open={!!deleteTargetId}
+        onOpenChange={(open)=>{ if (!open) setDeleteTargetId(null); }}
+        onConfirm={async ()=>{ if (!deleteTargetId) return; await forumService.deleteForumThread(deleteTargetId); setDeleteTargetId(null); await reload(); }}
+        title="Delete Thread"
+        description="Are you sure you want to delete this thread? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 };

@@ -31,6 +31,13 @@ const Forum = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editCategory, setEditCategory] = useState('Theology');
   const [savingEdit, setSavingEdit] = useState(false);
+  const visitorId = useMemo(() => {
+    // For unauthenticated users, persist a stable id in localStorage
+    const key = 'visitorId';
+    let id = localStorage.getItem(key);
+    if (!id) { id = crypto?.randomUUID?.() || String(Math.random()).slice(2); localStorage.setItem(key, id); }
+    return (userProfile?.uid || (userProfile as any)?.id || id) as string;
+  }, [userProfile]);
 
   const categories = [
     'All Topics',
@@ -218,7 +225,7 @@ const Forum = () => {
           ) : (
             <div className="space-y-4">
               {paginated.map((discussion: any) => (
-                <a key={discussion.id} href={`/forum/${discussion.id}`} className="block bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
+                <a key={discussion.id} href={`/forum/${discussion.id}`} className="block bg-white rounded-lg border p-6 hover:shadow-md transition-shadow" onClick={async ()=>{ try { await forumService.markViewedOnce(discussion.id, visitorId); } catch {} }}>
                   <div className="flex items-start space-x-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-blue-600 font-semibold text-sm">{(discussion.authorName || discussion.createdByName || 'U').slice(0,2)}</span>
@@ -230,7 +237,7 @@ const Forum = () => {
                         <div className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {replyCounts[discussion.id] ?? 0}</div>
                         <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {discussion.views ?? '—'}</div>
                         <button
-                          onClick={(e) => { e.preventDefault(); forumService.likeThread(discussion.id).then(reload); }}
+                          onClick={(e) => { e.preventDefault(); forumService.likeThreadOnce(discussion.id, visitorId).then(reload); }}
                           className="flex items-center gap-1 hover:text-blue-600"
                           aria-label="Like thread"
                         >

@@ -1136,6 +1136,17 @@ export const forumService = {
     return true;
   },
 
+  async unlikeThreadOnce(threadId: string, visitorId: string): Promise<boolean> {
+    const likeRef = doc(db, `forum_threads/${threadId}/likes`, visitorId);
+    const likeSnap = await getDoc(likeRef);
+    if (!likeSnap.exists()) return false;
+    await deleteDoc(likeRef);
+    const count = await this.getLikeCount(threadId);
+    const threadRef = doc(db, 'forum_threads', threadId);
+    await updateDoc(threadRef, { likes: count });
+    return true;
+  },
+
   // Per-visitor views stored under subcollection: forum_threads/{id}/views/{visitorId}
   async hasVisitorViewed(threadId: string, visitorId: string): Promise<boolean> {
     const ref = doc(db, `forum_threads/${threadId}/views`, visitorId);

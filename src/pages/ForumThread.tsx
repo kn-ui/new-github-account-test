@@ -33,6 +33,7 @@ const ForumThread = () => {
   const [editBody, setEditBody] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [postLikedMap, setPostLikedMap] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     if (!threadId) return;
@@ -51,6 +52,32 @@ const ForumThread = () => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
+
+  // Load liked state for replies
+  useEffect(() => {
+    if (!threadId || posts.length === 0) { setPostLikedMap({}); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const visitor = (currentUser?.uid || visitorId) as string;
+        const results = await Promise.all(posts.map(async (p) => {
+          try {
+            const liked = await forumService.hasVisitorLikedPost(threadId, p.id, visitor);
+            return { id: p.id, liked };
+          } catch {
+            return { id: p.id, liked: false };
+          }
+        }));
+        if (cancelled) return;
+        const map: Record<string, boolean> = {};
+        results.forEach(r => { map[r.id] = r.liked; });
+        setPostLikedMap(map);
+      } catch {
+        if (!cancelled) setPostLikedMap({});
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [threadId, posts, currentUser?.uid, visitorId]);
 
   const onCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +138,7 @@ const ForumThread = () => {
           <div className="space-y-4">
             {posts.map(p => {
               const canEdit = !!currentUser && (p.authorId === currentUser.uid);
-              const [postLiked, setPostLiked] = useState<boolean>(false);
-              useEffect(() => { if (threadId) forumService.hasVisitorLikedPost(threadId, p.id, (currentUser?.uid || visitorId) as string).then(setPostLiked).catch(()=>setPostLiked(false)); }, [threadId, p.id]);
+              const postLiked = !!postLikedMap[p.id];
               return (
                 <div key={p.id} className="bg-white rounded-lg shadow-sm border p-4">
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
@@ -139,8 +165,9 @@ const ForumThread = () => {
                       onClick={async ()=>{
                         if (!threadId) return;
                         try {
-                          if (postLiked) { await forumService.unlikePostOnce(threadId, p.id, (currentUser?.uid || visitorId) as string); setPostLiked(false); }
-                          else { await forumService.likePostOnce(threadId, p.id, (currentUser?.uid || visitorId) as string); setPostLiked(true); }
+                          const visitor = (currentUser?.uid || visitorId) as string;
+                          if (postLiked) { await forumService.unlikePostOnce(threadId, p.id, visitor); setPostLikedMap((m) => ({ ...m, [p.id]: false })); }
+                          else { await forumService.likePostOnce(threadId, p.id, visitor); setPostLikedMap((m) => ({ ...m, [p.id]: true })); }
                         } catch {}
                       }}
                       className={`flex items-center gap-1 text-xs ${postLiked ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}

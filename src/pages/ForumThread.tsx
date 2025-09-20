@@ -98,7 +98,7 @@ const ForumThread = () => {
             )}
             <div className="flex justify-end">
               <button className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-60" disabled={posting || !currentUser}>
-                {posting ? 'Posting…' : 'Replay'}
+                {posting ? 'Posting…' : 'Comment'}
               </button>
             </div>
           </form>

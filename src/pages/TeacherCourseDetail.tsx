@@ -362,7 +362,7 @@ export default function TeacherCourseDetail() {
               <TabsContent value="exams" className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">Exams</div>
-                  <Button onClick={() => { setEditingExam(null); setExamForm({ title: '', description: '', date: new Date().toISOString().slice(0,16), questions: [] }); setExamDialogOpen(true); }}>Create Exam</Button>
+                  <Button onClick={() => { setEditingExam(null); setExamForm({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] }); setExamDialogOpen(true); }}>Create Exam</Button>
                 </div>
                 {exams.length > 0 ? (
                   <div className="divide-y">
@@ -374,7 +374,7 @@ export default function TeacherCourseDetail() {
                           <div className="text-xs text-gray-500 mt-1">{exam.date.toDate().toLocaleString()}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => { setEditingExam(exam); setExamForm({ title: exam.title, description: exam.description || '', date: exam.date.toDate().toISOString().slice(0,16), questions: (exam as any).questions || [] }); setExamDialogOpen(true); }}>Edit</Button>
+                          <Button variant="outline" size="sm" onClick={() => { setEditingExam(exam); setExamForm({ title: exam.title, description: exam.description || '', date: exam.date.toDate().toISOString().slice(0,16), startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), durationMinutes: (exam as any).durationMinutes || 60, questions: (exam as any).questions || [] }); setExamDialogOpen(true); }}>Edit</Button>
                           <Button variant="destructive" size="sm" onClick={() => { setExamToDelete(exam); setShowExamDeleteConfirm(true); }}>Delete</Button>
                         </div>
                       </div>

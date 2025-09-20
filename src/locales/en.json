@@ -744,6 +744,28 @@
       "weeks": "weeks"
     }
   },
+  "teacher": {
+    "submissions": {
+      "title": "Submissions",
+      "subtitle": "All submissions for your courses",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Search by course or student id",
+      "filterByStatus": "Status",
+      "all": "All",
+      "submitted": "Submitted",
+      "graded": "Graded",
+      "sortBy": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "countSuffix": "submissions found",
+      "assignment": "Assignment",
+      "submittedGraded": "Submitted / Graded",
+      "gradedLower": "graded",
+      "viewSubmissions": "View submissions",
+      "noAssignments": "No assignments found",
+      "submissions": "submissions"
+    }
+  },
   "events": {
     "title": "Event Management",
     "subtitle": "Manage system events, schedules, and activities.",

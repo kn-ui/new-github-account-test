@@ -27,7 +27,6 @@ const Header = () => {
 
   // Exclude Academic and Home from base list; Home will be rendered first
   const baseNavItems = [
-    { label: t('nav.blog'), to: '/blog' },
     { label: t('nav.forum'), to: '/forum' },
     { label: t('nav.contact'), to: '/contact' },
   ];
@@ -69,6 +68,9 @@ const Header = () => {
                 <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.rules')}</Link>
               </div>
             </div>
+
+            {/* Updates link */}
+            <Link to="/updates" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Updates</Link>
 
             {/* Remaining items */}
             {baseNavItems.map((item) => (
@@ -162,6 +164,11 @@ const Header = () => {
                   </Link>
                 </div>
               )}
+
+              {/* Updates link (mobile) */}
+              <Link to="/updates" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                Updates
+              </Link>
 
               {/* Remaining items */}
               {baseNavItems.map((item) => (

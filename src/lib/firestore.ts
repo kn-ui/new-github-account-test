@@ -689,15 +689,18 @@ export const announcementService = {
   },
 
   async getPublicGeneralAnnouncements(limitCount = 30): Promise<FirestoreAnnouncement[]> {
+    // Query only by courseId == null, then filter out directs client-side to include docs
+    // that may not have recipientStudentId set at all
     const q = query(
       collections.announcements(),
       where('courseId', '==', null),
-      where('recipientStudentId', '==', null),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement))
+      .filter(a => !a.recipientStudentId);
   },
 
   async createAnnouncement(announcementData: Omit<FirestoreAnnouncement, 'id' | 'createdAt'>): Promise<string> {

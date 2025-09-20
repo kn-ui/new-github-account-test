@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { forumService, FirestoreForumThread, Timestamp } from '@/lib/firestore';
 import { Search, MessageCircle, Eye, ThumbsUp } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
 
 const Forum = () => {
@@ -16,6 +17,7 @@ const Forum = () => {
   const [todaysPosts, setTodaysPosts] = useState<number>(0);
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const { t } = useI18n();
+  const { userProfile } = useAuth();
 
   const categories = [
     'All Topics',
@@ -194,6 +196,13 @@ const Forum = () => {
                         <span className="">· By {discussion.authorName || 'Unknown'}</span>
                         {discussion.category && <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{discussion.category}</span>}
                       </div>
+                      {/* Author controls: allow edit/delete if current user is thread author and user has role */}
+                      {userProfile && (userProfile.role === 'super_admin' || userProfile.role === 'admin' || userProfile.role === 'teacher') && userProfile.uid === discussion.authorId && (
+                        <div className="mt-3 flex gap-2 text-xs">
+                          <button className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
+                          <button className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </a>

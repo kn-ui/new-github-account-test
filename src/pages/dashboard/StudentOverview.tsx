@@ -200,7 +200,7 @@ export default function StudentOverview() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">{course.title}</p>
-                      <p className="text-xs text-gray-500">{t('admin.common.by')} {course.instructor}</p>
+                      <p className="text-xs text-gray-500">{t('common.by')} {course.instructor}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -264,12 +264,12 @@ export default function StudentOverview() {
 
       {/* Upcoming Assignments Section (replaces Certificates) */}
       <Card>
-        <CardHeader>
+          <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FileText className="h-5 w-5" />
-            <span>Upcoming Assignments</span>
+            <span>{t('student.upcomingAssignments.title')}</span>
           </CardTitle>
-          <CardDescription>Next deadlines from your enrolled courses</CardDescription>
+          <CardDescription>{t('student.upcomingAssignments.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           {upcomingAssignments.length > 0 ? (
@@ -280,12 +280,12 @@ export default function StudentOverview() {
                     <div className="font-medium text-gray-900">{a.title || 'Assignment'}</div>
                     <div className="text-xs text-gray-600">{a.courseTitle || 'Course'}</div>
                   </div>
-                  <div className="text-xs text-gray-500">Due: {a.dueDate || '-'}</div>
+                  <div className="text-xs text-gray-500">{t('student.due')}: {a.dueDate || '-'}</div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 text-gray-500">No upcoming assignments</div>
+            <div className="text-center py-6 text-gray-500">{t('student.upcomingAssignments.none')}</div>
           )}
         </CardContent>
       </Card>

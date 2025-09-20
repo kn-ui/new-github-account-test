@@ -35,6 +35,19 @@ import DashboardHero from '@/components/DashboardHero';
 
 interface AssignmentRow { id: string; title: string; courseId: string; courseTitle: string; dueDate: Date; pending: number; graded: number; avg?: number; }
 
+// Define a local type for the grading dialog data
+interface SubmissionWithDetails {
+  id: string;
+  assignmentTitle: string;
+  studentName: string;
+  courseTitle: string;
+  maxScore: number;
+  grade?: number;
+  feedback?: string;
+  status?: string;
+  content?: string;
+}
+
 export default function TeacherGrades() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
@@ -112,8 +125,7 @@ export default function TeacherGrades() {
       await submissionService.updateSubmission(selectedSubmission.id, {
         grade: grade,
         feedback: feedback,
-        status: 'graded',
-        gradedAt: new Date()
+        status: 'graded'
       });
 
       toast.success('Submission graded successfully');
@@ -188,8 +200,8 @@ export default function TeacherGrades() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -198,7 +210,7 @@ export default function TeacherGrades() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading submissions...</div>
+        <div className="text-gray-600">{t('teacher.grades.loading')}</div>
       </div>
     );
   }
@@ -206,8 +218,8 @@ export default function TeacherGrades() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Grade Submissions"
-        subtitle="Review and grade student assignments"
+        title={t('teacher.grades.title')}
+        subtitle={t('teacher.grades.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -220,7 +232,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-600">Total Submissions</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.totalSubmissions') || 'Total Submissions'}</p>
               </div>
             </div>
           </div>
@@ -232,7 +244,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.graded}</p>
-                <p className="text-sm text-gray-600">Graded</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.graded')}</p>
               </div>
             </div>
           </div>
@@ -244,7 +256,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.pending}</p>
-                <p className="text-sm text-gray-600">Pending Grade</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.submitted')}</p>
               </div>
             </div>
           </div>
@@ -256,7 +268,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.averageGrade.toFixed(1)}</p>
-                <p className="text-sm text-gray-600">Average Grade</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.averageGrade') || 'Average Grade'}</p>
               </div>
             </div>
           </div>
@@ -266,12 +278,12 @@ export default function TeacherGrades() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Submissions</Label>
+              <Label htmlFor="search">{t('teacher.grades.searchPlaceholder')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by student, assignment, or course..."
+                  placeholder={t('teacher.grades.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -279,26 +291,26 @@ export default function TeacherGrades() {
               </div>
             </div>
             <div>
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">{t('teacher.grades.filterByStatus')}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="submitted">Pending Grade</SelectItem>
-                  <SelectItem value="graded">Graded</SelectItem>
+                  <SelectItem value="all">{t('teacher.grades.allStatuses')}</SelectItem>
+                  <SelectItem value="submitted">{t('teacher.grades.submitted')}</SelectItem>
+                  <SelectItem value="graded">{t('teacher.grades.graded')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('teacher.grades.filterByCourse')}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('teacher.grades.allCourses')}</SelectItem>
                   {getUniqueCourses().map(courseTitle => (
                     <SelectItem key={courseTitle} value={courseTitle}>
                       {courseTitle}
@@ -314,22 +326,22 @@ export default function TeacherGrades() {
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Label htmlFor="sort">Sort By</Label>
+              <Label htmlFor="sort">{t('teacher.courses.sortBy')}</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="student">Student Name</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
-                  <SelectItem value="assignment">Assignment</SelectItem>
+                  <SelectItem value="recent">{t('teacher.courses.dateDesc')}</SelectItem>
+                  <SelectItem value="oldest">{t('teacher.courses.dateAsc')}</SelectItem>
+                  <SelectItem value="student">{t('teacher.grades.studentName')}</SelectItem>
+                  <SelectItem value="course">{t('teacher.grades.courseTitle')}</SelectItem>
+                  <SelectItem value="assignment">{t('teacher.grades.assignmentTitle')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
               <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
               <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
             </div>
@@ -356,8 +368,8 @@ export default function TeacherGrades() {
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Due: {a.dueDate.toLocaleDateString()}</span>
-                    <span className="flex items-center gap-1">Avg: {typeof a.avg === 'number' ? a.avg : '-'}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t('student.due')}: {a.dueDate.toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1">{t('teacher.grades.averageGradeShort') || 'Avg'}: {typeof a.avg === 'number' ? a.avg : '-'}</span>
                   </div>
                   <div className="mt-2 text-sm text-gray-700">{a.pending + a.graded} submissions, {a.graded} graded</div>
                 </div>
@@ -366,7 +378,7 @@ export default function TeacherGrades() {
                 <Button variant="outline" size="sm" asChild>
                   <Link to={`/dashboard/assignments/${a.id}/submissions`}>
                     <Eye className="h-4 w-4 mr-2" />
-                    View grades
+                    {t('teacher.grades.view')}
                   </Link>
                 </Button>
                 <div />

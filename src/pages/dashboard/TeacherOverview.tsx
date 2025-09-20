@@ -205,7 +205,7 @@ export default function TeacherOverview() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{submission.courseTitle}</p>
-                        <p className="text-xs text-gray-500">{t('student.title').split(' ')[0]}: {studentNames[submission.studentId] || submission.studentId}</p>
+                        <p className="text-xs text-gray-500">{t('users.roles.student')}: {studentNames[submission.studentId] || submission.studentId}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -223,7 +223,7 @@ export default function TeacherOverview() {
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No recent submissions</p>
+                  <p>{t('teacher.recentSubmissions.none')}</p>
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
@@ -272,7 +272,7 @@ export default function TeacherOverview() {
                 </div>
               )}
               <Button variant="outline" className="w-full" asChild>
-                <Link to="/dashboard/my-courses">{'View All'}</Link>
+                <Link to="/dashboard/my-courses">{t('common.viewAll')}</Link>
               </Button>
             </div>
           </CardContent>

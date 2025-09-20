@@ -177,6 +177,16 @@
       "examination": "Examinations",
       "holiday": "Holidays"
     },
+    "today": "Today",
+    "prevMonth": "Previous Month",
+    "nextMonth": "Next Month",
+    "sidebar": {
+      "academicYear": "Academic Year",
+      "fallSemester": "Fall Semester:",
+      "winterBreak": "Winter Break:",
+      "springSemester": "Spring Semester:",
+      "summerBreak": "Summer Break:"
+    },
     "weekdays": ["እሁድ", "ሰኞ", "ማክሰኞ", "ረቡዕ", "ሐሙስ", "ዓርብ", "ቅዳሜ"],
     "loading": "Loading events...",
     "more": "+{count} more"

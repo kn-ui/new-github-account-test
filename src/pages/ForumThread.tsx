@@ -1,8 +1,9 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { forumService, FirestoreForumPost, FirestoreForumThread } from '@/lib/firestore';
+import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } from '@/lib/firestore';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ForumThread = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -11,6 +12,8 @@ const ForumThread = () => {
   const [posts, setPosts] = useState<FirestoreForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
+  const [posting, setPosting] = useState(false);
+  const { currentUser, userProfile } = useAuth();
 
   const load = async () => {
     if (!threadId) return;
@@ -33,9 +36,16 @@ const ForumThread = () => {
   const onCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!threadId || !newPost.trim()) return;
-    await forumService.createForumPost(threadId, { body: newPost.trim(), authorId: 'anon', authorName: 'Anonymous' });
-    setNewPost('');
-    await load();
+    try {
+      setPosting(true);
+      const authorId = currentUser?.uid || 'anon';
+      const authorName = userProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Anonymous';
+      await forumService.createForumPost(threadId, { body: newPost.trim(), authorId, authorName });
+      setNewPost('');
+      await load();
+    } finally {
+      setPosting(false);
+    }
   };
 
   return (
@@ -56,7 +66,9 @@ const ForumThread = () => {
               onChange={(e) => setNewPost(e.target.value)}
             />
             <div className="flex justify-end">
-              <button className="bg-blue-600 text-white rounded px-4 py-2">{t('forum.create.post')}</button>
+              <button className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-60" disabled={posting}>
+                {posting ? 'Posting…' : t('forum.create.post')}
+              </button>
             </div>
           </form>
         </div>
@@ -67,7 +79,10 @@ const ForumThread = () => {
           <div className="space-y-4">
             {posts.map(p => (
               <div key={p.id} className="bg-white rounded-lg shadow-sm border p-4">
-                <p className="text-sm text-gray-500 mb-2">{t('forum.by')} {p.createdByName} • {new Date(p.createdAt).toLocaleString()}</p>
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                  <span>By {p.authorName || 'Unknown'}</span>
+                  <span>{(p.createdAt as unknown as Timestamp)?.toDate?.().toLocaleString?.() || new Date(String(p.createdAt)).toLocaleString()}</span>
+                </div>
                 <div className="whitespace-pre-wrap text-gray-800">{p.body}</div>
               </div>
             ))}

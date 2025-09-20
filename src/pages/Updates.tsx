@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { announcementService, blogService, eventService, FirestoreAnnouncement, FirestoreBlog, FirestoreEvent, Timestamp } from '@/lib/firestore';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Updates() {
   const { t } = useI18n();
+  const { currentUser } = useAuth();
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
   const [blogs, setBlogs] = useState<FirestoreBlog[]>([]);
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -20,7 +22,7 @@ export default function Updates() {
       try {
         setLoading(true);
         const [a, b, e] = await Promise.all([
-          announcementService.getPublicGeneralAnnouncements(100),
+          currentUser ? announcementService.getAllAnnouncements(100) : announcementService.getPublicGeneralAnnouncements(100),
           blogService.getBlogPosts(30),
           eventService.getAllEvents(),
         ]);

@@ -122,11 +122,11 @@ const ForumThread = () => {
               onChange={(e) => setNewPost(e.target.value)}
             />
             {!currentUser && (
-              <div className="text-xs text-gray-500">posing a replay is not available for public users</div>
+              <div className="text-xs text-gray-500">{t('forum.publicReplyWarning')}</div>
             )}
             <div className="flex justify-end">
               <button className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-60" disabled={posting || !currentUser}>
-                {posting ? 'Posting…' : 'Comment'}
+                {posting ? (t('forum.posting') || 'Posting...') : t('forum.reply')}
               </button>
             </div>
           </form>
@@ -193,10 +193,10 @@ const ForumThread = () => {
           open={!!deleteId}
           onOpenChange={(open)=>{ if (!open) setDeleteId(null); }}
           onConfirm={async ()=>{ if (!threadId || !deleteId) return; await forumService.deleteForumPost(threadId, deleteId); setDeleteId(null); await load(); }}
-          title="Delete Reply"
-          description="Are you sure you want to delete this reply? This action cannot be undone."
-          confirmText="Delete"
-          cancelText="Cancel"
+          title={t('forum.deleteReply') || 'Delete Reply'}
+          description={t('forum.deleteReplyConfirm') || 'Are you sure you want to delete this reply? This action cannot be undone.'}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
           variant="destructive"
         />
       </div>

@@ -114,9 +114,9 @@ const Calendar = () => {
               <div className="text-lg font-semibold text-gray-900">{monthLabel}</div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={goToPrevMonth} className="p-2 rounded border hover:bg-gray-50" aria-label="Previous Month"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={goToPrevMonth} className="p-2 rounded border hover:bg-gray-50" aria-label={safeT('calendar.prevMonth','Previous Month')}><ChevronLeft className="h-4 w-4" /></button>
               <button onClick={goToToday} className="px-3 py-2 rounded border text-sm hover:bg-gray-50">{safeT('calendar.today','Today')}</button>
-              <button onClick={goToNextMonth} className="p-2 rounded border hover:bg-gray-50" aria-label="Next Month"><ChevronRight className="h-4 w-4" /></button>
+              <button onClick={goToNextMonth} className="p-2 rounded border hover:bg-gray-50" aria-label={safeT('calendar.nextMonth','Next Month')}><ChevronRight className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
@@ -163,12 +163,12 @@ const Calendar = () => {
 
           <div className="space-y-6">
             <div className="bg-white rounded-lg border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Year</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{safeT('calendar.sidebar.academicYear','Academic Year')}</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-600">Fall Semester:</span><span className="font-medium">{academicYearInfo.fallSemester}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Winter Break:</span><span className="font-medium">{academicYearInfo.winterBreak}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Spring Semester:</span><span className="font-medium">{academicYearInfo.springSemester}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Summer Break:</span><span className="font-medium">{academicYearInfo.summerBreak}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{safeT('calendar.sidebar.fallSemester','Fall Semester:')}</span><span className="font-medium">{academicYearInfo.fallSemester}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{safeT('calendar.sidebar.winterBreak','Winter Break:')}</span><span className="font-medium">{academicYearInfo.winterBreak}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{safeT('calendar.sidebar.springSemester','Spring Semester:')}</span><span className="font-medium">{academicYearInfo.springSemester}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{safeT('calendar.sidebar.summerBreak','Summer Break:')}</span><span className="font-medium">{academicYearInfo.summerBreak}</span></div>
               </div>
             </div>
             <EthiopianHolidays />
@@ -178,7 +178,7 @@ const Calendar = () => {
         {/* Upcoming Events under calendar */}
         <div className="mt-8">
           <div className="bg-white rounded-lg border p-4 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{safeT('events.upcomingEvents','Upcoming Events')}</h3>
           </div>
           <EventsList readOnly />
         </div>

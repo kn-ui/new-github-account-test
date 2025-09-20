@@ -57,11 +57,9 @@ const Header = () => {
               <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.dashboard')}</Link>
             )}
 
-            {/* Academic dropdown */}
+            {/* Academic dropdown: click to open */}
             <div
               className="relative"
-              onMouseEnter={() => setAcademicOpen(true)}
-              onMouseLeave={() => setAcademicOpen(false)}
             >
               <button
                 className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center"
@@ -71,7 +69,8 @@ const Header = () => {
               >
                 {t('nav.academic')} <ChevronDown className="w-4 h-4 ml-1" />
               </button>
-                   <div className={`${academicOpen ? 'block' : 'hidden'} absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50`}>                <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.academic')}</Link>
+              <div className={`${academicOpen ? 'block' : 'hidden'} absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50`}>
+                <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.academic')}</Link>
                 <Link to="/admissions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.admissions')}</Link>
                 <Link to="/calendar" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.calendar')}</Link>
                 <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Rules and Regulations</Link>

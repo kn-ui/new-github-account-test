@@ -250,6 +250,60 @@
     "tagline": "Providing quality spiritual education and nurturing young minds in the Orthodox tradition.",
     "copyright": "St. Raguel Church Spiritual School. All rights reserved."
   },
+  "contact": {
+    "hero": {
+      "title": "Contact Us",
+      "subtitle": "We're here to help and answer any questions you may have"
+    },
+    "cards": {
+      "phone": { "title": "Phone", "description": "Monday - Friday, 8:00 AM - 5:00 PM" },
+      "email": { "title": "Email", "description": "We respond within 24 hours" },
+      "address": { "title": "Address", "description": "Main Campus Location" },
+      "officeHours": { "title": "Office Hours", "description": "Closed on Sundays and holidays" }
+    },
+    "form": {
+      "title": "Send us a Message",
+      "subtitle": "Fill out the form below and we'll get back to you as soon as possible.",
+      "labels": {
+        "name": "Full Name *",
+        "email": "Email Address *",
+        "subject": "Subject *",
+        "message": "Message *"
+      },
+      "placeholders": {
+        "name": "Enter your full name",
+        "email": "Enter your email address",
+        "subject": "Enter the subject of your message",
+        "message": "Enter your message here..."
+      },
+      "submit": "Send Message",
+      "sending": "Sending...",
+      "success": "Message sent!",
+      "error": "Failed to send message. Please try again.",
+      "failed": "Failed to send"
+    },
+    "map": {
+      "title": "Interactive Map",
+      "subtitle": "Google Maps integration would go here"
+    },
+    "visit": {
+      "title": "Visit Our Campus",
+      "body": "Our main campus is located in the heart of Addis Ababa, easily accessible by public transportation.",
+      "address": "Address:",
+      "city": "City:",
+      "postalCode": "Postal Code:"
+    },
+    "quick": {
+      "title": "Quick Contact",
+      "emergency": { "title": "Emergency Contact", "value": "+251-11-123-4569" },
+      "support": { "title": "Student Support", "value": "support@straguel.edu.et" }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "body": "Before contacting us, you might find the answer to your question in our FAQ section.",
+      "cta": "View FAQ"
+    }
+  },
   "academicPage": {
     "title": "Academic Programs",
     "subtitle": "Explore all available courses and programs",

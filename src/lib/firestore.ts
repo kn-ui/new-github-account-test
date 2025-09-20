@@ -1101,6 +1101,16 @@ export const forumService = {
     const snap = await getDocs(q);
     return snap.size;
   },
+
+  async updateForumThread(threadId: string, updates: Partial<FirestoreForumThread>): Promise<void> {
+    const ref = doc(db, 'forum_threads', threadId);
+    await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);
+  },
+
+  async deleteForumThread(threadId: string): Promise<void> {
+    const ref = doc(db, 'forum_threads', threadId);
+    await deleteDoc(ref);
+  },
 };
 
 // Analytics and statistics

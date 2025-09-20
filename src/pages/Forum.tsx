@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { forumService, FirestoreForumThread, Timestamp } from '@/lib/firestore';
-import { Search, MessageCircle, Eye, ThumbsUp } from 'lucide-react';
+import { Search, MessageCircle, Eye, ThumbsUp, Plus } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
@@ -18,6 +18,12 @@ const Forum = () => {
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const { t } = useI18n();
   const { userProfile } = useAuth();
+  const canCreate = !!userProfile && ['super_admin','admin','teacher'].includes(userProfile.role as any);
+  const isOwner = (thread: any) => userProfile && (thread.authorId === (userProfile.uid || userProfile.id));
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newCategory, setNewCategory] = useState('Theology');
+  const [creating, setCreating] = useState(false);
 
   const categories = [
     'All Topics',
@@ -169,6 +175,36 @@ const Forum = () => {
               <div className="text-2xl font-semibold text-gray-900">{todaysPosts}</div>
             </div>
           </div>
+          {/* Create thread button */}
+          {canCreate && (
+            <div className="flex justify-end mb-4">
+              <button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm">
+                <Plus className="w-4 h-4" /> New Topic
+              </button>
+            </div>
+          )}
+
+          {showCreate && (
+            <div className="bg-white rounded-lg border p-4 mb-6">
+              <div className="grid md:grid-cols-3 gap-3">
+                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Thread title" className="md:col-span-2 border rounded px-3 py-2 text-sm" />
+                <select value={newCategory} onChange={(e)=>setNewCategory(e.target.value)} className="border rounded px-3 py-2 text-sm">
+                  {categories.filter(c=>c!=='All Topics').map(c => (<option key={c} value={c}>{c}</option>))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 mt-3">
+                <button onClick={()=>{setShowCreate(false); setNewTitle('');}} className="px-3 py-2 text-sm border rounded">Cancel</button>
+                <button disabled={!newTitle.trim()||creating} onClick={async ()=>{
+                  if (!newTitle.trim()) return; setCreating(true);
+                  try {
+                    await forumService.createForumThread({ title: newTitle.trim(), body: '', authorId: (userProfile?.uid||userProfile?.id) as any, authorName: userProfile?.displayName || 'Unknown', category: newCategory } as any);
+                    setShowCreate(false); setNewTitle(''); await reload();
+                  } finally { setCreating(false); }
+                }} className="px-3 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-60">{creating?'Creating…':'Create'}</button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center text-gray-500">{t('forum.loading')}</div>
           ) : (
@@ -197,10 +233,10 @@ const Forum = () => {
                         {discussion.category && <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{discussion.category}</span>}
                       </div>
                       {/* Author controls: allow edit/delete if current user is thread author and user has role */}
-                      {userProfile && (userProfile.role === 'super_admin' || userProfile.role === 'admin' || userProfile.role === 'teacher') && userProfile.uid === discussion.authorId && (
+                      {isOwner(discussion) && canCreate && (
                         <div className="mt-3 flex gap-2 text-xs">
-                          <button className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
-                          <button className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
+                          <button onClick={(e)=>{ e.preventDefault(); }} className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
+                          <button onClick={async (e)=>{ e.preventDefault(); if (!confirm('Delete this thread?')) return; await forumService.deleteForumThread(discussion.id); await reload(); }} className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
                         </div>
                       )}
                     </div>

@@ -4,6 +4,7 @@ import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } fro
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const ForumThread = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -14,6 +15,10 @@ const ForumThread = () => {
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
   const { currentUser, userProfile } = useAuth();
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const load = async () => {
     if (!threadId) return;
@@ -87,20 +92,53 @@ const ForumThread = () => {
           <div className="text-center text-gray-500">{t('forum.loading')}</div>
         ) : (
           <div className="space-y-4">
-            {posts.map(p => (
-              <div key={p.id} className="bg-white rounded-lg shadow-sm border p-4">
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span>By {p.authorName || 'Unknown'}</span>
-                  <span>{(p.createdAt as unknown as Timestamp)?.toDate?.().toLocaleString?.() || new Date(String(p.createdAt)).toLocaleString()}</span>
+            {posts.map(p => {
+              const canEdit = !!currentUser && (p.authorId === currentUser.uid);
+              return (
+                <div key={p.id} className="bg-white rounded-lg shadow-sm border p-4">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                    <span>By {p.authorName || 'Unknown'}</span>
+                    <span>{(p.createdAt as unknown as Timestamp)?.toDate?.().toLocaleString?.() || new Date(String(p.createdAt)).toLocaleString()}</span>
+                  </div>
+                  {editId === p.id ? (
+                    <div className="space-y-2">
+                      <textarea value={editBody} onChange={(e)=>setEditBody(e.target.value)} rows={4} className="w-full border rounded p-2 text-sm" />
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={()=>{ setEditId(null); setEditBody(''); }} className="px-3 py-1 text-sm border rounded">Cancel</button>
+                        <button disabled={!editBody.trim()||savingEdit} onClick={async ()=>{
+                          if (!threadId || !editId || !editBody.trim()) return; setSavingEdit(true);
+                          try { await forumService.updateForumPost(threadId, editId, { body: editBody.trim() } as any); setEditId(null); setEditBody(''); await load(); }
+                          finally { setSavingEdit(false); }
+                        }} className="px-3 py-1 text-sm rounded bg-blue-600 text-white disabled:opacity-60">{savingEdit?'Saving…':'Save'}</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-wrap text-gray-800">{p.body}</div>
+                  )}
+                  {canEdit && editId !== p.id && (
+                    <div className="flex gap-2 justify-end mt-2 text-xs">
+                      <button onClick={()=>{ setEditId(p.id); setEditBody(p.body); }} className="px-2 py-1 border rounded hover:bg-gray-50">Edit</button>
+                      <button onClick={()=> setDeleteId(p.id)} className="px-2 py-1 border rounded hover:bg-gray-50">Delete</button>
+                    </div>
+                  )}
                 </div>
-                <div className="whitespace-pre-wrap text-gray-800">{p.body}</div>
-              </div>
-            ))}
+              );
+            })}
             {!posts.length && (
               <div className="text-center text-gray-500 py-12">{t('forum.noTopics')}</div>
             )}
           </div>
         )}
+        <ConfirmDialog
+          open={!!deleteId}
+          onOpenChange={(open)=>{ if (!open) setDeleteId(null); }}
+          onConfirm={async ()=>{ if (!threadId || !deleteId) return; await forumService.deleteForumPost(threadId, deleteId); setDeleteId(null); await load(); }}
+          title="Delete Reply"
+          description="Are you sure you want to delete this reply? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+        />
       </div>
     </div>
   );

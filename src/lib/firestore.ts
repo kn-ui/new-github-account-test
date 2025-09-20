@@ -1082,6 +1082,16 @@ export const forumService = {
     return docRef.id;
   },
 
+  async updateForumPost(threadId: string, postId: string, updates: Partial<FirestoreForumPost>): Promise<void> {
+    const ref = doc(db, `forum_threads/${threadId}/posts`, postId);
+    await updateDoc(ref, { ...updates } as any);
+  },
+
+  async deleteForumPost(threadId: string, postId: string): Promise<void> {
+    const ref = doc(db, `forum_threads/${threadId}/posts`, postId);
+    await deleteDoc(ref);
+  },
+
   async likeThread(threadId: string): Promise<void> {
     const ref = doc(db, 'forum_threads', threadId);
     const snap = await getDoc(ref);

@@ -290,7 +290,7 @@ const Forum = () => {
               {editOpenFor && (
                 <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
                   <div className="bg-white w-full max-w-lg rounded-lg border p-5">
-                    <div className="text-lg font-semibold mb-3">Edit Thread</div>
+                    <div className="text-lg font-semibold mb-3">{t('forum.editThread')}</div>
                     <div className="space-y-3">
                       <div>
                         <label className="block text-sm text-gray-700 mb-1">Title</label>
@@ -340,10 +340,10 @@ const Forum = () => {
         open={!!deleteTargetId}
         onOpenChange={(open)=>{ if (!open) setDeleteTargetId(null); }}
         onConfirm={async ()=>{ if (!deleteTargetId) return; await forumService.deleteForumThread(deleteTargetId); setDeleteTargetId(null); await reload(); }}
-        title="Delete Thread"
-        description="Are you sure you want to delete this thread? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('forum.deleteThread')}
+        description={t('forum.deleteConfirm')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="destructive"
       />
     </div>

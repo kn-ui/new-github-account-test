@@ -376,7 +376,7 @@
     "completedLabel": "Completed events",
     "detailsTitle": "Event Details",
     "deleteConfirm": "Are you sure you want to delete this event? This action cannot be undone."
-  }
+  },
   "search": {
     "placeholder": "Search users, courses, events..."
   },

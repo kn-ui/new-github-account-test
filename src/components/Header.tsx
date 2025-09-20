@@ -13,6 +13,7 @@ const Header = () => {
   const navigate = useNavigate();
   const { t, lang, setLang } = useI18n();
   const [academicMobileOpen, setAcademicMobileOpen] = useState(false);
+  const [academicOpen, setAcademicOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -57,15 +58,23 @@ const Header = () => {
             )}
 
             {/* Academic dropdown */}
-            <div className="relative group">
-              <button className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center">
+            <div
+              className="relative"
+              onMouseEnter={() => setAcademicOpen(true)}
+              onMouseLeave={() => setAcademicOpen(false)}
+            >
+              <button
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center"
+                onClick={() => setAcademicOpen((o) => !o)}
+                aria-haspopup="true"
+                aria-expanded={academicOpen}
+              >
                 {t('nav.academic')} <ChevronDown className="w-4 h-4 ml-1" />
               </button>
-              <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.academic')}</Link>
+                   <div className={`${academicOpen ? 'block' : 'hidden'} absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50`}>                <Link to="/academic" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.academic')}</Link>
                 <Link to="/admissions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.admissions')}</Link>
                 <Link to="/calendar" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.calendar')}</Link>
-                <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.rules')}</Link>
+                <Link to="/rules" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Rules and Regulations</Link>
               </div>
             </div>
 

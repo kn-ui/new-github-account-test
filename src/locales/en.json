@@ -310,6 +310,73 @@
     "apply": "Apply for Admission",
     "contact": "Contact Us"
   },
+  "about": {
+    "hero": {
+      "title": "About Us",
+      "subtitle": "Learn About Our Mission, Vision, and Values"
+    },
+    "mission": {
+      "title": "Our Mission",
+      "p1": "St. Raguel Church Spiritual School is dedicated to providing comprehensive Orthodox Christian education that nurtures both spiritual growth and academic excellence. We prepare students to become faithful servants of God and productive members of society.",
+      "p2": "Rooted in the rich traditions of the Ethiopian Orthodox Tewahedo Church, our institution combines rigorous academic study with deep spiritual formation, creating an environment where faith and learning flourish together."
+    },
+    "values": {
+      "academic": { "title": "Academic Excellence", "desc": "Committed to the highest standards of education and scholarship" },
+      "spiritual": { "title": "Spiritual Growth", "desc": "Fostering deep faith and spiritual maturity in our students" },
+      "community": { "title": "Community Service", "desc": "Preparing students to serve their communities with love" },
+      "tradition": { "title": "Orthodox Tradition", "desc": "Preserving and teaching our rich Orthodox heritage" }
+    },
+    "history": {
+      "title": "Our History",
+      "p1": "Founded in 1995, St. Raguel Church Spiritual School has been a beacon of Orthodox Christian education in Ethiopia for over three decades. Our institution was established with the vision of creating a learning environment where students could grow in both faith and knowledge.",
+      "p2": "Throughout our history, we have remained committed to the teachings of the Ethiopian Orthodox Tewahedo Church while embracing modern educational methodologies. Our graduates have gone on to serve as priests, deacons, teachers, and community leaders, carrying forward the light of Orthodox faith.",
+      "p3": "Today, we continue to build upon this legacy, preparing the next generation of Orthodox Christians to face the challenges of the modern world while remaining firmly rooted in their faith and traditions."
+    }
+  },
+  "admissions": {
+    "hero": { "title": "Admissions", "subtitle": "Registration Requirements" },
+    "extensionTitle": "Extension, Online and Regular",
+    "childrenTitle": "Children and Adolescent",
+    "youthTitle": "Youth"
+  },
+  "rules": {
+    "hero": { "title": "Rules & Regulations", "subtitle": "Guidelines to ensure a respectful, safe, and faithful community" },
+    "items": {
+      "respect": { "title": "Respect and Conduct", "body": "Students must maintain respectful behavior towards peers, faculty, and staff at all times, reflecting our Orthodox values." },
+      "attendance": { "title": "Attendance", "body": "Regular attendance is mandatory for all classes, liturgies, and scheduled events unless excused." },
+      "dress": { "title": "Dress Code", "body": "Modest attire is required on campus and during services, in accordance with school guidelines." },
+      "integrity": { "title": "Academic Integrity", "body": "Plagiarism, cheating, and any form of academic dishonesty are strictly prohibited." },
+      "facilities": { "title": "Use of Facilities", "body": "School facilities should be used responsibly. Any damage or misuse will result in disciplinary action." }
+    }
+  },
+  "searchResults": {
+    "title": "Search Results",
+    "showingFor": "Showing results for \"{q}\"",
+    "users": "Users",
+    "viewAllUsers": "View all users",
+    "courses": "Courses",
+    "open": "Open",
+    "viewAllCourses": "View all courses",
+    "assignments": "Assignments",
+    "due": "Due:",
+    "materials": "Materials",
+    "announcements": "Announcements",
+    "events": "Events",
+    "viewAllEvents": "View all events",
+    "noResults": "No results found",
+    "noResultsTipFiltered": "Try adjusting your search or filters",
+    "noResultsTipCreate": "Get started by creating your first event"
+  },
+  "blog": {
+    "notFound": "Post not found."
+  },
+  "events": {
+    "allEventsLabel": "All events",
+    "scheduledLabel": "Scheduled events",
+    "completedLabel": "Completed events",
+    "detailsTitle": "Event Details",
+    "deleteConfirm": "Are you sure you want to delete this event? This action cannot be undone."
+  }
   "search": {
     "placeholder": "Search users, courses, events..."
   },

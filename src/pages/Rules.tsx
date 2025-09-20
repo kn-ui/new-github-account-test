@@ -1,12 +1,14 @@
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Rules = () => {
+  const { t } = useI18n();
   const items = [
-    { title: 'Respect and Conduct', body: 'Students must maintain respectful behavior towards peers, faculty, and staff at all times, reflecting our Orthodox values.' },
-    { title: 'Attendance', body: 'Regular attendance is mandatory for all classes, liturgies, and scheduled events unless excused.' },
-    { title: 'Dress Code', body: 'Modest attire is required on campus and during services, in accordance with school guidelines.' },
-    { title: 'Academic Integrity', body: 'Plagiarism, cheating, and any form of academic dishonesty are strictly prohibited.' },
-    { title: 'Use of Facilities', body: 'School facilities should be used responsibly. Any damage or misuse will result in disciplinary action.' },
+    { title: t('rules.items.respect.title'), body: t('rules.items.respect.body') },
+    { title: t('rules.items.attendance.title'), body: t('rules.items.attendance.body') },
+    { title: t('rules.items.dress.title'), body: t('rules.items.dress.body') },
+    { title: t('rules.items.integrity.title'), body: t('rules.items.integrity.body') },
+    { title: t('rules.items.facilities.title'), body: t('rules.items.facilities.body') },
   ];
 
   return (
@@ -15,8 +17,8 @@ const Rules = () => {
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
         <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Rules & Regulations</h1>
-          <p className="text-xl mb-8">Guidelines to ensure a respectful, safe, and faithful community</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('rules.hero.title')}</h1>
+          <p className="text-xl mb-8">{t('rules.hero.subtitle')}</p>
         </div>
       </div>
 

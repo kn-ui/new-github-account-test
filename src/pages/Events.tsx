@@ -287,7 +287,7 @@ const EventsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{totalEvents}</div>
-              <div className="text-blue-100 text-sm">All events</div>
+              <div className="text-blue-100 text-sm">{t('events.allEventsLabel')}</div>
             </CardContent>
           </Card>
           
@@ -300,7 +300,7 @@ const EventsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{upcomingEvents}</div>
-              <div className="text-green-100 text-sm">Scheduled events</div>
+              <div className="text-green-100 text-sm">{t('events.scheduledLabel')}</div>
             </CardContent>
           </Card>
           
@@ -313,7 +313,7 @@ const EventsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{pastEvents}</div>
-              <div className="text-gray-100 text-sm">Completed events</div>
+              <div className="text-gray-100 text-sm">{t('events.completedLabel')}</div>
             </CardContent>
           </Card>
         </div>
@@ -332,7 +332,7 @@ const EventsPage = () => {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search events by title, description, or location..."
+                      placeholder={t('events.searchPlaceholder') as any}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -343,10 +343,10 @@ const EventsPage = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
                   >
-                    <option value="all">All Status</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
+                    <option value="all">{t('events.allStatus')}</option>
+                    <option value="upcoming">{t('events.status.upcoming')}</option>
+                    <option value="ongoing">{t('events.status.ongoing')}</option>
+                    <option value="completed">{t('events.status.completed')}</option>
                   </select>
                 </div>
               </CardContent>
@@ -472,17 +472,17 @@ const EventsPage = () => {
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CalendarIcon className="h-8 w-8 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('events.noEvents') || 'No events found'}</h3>
                 <p className="text-gray-500 mb-4">
                   {searchTerm || statusFilter !== 'all' 
-                    ? 'Try adjusting your search or filters'
-                    : 'Get started by creating your first event'
+                    ? (t('searchResults.noResultsTipFiltered') || 'Try adjusting your search or filters')
+                    : (t('searchResults.noResultsTipCreate') || 'Get started by creating your first event')
                   }
                 </p>
                 {!searchTerm && statusFilter === 'all' && (
                   <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => setIsCreateOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Event
+                    {t('events.createEvent')}
                   </Button>
                 )}
               </Card>
@@ -557,7 +557,7 @@ const EventsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-purple-600" />
-              Event Details
+              {t('events.detailsTitle')}
             </DialogTitle>
           </DialogHeader>
           {selectedEvent && (
@@ -624,14 +624,14 @@ const EventsPage = () => {
       <AlertDialog open={!!confirmDeleteId}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+              <AlertDialogTitle>{t('events.createEventTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this event? This action cannot be undone.
+              {t('events.deleteConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmDeleteId(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmDeleteId && handleDeleteEvent(confirmDeleteId)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setConfirmDeleteId(null)}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDeleteId && handleDeleteEvent(confirmDeleteId)} className="bg-red-600 hover:bg-red-700">{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

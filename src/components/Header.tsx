@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Globe, LogIn, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -12,6 +12,7 @@ const Header = () => {
   const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useI18n();
+  const location = useLocation();
   const [academicMobileOpen, setAcademicMobileOpen] = useState(false);
   const [academicOpen, setAcademicOpen] = useState(false);
 
@@ -50,11 +51,11 @@ const Header = () => {
 
           <nav className="hidden md:flex items-center space-x-1">
             {/* Home first */}
-            <Link to="/" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.home')}</Link>
+            <Link to="/" className={`${location.pathname === '/' ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>{t('nav.home')}</Link>
 
             {/* Dashboard (when logged in) */}
             {currentUser && (
-              <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.dashboard')}</Link>
+              <Link to="/dashboard" className={`${location.pathname.startsWith('/dashboard') ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>{t('nav.dashboard')}</Link>
             )}
 
             {/* Academic dropdown: click to open */}
@@ -78,11 +79,11 @@ const Header = () => {
             </div>
 
             {/* Updates link */}
-            <Link to="/updates" className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Updates</Link>
+            <Link to="/updates" className={`${location.pathname.startsWith('/updates') ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>Updates</Link>
 
             {/* Remaining items */}
             {baseNavItems.map((item) => (
-              <Link key={item.label} to={item.to} className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
+              <Link key={item.label} to={item.to} className={`${location.pathname.startsWith(item.to) ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>
                 {item.label}
               </Link>
             ))}

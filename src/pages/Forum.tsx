@@ -39,12 +39,24 @@ const Forum = () => {
     return (userProfile?.uid || (userProfile as any)?.id || id) as string;
   }, [userProfile]);
 
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+
   const categories = [
     'All Topics',
     'Theology',
     'Academic',
     'General'
   ];
+  const categoryCounts = useMemo(() => {
+    const count: Record<string, number> = { 'All Topics': threads.length, Theology: 0, Academic: 0, General: 0 };
+    threads.forEach((t: any) => {
+      const cat = t.category || 'General';
+      if (count[cat] === undefined) count[cat] = 0;
+      count[cat] += 1;
+      count['All Topics'] += 0; // already set to total above
+    });
+    return count;
+  }, [threads]);
 
   const reload = async () => {
     setLoading(true);
@@ -99,6 +111,7 @@ const Forum = () => {
         setReplyCounts({});
         setTotalPosts(0);
         setTodaysPosts(0);
+        setLikedMap({});
         return;
       }
       try {
@@ -110,26 +123,30 @@ const Forum = () => {
           try {
             const c = await forumService.countPosts(t.id);
             const todayC = await forumService.countPostsSince(t.id, since);
-            return { id: t.id, c, todayC };
+            const liked = await forumService.hasVisitorLiked(t.id, visitorId);
+            return { id: t.id, c, todayC, liked };
           } catch {
-            return { id: t.id, c: 0, todayC: 0 };
+            return { id: t.id, c: 0, todayC: 0, liked: false };
           }
         }));
 
         const map: Record<string, number> = {};
+        const liked: Record<string, boolean> = {};
         let total = 0;
         let today = 0;
-        perThread.forEach(({ id, c, todayC }) => { map[id] = c; total += c; today += todayC; });
+        perThread.forEach(({ id, c, todayC, liked: lk }) => { map[id] = c; total += c; today += todayC; liked[id] = lk; });
         setReplyCounts(map);
+        setLikedMap(liked);
         setTotalPosts(total);
         setTodaysPosts(today);
       } catch {
         setReplyCounts({});
         setTotalPosts(0);
         setTodaysPosts(0);
+        setLikedMap({});
       }
     })();
-  }, [threads]);
+  }, [threads, visitorId]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,9 +181,10 @@ const Forum = () => {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedCategory === cat ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between ${selectedCategory === cat ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  {cat}
+                  <span>{cat}</span>
+                  <span className="ml-3 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs bg-gray-100 text-gray-700">{categoryCounts[cat] ?? 0}</span>
                 </button>
               ))}
             </div>
@@ -237,8 +255,12 @@ const Forum = () => {
                         <div className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {replyCounts[discussion.id] ?? 0}</div>
                         <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {discussion.views ?? '—'}</div>
                         <button
-                          onClick={(e) => { e.preventDefault(); forumService.likeThreadOnce(discussion.id, visitorId).then(reload); }}
-                          className="flex items-center gap-1 hover:text-blue-600"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const toggle = likedMap[discussion.id];
+                            (toggle ? forumService.unlikeThreadOnce(discussion.id, visitorId) : forumService.likeThreadOnce(discussion.id, visitorId)).then(reload);
+                          }}
+                          className={`flex items-center gap-1 ${likedMap[discussion.id] ? 'text-blue-600' : 'hover:text-blue-600'}`}
                           aria-label="Like thread"
                         >
                           <ThumbsUp className="w-4 h-4" /> {discussion.likes ?? 0}

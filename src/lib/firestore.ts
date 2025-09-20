@@ -1112,6 +1112,56 @@ export const forumService = {
     return snap.size;
   },
 
+  // Per-visitor likes stored under subcollection: forum_threads/{id}/likes/{visitorId}
+  async hasVisitorLiked(threadId: string, visitorId: string): Promise<boolean> {
+    const ref = doc(db, `forum_threads/${threadId}/likes`, visitorId);
+    const snap = await getDoc(ref);
+    return snap.exists();
+  },
+
+  async getLikeCount(threadId: string): Promise<number> {
+    const snap = await getDocs(collection(db, `forum_threads/${threadId}/likes`));
+    return snap.size;
+  },
+
+  async likeThreadOnce(threadId: string, visitorId: string): Promise<boolean> {
+    const likeRef = doc(db, `forum_threads/${threadId}/likes`, visitorId);
+    const likeSnap = await getDoc(likeRef);
+    if (likeSnap.exists()) return false;
+    await setDoc(likeRef, { visitorId, createdAt: Timestamp.now() } as any);
+    // Recalculate likes count to keep denormalized field in sync
+    const count = await this.getLikeCount(threadId);
+    const threadRef = doc(db, 'forum_threads', threadId);
+    await updateDoc(threadRef, { likes: count });
+    return true;
+  },
+
+  // Per-visitor views stored under subcollection: forum_threads/{id}/views/{visitorId}
+  async hasVisitorViewed(threadId: string, visitorId: string): Promise<boolean> {
+    const ref = doc(db, `forum_threads/${threadId}/views`, visitorId);
+    const snap = await getDoc(ref);
+    return snap.exists();
+  },
+
+  async getViewCount(threadId: string): Promise<number> {
+    const snap = await getDocs(collection(db, `forum_threads/${threadId}/views`));
+    return snap.size;
+  },
+
+  async markViewedOnce(threadId: string, visitorId: string): Promise<boolean> {
+    const viewRef = doc(db, `forum_threads/${threadId}/views`, visitorId);
+    const viewSnap = await getDoc(viewRef);
+    if (viewSnap.exists()) return false;
+    await setDoc(viewRef, { visitorId, createdAt: Timestamp.now() } as any);
+    // Optionally denormalize view count
+    try {
+      const count = await this.getViewCount(threadId);
+      const threadRef = doc(db, 'forum_threads', threadId);
+      await updateDoc(threadRef, { views: count });
+    } catch {}
+    return true;
+  },
+
   async updateForumThread(threadId: string, updates: Partial<FirestoreForumThread>): Promise<void> {
     const ref = doc(db, 'forum_threads', threadId);
     await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);

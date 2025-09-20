@@ -15,6 +15,12 @@ const ForumThread = () => {
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
   const { currentUser, userProfile } = useAuth();
+  const visitorId = useMemo(() => {
+    const key = 'visitorId';
+    let id = localStorage.getItem(key);
+    if (!id) { id = crypto?.randomUUID?.() || String(Math.random()).slice(2); localStorage.setItem(key, id); }
+    return id;
+  }, []);
   const [editId, setEditId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
@@ -80,9 +86,12 @@ const ForumThread = () => {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
             />
+            {!currentUser && (
+              <div className="text-xs text-gray-500">posing a replay is not available for public users</div>
+            )}
             <div className="flex justify-end">
-              <button className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-60" disabled={posting}>
-                {posting ? 'Posting…' : t('forum.create.post')}
+              <button className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-60" disabled={posting || !currentUser}>
+                {posting ? 'Posting…' : 'Replay'}
               </button>
             </div>
           </form>

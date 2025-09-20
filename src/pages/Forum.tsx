@@ -24,6 +24,10 @@ const Forum = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('Theology');
   const [creating, setCreating] = useState(false);
+  const [editOpenFor, setEditOpenFor] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState('Theology');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const categories = [
     'All Topics',
@@ -235,7 +239,7 @@ const Forum = () => {
                       {/* Author controls: allow edit/delete if current user is thread author and user has role */}
                       {isOwner(discussion) && canCreate && (
                         <div className="mt-3 flex gap-2 text-xs">
-                          <button onClick={(e)=>{ e.preventDefault(); }} className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
+                          <button onClick={(e)=>{ e.preventDefault(); setEditOpenFor(discussion.id); setEditTitle(discussion.title || ''); setEditCategory(discussion.category || 'Theology'); }} className="px-2 py-1 rounded border hover:bg-gray-50">Edit</button>
                           <button onClick={async (e)=>{ e.preventDefault(); if (!confirm('Delete this thread?')) return; await forumService.deleteForumThread(discussion.id); await reload(); }} className="px-2 py-1 rounded border hover:bg-gray-50">Delete</button>
                         </div>
                       )}
@@ -243,6 +247,41 @@ const Forum = () => {
                   </div>
                 </a>
               ))}
+              {/* Inline Edit Dialog */}
+              {editOpenFor && (
+                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+                  <div className="bg-white w-full max-w-lg rounded-lg border p-5">
+                    <div className="text-lg font-semibold mb-3">Edit Thread</div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Title</label>
+                        <input value={editTitle} onChange={(e)=>setEditTitle(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" maxLength={140} />
+                        <div className="text-xs text-gray-500 mt-1">{editTitle.length}/140</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Category</label>
+                        <select value={editCategory} onChange={(e)=>setEditCategory(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+                          {categories.filter(c=>c!=='All Topics').map(c => (<option key={c} value={c}>{c}</option>))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-5">
+                      <button onClick={()=>{ setEditOpenFor(null); }} className="px-3 py-2 text-sm border rounded">Cancel</button>
+                      <button
+                        disabled={!editTitle.trim()||savingEdit}
+                        onClick={async ()=>{
+                          if (!editOpenFor) return; if (!editTitle.trim()) return; setSavingEdit(true);
+                          try {
+                            await forumService.updateForumThread(editOpenFor, { title: editTitle.trim(), category: editCategory } as any);
+                            setEditOpenFor(null); await reload();
+                          } finally { setSavingEdit(false); }
+                        }}
+                        className="px-3 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-60"
+                      >{savingEdit?'Saving…':'Save Changes'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {!filtered.length && (
                 <div className="text-center text-gray-500 py-12">{t('forum.noTopics')}</div>
               )}

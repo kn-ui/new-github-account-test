@@ -56,6 +56,16 @@ const ForumThread = () => {
           <Link to="/forum" className="text-blue-600 hover:underline">{t('nav.forum')}</Link>
           {thread && <div className="text-sm text-gray-600">{thread.title}</div>}
         </div>
+        {thread && (
+          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+              <span>By {thread.authorName || 'Unknown'}</span>
+              <span>{(thread.createdAt as unknown as Timestamp)?.toDate?.().toLocaleString?.() || ''}</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{thread.title}</h2>
+            {thread.body && <div className="text-gray-800 whitespace-pre-wrap">{thread.body}</div>}
+          </div>
+        )}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <form onSubmit={onCreatePost} className="space-y-3">
             <textarea

@@ -1092,6 +1092,34 @@ export const forumService = {
     await deleteDoc(ref);
   },
 
+  // Post likes helpers: forum_threads/{threadId}/posts/{postId}/likes/{visitorId}
+  async hasVisitorLikedPost(threadId: string, postId: string, visitorId: string): Promise<boolean> {
+    const ref = doc(db, `forum_threads/${threadId}/posts/${postId}/likes`, visitorId);
+    const snap = await getDoc(ref);
+    return snap.exists();
+  },
+
+  async getPostLikeCount(threadId: string, postId: string): Promise<number> {
+    const snap = await getDocs(collection(db, `forum_threads/${threadId}/posts/${postId}/likes`));
+    return snap.size;
+  },
+
+  async likePostOnce(threadId: string, postId: string, visitorId: string): Promise<boolean> {
+    const likeRef = doc(db, `forum_threads/${threadId}/posts/${postId}/likes`, visitorId);
+    const likeSnap = await getDoc(likeRef);
+    if (likeSnap.exists()) return false;
+    await setDoc(likeRef, { visitorId, createdAt: Timestamp.now() } as any);
+    return true;
+  },
+
+  async unlikePostOnce(threadId: string, postId: string, visitorId: string): Promise<boolean> {
+    const likeRef = doc(db, `forum_threads/${threadId}/posts/${postId}/likes`, visitorId);
+    const likeSnap = await getDoc(likeRef);
+    if (!likeSnap.exists()) return false;
+    await deleteDoc(likeRef);
+    return true;
+  },
+
   async likeThread(threadId: string): Promise<void> {
     const ref = doc(db, 'forum_threads', threadId);
     const snap = await getDoc(ref);

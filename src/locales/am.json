@@ -24,7 +24,11 @@
     "certificates": "ማረጋገጫዎች",
     "progress": "እድገት",
     "updates": "አዳዲስ",
-    "rulesAndRegulations": "ህጎች እና መመሪያዎች"
+    "rulesAndRegulations": "ህጎች እና መመሪያዎች",
+    "grades": "ደረጃዎች",
+    "analytics": "ትንታኔ",
+    "exams": "ፈተናዎች",
+    "myGrades": "የእኔ ደረጃዎች"
   },
   "auth": {
     "login": "መግባት",
@@ -298,7 +302,15 @@
     "delete": "ሰርዝ",
     "approve": "ፀድቅ",
     "reject": "አትቀበል",
-    "by": "በ"
+    "by": "በ",
+    "view": "ይመልከቱ",
+    "table": "ሰንጠረዥ",
+    "grid": "ግሪድ",
+    "viewAll": "ሁሉንም ይመልከቱ",
+    "accessDenied": "መዳረሻ ታግዷል",
+    "teacherOnly": "ይህን ገፅ መዳረስ ለአስተማሪዎች ብቻ ነው።",
+    "saveChanges": "ለውጦችን አስቀምጥ",
+    "created": "ተፈጥሯል"
   },
   "studentProgress": {
     "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
@@ -390,8 +402,9 @@
       "avgRating": "አማካይ ደረጃ"
     },
     "recentSubmissions": {
-      "title": "የቅርብ ጊዜ ስራዎች",
-      "subtitle": "ለጥበቃ የሚያስፈልጉ የተማሪ ስራዎች"
+      "title": "የቅርብ ጊዜ ስብስቦች",
+      "subtitle": "ለግምገማ የሚያስፈልጉ የተማሪ ስራዎች",
+      "none": "የቅርብ ጊዜ ስብስቦች የሉም"
     },
     "topStudents": "ከፍተኛ ተማሪዎች",
     "myCourses": {
@@ -552,7 +565,12 @@
       "noCourses": "ምንም ኮርስ አልተገኘም",
       "loading": "ኮርሶች እየተጫነ...",
       "createNew": "አዲስ ኮርስ ፍጠር",
-      "weeks": "ሳምንታት"
+      "weeks": "ሳምንታት",
+      "editCourse": "ኮርስ አርትዕ",
+      "description": "መግለጫ",
+      "syllabus": "ሲላብስ",
+      "noMatch": "በማጣሪያዎ ጋር የሚዛመዱ ኮርሶች የሉም",
+      "countSuffix": "ኮርሶች ተገኝተዋል"
     }
   },
   "events": {

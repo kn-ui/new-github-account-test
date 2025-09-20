@@ -38,9 +38,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function TeacherAssignments() {
+  const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
@@ -238,8 +240,8 @@ export default function TeacherAssignments() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -248,7 +250,7 @@ export default function TeacherAssignments() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading assignments...</div>
+        <div className="text-gray-600">{t('teacher.grades.loading')}</div>
       </div>
     );
   }
@@ -256,12 +258,12 @@ export default function TeacherAssignments() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Assignments"
-        subtitle="Create and manage course assignments"
+        title={t('teacher.assignments.title') || 'Assignments'}
+        subtitle={t('teacher.assignments.subtitle') || 'Create and manage course assignments'}
       >
         <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
-          Create Assignment
+          {t('teacher.assignments.create') || 'Create Assignment'}
         </Button>
       </DashboardHero>
 
@@ -272,12 +274,12 @@ export default function TeacherAssignments() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="search">Search Assignments</Label>
+              <Label htmlFor="search">{t('teacher.grades.searchPlaceholder')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title or description..."
+                  placeholder={t('teacher.assignments.searchPlaceholder') || 'Search by title or description...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -285,13 +287,13 @@ export default function TeacherAssignments() {
               </div>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('teacher.grades.filterByCourse')}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('teacher.grades.allCourses')}</SelectItem>
                   {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -303,23 +305,23 @@ export default function TeacherAssignments() {
           </div>
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              {filteredAssignments.length} assignment{filteredAssignments.length !== 1 ? 's' : ''} found
+              {filteredAssignments.length} {t('teacher.assignments.countSuffix') || 'assignments found'}
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
-                List
+                {t('common.list') || 'List'}
               </Button>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
               >
-                Grid
+                {t('common.grid')}
               </Button>
             </div>
           </div>
@@ -343,7 +345,7 @@ export default function TeacherAssignments() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Max Score: {assignment.maxScore}
+                      {t('teacher.grades.maxScore')}: {assignment.maxScore}
                     </span>
                     <span>{getCourseName(assignment.courseId)}</span>
                   </div>
@@ -355,26 +357,26 @@ export default function TeacherAssignments() {
               <div className="mt-auto pt-4 flex items-center justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
                   <Edit className="h-4 w-4 mr-1" />
-                  Edit
+                  {t('teacher.materials.edit')}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this assignment?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('teacher.assignments.deleteTitle') || 'Delete this assignment?'}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently remove the assignment
-                        "{assignment.title}" and all associated submissions.
+                        {t('teacher.assignments.deleteDesc') || 'This action cannot be undone. This will permanently remove the assignment'}
+                        "{assignment.title}" {t('teacher.assignments.deleteDesc2') || 'and all associated submissions.'}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(assignment.id)}>Delete</AlertDialogAction>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(assignment.id)}>{t('common.delete')}</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -384,7 +386,7 @@ export default function TeacherAssignments() {
           {filteredAssignments.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No assignments found</p>
+              <p>{t('teacher.grades.noSubmissions')}</p>
             </div>
           )}
         </div>
@@ -395,14 +397,14 @@ export default function TeacherAssignments() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+              {editingAssignment ? t('teacher.assignments.editTitle') || 'Edit Assignment' : t('teacher.assignments.createNew') || 'Create New Assignment'}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">{t('teacher.grades.assignmentTitle') || 'Title'} *</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -415,7 +417,7 @@ export default function TeacherAssignments() {
                 <Label htmlFor="courseId">Course *</Label>
                 <Select value={formData.courseId} onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a course" />
+                    <SelectValue placeholder={t('teacher.materials.selectCourse')} />
                   </SelectTrigger>
                   <SelectContent>
 
@@ -431,7 +433,7 @@ export default function TeacherAssignments() {
             </div>
             
             <div>
-              <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">{t('teacher.courses.description')} *</Label>
               <Input
                 id="description"
                 value={formData.description}
@@ -443,7 +445,7 @@ export default function TeacherAssignments() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dueDate">Due Date *</Label>
+                <Label htmlFor="dueDate">{t('student.due')} *</Label>
                 <DualDateInput
                   value={formData.dueDate ? new Date(formData.dueDate) : new Date()}
                   onChange={(d) => setFormData(prev => ({ ...prev, dueDate: d.toISOString().slice(0,10) }))}
@@ -451,14 +453,14 @@ export default function TeacherAssignments() {
                 />
               </div>
               <div>
-                <Label htmlFor="dueTime">Due Time</Label>
+                <Label htmlFor="dueTime">{t('teacher.assignments.dueTime') || 'Due Time'}</Label>
                 <Input id="dueTime" type="time" value={formData.dueTime} onChange={(e) => setFormData(prev => ({ ...prev, dueTime: e.target.value }))} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="maxScore">Max Score</Label>
+                <Label htmlFor="maxScore">{t('teacher.grades.maxScore')}</Label>
                 <Input
                   id="maxScore"
                   type="number"
@@ -469,13 +471,13 @@ export default function TeacherAssignments() {
                 />
               </div>
               <div>
-                <Label htmlFor="file">Attachment (optional)</Label>
+                <Label htmlFor="file">{t('teacher.assignments.attachment') || 'Attachment (optional)'}</Label>
                 <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="instructions">Instructions</Label>
+                <Label htmlFor="instructions">{t('teacher.assignments.instructions') || 'Instructions'}</Label>
               <Textarea
                 id="instructions"
 
@@ -488,18 +490,18 @@ export default function TeacherAssignments() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="linkTitle">Resource Title (optional)</Label>
+                <Label htmlFor="linkTitle">{t('teacher.assignments.resourceTitle') || 'Resource Title (optional)'}</Label>
                 <Input id="linkTitle" value={formData.linkTitle} onChange={(e) => setFormData(prev => ({ ...prev, linkTitle: e.target.value }))} placeholder="Syllabus link" />
               </div>
               <div>
-                <Label htmlFor="linkUrl">Resource URL (optional)</Label>
+                <Label htmlFor="linkUrl">{t('teacher.assignments.resourceUrl') || 'Resource URL (optional)'}</Label>
                 <Input id="linkUrl" value={formData.linkUrl} onChange={(e) => setFormData(prev => ({ ...prev, linkUrl: e.target.value }))} placeholder="https://example.com/resource" />
               </div>
             </div>
 
             <div className="flex space-x-3 pt-4">
               <Button type="submit" className="flex-1">
-                {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+                {editingAssignment ? t('teacher.assignments.update') || 'Update Assignment' : t('teacher.assignments.create') || 'Create Assignment'}
               </Button>
               <Button 
                 type="button" 
@@ -507,7 +509,7 @@ export default function TeacherAssignments() {
                 onClick={() => setShowCreateDialog(false)}
                 className="flex-1"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </form>

@@ -235,8 +235,8 @@ export default function TeacherAnalytics() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -245,7 +245,7 @@ export default function TeacherAnalytics() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading analytics...</div>
+        <div className="text-gray-600">{t('teacher.analytics.loading')}</div>
       </div>
     );
   }
@@ -253,8 +253,8 @@ export default function TeacherAnalytics() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Analytics Dashboard"
-        subtitle="Track course performance and student progress"
+        title={t('teacher.analytics.title')}
+        subtitle={t('teacher.analytics.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -262,17 +262,17 @@ export default function TeacherAnalytics() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Course Analytics</h2>
-              <p className="text-sm text-gray-600">Select a course to view detailed analytics</p>
+              <h2 className="text-lg font-semibold text-gray-900">{t('teacher.analytics.courseAnalytics')}</h2>
+              <p className="text-sm text-gray-600">{t('teacher.analytics.subtitle')}</p>
             </div>
             <div className="w-64">
-              <Label htmlFor="course-select">Select Course</Label>
+              <Label htmlFor="course-select">{t('teacher.analytics.selectCourse')}</Label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('teacher.analytics.allCourses')}</SelectItem>
                   {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -290,7 +290,7 @@ export default function TeacherAnalytics() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Total Courses
+                {t('teacher.analytics.totalAssignments').replace('Total Assignments','Total Courses')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -302,7 +302,7 @@ export default function TeacherAnalytics() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Total Students
+                {t('teacher.analytics.totalStudents')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -314,7 +314,7 @@ export default function TeacherAnalytics() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Average Progress
+                {t('teacher.analytics.averageProgress')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -330,7 +330,7 @@ export default function TeacherAnalytics() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Star className="h-5 w-5" />
-                Average Grade
+                {t('teacher.analytics.averageGrade')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -352,32 +352,32 @@ export default function TeacherAnalytics() {
                   <BookOpen className="h-5 w-5" />
                   {course.courseTitle}
                 </CardTitle>
-                <CardDescription>Course Performance Overview</CardDescription>
+                <CardDescription>{t('teacher.analytics.courseAnalytics')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-2xl font-bold text-blue-600">{course.totalStudents}</div>
-                    <div className="text-sm text-gray-600">Students</div>
+                    <div className="text-sm text-gray-600">{t('teacher.analytics.totalStudents')}</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-green-600">{course.averageProgress}%</div>
-                    <div className="text-sm text-gray-600">Avg Progress</div>
+                    <div className="text-sm text-gray-600">{t('teacher.analytics.averageProgress')}</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-purple-600">{course.averageGrade}</div>
-                    <div className="text-sm text-gray-600">Avg Grade</div>
+                    <div className="text-sm text-gray-600">{t('teacher.analytics.averageGrade')}</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-orange-600">{course.completionRate}%</div>
-                    <div className="text-sm text-gray-600">Completion Rate</div>
+                    <div className="text-sm text-gray-600">{t('teacher.analytics.completionRate')}</div>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex justify-between text-sm text-gray-600">
-                    <span>Assignments: {course.totalAssignments}</span>
-                    <span>Submissions: {course.totalSubmissions}</span>
-                    <span>Graded: {course.gradedSubmissions}</span>
+                    <span>{t('teacher.analytics.totalAssignments')}: {course.totalAssignments}</span>
+                    <span>{t('teacher.analytics.totalSubmissions')}: {course.totalSubmissions}</span>
+                    <span>{t('teacher.analytics.gradedSubmissions')}: {course.gradedSubmissions}</span>
                   </div>
                 </div>
               </CardContent>
@@ -390,21 +390,21 @@ export default function TeacherAnalytics() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Student Performance
+              {t('teacher.analytics.studentPerformance')}
             </CardTitle>
-            <CardDescription>Individual student progress and grades</CardDescription>
+            <CardDescription>{t('teacher.analytics.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Student</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Course</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Progress</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Avg Grade</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Assignments</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Last Activity</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.studentName')}</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.courseTitle')}</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.progress')}</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.averageGrade')}</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.totalAssignments')}</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">{t('teacher.analytics.lastActivity')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -445,7 +445,7 @@ export default function TeacherAnalytics() {
               {filteredStudentPerformance.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No student data available</p>
+                  <p>{t('teacher.analytics.noData')}</p>
                 </div>
               )}
             </div>

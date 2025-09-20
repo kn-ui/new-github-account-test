@@ -217,7 +217,8 @@ export default function TeacherAnnouncements() {
       courseId: announcement.courseId || '',
       isGeneral: !announcement.courseId && !('recipientStudentId' in (announcement as any) && (announcement as any).recipientStudentId),
       priority: 'normal',
-      recipientStudentId: (announcement as any).recipientStudentId || ''
+      recipientStudentId: (announcement as any).recipientStudentId || '',
+      externalLink: (announcement as any).externalLink || ''
     });
     setShowCreateDialog(true);
   };
@@ -260,7 +261,8 @@ export default function TeacherAnnouncements() {
       courseId: '',
       isGeneral: false,
       priority: 'normal',
-      recipientStudentId: ''
+      recipientStudentId: '',
+      externalLink: ''
     });
   };
 
@@ -308,8 +310,8 @@ export default function TeacherAnnouncements() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -318,7 +320,7 @@ export default function TeacherAnnouncements() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading announcements...</div>
+        <div className="text-gray-600">{t('teacher.announcements.loading')}</div>
       </div>
     );
   }
@@ -326,12 +328,12 @@ export default function TeacherAnnouncements() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Announcements"
-        subtitle="Create and manage course announcements"
+        title={t('teacher.announcements.title')}
+        subtitle={t('teacher.announcements.subtitle')}
       >
         <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
-          Create Announcement
+          {t('teacher.announcements.createAnnouncement')}
         </Button>
       </DashboardHero>
 
@@ -341,12 +343,12 @@ export default function TeacherAnnouncements() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Announcements</Label>
+              <Label htmlFor="search">{t('teacher.announcements.searchPlaceholder')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title or content..."
+                  placeholder={t('teacher.announcements.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -354,14 +356,14 @@ export default function TeacherAnnouncements() {
               </div>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('teacher.announcements.filterByCourse')}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Announcements</SelectItem>
-                  <SelectItem value="general">General Announcements</SelectItem>
+                  <SelectItem value="all">{t('teacher.announcements.allCourses')}</SelectItem>
+                  <SelectItem value="general">{t('teacher.announcements.general') || 'General Announcements'}</SelectItem>
                   {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -371,25 +373,25 @@ export default function TeacherAnnouncements() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="sort">Sort By</Label>
+              <Label htmlFor="sort">{t('teacher.announcements.sortBy')}</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="title-asc">Title A→Z</SelectItem>
-                  <SelectItem value="title-desc">Title Z→A</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
+                  <SelectItem value="recent">{t('teacher.announcements.newest')}</SelectItem>
+                  <SelectItem value="oldest">{t('teacher.announcements.oldest')}</SelectItem>
+                  <SelectItem value="title-asc">{t('teacher.courses.titleAsc')}</SelectItem>
+                  <SelectItem value="title-desc">{t('teacher.courses.titleDesc')}</SelectItem>
+                  <SelectItem value="course">{t('teacher.announcements.course')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">{filteredAndSortedAnnouncements.length} announcement{filteredAndSortedAnnouncements.length !== 1 ? 's' : ''} found</div>
+            <div className="text-sm text-gray-500">{filteredAndSortedAnnouncements.length} {t('teacher.announcements.countSuffix') || 'announcements found'}</div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
               <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
               <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
             </div>
@@ -411,11 +413,11 @@ export default function TeacherAnnouncements() {
                         <h3 className="font-medium text-gray-900">{announcement.title}</h3>
                         {announcement.recipientStudentId ? (
                           <Badge variant="outline">
-                            Message to {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                            {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
                           </Badge>
                         ) : (
                           <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                            {announcement.courseId ? 'Course' : 'General'}
+                            {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel') || 'General'}
                           </Badge>
                         )}
                       </div>
@@ -435,7 +437,7 @@ export default function TeacherAnnouncements() {
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
                       <Edit className="h-4 w-4 mr-1" />
-                      Edit
+                      {t('teacher.announcements.edit')}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -446,19 +448,19 @@ export default function TeacherAnnouncements() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
+                          <AlertDialogTitle>{t('teacher.announcements.deleteConfirmTitle') || 'Delete this announcement?'}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove the announcement
+                            {t('teacher.announcements.deleteConfirm') || 'This action cannot be undone. This will permanently remove the announcement'}
                             "{announcement.title}".
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                           <AlertDialogAction 
                             className="bg-red-600 hover:bg-red-700"
                             onClick={() => handleDelete(announcement.id)}
                           >
-                            Delete
+                            {t('common.delete')}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -479,11 +481,11 @@ export default function TeacherAnnouncements() {
                   </div>
                   {announcement.recipientStudentId ? (
                     <Badge variant="outline">
-                      Message to {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                      {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
                     </Badge>
                   ) : (
                     <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                      {announcement.courseId ? 'Course' : 'General'}
+                      {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel') || 'General'}
                     </Badge>
                   )}
                 </div>
@@ -494,23 +496,23 @@ export default function TeacherAnnouncements() {
                 </div>
                 <div className="flex items-center justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
-                    <Edit className="h-4 w-4 mr-1" /> Edit
+                    <Edit className="h-4 w-4 mr-1" /> {t('teacher.announcements.edit')}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('teacher.announcements.deleteConfirmTitle') || 'Delete this announcement?'}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently remove the announcement
-                          "{announcement.title}".
+                            {t('teacher.announcements.deleteConfirm') || 'This action cannot be undone. This will permanently remove the announcement'}
+                            "{announcement.title}".
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)}>Delete</AlertDialogAction>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)}>{t('common.delete')}</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

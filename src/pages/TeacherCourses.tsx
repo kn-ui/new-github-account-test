@@ -133,8 +133,8 @@ export default function TeacherCourses() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ export default function TeacherCourses() {
                 <SelectContent>
                   <SelectItem value="all">{t('teacher.courses.allStatuses')}</SelectItem>
                   <SelectItem value="active">{t('teacher.courses.active')}</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
+                  <SelectItem value="pending">{t('users.status.pendingApproval')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -194,19 +194,19 @@ export default function TeacherCourses() {
                 <SelectContent>
                   <SelectItem value="title-asc">{t('teacher.courses.titleAsc')}</SelectItem>
                   <SelectItem value="title-desc">{t('teacher.courses.titleDesc')}</SelectItem>
-                  <SelectItem value="date-newest">Date: Newest</SelectItem>
-                  <SelectItem value="date-oldest">Date: Oldest</SelectItem>
-                  <SelectItem value="category">Category</SelectItem>
+                  <SelectItem value="date-newest">{t('teacher.courses.dateDesc')}</SelectItem>
+                  <SelectItem value="date-oldest">{t('teacher.courses.dateAsc')}</SelectItem>
+                  <SelectItem value="category">{t('teacher.courses.category')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">{filteredAndSortedCourses.length} course{filteredAndSortedCourses.length !== 1 ? 's' : ''} found</div>
+            <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-500">{filteredAndSortedCourses.length} {t('teacher.courses.countSuffix', {count: filteredAndSortedCourses.length})}</div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
-              <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>Table</Button>
-              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
+              <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>{t('common.table')}</Button>
+              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>{t('common.grid')}</Button>
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function TeacherCourses() {
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-900">
-                Courses ({filteredAndSortedCourses.length})
+                {t('nav.courses')} ({filteredAndSortedCourses.length})
               </h2>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function TeacherCourses() {
                 {filteredAndSortedCourses.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                      {searchTerm || statusFilter !== 'all' ? 'No courses match your filters' : t('teacher.courses.noCourses')}
+                      {searchTerm || statusFilter !== 'all' ? t('teacher.courses.noMatch') : t('teacher.courses.noCourses')}
                     </td>
                   </tr>
                 )}
@@ -309,11 +309,11 @@ export default function TeacherCourses() {
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/dashboard/my-courses/${course.id}`}>
-                        <Eye className="h-4 w-4 mr-1" /> View
+                        <Eye className="h-4 w-4 mr-1" /> {t('teacher.courses.view')}
                       </Link>
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => openEditDialog(course)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
+                      <Edit className="h-4 w-4 mr-1" /> {t('teacher.courses.edit')}
                     </Button>
                   </div>
                 </div>
@@ -325,13 +325,13 @@ export default function TeacherCourses() {
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Course</DialogTitle>
+              <DialogTitle>{t('teacher.courses.editCourse')}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleUpdateCourse} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('teacher.courses.description')}</Label>
                   <Textarea
                     id="description"
                     value={editForm.description}
@@ -341,7 +341,7 @@ export default function TeacherCourses() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="syllabus">Syllabus</Label>
+                  <Label htmlFor="syllabus">{t('teacher.courses.syllabus')}</Label>
                   <Textarea
                     id="syllabus"
                     value={editForm.syllabus}
@@ -353,8 +353,8 @@ export default function TeacherCourses() {
               </div>
 
               <DialogFooter>
-                <Button type="submit">Save Changes</Button>
-                <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+                <Button type="submit">{t('common.saveChanges')}</Button>
+                <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>{t('common.cancel')}</Button>
               </DialogFooter>
             </form>
           </DialogContent>

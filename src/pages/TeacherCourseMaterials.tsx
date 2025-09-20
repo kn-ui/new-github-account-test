@@ -268,8 +268,8 @@ export default function TeacherCourseMaterials() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only teachers can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.teacherOnly')}</div>
         </div>
       </div>
     );
@@ -278,8 +278,7 @@ export default function TeacherCourseMaterials() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-
-        <div className="text-gray-600">Loading materials...</div>
+        <div className="text-gray-600">{t('teacher.materials.loading')}</div>
       </div>
     );
   }
@@ -290,12 +289,12 @@ export default function TeacherCourseMaterials() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Course Materials"
-        subtitle="Create and manage course materials"
+        title={t('teacher.materials.title')}
+        subtitle={t('teacher.materials.subtitle')}
       >
         <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
-          Add Material
+          {t('teacher.materials.createMaterial')}
         </Button>
       </DashboardHero>
 
@@ -306,12 +305,12 @@ export default function TeacherCourseMaterials() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
-              <Label htmlFor="search">Search Materials</Label>
+              <Label htmlFor="search">{t('teacher.materials.searchPlaceholder')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title or description..."
+                  placeholder={t('teacher.materials.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -319,13 +318,13 @@ export default function TeacherCourseMaterials() {
               </div>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('teacher.materials.filterByCourse')}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('teacher.materials.allCourses')}</SelectItem>
                   {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -335,33 +334,33 @@ export default function TeacherCourseMaterials() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="type-filter">Filter by Type</Label>
+              <Label htmlFor="type-filter">{t('teacher.materials.type')}</Label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="document">Documents</SelectItem>
-                  <SelectItem value="video">Videos</SelectItem>
-                  <SelectItem value="link">Links</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="all">{t('teacher.materials.allTypes') || 'All Types'}</SelectItem>
+                  <SelectItem value="document">{t('teacher.materials.document')}</SelectItem>
+                  <SelectItem value="video">{t('teacher.materials.video')}</SelectItem>
+                  <SelectItem value="link">{t('teacher.materials.link')}</SelectItem>
+                  <SelectItem value="other">{t('teacher.materials.other') || 'Other'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="sort">Sort By</Label>
+              <Label htmlFor="sort">{t('teacher.materials.sortBy')}</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="title-asc">Title A→Z</SelectItem>
-                  <SelectItem value="title-desc">Title Z→A</SelectItem>
-                  <SelectItem value="type">Type</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
+                  <SelectItem value="recent">{t('teacher.materials.newest')}</SelectItem>
+                  <SelectItem value="oldest">{t('teacher.materials.oldest')}</SelectItem>
+                  <SelectItem value="title-asc">{t('teacher.courses.titleAsc')}</SelectItem>
+                  <SelectItem value="title-desc">{t('teacher.courses.titleDesc')}</SelectItem>
+                  <SelectItem value="type">{t('teacher.materials.type')}</SelectItem>
+                  <SelectItem value="course">{t('teacher.materials.course')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -369,10 +368,10 @@ export default function TeacherCourseMaterials() {
           
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              {filteredAndSortedMaterials.length} material{filteredAndSortedMaterials.length !== 1 ? 's' : ''} found
+              {filteredAndSortedMaterials.length} {t('teacher.materials.countSuffix') || 'materials found'}
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"

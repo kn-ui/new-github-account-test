@@ -24,7 +24,11 @@
     "certificates": "Certificates",
     "progress": "Progress",
     "updates": "Updates",
-    "rulesAndRegulations": "Rules and Regulations"
+    "rulesAndRegulations": "Rules and Regulations",
+    "grades": "Grades",
+    "analytics": "Analytics",
+    "exams": "Exams",
+    "myGrades": "My Grades"
   },
   "auth": {
     "login": "Login",
@@ -421,6 +425,50 @@
     "userActivity": "User Activity"
   }
   ,
+  "search": {
+    "placeholder": "Search users, courses, events..."
+  },
+  "notifications": {
+    "announcements": "Announcements",
+    "none": "No announcements"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "courses": {
+    "title": "Course Catalog",
+    "subtitle": "Explore our comprehensive collection of courses designed to help you grow and succeed.",
+    "searchLabel": "Search Courses",
+    "searchPlaceholder": "Search courses, instructors, or topics...",
+    "categoryFilter": "Category",
+    "allCategories": "All Categories",
+    "statusFilter": "Status Filter",
+    "allStatus": "All Status",
+    "approved": "Approved",
+    "pending": "Pending",
+    "pendingApproval": "Pending Approval",
+    "instructor": "Instructor",
+    "hours": "hours"
+  },
+  "events": {
+    "searchPlaceholder": "Search events by title, description, or location...",
+    "allStatus": "All Status",
+    "status": {
+      "upcoming": "Upcoming",
+      "ongoing": "Ongoing",
+      "completed": "Completed"
+    },
+    "attendees": "attendees"
+  },
+  "superadmin": {
+    "title": "Super Admin Dashboard",
+    "subtitle": "System-wide analytics and overview.",
+    "completionRate": "Completion Rate",
+    "roleDistribution": "Role Distribution",
+    "courseCompletion": "Course Completion",
+    "userActivity": "User Activity"
+  }
+  ,
   "common": {
     "dashboard": "Dashboard",
     "viewAllSubmissions": "View All Submissions",
@@ -429,7 +477,15 @@
     "delete": "Delete",
     "approve": "Approve",
     "reject": "Reject",
-    "by": "by"
+    "by": "by",
+    "view": "View",
+    "table": "Table",
+    "grid": "Grid",
+    "viewAll": "View All",
+    "accessDenied": "Access Denied",
+    "teacherOnly": "Only teachers can access this page.",
+    "saveChanges": "Save Changes",
+    "created": "Created"
   },
   "studentProgress": {
     "highest": "Students with highest progress"
@@ -523,6 +579,8 @@
     "recentSubmissions": {
       "title": "Recent Submissions",
       "subtitle": "Latest student submissions requiring review"
+      ,
+      "none": "No recent submissions"
     },
     "topStudents": "Top Students",
     "myCourses": {
@@ -710,5 +768,20 @@
     "description_label": "Description (Optional)",
     "noEvents": "No events found",
     "createEventTitle": "Create Event"
+  },
+  "student": {
+    "upcomingAssignments": {
+      "none": "No upcoming assignments"
+    },
+    "due": "Due"
+  },
+  "teacher": {
+    "courses": {
+      "editCourse": "Edit Course",
+      "description": "Description",
+      "syllabus": "Syllabus",
+      "noMatch": "No courses match your filters",
+      "countSuffix": "courses found"
+    }
   }
 }

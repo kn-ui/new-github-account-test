@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } from '@/lib/firestore';
+import { ThumbsUp } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -110,6 +111,8 @@ const ForumThread = () => {
           <div className="space-y-4">
             {posts.map(p => {
               const canEdit = !!currentUser && (p.authorId === currentUser.uid);
+              const [postLiked, setPostLiked] = useState<boolean>(false);
+              useEffect(() => { if (threadId) forumService.hasVisitorLikedPost(threadId, p.id, (currentUser?.uid || visitorId) as string).then(setPostLiked).catch(()=>setPostLiked(false)); }, [threadId, p.id]);
               return (
                 <div key={p.id} className="bg-white rounded-lg shadow-sm border p-4">
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
@@ -131,12 +134,26 @@ const ForumThread = () => {
                   ) : (
                     <div className="whitespace-pre-wrap text-gray-800">{p.body}</div>
                   )}
-                  {canEdit && editId !== p.id && (
-                    <div className="flex gap-2 justify-end mt-2 text-xs">
-                      <button onClick={()=>{ setEditId(p.id); setEditBody(p.body); }} className="px-2 py-1 border rounded hover:bg-gray-50">Edit</button>
-                      <button onClick={()=> setDeleteId(p.id)} className="px-2 py-1 border rounded hover:bg-gray-50">Delete</button>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between mt-2">
+                    <button
+                      onClick={async ()=>{
+                        if (!threadId) return;
+                        try {
+                          if (postLiked) { await forumService.unlikePostOnce(threadId, p.id, (currentUser?.uid || visitorId) as string); setPostLiked(false); }
+                          else { await forumService.likePostOnce(threadId, p.id, (currentUser?.uid || visitorId) as string); setPostLiked(true); }
+                        } catch {}
+                      }}
+                      className={`flex items-center gap-1 text-xs ${postLiked ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}
+                    >
+                      <ThumbsUp className="w-3 h-3" /> {postLiked ? 'Liked' : 'Like'}
+                    </button>
+                    {canEdit && editId !== p.id && (
+                      <div className="flex gap-2 text-xs">
+                        <button onClick={()=>{ setEditId(p.id); setEditBody(p.body); }} className="px-2 py-1 border rounded hover:bg-gray-50">Edit</button>
+                        <button onClick={()=> setDeleteId(p.id)} className="px-2 py-1 border rounded hover:bg-gray-50">Delete</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -255,10 +255,16 @@ const Forum = () => {
                         <div className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {replyCounts[discussion.id] ?? 0}</div>
                         <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {discussion.views ?? '—'}</div>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.preventDefault();
-                            const toggle = likedMap[discussion.id];
-                            (toggle ? forumService.unlikeThreadOnce(discussion.id, visitorId) : forumService.likeThreadOnce(discussion.id, visitorId)).then(reload);
+                            const toggled = likedMap[discussion.id];
+                            try {
+                              if (toggled) { await forumService.unlikeThreadOnce(discussion.id, visitorId); }
+                              else { await forumService.likeThreadOnce(discussion.id, visitorId); }
+                              setLikedMap((m) => ({ ...m, [discussion.id]: !toggled }));
+                              // Optimistically update like count on the card without full reload
+                              setThreads((prev) => prev.map((th: any) => th.id === discussion.id ? { ...th, likes: Math.max(0, (th.likes || 0) + (toggled ? -1 : 1)) } : th));
+                            } catch {}
                           }}
                           className={`flex items-center gap-1 ${likedMap[discussion.id] ? 'text-blue-600' : 'hover:text-blue-600'}`}
                           aria-label="Like thread"

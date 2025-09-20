@@ -97,10 +97,10 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
       <Card className="mb-6 shadow-lg">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-[280px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder={t('events.searchPlaceholder')}
+                placeholder={(t('events.searchPlaceholder') as any) || 'Search events...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -111,10 +111,10 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
             >
-              <option value="all">{t('events.allStatus')}</option>
-              <option value="upcoming">{t('events.status.upcoming')}</option>
-              <option value="ongoing">{t('events.status.ongoing')}</option>
-              <option value="completed">{t('events.status.completed')}</option>
+              <option value="all">{(t('events.allStatus') as any) || 'All Status'}</option>
+              <option value="upcoming">{(t('events.status.upcoming') as any) || 'Upcoming'}</option>
+              <option value="ongoing">{(t('events.status.ongoing') as any) || 'Ongoing'}</option>
+              <option value="completed">{(t('events.status.completed') as any) || 'Completed'}</option>
             </select>
           </div>
         </CardContent>

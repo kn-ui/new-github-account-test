@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Inf
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar';
 import { EventsList } from '@/components/EventsList';
+import EthiopianHolidays from '@/components/EthiopianHolidays';
 
 const Calendar = () => {
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -56,7 +57,16 @@ const Calendar = () => {
     return map;
   }, [events, daysInMonth, month]);
 
-  const weekdays = t('calendar.weekdays') as unknown as string[];
+  const safeT = (key: string, fallback: string) => {
+    const value: any = t(key as any);
+    if (typeof value !== 'string') return fallback;
+    // If translation equals a key-like string, fallback
+    return /^[a-z0-9_.]+$/i.test(value) ? fallback : value;
+  };
+  const weekdaysFromT = t('calendar.weekdays') as unknown as string[] | undefined;
+  const weekdays = Array.isArray(weekdaysFromT) && weekdaysFromT.length === 7
+    ? weekdaysFromT
+    : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
   const goToToday = () => {
     const d = new Date();
@@ -105,7 +115,7 @@ const Calendar = () => {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={goToPrevMonth} className="p-2 rounded border hover:bg-gray-50" aria-label="Previous Month"><ChevronLeft className="h-4 w-4" /></button>
-              <button onClick={goToToday} className="px-3 py-2 rounded border text-sm hover:bg-gray-50">{t('calendar.today') ?? 'Today'}</button>
+              <button onClick={goToToday} className="px-3 py-2 rounded border text-sm hover:bg-gray-50">{safeT('calendar.today','Today')}</button>
               <button onClick={goToNextMonth} className="p-2 rounded border hover:bg-gray-50" aria-label="Next Month"><ChevronRight className="h-4 w-4" /></button>
             </div>
           </div>
@@ -114,7 +124,7 @@ const Calendar = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {loading ? (
-              <div className="text-center text-gray-500">{t('calendar.loading')}</div>
+              <div className="text-center text-gray-500">{safeT('calendar.loading','Loading...')}</div>
             ) : (
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div className="grid grid-cols-7 gap-1 p-4">
@@ -161,11 +171,16 @@ const Calendar = () => {
                 <div className="flex justify-between"><span className="text-gray-600">Summer Break:</span><span className="font-medium">{academicYearInfo.summerBreak}</span></div>
               </div>
             </div>
-            <div className="bg-white rounded-lg border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Holidays</h3>
-              <EventsList readOnly />
-            </div>
+            <EthiopianHolidays />
           </div>
+        </div>
+
+        {/* Upcoming Events under calendar */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg border p-4 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+          </div>
+          <EventsList readOnly />
         </div>
       </div>
 

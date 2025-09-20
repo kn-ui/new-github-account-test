@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { courseService, submissionService, assignmentService } from '@/lib/firestore';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 
 interface AssignmentRow {
@@ -23,6 +24,7 @@ interface AssignmentRow {
 }
 
 export default function SubmissionsPage() {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function SubmissionsPage() {
     return list;
   }, [assignments, search, sortBy]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading assignments...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('teacher.grades.loading')}</div>;
 
 
 
@@ -89,52 +91,52 @@ export default function SubmissionsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="Submissions"
-        subtitle="All submissions for your courses"
+        title={t('teacher.submissions.title')}
+        subtitle={t('teacher.submissions.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label>Search</Label>
+              <Label>{t('teacher.submissions.searchLabel')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input className="pl-10" placeholder="Search by course or student id" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input className="pl-10" placeholder={t('teacher.submissions.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t('teacher.submissions.filterByStatus')}</Label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="graded">Graded</SelectItem>
+                  <SelectItem value="all">{t('teacher.submissions.all')}</SelectItem>
+                  <SelectItem value="submitted">{t('teacher.submissions.submitted')}</SelectItem>
+                  <SelectItem value="graded">{t('teacher.submissions.graded')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Sort</Label>
+              <Label>{t('teacher.submissions.sortBy')}</Label>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="newest">{t('teacher.submissions.newest')}</SelectItem>
+                  <SelectItem value="oldest">{t('teacher.submissions.oldest')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">{filtered.length} submission{filtered.length !== 1 ? 's' : ''} found</div>
+            <div className="text-sm text-gray-500">{filtered.length} {t('teacher.submissions.countSuffix')}</div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">View:</span>
-              <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>Table</Button>
-              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>Grid</Button>
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
+              <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>{t('common.table')}</Button>
+              <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>{t('common.grid')}</Button>
             </div>
           </div>
         </div>
@@ -144,10 +146,10 @@ export default function SubmissionsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignment</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted / Graded</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.submissions.assignment')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.grades.courseTitle')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('student.due')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.submissions.submittedGraded')}</th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
@@ -157,17 +159,17 @@ export default function SubmissionsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">{a.title}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{a.courseTitle}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{a.dueDate.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{a.pendingCount + a.gradedCount} / {a.gradedCount} graded</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{a.pendingCount + a.gradedCount} / {a.gradedCount} {t('teacher.submissions.gradedLower')}</td>
                     <td className="px-6 py-4 text-right">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/dashboard/assignments/${a.id}/submissions`}>View submissions</Link>
+                        <Link to={`/dashboard/assignments/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
                       </Button>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No assignments found</td>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">{t('teacher.submissions.noAssignments')}</td>
                   </tr>
                 )}
               </tbody>
@@ -178,12 +180,12 @@ export default function SubmissionsPage() {
             {filtered.map(a => (
               <div key={a.id} className="bg-white border rounded-lg p-4">
                 <div className="font-medium text-gray-900 mb-1">{a.title}</div>
-                <div className="text-sm text-gray-600 mb-2">Course: {a.courseTitle}</div>
-                <div className="text-xs text-gray-500 mb-2">Due: {a.dueDate.toLocaleString()}</div>
+                <div className="text-sm text-gray-600 mb-2">{t('teacher.grades.courseTitle')}: {a.courseTitle}</div>
+                <div className="text-xs text-gray-500 mb-2">{t('student.due')}: {a.dueDate.toLocaleString()}</div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs capitalize px-2 py-1 border rounded">{a.pendingCount + a.gradedCount} submissions</span>
+                  <span className="text-xs capitalize px-2 py-1 border rounded">{a.pendingCount + a.gradedCount} {t('teacher.submissions.submissions')}</span>
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/dashboard/assignments/${a.id}/submissions`}>View submissions</Link>
+                    <Link to={`/dashboard/assignments/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
                   </Button>
                 </div>
               </div>

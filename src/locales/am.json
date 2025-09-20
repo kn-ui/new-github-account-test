@@ -110,7 +110,27 @@
       "messageStudents": "መልዕክት ላክ ለተማሪዎች",
       "viewReports": "ሪፖርቶች ይመልከቱ"
     },
-    "messages": "የቅርብ ጊዜ መልዕክቶች"
+    "messages": "የቅርብ ጊዜ መልዕክቶች",
+    "submissions": {
+      "title": "ስብስቦች",
+      "subtitle": "ከርስዎ ኮርሶች ሁሉ ስብስቦች",
+      "searchLabel": "ፈልግ",
+      "searchPlaceholder": "በኮርስ ወይም ተማሪ መለያ ፈልግ",
+      "filterByStatus": "ሁኔታ",
+      "all": "ሁሉም",
+      "submitted": "ቀርቧል",
+      "graded": "ተገመግሟል",
+      "sortBy": "ደርድር",
+      "newest": "አዲስ",
+      "oldest": "አሮጌ",
+      "countSuffix": "ስብስቦች ተገኝተዋል",
+      "assignment": "ተግባር",
+      "submittedGraded": "ቀርቧል / ተገመግሟል",
+      "gradedLower": "ተገመግሟል",
+      "viewSubmissions": "ስብስቦች ይመልከቱ",
+      "noAssignments": "ተግባር አልተገኘም",
+      "submissions": "ስብስቦች"
+    }
   },
   "admin": {
     "title": "የአስተዳዳሪ ዳሽቦርድ",

@@ -86,7 +86,7 @@ const Academic = () => {
             {filtered.map(course => (
               <div key={course.id} className="bg-white rounded-lg border p-5 hover:shadow-md transition-shadow flex flex-col">
                 <div className="flex items-start justify-between">
-                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">{course.category || 'General'}</span>
+                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">{course.category || (t('common.general') as any) || 'General'}</span>
                   <span className="text-xs text-gray-500">{(course.createdAt as Timestamp).toDate().toLocaleDateString()}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mt-3">{course.title}</h3>
@@ -94,8 +94,8 @@ const Academic = () => {
                 <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-600">
                   <div><span className="text-gray-500">{t('courses.instructor')}:</span> <span className="font-medium text-gray-800">{course.instructorName || '—'}</span></div>
                   <div><span className="text-gray-500">{t('courses.hours')}:</span> <span className="font-medium text-gray-800">{course.duration ?? '—'}</span></div>
-                  <div><span className="text-gray-500">Max Students:</span> <span className="font-medium text-gray-800">{course.maxStudents ?? '—'}</span></div>
-                  <div><span className="text-gray-500">Status:</span> <span className={`font-medium ${course.isActive ? 'text-green-600' : 'text-gray-700'}`}>{course.isActive ? 'Active' : 'Planned'}</span></div>
+                  <div><span className="text-gray-500">{t('academicPage.maxStudents') || 'Max Students:'}</span> <span className="font-medium text-gray-800">{course.maxStudents ?? '—'}</span></div>
+                  <div><span className="text-gray-500">{t('academicPage.status') || 'Status:'}</span> <span className={`font-medium ${course.isActive ? 'text-green-600' : 'text-gray-700'}`}>{course.isActive ? (t('academicPage.active') || 'Active') : (t('academicPage.planned') || 'Planned')}</span></div>
                 </div>
                 <div className="mt-5 flex gap-2">
                   <a href="/admissions" className="inline-flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">{t('academicPage.apply')}</a>
@@ -112,8 +112,8 @@ const Academic = () => {
 
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Your Academic Journey?</h2>
-          <p className="text-xl mb-8">Take the first step towards your calling in spiritual leadership and service.</p>
+          <h2 className="text-3xl font-bold mb-4">{t('academicPage.ctaTitle') || 'Ready to Start Your Academic Journey?'}</h2>
+          <p className="text-xl mb-8">{t('academicPage.ctaSubtitle') || 'Take the first step towards your calling in spiritual leadership and service.'}</p>
           <div className="flex flex-wrap justify-center gap-4">
             <a href="/admissions" className="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">{t('academicPage.apply')}</a>
             <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors">{t('academicPage.contact')}</a>

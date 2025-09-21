@@ -49,6 +49,23 @@
     "createAccount": "Create New Account",
     "login_required": "Please fill in all fields"
   },
+  "site": {
+    "brand": "St. Raguel Church",
+    "taglineShort": "Spiritual School"
+  },
+  "hero": {
+    "title1": "Nurturing Faith,",
+    "title2Prefix": "Building",
+    "title2Highlight": "Character",
+    "subtitle": "St. Raguel Church Spiritual School provides comprehensive Orthodox education rooted in Ethiopian traditions and academic excellence.",
+    "applyNow": "Apply Now →",
+    "explorePrograms": "Explore Programs"
+  },
+  "loginAside": {
+    "headline": "Grow in Faith and Wisdom",
+    "subtitle": "Discover our programs designed to nurture character and academic excellence in the Orthodox tradition.",
+    "explore": "Explore Programs"
+  },
   "student": {
     "title": "Student Dashboard",
     "subtitle": "Welcome back! Continue your spiritual learning journey.",
@@ -234,7 +251,8 @@
       "cta": "About Our Services"
     },
     "events": {
-      "title": "Upcoming Events"
+      "title": "Upcoming Events",
+      "subtitle": "Stay up to date with our calendar"
     }
   },
   "footer": {
@@ -312,7 +330,13 @@
     "title": "Academic Programs",
     "subtitle": "Explore all available courses and programs",
     "apply": "Apply for Admission",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "maxStudents": "Max Students:",
+    "status": "Status:",
+    "active": "Active",
+    "planned": "Planned",
+    "ctaTitle": "Ready to Start Your Academic Journey?",
+    "ctaSubtitle": "Take the first step towards your calling in spiritual leadership and service."
   },
   "about": {
     "hero": {
@@ -485,7 +509,8 @@
     "accessDenied": "Access Denied",
     "teacherOnly": "Only teachers can access this page.",
     "saveChanges": "Save Changes",
-    "created": "Created"
+    "created": "Created",
+    "general": "General"
   },
   "studentProgress": {
     "highest": "Students with highest progress"
@@ -827,14 +852,54 @@
     "location_label": "Location (Optional)",
     "description_label": "Description (Optional)",
     "noEvents": "No events found",
-    "createEventTitle": "Create Event"
+    "createEventTitle": "Create Event",
+    "detailsTitle": "Event Details",
+    "deleteConfirm": "Are you sure you want to delete this event? This action cannot be undone.",
+    "subtitle": "Manage system events, schedules, and activities.",
+    "title_label": "Title",
+    "date_label": "Date",
+    "time_label": "Time (Optional)",
+    "type_label": "Type (Optional)",
+    "location_label": "Location (Optional)",
+    "description_label": "Description (Optional)",
+    "create": "Create"
   },
   "student": {
     "upcomingAssignments": {
       "none": "No upcoming assignments"
     },
-    "due": "Due"
+    "due": "Due",
+    "courses": {
+      "loading": "Loading courses...",
+      "browseMore": "Browse More Courses",
+      "searchPlaceholder": "Search by title, description, or instructor...",
+      "progressFilter": "Filter by Progress",
+      "progressAll": "All Progress",
+      "progressNotStarted": "Not Started",
+      "progressInProgress": "In Progress",
+      "progressCompleted": "Completed",
+      "sortBy": "Sort By",
+      "sortRecent": "Recently Enrolled",
+      "sortProgressHigh": "Progress: High to Low",
+      "sortProgressLow": "Progress: Low to High",
+      "sortTitleAsc": "Title: A → Z",
+      "sortTitleDesc": "Title: Z → A",
+      "enrolledOn": "Enrolled",
+      "lastAccessed": "Last accessed",
+      "progress": "Progress",
+      "none": "No courses found",
+      "noResultsTip": "You haven't enrolled in any courses yet",
+      "noResultsTipFiltered": "Try adjusting your filters or search terms",
+      "browseAvailable": "Browse Available Courses"
+    },
+    "progress": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "gettingStarted": "Getting Started",
+      "notStarted": "Not Started"
+    }
   },
+  "errors": { "loadCourses": "Failed to load enrolled courses" },
   "teacher": {
     "courses": {
       "editCourse": "Edit Course",

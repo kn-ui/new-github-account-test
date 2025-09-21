@@ -162,12 +162,12 @@ const Forum = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
           <div className="bg-white rounded-lg border p-4 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Search Topics</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('forum.searchPlaceholder')}</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search discussions..."
+                placeholder={t('forum.searchPlaceholder')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -175,7 +175,7 @@ const Forum = () => {
             </div>
           </div>
           <div className="bg-white rounded-lg border p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('forum.categories.all')}</h3>
             <div className="space-y-2">
               {categories.map((cat) => (
                 <button

@@ -414,7 +414,7 @@ const EventsPage = () => {
                               )}
                               <span className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                {event.currentAttendees}/{event.maxAttendees} attendees
+                                {event.currentAttendees}/{event.maxAttendees} {t('events.attendees')}
                               </span>
                             </div>
                           </div>
@@ -437,7 +437,7 @@ const EventsPage = () => {
                             onClick={() => setSelectedEvent(event)}
                           >
                             <CalendarIcon className="h-4 w-4 mr-1" />
-                            View
+                            {t('common.view')}
                           </Button>
                           
                           <DropdownMenu>
@@ -449,14 +449,14 @@ const EventsPage = () => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(event)}>
                                 <CalendarIcon className="h-4 w-4 mr-2" />
-                                Edit
+                                {t('events.edit')}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-red-600 cursor-pointer"
                                 onClick={() => setConfirmDeleteId(event.id)}
                               >
                                 <CalendarIcon className="h-4 w-4 mr-2" />
-                                Delete
+                                {t('events.delete')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -495,17 +495,17 @@ const EventsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-purple-600" />
-              Create Event
+              {t('events.createEventTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
             </div>
             <div>
               <DualDateInput
-                label="Date"
+                label={t('events.date_label') as any}
                 value={createForm.date instanceof Date ? createForm.date : new Date()}
                 onChange={(d) => setCreateForm({ ...createForm, date: d })}
                 defaultMode="ethiopian"
@@ -513,7 +513,7 @@ const EventsPage = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Time (Optional)</label>
+                <label className="block text-sm font-medium mb-1">{t('events.time_label')}</label>
                 <Input 
                   type="time" 
                   value={String(createForm.time || '09:00')} 
@@ -521,7 +521,7 @@ const EventsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Type (Optional)</label>
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
                 <Input 
                   value={String(createForm.type || '')} 
                   onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}
@@ -530,7 +530,7 @@ const EventsPage = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Location (Optional)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.location_label')}</label>
               <Input 
                 value={String(createForm.location || '')} 
                 onChange={(e) => setCreateForm({ ...createForm, location: e.target.value } as any)}
@@ -538,7 +538,7 @@ const EventsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
               <Textarea 
                 value={String(createForm.description || '')} 
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)}
@@ -547,7 +547,7 @@ const EventsPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700">Create</Button>
+            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700">{t('events.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -562,13 +562,13 @@ const EventsPage = () => {
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-2 text-sm text-gray-700">
-              <div><span className="font-medium">Title:</span> {selectedEvent.title}</div>
-              <div><span className="font-medium">Date:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
-              {selectedEvent.time && (<div><span className="font-medium">Time:</span> {selectedEvent.time}</div>)}
-              {selectedEvent.location && (<div><span className="font-medium">Location:</span> {selectedEvent.location}</div>)}
-              <div><span className="font-medium">Type:</span> {selectedEvent.type}</div>
+              <div><span className="font-medium">{t('events.title_label')}:</span> {selectedEvent.title}</div>
+              <div><span className="font-medium">{t('events.date_label')}:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
+              {selectedEvent.time && (<div><span className="font-medium">{t('events.time_label')}:</span> {selectedEvent.time}</div>)}
+              {selectedEvent.location && (<div><span className="font-medium">{t('events.location_label')}:</span> {selectedEvent.location}</div>)}
+              <div><span className="font-medium">{t('events.type_label')}:</span> {selectedEvent.type}</div>
               <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
-              <div><span className="font-medium">Description:</span> {selectedEvent.description}</div>
+              <div><span className="font-medium">{t('events.description_label')}:</span> {selectedEvent.description}</div>
             </div>
           )}
         </DialogContent>
@@ -579,17 +579,17 @@ const EventsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-purple-600" />
-              Edit Event
+              {t('events.edit')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input value={String(editForm.title || '')} onChange={(e) => setEditForm({ ...editForm, title: e.target.value } as any)} />
             </div>
             <div>
               <DualDateInput
-                label="Date"
+                label={t('events.date_label') as any}
                 value={editForm.date instanceof Date ? editForm.date : (editForm.date as Timestamp)?.toDate() || new Date()}
                 onChange={(d) => setEditForm({ ...editForm, date: d })}
                 defaultMode="ethiopian"
@@ -597,26 +597,26 @@ const EventsPage = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Time</label>
+                <label className="block text-sm font-medium mb-1">{t('events.time_label')}</label>
                 <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
                 <Input value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Location</label>
+              <label className="block text-sm font-medium mb-1">{t('events.location_label')}</label>
               <Input value={String(editForm.location || '')} onChange={(e) => setEditForm({ ...editForm, location: e.target.value } as any)} />
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
               <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700">Save</Button>
+            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700">{t('common.saveChanges')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -232,7 +232,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-600">{t('teacher.grades.totalSubmissions') || 'Total Submissions'}</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.totalSubmissions')}</p>
               </div>
             </div>
           </div>
@@ -268,7 +268,7 @@ export default function TeacherGrades() {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">{stats.averageGrade.toFixed(1)}</p>
-                <p className="text-sm text-gray-600">{t('teacher.grades.averageGrade') || 'Average Grade'}</p>
+                <p className="text-sm text-gray-600">{t('teacher.grades.averageGrade')}</p>
               </div>
             </div>
           </div>
@@ -368,8 +368,8 @@ export default function TeacherGrades() {
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t('student.due')}: {a.dueDate.toLocaleDateString()}</span>
-                    <span className="flex items-center gap-1">{t('teacher.grades.averageGradeShort') || 'Avg'}: {typeof a.avg === 'number' ? a.avg : '-'}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t('assignments.dueDate')}: {a.dueDate.toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1">{t('teacher.grades.averageGradeShort')}: {typeof a.avg === 'number' ? a.avg : '-'}</span>
                   </div>
                   <div className="mt-2 text-sm text-gray-700">{a.pending + a.graded} submissions, {a.graded} graded</div>
                 </div>

@@ -146,7 +146,7 @@ export default function TeacherOverview() {
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.totalStudents || 0}</div>
             <p className="text-xs text-green-100">
-              {t('student.myCourses.subtitle')}
+              {t('teacher.stats.activeStudents')}
             </p>
           </CardContent>
         </Card>

@@ -389,7 +389,7 @@ export default function TeacherAnnouncements() {
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">{filteredAndSortedAnnouncements.length} {t('teacher.announcements.countSuffix') || 'announcements found'}</div>
+            <div className="text-sm text-gray-500">{filteredAndSortedAnnouncements.length} {t('teacher.announcements.countSuffix')}</div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-700">{t('common.view')}:</span>
               <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
@@ -413,11 +413,11 @@ export default function TeacherAnnouncements() {
                         <h3 className="font-medium text-gray-900">{announcement.title}</h3>
                         {announcement.recipientStudentId ? (
                           <Badge variant="outline">
-                            {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                            {t('teacher.announcements.messageTo')} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
                           </Badge>
                         ) : (
                           <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                            {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel') || 'General'}
+                            {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel')}
                           </Badge>
                         )}
                       </div>

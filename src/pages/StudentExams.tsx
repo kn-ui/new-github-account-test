@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { examService, examAttemptService, enrollmentService, courseService, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import { toast } from 'sonner';
 export default function StudentExams() {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState<(FirestoreExam & { courseTitle?: string; status: 'not_started' | 'in_progress' | 'completed'; score?: number })[]>([]);
   const [filter, setFilter] = useState<'all'|'not_started'|'in_progress'|'completed'>('all');
@@ -49,7 +51,7 @@ export default function StudentExams() {
         setExams(normalized);
       } catch (e) {
         console.error(e);
-        toast.error('Failed to load exams');
+        toast.error(t('student.exams.loadError') || 'Failed to load exams');
       } finally {
         setLoading(false);
       }
@@ -63,32 +65,32 @@ export default function StudentExams() {
   }, [exams, filter, search]);
 
   if (!userProfile || userProfile.role !== 'student') {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Access denied</div>;
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">{t('common.accessDenied')}</div>;
   }
-  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading exams...</div>;
+  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">{t('student.exams.loading') || 'Loading exams...'}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <DashboardHero title="Exams" subtitle="Upcoming and past exams" />
+      <DashboardHero title={t('student.exams.title') || 'Exams'} subtitle={t('student.exams.subtitle') || 'Upcoming and past exams'} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
+            <CardHeader>
+            <CardTitle>{t('student.exams.filters') || 'Filters'}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label>Search</Label>
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title or course" />
+              <Label>{t('searchResults.title') || 'Search'}</Label>
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('student.exams.searchPlaceholder') || 'Search by title or course'} />
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t('student.exams.status') || 'Status'}</Label>
               <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="not_started">Not started</SelectItem>
-                  <SelectItem value="in_progress">In progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="all">{t('student.exams.all') || 'All'}</SelectItem>
+                  <SelectItem value="not_started">{t('student.exams.notStarted') || 'Not started'}</SelectItem>
+                  <SelectItem value="in_progress">{t('student.exams.inProgress') || 'In progress'}</SelectItem>
+                  <SelectItem value="completed">{t('student.exams.completed') || 'Completed'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -112,12 +114,12 @@ export default function StudentExams() {
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs px-2 py-1 border rounded capitalize">{e.status.replace('_',' ')}</span>
                 <Button size="sm" asChild>
-                  <Link to={`/dashboard/student-exams/${e.id}`}>{e.status === 'not_started' ? 'Start' : (e.status === 'in_progress' ? 'Continue' : 'View')}</Link>
+                  <Link to={`/dashboard/student-exams/${e.id}`}>{e.status === 'not_started' ? (t('student.exams.start') || 'Start') : (e.status === 'in_progress' ? (t('student.exams.continue') || 'Continue') : (t('common.view') || 'View'))}</Link>
                 </Button>
               </div>
             </div>
           ))}
-          {list.length === 0 && <div className="text-center text-gray-500 col-span-full py-12">No exams</div>}
+          {list.length === 0 && <div className="text-center text-gray-500 col-span-full py-12">{t('student.exams.none') || 'No exams'}</div>}
         </div>
       </div>
     </div>

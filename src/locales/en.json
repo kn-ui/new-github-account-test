@@ -624,6 +624,20 @@
       "createAssignment": "Create Assignment",
       "messageStudents": "Message Students"
     },
+    "students": {
+      "title": "Students",
+      "subtitle": "Students enrolled in your courses",
+      "loading": "Loading students...",
+      "loadError": "Failed to load students",
+      "searchPlaceholder": "Search by name, email, id",
+      "filterByCourse": "Filter by Course",
+      "sortName": "Name",
+      "sortProgressDesc": "Progress: High to Low",
+      "sortProgressAsc": "Progress: Low to High",
+      "table": { "student": "Student", "email": "Email", "courses": "Courses", "progress": "Avg Progress" },
+      "profileOnly": "Profile view only",
+      "none": "No students found"
+    },
     "analytics": {
       "title": "Analytics",
       "subtitle": "Track your teaching performance and student progress.",
@@ -774,7 +788,12 @@
       "noCourses": "No courses found",
       "loading": "Loading courses...",
       "createNew": "Create New Course",
-      "weeks": "weeks"
+      "weeks": "weeks",
+      "editCourse": "Edit Course",
+      "description": "Description",
+      "syllabus": "Syllabus",
+      "noMatch": "No courses match your filters",
+      "countSuffix": "courses found"
     },
     "assignments": {
       "title": "Assignments",
@@ -815,28 +834,7 @@
       "submissions": "submissions"
     }
   },
-  "teacher": {
-    "submissions": {
-      "title": "Submissions",
-      "subtitle": "All submissions for your courses",
-      "searchLabel": "Search",
-      "searchPlaceholder": "Search by course or student id",
-      "filterByStatus": "Status",
-      "all": "All",
-      "submitted": "Submitted",
-      "graded": "Graded",
-      "sortBy": "Sort",
-      "newest": "Newest",
-      "oldest": "Oldest",
-      "countSuffix": "submissions found",
-      "assignment": "Assignment",
-      "submittedGraded": "Submitted / Graded",
-      "gradedLower": "graded",
-      "viewSubmissions": "View submissions",
-      "noAssignments": "No assignments found",
-      "submissions": "submissions"
-    }
-  },
+  
   "events": {
     "title": "Event Management",
     "subtitle": "Manage system events, schedules, and activities.",

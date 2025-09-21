@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { courseService, enrollmentService, userService, FirestoreCourse, FirestoreUser } from '@/lib/firestore';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
   
 interface StudentRow {
@@ -23,6 +24,7 @@ interface StudentRow {
 export default function StudentsPage() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [courses, setCourses] = useState<FirestoreCourse[]>([]);
@@ -63,7 +65,7 @@ export default function StudentsPage() {
         setStudents(rows);
       } catch (e) {
         console.error(e);
-        toast.error('Failed to load students');
+        toast.error(t('teacher.students.loadError') || 'Failed to load students');
       } finally {
         setLoading(false);
       }
@@ -82,7 +84,7 @@ export default function StudentsPage() {
     return list;
   }, [students, search, courseFilter, sortBy]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading students...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('teacher.students.loading') || 'Loading students...'}</div>;
 
 
 
@@ -92,22 +94,22 @@ export default function StudentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <DashboardHero 
-        title="Students"
-        subtitle="Students enrolled in your courses"
+        title={t('teacher.students.title') || 'Students'}
+        subtitle={t('teacher.students.subtitle') || 'Students enrolled in your courses'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label>Search</Label>
+              <Label>{t('searchResults.title') || 'Search'}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input className="pl-10" placeholder="Search by name, email, id" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input className="pl-10" placeholder={t('teacher.students.searchPlaceholder') || 'Search by name, email, id'} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label>Filter by Course</Label>
+              <Label>{t('teacher.students.filterByCourse') || 'Filter by Course'}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -121,15 +123,15 @@ export default function StudentsPage() {
               </Select>
             </div>
             <div>
-              <Label>Sort</Label>
+              <Label>{t('common.sortBy') || 'Sort'}</Label>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="progress-desc">Progress: High to Low</SelectItem>
-                  <SelectItem value="progress-asc">Progress: Low to High</SelectItem>
+                  <SelectItem value="name">{t('teacher.students.sortName') || 'Name'}</SelectItem>
+                  <SelectItem value="progress-desc">{t('teacher.students.sortProgressDesc') || 'Progress: High to Low'}</SelectItem>
+                  <SelectItem value="progress-asc">{t('teacher.students.sortProgressAsc') || 'Progress: Low to High'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -140,10 +142,10 @@ export default function StudentsPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courses</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Progress</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.students.table.student') || 'Student'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.students.table.email') || 'Email'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.students.table.courses') || 'Courses'}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('teacher.students.table.progress') || 'Avg Progress'}</th>
                 <th className="px-6 py-3" />
               </tr>
             </thead>
@@ -155,13 +157,13 @@ export default function StudentsPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{s.courses.join(', ')}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{s.progressAvg}%</td>
                   <td className="px-6 py-4 text-right">
-                    <Button variant="outline" size="sm" onClick={() => toast.info('Profile view only')}>View</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast.info(t('teacher.students.profileOnly') || 'Profile view only')}>{t('common.view') || 'View'}</Button>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No students found</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">{t('teacher.students.none') || 'No students found'}</td>
                 </tr>
               )}
             </tbody>

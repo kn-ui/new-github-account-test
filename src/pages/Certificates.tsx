@@ -8,10 +8,12 @@ import { evaluateAndAwardCertificates } from '@/lib/certificates';
 import CertificateCard from '@/components/CertificateCard';
 import { Button } from '@/components/ui/button';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function CertificatesPage() {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [certs, setCerts] = useState<FirestoreCertificate[]>([]);
 
@@ -35,20 +37,20 @@ export default function CertificatesPage() {
     await load();
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading certificates...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('student.certificates.loading') || 'Loading certificates...'}</div>;
 
 
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="My Certificates"
-        subtitle="Your earned achievements"
+        title={t('student.certificates.title') || 'My Certificates'}
+        subtitle={t('student.certificates.subtitle') || 'Your earned achievements'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-end mb-6">
-          <Button onClick={checkNew}>Check for new</Button>
+          <Button onClick={checkNew}>{t('student.certificates.checkNew') || 'Check for new'}</Button>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {certs.map(c => (
@@ -63,7 +65,7 @@ export default function CertificatesPage() {
           {certs.length === 0 && (
             <div className="text-center text-gray-500 col-span-full">
               <Award className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              No certificates yet
+              {t('student.certificates.none') || 'No certificates yet'}
             </div>
           )}
         </div>

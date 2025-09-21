@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AnnouncementWithDetails extends FirestoreAnnouncement {
   course?: any;
@@ -32,6 +33,7 @@ interface AnnouncementWithDetails extends FirestoreAnnouncement {
 export default function StudentAnnouncements() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [announcements, setAnnouncements] = useState<AnnouncementWithDetails[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export default function StudentAnnouncements() {
       setAnnouncements(withDetails);
     } catch (error) {
       console.error('Failed to load announcements:', error);
-      toast.error('Failed to load announcements');
+      toast.error(t('student.announcements.loadError') || 'Failed to load announcements');
     } finally {
       setLoading(false);
     }
@@ -159,8 +161,8 @@ export default function StudentAnnouncements() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="Announcements"
-        subtitle="Stay updated with course announcements and important information"
+        title={t('student.announcements.title') || 'Announcements'}
+        subtitle={t('student.announcements.subtitle') || 'Stay updated with course announcements and important information'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -168,11 +170,11 @@ export default function StudentAnnouncements() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('searchResults.title') || 'Search'}</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search announcements..."
+                  placeholder={t('student.announcements.searchPlaceholder') || 'Search announcements...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -181,13 +183,13 @@ export default function StudentAnnouncements() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Course</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.course') || 'Course'}</label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All courses" />
+                  <SelectValue placeholder={t('student.announcements.allCourses') || 'All Courses'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('student.announcements.allCourses') || 'All Courses'}</SelectItem>
                   {enrolledCourses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -198,32 +200,32 @@ export default function StudentAnnouncements() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.type') || 'Type'}</label>
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="course">Course-specific</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="all">{t('student.announcements.allTypes') || 'All Types'}</SelectItem>
+                  <SelectItem value="course">{t('student.announcements.courseSpecific') || 'Course-specific'}</SelectItem>
+                  <SelectItem value="general">{t('student.announcements.general') || 'General'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.sortBy') || 'Sort By'}</label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="important">Important First</SelectItem>
-                  <SelectItem value="title-asc">Title A→Z</SelectItem>
-                  <SelectItem value="title-desc">Title Z→A</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
+                  <SelectItem value="recent">{t('student.announcements.sortRecent') || 'Most Recent'}</SelectItem>
+                  <SelectItem value="oldest">{t('student.announcements.sortOldest') || 'Oldest First'}</SelectItem>
+                  <SelectItem value="important">{t('student.announcements.sortImportant') || 'Important First'}</SelectItem>
+                  <SelectItem value="title-asc">{t('student.announcements.sortTitleAsc') || 'Title A→Z'}</SelectItem>
+                  <SelectItem value="title-desc">{t('student.announcements.sortTitleDesc') || 'Title Z→A'}</SelectItem>
+                  <SelectItem value="course">{t('student.announcements.sortCourse') || 'Course'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -238,12 +240,12 @@ export default function StudentAnnouncements() {
                   onChange={(e) => setShowUnreadOnly(e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm text-gray-700">Show unread only</span>
+                <span className="text-sm text-gray-700">{t('student.announcements.showUnreadOnly') || 'Show unread only'}</span>
               </label>
             </div>
             
             <div className="text-sm text-gray-500">
-              {filteredAndSortedAnnouncements.length} announcement{filteredAndSortedAnnouncements.length !== 1 ? 's' : ''} found
+              {filteredAndSortedAnnouncements.length} {t('student.announcements.countSuffix') || 'announcements found'}
             </div>
           </div>
         </div>
@@ -253,17 +255,17 @@ export default function StudentAnnouncements() {
           {filteredAndSortedAnnouncements.length === 0 ? (
             <div className="text-center py-12">
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No announcements found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.announcements.none') || 'No announcements found'}</h3>
               <p className="text-gray-600 mb-4">
                 {announcements.length === 0 
-                  ? 'No announcements available yet'
-                  : 'No announcements match your current filters'
+                  ? (t('student.announcements.noneAvailable') || 'No announcements available yet')
+                  : (t('student.announcements.noResultsTipFiltered') || 'No announcements match your current filters')
                 }
               </p>
               {announcements.length === 0 && (
                 <Button onClick={() => navigate('/courses')}>
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Browse Courses
+                  {t('student.courses.browseAvailable') || 'Browse Courses'}
                 </Button>
               )}
             </div>
@@ -287,11 +289,11 @@ export default function StudentAnnouncements() {
                         {announcement.isImportant && (
                           <Badge variant="default" className="bg-yellow-600">
                             <Pin className="h-3 w-3 mr-1" />
-                            Important
+                            {t('student.announcements.important') || 'Important'}
                           </Badge>
                         )}
                         <Badge variant="outline">
-                          {announcement.recipientStudentId ? 'Direct' : (announcement.courseId ? 'Course-specific' : 'General')}
+                          {announcement.recipientStudentId ? (t('student.announcements.direct') || 'Direct') : (announcement.courseId ? (t('student.announcements.courseSpecific') || 'Course-specific') : (t('student.announcements.general') || 'General'))}
                         </Badge>
                       </div>
                       
@@ -314,12 +316,12 @@ export default function StudentAnnouncements() {
                       
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4" />
-                        <span>All students</span>
+                          <span>{t('student.announcements.allStudents') || 'All students'}</span>
                       </div>
                       
                       <div className="flex items-center space-x-1">
                         <MessageSquare className="h-4 w-4" />
-                        <span>Announcement</span>
+                          <span>{t('student.announcements.announcement') || 'Announcement'}</span>
                       </div>
                     </div>
                   </div>

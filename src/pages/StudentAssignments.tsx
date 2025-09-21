@@ -22,6 +22,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AssignmentWithStatus extends FirestoreAssignment {
   courseTitle: string;
@@ -34,6 +35,7 @@ interface AssignmentWithStatus extends FirestoreAssignment {
 
 export default function StudentAssignments() {
   const { currentUser, userProfile } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState<AssignmentWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +129,7 @@ export default function StudentAssignments() {
       setAssignments(assignmentsWithStatus);
     } catch (error) {
       console.error('Error loading assignments:', error);
-      toast.error('Failed to load assignments');
+      toast.error(t('student.assignments.loadError') || 'Failed to load assignments');
     } finally {
       setLoading(false);
     }
@@ -192,11 +194,11 @@ export default function StudentAssignments() {
     const now = new Date();
     const due = dueDate.toDate();
     if (due < now) {
-      return { text: 'Overdue', color: 'text-red-600' };
+      return { text: t('student.assignments.overdue') || 'Overdue', color: 'text-red-600' };
     } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
-      return { text: 'Due Soon', color: 'text-yellow-600' };
+      return { text: t('student.assignments.dueSoon') || 'Due Soon', color: 'text-yellow-600' };
     }
-    return { text: 'Active', color: 'text-green-600' };
+    return { text: t('student.assignments.active') || 'Active', color: 'text-green-600' };
   };
 
   const getUniqueCourses = () => {
@@ -207,8 +209,8 @@ export default function StudentAssignments() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only students can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.studentOnly') || 'Only students can access this page.'}</div>
         </div>
       </div>
     );
@@ -217,7 +219,7 @@ export default function StudentAssignments() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading assignments...</div>
+        <div className="text-gray-600">{t('student.assignments.loading') || 'Loading assignments...'}</div>
       </div>
     );
   }
@@ -228,8 +230,8 @@ export default function StudentAssignments() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="My Assignments"
-        subtitle="View and manage your course assignments"
+        title={t('student.assignments.title') || 'My Assignments'}
+        subtitle={t('student.assignments.subtitle') || 'View and manage your course assignments'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -238,12 +240,12 @@ export default function StudentAssignments() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Assignments</Label>
+              <Label htmlFor="search">{t('student.assignments.searchLabel') || 'Search Assignments'}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title, description, or course..."
+                  placeholder={t('student.assignments.searchPlaceholder') || 'Search by title, description, or course...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -251,28 +253,28 @@ export default function StudentAssignments() {
               </div>
             </div>
             <div>
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">{t('student.assignments.filterByStatus') || 'Filter by Status'}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="not-started">Not Started</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="graded">Graded</SelectItem>
+                  <SelectItem value="all">{t('student.assignments.allStatuses') || 'All Statuses'}</SelectItem>
+                  <SelectItem value="not-started">{t('student.assignments.notStarted') || 'Not Started'}</SelectItem>
+                  <SelectItem value="in-progress">{t('student.assignments.inProgress') || 'In Progress'}</SelectItem>
+                  <SelectItem value="submitted">{t('student.assignments.submitted') || 'Submitted'}</SelectItem>
+                  <SelectItem value="graded">{t('student.assignments.graded') || 'Graded'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('student.assignments.filterByCourse') || 'Filter by Course'}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
+                  <SelectItem value="all">{t('student.assignments.allCourses') || 'All Courses'}</SelectItem>
                   {getUniqueCourses().map(courseTitle => (
                     <SelectItem key={courseTitle} value={courseTitle}>
                       {courseTitle}
@@ -287,17 +289,17 @@ export default function StudentAssignments() {
         {/* Sort Options */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">Sort By</Label>
+            <Label htmlFor="sort">{t('student.assignments.sortBy') || 'Sort By'}</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="due-date">Due Date: Earliest</SelectItem>
-                <SelectItem value="due-date-desc">Due Date: Latest</SelectItem>
-                <SelectItem value="title-asc">Title: A → Z</SelectItem>
-                <SelectItem value="title-desc">Title: Z → A</SelectItem>
-                <SelectItem value="course">Course</SelectItem>
+                <SelectItem value="due-date">{t('student.assignments.sortDueAsc') || 'Due Date: Earliest'}</SelectItem>
+                <SelectItem value="due-date-desc">{t('student.assignments.sortDueDesc') || 'Due Date: Latest'}</SelectItem>
+                <SelectItem value="title-asc">{t('student.assignments.sortTitleAsc') || 'Title: A → Z'}</SelectItem>
+                <SelectItem value="title-desc">{t('student.assignments.sortTitleDesc') || 'Title: Z → A'}</SelectItem>
+                <SelectItem value="course">{t('student.assignments.sortCourse') || 'Course'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -332,29 +334,29 @@ export default function StudentAssignments() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          Due: {assignment.dueDate.toDate().toLocaleDateString()}
+                          {t('student.due') || 'Due'}: {assignment.dueDate.toDate().toLocaleDateString()}
                         </span>
                         <span className={`flex items-center gap-1 ${dueDateStatus.color}`}>
                           <Clock className="h-3 w-3" />
                           {dueDateStatus.text}
                         </span>
                         <span className="flex items-center gap-1">
-                          Max Score: {assignment.maxScore}
+                          {t('student.assignments.maxScore') || 'Max Score'}: {assignment.maxScore}
                         </span>
                       </div>
                       {assignment.instructions && (
                         <p className="text-xs text-gray-500 mb-2">
-                          <strong>Instructions:</strong> {assignment.instructions}
+                          <strong>{t('student.assignments.instructions') || 'Instructions'}:</strong> {assignment.instructions}
                         </p>
                       )}
                       {assignment.status === 'graded' && assignment.grade !== undefined && (
                         <div className="flex items-center gap-2 text-sm">
                           <span className="font-medium text-green-600">
-                            Grade: {assignment.grade}/{assignment.maxScore}
+                            {t('student.assignments.grade') || 'Grade'}: {assignment.grade}/{assignment.maxScore}
                           </span>
                           {assignment.feedback && (
-                            <span className="text-gray-600">
-                              Feedback: {assignment.feedback}
+                              <span className="text-gray-600">
+                              {t('student.assignments.feedback') || 'Feedback'}: {assignment.feedback}
                             </span>
                           )}
                         </div>
@@ -362,30 +364,30 @@ export default function StudentAssignments() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setDetailAssignment(assignment); setDetailOpen(true); }}>View Details</Button>
+                    <Button variant="outline" size="sm" onClick={() => { setDetailAssignment(assignment); setDetailOpen(true); }}>{t('student.assignments.viewDetails') || 'View Details'}</Button>
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/courses/${assignment.courseId}`}>
                         <Eye className="h-4 w-4 mr-2" />
-                        View Course
+                        {t('common.view') || 'View Course'}
                       </Link>
                     </Button>
                     {assignment.status === 'not-started' && (
                       <Button size="sm" asChild>
                         <Link to={`/dashboard/student-submissions/${assignment.id}/submit`}>
-                          Start Assignment
+                          {t('student.assignments.start') || 'Start Assignment'}
                         </Link>
                       </Button>
                     )}
                     {assignment.status === 'in-progress' && (
                       <Button size="sm" asChild>
                         <Link to={`/dashboard/student-submissions/${assignment.id}/edit`}>
-                          Continue
+                          {t('student.assignments.continue') || 'Continue'}
                         </Link>
                       </Button>
                     )}
                     {assignment.status === 'submitted' && (
                       <Button variant="outline" size="sm" onClick={() => setEditRequestOpen(true)}>
-                        Request Edit
+                        {t('student.assignments.requestEdit') || 'Request Edit'}
                       </Button>
                     )}
                   </div>
@@ -397,7 +399,7 @@ export default function StudentAssignments() {
           {filteredAndSortedAssignments.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No assignments found</p>
+              <p>{t('student.assignments.none') || 'No assignments found'}</p>
             </div>
           )}
         </div>

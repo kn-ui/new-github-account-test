@@ -31,6 +31,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface SubmissionWithDetails {
   id: string;
@@ -51,6 +52,7 @@ interface SubmissionWithDetails {
 export default function StudentSubmissions() {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { assignmentId, action } = useParams();
   const [submissions, setSubmissions] = useState<SubmissionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +144,7 @@ export default function StudentSubmissions() {
 
     } catch (error) {
       console.error('Error loading submissions:', error);
-      toast.error('Failed to load submissions');
+      toast.error(t('student.submissions.loadError') || 'Failed to load submissions');
     } finally {
       setLoading(false);
     }
@@ -166,7 +168,7 @@ export default function StudentSubmissions() {
       }
 
       if (!assignment) {
-        toast.error('Assignment not found');
+        toast.error(t('student.submissions.assignmentNotFound') || 'Assignment not found');
         return;
       }
 
@@ -174,13 +176,13 @@ export default function StudentSubmissions() {
       setShowSubmissionDialog(true);
     } catch (error) {
       console.error('Error handling submission action:', error);
-      toast.error('Failed to load assignment');
+      toast.error(t('student.submissions.loadAssignmentError') || 'Failed to load assignment');
     }
   };
 
   const handleSubmitSubmission = async () => {
     if (!selectedAssignment || !submissionContent.trim()) {
-      toast.error('Please provide submission content');
+      toast.error(t('student.submissions.missingContent') || 'Please provide submission content');
       return;
     }
 
@@ -197,7 +199,7 @@ export default function StudentSubmissions() {
       };
 
       await submissionService.createSubmission(submissionData);
-      toast.success('Submission submitted successfully');
+      toast.success(t('student.submissions.submitted') || 'Submission submitted successfully');
       setShowSubmissionDialog(false);
       setSelectedAssignment(null);
       setSubmissionContent('');
@@ -205,7 +207,7 @@ export default function StudentSubmissions() {
       loadSubmissions();
     } catch (error) {
       console.error('Error submitting assignment:', error);
-      toast.error('Failed to submit assignment');
+      toast.error(t('student.submissions.submitError') || 'Failed to submit assignment');
     }
   };
 
@@ -274,8 +276,8 @@ export default function StudentSubmissions() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only students can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.studentOnly') || 'Only students can access this page.'}</div>
         </div>
       </div>
     );
@@ -284,7 +286,7 @@ export default function StudentSubmissions() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading submissions...</div>
+        <div className="text-gray-600">{t('student.submissions.loading') || 'Loading submissions...'}</div>
       </div>
     );
   }
@@ -292,8 +294,8 @@ export default function StudentSubmissions() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="My Submissions"
-        subtitle="View and manage your assignment submissions"
+        title={t('student.submissions.title') || 'My Submissions'}
+        subtitle={t('student.submissions.subtitle') || 'View and manage your assignment submissions'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -301,12 +303,12 @@ export default function StudentSubmissions() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Submissions</Label>
+              <Label htmlFor="search">{t('student.submissions.searchLabel') || 'Search Submissions'}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by assignment, course, or instructor..."
+                  placeholder={t('student.submissions.searchPlaceholder') || 'Search by assignment, course, or instructor...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -314,21 +316,21 @@ export default function StudentSubmissions() {
               </div>
             </div>
             <div>
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">{t('student.submissions.filterByStatus') || 'Filter by Status'}</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="graded">Graded</SelectItem>
+                  <SelectItem value="all">{t('student.submissions.allStatuses') || 'All Statuses'}</SelectItem>
+                  <SelectItem value="draft">{t('student.submissions.draft') || 'Draft'}</SelectItem>
+                  <SelectItem value="submitted">{t('student.submissions.submitted') || 'Submitted'}</SelectItem>
+                  <SelectItem value="graded">{t('student.submissions.graded') || 'Graded'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="course-filter">Filter by Course</Label>
+              <Label htmlFor="course-filter">{t('student.submissions.filterByCourse') || 'Filter by Course'}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -349,16 +351,16 @@ export default function StudentSubmissions() {
         {/* Sort Options */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">Sort By</Label>
+              <Label htmlFor="sort">{t('student.submissions.sortBy') || 'Sort By'}</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="assignment">Assignment</SelectItem>
-                <SelectItem value="course">Course</SelectItem>
+                <SelectItem value="recent">{t('student.submissions.sortRecent') || 'Most Recent'}</SelectItem>
+                <SelectItem value="oldest">{t('student.submissions.sortOldest') || 'Oldest First'}</SelectItem>
+                <SelectItem value="assignment">{t('student.submissions.sortAssignment') || 'Assignment'}</SelectItem>
+                <SelectItem value="course">{t('student.submissions.sortCourse') || 'Course'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -392,24 +394,24 @@ export default function StudentSubmissions() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          Submitted: {submission.submittedAt.toLocaleDateString()}
+                          {t('student.submissions.submittedAt') || 'Submitted'}: {submission.submittedAt.toLocaleDateString()}
                         </span>
                         <span className="flex items-center gap-1">
-                          Max Score: {submission.maxScore}
+                          {t('student.submissions.maxScore') || 'Max Score'}: {submission.maxScore}
                         </span>
                       </div>
                       
                       {submission.status === 'graded' && submission.grade !== undefined && (
                         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium">Grade:</span>
+                            <span className="font-medium">{t('student.submissions.grade') || 'Grade'}:</span>
                             <span className={`font-bold ${getGradeColor(submission.grade, submission.maxScore)}`}>
                               {submission.grade}/{submission.maxScore}
                             </span>
                           </div>
                           {submission.feedback && (
                             <p className="text-sm text-gray-700">
-                              <strong>Feedback:</strong> {submission.feedback}
+                              <strong>{t('student.submissions.feedback') || 'Feedback'}:</strong> {submission.feedback}
                             </p>
                           )}
                         </div>
@@ -420,13 +422,13 @@ export default function StudentSubmissions() {
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/courses/${submission.courseId}`}>
                         <Eye className="h-4 w-4 mr-2" />
-                        View Course
+                        {t('common.view') || 'View Course'}
                       </Link>
                     </Button>
                     {submission.status === 'draft' && (
                       <Button size="sm" onClick={() => handleSubmissionAction(submission.assignmentId, 'edit')}>
                         <Edit className="h-4 w-4 mr-2" />
-                        Continue
+                        {t('student.submissions.continue') || 'Continue'}
                       </Button>
                     )}
                   </div>
@@ -438,16 +440,16 @@ export default function StudentSubmissions() {
             <Card>
               <CardContent className="p-12 text-center">
                 <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.submissions.none') || 'No submissions yet'}</h3>
                 <p className="text-gray-600 mb-4">
                   {searchTerm || statusFilter !== 'all' || courseFilter !== 'all'
-                    ? 'No submissions match your current filters'
-                    : 'You haven\'t submitted any assignments yet. Start by viewing your assignments.'
+                    ? (t('student.submissions.noResultsTipFiltered') || 'No submissions match your current filters')
+                    : (t('student.submissions.noResultsTip') || 'You haven\'t submitted any assignments yet. Start by viewing your assignments.')
                   }
                 </p>
                 {!searchTerm && statusFilter === 'all' && courseFilter === 'all' && (
                   <Button asChild>
-                    <Link to="/dashboard/student-assignments">View Assignments</Link>
+                    <Link to="/dashboard/student-assignments">{t('student.submissions.viewAssignments') || 'View Assignments'}</Link>
                   </Button>
                 )}
               </CardContent>
@@ -460,40 +462,40 @@ export default function StudentSubmissions() {
       <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Submit Assignment</DialogTitle>
+            <DialogTitle>{t('student.submissions.dialog.title') || 'Submit Assignment'}</DialogTitle>
           </DialogHeader>
           
           {selectedAssignment && (
             <div className="space-y-4">
               <div>
-                <Label>Assignment: {selectedAssignment.title}</Label>
+                <Label>{t('student.submissions.dialog.assignment') || 'Assignment'}: {selectedAssignment.title}</Label>
                 <p className="text-sm text-gray-600">{selectedAssignment.description}</p>
-                <p className="text-sm text-gray-600">Max Score: {selectedAssignment.maxScore}</p>
+                <p className="text-sm text-gray-600">{t('student.submissions.maxScore') || 'Max Score'}: {selectedAssignment.maxScore}</p>
                 {selectedAssignment.instructions && (
                   <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm"><strong>Instructions:</strong> {selectedAssignment.instructions}</p>
+                    <p className="text-sm"><strong>{t('student.submissions.feedback') || 'Instructions'}:</strong> {selectedAssignment.instructions}</p>
                   </div>
                 )}
               </div>
               
               <div>
-                <Label htmlFor="content">Your Submission *</Label>
+                <Label htmlFor="content">{t('student.submissions.dialog.content') || 'Your Submission *'}</Label>
                 <Textarea
                   id="content"
                   value={submissionContent}
                   onChange={(e) => setSubmissionContent(e.target.value)}
-                  placeholder="Write your assignment submission here..."
+                  placeholder={t('student.submissions.dialog.contentPlaceholder') || 'Write your assignment submission here...'}
                   rows={8}
                   required
                 />
               </div>
               
               <div>
-                <Label>Attachments (Optional)</Label>
+                <Label>{t('student.submissions.dialog.attachments') || 'Attachments (Optional)'}</Label>
                 <div className="mt-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-600">Click to upload files or drag and drop</p>
-                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT files only</p>
+                  <p className="text-sm text-gray-600">{t('student.submissions.dialog.uploadHint') || 'Click to upload files or drag and drop'}</p>
+                  <p className="text-xs text-gray-500">{t('student.submissions.dialog.uploadTypes') || 'PDF, DOC, DOCX, TXT files only'}</p>
                 </div>
               </div>
             </div>
@@ -501,10 +503,10 @@ export default function StudentSubmissions() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSubmitSubmission} disabled={!submissionContent.trim()}>
-              Submit Assignment
+              {t('student.submissions.dialog.submit') || 'Submit Assignment'}
             </Button>
           </DialogFooter>
         </DialogContent>

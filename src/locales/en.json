@@ -444,7 +444,10 @@
       "ongoing": "Ongoing",
       "completed": "Completed"
     },
-    "attendees": "attendees"
+    "attendees": "attendees",
+    "allEventsLabel": "All events",
+    "scheduledLabel": "Scheduled events",
+    "completedLabel": "Completed events"
   },
   "superadmin": {
     "title": "Super Admin Dashboard",
@@ -1020,6 +1023,8 @@
       "subtitle": "View your assignment grades and feedback",
       "loading": "Loading grades...",
       "averageGrade": "Average Grade",
+      "averageGradeShort": "Avg",
+      "totalSubmissions": "Total Submissions",
       "totalAssignments": "Total Assignments",
       "highestGrade": "Highest Grade",
       "lowestGrade": "Lowest Grade",
@@ -1041,6 +1046,8 @@
       "viewAssignments": "View Assignments"
     },
     "announcements": {
+      "countSuffix": "announcements found",
+      "messageTo": "Message to {name}",
       "title": "Announcements",
       "subtitle": "Stay updated with course announcements and important information",
       "loading": "Loading announcements...",
@@ -1195,6 +1202,9 @@
       "deleteConfirmTitle": "Delete Announcement"
     },
     "materials": {
+      "countSuffix": "materials found",
+      "allTypes": "All Types",
+      "other": "Other",
       "title": "Course Materials",
       "subtitle": "Manage course materials and resources.",
       "createMaterial": "Create Material",

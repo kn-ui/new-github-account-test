@@ -128,7 +128,7 @@ export default function StudentOverview() {
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.enrolledCourses || enrolledCourses.length}</div>
             <p className="text-xs text-blue-100">
-              {t('student.myCourses.subtitle')}
+              {t('student.stats.enrolledCoursesDesc')}
             </p>
           </CardContent>
         </Card>
@@ -143,7 +143,7 @@ export default function StudentOverview() {
           <CardContent>
             <div className="text-3xl font-bold mb-2">{Math.round(averageProgress)}%</div>
             <p className="text-xs text-green-100">
-              {t('student.myCourses.subtitle')}
+              {t('student.stats.averageProgressDesc')}
             </p>
           </CardContent>
         </Card>
@@ -158,7 +158,7 @@ export default function StudentOverview() {
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.pendingAssignments || upcomingAssignments.length}</div>
             <p className="text-xs text-orange-100">
-              {t('student.upcomingAssignments.title')}
+              {t('student.stats.pendingAssignmentsDesc')}
             </p>
           </CardContent>
         </Card>
@@ -173,7 +173,7 @@ export default function StudentOverview() {
           <CardContent>
             <div className="text-3xl font-bold mb-2">{stats?.certificates || certificates.length}</div>
             <p className="text-xs text-purple-100">
-              {t('student.quickActions.myCertificates')}
+              {t('student.stats.certificatesDesc')}
             </p>
           </CardContent>
         </Card>
@@ -188,7 +188,7 @@ export default function StudentOverview() {
               <BookOpen className="h-5 w-5" />
               <span>{t('student.myCourses.title')}</span>
             </CardTitle>
-            <CardDescription>{t('student.myCourses.subtitle')}</CardDescription>
+            <CardDescription>{t('student.myCourses.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -228,7 +228,7 @@ export default function StudentOverview() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
-              <span>{t('student.announcements')}</span>
+              <span>{t('student.announcements.title')}</span>
             </CardTitle>
             <CardDescription>{t('forum.categories.announcements')}</CardDescription>
           </CardHeader>
@@ -280,7 +280,7 @@ export default function StudentOverview() {
                     <div className="font-medium text-gray-900">{a.title || 'Assignment'}</div>
                     <div className="text-xs text-gray-600">{a.courseTitle || 'Course'}</div>
                   </div>
-                  <div className="text-xs text-gray-500">{t('student.due')}: {a.dueDate || '-'}</div>
+                  <div className="text-xs text-gray-500">{t('assignments.dueDate')}: {a.dueDate || '-'}</div>
                 </div>
               ))}
             </div>

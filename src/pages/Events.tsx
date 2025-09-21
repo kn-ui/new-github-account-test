@@ -472,11 +472,11 @@ const EventsPage = () => {
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CalendarIcon className="h-8 w-8 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('events.noEvents') || 'No events found'}</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('events.noEvents')}</h3>
                 <p className="text-gray-500 mb-4">
                   {searchTerm || statusFilter !== 'all' 
-                    ? (t('searchResults.noResultsTipFiltered') || 'Try adjusting your search or filters')
-                    : (t('searchResults.noResultsTipCreate') || 'Get started by creating your first event')
+                    ? t('searchResults.noResultsTipFiltered')
+                    : t('searchResults.noResultsTipCreate')
                   }
                 </p>
                 {!searchTerm && statusFilter === 'all' && (

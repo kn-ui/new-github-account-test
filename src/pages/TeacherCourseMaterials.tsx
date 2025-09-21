@@ -340,11 +340,11 @@ export default function TeacherCourseMaterials() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('teacher.materials.allTypes') || 'All Types'}</SelectItem>
+                  <SelectItem value="all">{t('teacher.materials.allTypes')}</SelectItem>
                   <SelectItem value="document">{t('teacher.materials.document')}</SelectItem>
                   <SelectItem value="video">{t('teacher.materials.video')}</SelectItem>
                   <SelectItem value="link">{t('teacher.materials.link')}</SelectItem>
-                  <SelectItem value="other">{t('teacher.materials.other') || 'Other'}</SelectItem>
+                  <SelectItem value="other">{t('teacher.materials.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -368,7 +368,7 @@ export default function TeacherCourseMaterials() {
           
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              {filteredAndSortedMaterials.length} {t('teacher.materials.countSuffix') || 'materials found'}
+              {filteredAndSortedMaterials.length} {t('teacher.materials.countSuffix')}
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-700">{t('common.view')}:</span>

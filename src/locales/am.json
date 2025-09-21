@@ -58,6 +58,24 @@
       "pendingAssignments": "የሚጠብቁ ተግባራት",
       "certificates": "የተከፈሉ ማረጋገጫዎች"
     },
+    "assignments": {
+      "title": "ተግባራት",
+      "subtitle": "የኮርስ ተግባራትን ፍጠር እና አስተዳድር",
+      "create": "ተግባር ፍጠር",
+      "searchPlaceholder": "በርእስ ወይም መግለጫ ፈልግ...",
+      "countSuffix": "ተግባራት ተገኝተዋል",
+      "deleteTitle": "ይህን ተግባር ስወግድ?",
+      "deleteDesc": "ይህ እርምጃ አይመለስም። ተግባሩን በፍጥነት ያስወግዳል",
+      "deleteDesc2": "እና ጋር የተያያዙ ስብስቦች ሁሉ.",
+      "editTitle": "ተግባር አርትዕ",
+      "createNew": "አዲስ ተግባር ፍጠር",
+      "dueTime": "የማብቂያ ጊዜ",
+      "attachment": "አባሪ (አማራጭ)",
+      "instructions": "መመሪያዎች",
+      "resourceTitle": "የሀብት ርእስ (አማራጭ)",
+      "resourceUrl": "የሀብት URL (አማራጭ)",
+      "update": "ተግባር አዘምን"
+    },
     "myCourses": {
       "title": "የእኔ ኮርሶች",
       "subtitle": "የመማር ጉዞዎን ቀጥሉ"

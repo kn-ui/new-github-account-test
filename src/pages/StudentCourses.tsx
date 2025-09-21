@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface EnrolledCourse {
   id: string;
@@ -33,6 +34,7 @@ interface EnrolledCourse {
 
 export default function StudentCourses() {
   const { currentUser, userProfile } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function StudentCourses() {
       setEnrolledCourses(validCourses);
     } catch (error) {
       console.error('Error loading enrolled courses:', error);
-      toast.error('Failed to load enrolled courses');
+      toast.error(t('errors.loadCourses') || 'Failed to load enrolled courses');
     } finally {
       setLoading(false);
     }
@@ -133,18 +135,18 @@ export default function StudentCourses() {
   };
 
   const getProgressText = (progress: number) => {
-    if (progress === 100) return 'Completed';
-    if (progress >= 50) return 'In Progress';
-    if (progress >= 25) return 'Getting Started';
-    return 'Not Started';
+    if (progress === 100) return t('student.progress.completed') || 'Completed';
+    if (progress >= 50) return t('student.progress.inProgress') || 'In Progress';
+    if (progress >= 25) return t('student.progress.gettingStarted') || 'Getting Started';
+    return t('student.progress.notStarted') || 'Not Started';
   };
 
   if (!userProfile || userProfile.role !== 'student') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only students can access this page.</div>
+          <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
+          <div className="text-gray-600">{t('common.studentOnly') || 'Only students can access this page.'}</div>
         </div>
       </div>
     );
@@ -153,7 +155,7 @@ export default function StudentCourses() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading courses...</div>
+        <div className="text-gray-600">{t('student.courses.loading') || 'Loading courses...'}</div>
       </div>
     );
   }
@@ -164,15 +166,15 @@ export default function StudentCourses() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title="My Courses"
-        subtitle="Your enrolled courses and progress"
+        title={t('student.myCourses.title') || 'My Courses'}
+        subtitle={t('student.myCourses.subtitle') || 'Your enrolled courses and progress'}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-end mb-6">
           <Button asChild>
             <Link to="/courses">
-              Browse More Courses
+              {t('student.courses.browseMore') || 'Browse More Courses'}
             </Link>
           </Button>
         </div>
@@ -180,12 +182,12 @@ export default function StudentCourses() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="search">Search Courses</Label>
+              <Label htmlFor="search">{t('courses.searchLabel') || 'Search Courses'}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by title, description, or instructor..."
+                  placeholder={t('student.courses.searchPlaceholder') || 'Search by title, description, or instructor...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -193,13 +195,13 @@ export default function StudentCourses() {
               </div>
             </div>
             <div>
-              <Label htmlFor="category-filter">Filter by Category</Label>
+              <Label htmlFor="category-filter">{t('courses.categoryFilter') || 'Category'}</Label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t('courses.allCategories') || 'All Categories'}</SelectItem>
                   {Array.from(new Set(enrolledCourses.map(course => course.category))).map(category => (
                     <SelectItem key={category} value={category}>
                       {category}
@@ -209,16 +211,16 @@ export default function StudentCourses() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="progress-filter">Filter by Progress</Label>
+              <Label htmlFor="progress-filter">{t('student.courses.progressFilter') || 'Filter by Progress'}</Label>
               <Select value={progressFilter} onValueChange={setProgressFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Progress</SelectItem>
-                  <SelectItem value="not-started">Not Started</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="all">{t('student.courses.progressAll') || 'All Progress'}</SelectItem>
+                  <SelectItem value="not-started">{t('student.courses.progressNotStarted') || 'Not Started'}</SelectItem>
+                  <SelectItem value="in-progress">{t('student.courses.progressInProgress') || 'In Progress'}</SelectItem>
+                  <SelectItem value="completed">{t('student.courses.progressCompleted') || 'Completed'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -228,17 +230,17 @@ export default function StudentCourses() {
         {/* Sort Options */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">Sort By</Label>
+            <Label htmlFor="sort">{t('student.courses.sortBy') || 'Sort By'}</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Recently Enrolled</SelectItem>
-                <SelectItem value="progress-high">Progress: High to Low</SelectItem>
-                <SelectItem value="progress-low">Progress: Low to High</SelectItem>
-                <SelectItem value="title-asc">Title: A → Z</SelectItem>
-                <SelectItem value="title-desc">Title: Z → A</SelectItem>
+                <SelectItem value="recent">{t('student.courses.sortRecent') || 'Recently Enrolled'}</SelectItem>
+                <SelectItem value="progress-high">{t('student.courses.sortProgressHigh') || 'Progress: High to Low'}</SelectItem>
+                <SelectItem value="progress-low">{t('student.courses.sortProgressLow') || 'Progress: Low to High'}</SelectItem>
+                <SelectItem value="title-asc">{t('student.courses.sortTitleAsc') || 'Title: A → Z'}</SelectItem>
+                <SelectItem value="title-desc">{t('student.courses.sortTitleDesc') || 'Title: Z → A'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -262,22 +264,22 @@ export default function StudentCourses() {
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                       <span className="flex items-center gap-1">
                         <TrendingUp className="h-4 w-4" />
-                        by {course.instructorName}
+                        {t('common.by') || 'by'} {course.instructorName}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        Enrolled {course.enrolledAt.toLocaleDateString()}
+                        {t('student.courses.enrolledOn') || 'Enrolled'} {course.enrolledAt.toLocaleDateString()}
                       </span>
                       {course.lastAccessed && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          Last accessed {course.lastAccessed.toLocaleDateString()}
+                          {t('student.courses.lastAccessed') || 'Last accessed'} {course.lastAccessed.toLocaleDateString()}
                         </span>
                       )}
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">Progress</span>
+                        <span className="font-medium">{t('student.courses.progress') || 'Progress'}</span>
                         <span className="text-gray-600">{course.progress}%</span>
                       </div>
                       <Progress value={course.progress} className="h-2" />
@@ -294,7 +296,7 @@ export default function StudentCourses() {
                   <Button variant="outline" size="sm" asChild>
                     <Link to={`/courses/${course.id}`}>
                       <Eye className="h-4 w-4 mr-2" />
-                      View Course
+                      {t('common.view') || 'View Course'}
                     </Link>
                   </Button>
                 </div>
@@ -304,16 +306,16 @@ export default function StudentCourses() {
           {filteredAndSortedCourses.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No courses found</h3>
+              <h3 className="text-lg font-medium mb-2">{t('student.courses.none') || 'No courses found'}</h3>
               <p className="text-gray-400">
                 {searchTerm || categoryFilter !== 'all' || progressFilter !== 'all' 
-                  ? 'Try adjusting your filters or search terms'
-                  : 'You haven\'t enrolled in any courses yet'
+                  ? (t('student.courses.noResultsTipFiltered') || 'Try adjusting your filters or search terms')
+                  : (t('student.courses.noResultsTip') || 'You\'t enrolled in any courses yet')
                 }
               </p>
               {!searchTerm && categoryFilter === 'all' && progressFilter === 'all' && (
                 <Button asChild className="mt-4">
-                  <Link to="/courses">Browse Available Courses</Link>
+                  <Link to="/courses">{t('student.courses.browseAvailable') || 'Browse Available Courses'}</Link>
                 </Button>
               )}
             </div>

@@ -259,6 +259,7 @@
     "title": "ውይይት ፎረም",
     "subtitle": "ከማህበረሰባችን ጋር ይተባበሩ",
     "searchPlaceholder": "ጉዳዮች ፈልግ...",
+    "searchTopics": "ጉዳዮችን ፈልግ",
     "categories": {
       "all": "ሁሉም ጉዳዮች",
       "theology": "እምነት ሳይንስ",
@@ -280,7 +281,11 @@
     "deleteThread": "ጉዳዩን ሰርዝ",
     "deleteConfirm": "ይህን ጉዳይ መሰረዝ እርግጠኛ ነዎት? ይህ እርምጃ አይመለስም.",
     "reply": "ምላሽ",
-    "publicReplyWarning": "ለህዝብ ተጠቃሚዎች ምላሽ መስጠት አይቻልም"
+    "publicReplyWarning": "ለህዝብ ተጠቃሚዎች ምላሽ መስጠት አይቻልም",
+    "categoriesTitle": "ሬማዎች",
+    "stats": { "totalTopics": "ጠቅላላ ጉዳዮች", "totalPosts": "ጠቅላላ ልጥፎች", "todaysPosts": "ዛሬ የተደረጉ ልጥፎች" },
+    "saveChanges": "ለውጦችን አስቀምጥ",
+    "cancel": "ሰርዝ"
   }
   ,
   "updatesPage": {

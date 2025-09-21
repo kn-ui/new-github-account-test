@@ -47,8 +47,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         }
         return value;
       }
-      // return arrays/objects as-is to support non-string values (e.g., weekdays)
-      if (value !== undefined) return value;
+      // If an array is stored at the key (e.g., weekdays), return as-is
+      if (Array.isArray(value)) return value;
+      // For non-string, non-array objects, avoid returning [object Object]
+      if (value !== undefined && typeof value === 'object') return key;
       return key;
     };
     return translate;

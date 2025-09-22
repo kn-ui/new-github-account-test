@@ -70,7 +70,7 @@ export default function StudentProgress() {
       // Load detailed progress for each course
       const progressPromises = enrollments.map(async (enrollment) => {
         try {
-          const course = await courseService.getCourse(enrollment.courseId);
+          const course = await courseService.getCourseById(enrollment.courseId);
           if (!course) return null;
 
           // Get assignments for this course

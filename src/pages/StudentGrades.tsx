@@ -70,7 +70,7 @@ export default function StudentGrades() {
       const assignmentsPromises = courseIds.map(async (courseId) => {
         try {
           const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
-          const course = await courseService.getCourse(courseId);
+          const course = await courseService.getCourseById(courseId);
           return courseAssignments.map(assignment => ({
             ...assignment,
             courseTitle: course?.title || 'Unknown Course',
@@ -207,7 +207,7 @@ export default function StudentGrades() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-xl mb-4">{t('common.accessDenied')}</div>
-          <div className="text-gray-600">{t('common.studentOnly') || 'Only students can access this page.'}</div>
+          <div className="text-gray-600">{t('common.studentOnly')}</div>
         </div>
       </div>
     );
@@ -216,7 +216,7 @@ export default function StudentGrades() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">{t('student.grades.loading') || 'Loading grades...'}</div>
+        <div className="text-gray-600">{t('student.grades.loading')}</div>
       </div>
     );
   }
@@ -224,8 +224,8 @@ export default function StudentGrades() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHero 
-        title={t('student.grades.title') || 'My Grades'}
-        subtitle={t('student.grades.subtitle') || 'View your assignment grades and feedback'}
+        title={t('student.grades.title')}
+        subtitle={t('student.grades.subtitle')}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -235,7 +235,7 @@ export default function StudentGrades() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Award className="h-5 w-5" />
-                {t('student.grades.averageGrade') || 'Average Grade'}
+                {t('student.grades.averageGrade')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -247,7 +247,7 @@ export default function StudentGrades() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                {t('student.grades.totalAssignments') || 'Total Assignments'}
+                {t('student.grades.totalAssignments')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -259,7 +259,7 @@ export default function StudentGrades() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                {t('student.grades.highestGrade') || 'Highest Grade'}
+                {t('student.grades.highestGrade')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -271,7 +271,7 @@ export default function StudentGrades() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                {t('student.grades.lowestGrade') || 'Lowest Grade'}
+                {t('student.grades.lowestGrade')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -284,12 +284,12 @@ export default function StudentGrades() {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="search">{t('student.grades.searchLabel') || 'Search Grades'}</Label>
+              <Label htmlFor="search">{t('student.grades.searchLabel')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder={t('student.grades.searchPlaceholder') || 'Search by assignment, course, or instructor...'}
+                  placeholder={t('student.grades.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -297,7 +297,7 @@ export default function StudentGrades() {
               </div>
             </div>
             <div>
-              <Label htmlFor="course-filter">{t('student.grades.filterByCourse') || 'Filter by Course'}</Label>
+              <Label htmlFor="course-filter">{t('student.grades.filterByCourse')}</Label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -313,18 +313,18 @@ export default function StudentGrades() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="sort">{t('student.grades.sortBy') || 'Sort By'}</Label>
+              <Label htmlFor="sort">{t('student.grades.sortBy')}</Label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">{t('student.grades.sortRecent') || 'Most Recent'}</SelectItem>
-                  <SelectItem value="oldest">{t('student.grades.sortOldest') || 'Oldest First'}</SelectItem>
-                  <SelectItem value="grade-high">{t('student.grades.sortGradeHigh') || 'Grade: High to Low'}</SelectItem>
-                  <SelectItem value="grade-low">{t('student.grades.sortGradeLow') || 'Grade: Low to High'}</SelectItem>
-                  <SelectItem value="course">{t('student.grades.sortCourse') || 'Course'}</SelectItem>
-                  <SelectItem value="assignment">{t('student.grades.sortAssignment') || 'Assignment'}</SelectItem>
+                  <SelectItem value="recent">{t('student.grades.sortRecent')}</SelectItem>
+                  <SelectItem value="oldest">{t('student.grades.sortOldest')}</SelectItem>
+                  <SelectItem value="grade-high">{t('student.grades.sortGradeHigh')}</SelectItem>
+                  <SelectItem value="grade-low">{t('student.grades.sortGradeLow')}</SelectItem>
+                  <SelectItem value="course">{t('student.grades.sortCourse')}</SelectItem>
+                  <SelectItem value="assignment">{t('student.grades.sortAssignment')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -360,13 +360,13 @@ export default function StudentGrades() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {t('student.grades.gradedAt') || 'Graded'}: {grade.gradedAt.toLocaleDateString()}
+                            {t('student.grades.gradedAt')}: {grade.gradedAt.toLocaleDateString()}
                           </span>
                         </div>
                         {grade.feedback && (
                           <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-700">
-                              <strong>{t('student.grades.feedback') || 'Feedback'}:</strong> {grade.feedback}
+                              <strong>{t('student.grades.feedback')}:</strong> {grade.feedback}
                             </p>
                           </div>
                         )}
@@ -389,16 +389,16 @@ export default function StudentGrades() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.grades.none') || 'No grades yet'}</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.grades.none')}</h3>
                 <p className="text-gray-600 mb-4">
                   {searchTerm || courseFilter !== 'all' 
-                    ? (t('student.grades.noResultsTipFiltered') || 'No grades match your current filters')
-                    : (t('student.grades.noResultsTip') || 'You haven\'t received any grades yet. Complete assignments to see your grades here.')
+                    ? t('student.grades.noResultsTipFiltered')
+                    : t('student.grades.noResultsTip')
                   }
                 </p>
                 {!searchTerm && courseFilter === 'all' && (
                   <Button asChild>
-                    <Link to="/dashboard/student-assignments">{t('student.grades.viewAssignments') || 'View Assignments'}</Link>
+                    <Link to="/dashboard/student-assignments">{t('student.grades.viewAssignments')}</Link>
                   </Button>
                 )}
               </CardContent>

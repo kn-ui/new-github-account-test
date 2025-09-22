@@ -71,13 +71,18 @@
     "subtitle": "Welcome back! Continue your spiritual learning journey.",
     "stats": {
       "enrolledCourses": "Enrolled Courses",
-      "averageProgress": "Average Progress",
+      "enrolledCoursesDesc": "Your active courses",
+      "averageProgress": "Average Progress", 
+      "averageProgressDesc": "Overall progress",
       "pendingAssignments": "Pending Assignments",
-      "certificates": "Certificates Earned"
+      "pendingAssignmentsDesc": "Assignments due soon",
+      "certificates": "Certificates Earned",
+      "certificatesDesc": "Your achievements"
     },
     "myCourses": {
       "title": "My Courses",
-      "subtitle": "Continue your learning journey"
+      "subtitle": "Continue your learning journey",
+      "description": "Your enrolled courses and progress"
     },
     "next": "Next",
     "due": "Due",
@@ -85,9 +90,12 @@
     "upcomingAssignments": {
       "title": "Upcoming Assignments",
       "subtitle": "Stay on track with your coursework",
-      "view": "View"
+      "view": "View",
+      "none": "No upcoming assignments"
     },
-    "announcements": "Announcements",
+    "announcements": {
+      "title": "Announcements"
+    },
     "quickActions": {
       "title": "Quick Actions",
       "viewSchedule": "View Schedule",
@@ -101,6 +109,7 @@
     "stats": {
       "activeCourses": "Active Courses",
       "totalStudents": "Total Students",
+      "activeStudents": "Active Students",
       "pendingReviews": "Pending Reviews",
       "avgRating": "Avg Rating"
     },
@@ -873,6 +882,18 @@
     "description_label": "Description (Optional)",
     "create": "Create"
   },
+  "assignments": {
+    "dueDate": "Due Date",
+    "maxScore": "Max Score", 
+    "instructions": "Instructions",
+    "grade": "Grade",
+    "feedback": "Feedback",
+    "viewDetails": "View Details",
+    "start": "Start Assignment",
+    "continue": "Continue",
+    "requestEdit": "Request Edit",
+    "none": "No assignments found"
+  },
   "student": {
     "upcomingAssignments": {
       "none": "No upcoming assignments"
@@ -1167,7 +1188,10 @@
       "saveGrade": "Save Grade",
       "cancel": "Cancel",
       "gradeSaved": "Grade saved successfully!",
-      "gradeError": "Failed to save grade. Please try again."
+      "gradeError": "Failed to save grade. Please try again.",
+      "averageGrade": "Average Grade",
+      "averageGradeShort": "Avg",
+      "totalSubmissions": "Total Submissions"
     },
     "announcements": {
       "title": "Announcements",
@@ -1199,7 +1223,10 @@
       "announcementDeleted": "Announcement deleted successfully!",
       "announcementError": "Failed to save announcement. Please try again.",
       "deleteConfirm": "Are you sure you want to delete this announcement?",
-      "deleteConfirmTitle": "Delete Announcement"
+      "deleteConfirmTitle": "Delete Announcement",
+      "countSuffix": "announcements found",
+      "messageTo": "Message to",
+      "generalLabel": "General"
     },
     "materials": {
       "countSuffix": "materials found",

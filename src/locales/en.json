@@ -855,7 +855,7 @@
     "totalEvents": "Total Events",
     "upcomingEvents": "Upcoming Events",
     "pastEvents": "Past Events",
-    "searchPlaceholder": "Search events...",
+    "searchPlaceholder": "Search events by title, description, or location...",
     "filterByStatus": "Filter by Status",
     "allStatuses": "All Statuses",
     "upcoming": "Upcoming",
@@ -873,6 +873,16 @@
     "createEventTitle": "Create Event",
     "detailsTitle": "Event Details",
     "deleteConfirm": "Are you sure you want to delete this event? This action cannot be undone.",
+    "attendees": "attendees",
+    "allEventsLabel": "All events",
+    "scheduledLabel": "Scheduled events",
+    "completedLabel": "Completed events",
+    "allStatus": "All Status",
+    "status": {
+      "upcoming": "Upcoming",
+      "ongoing": "Ongoing",
+      "completed": "Completed"
+    },
     "subtitle": "Manage system events, schedules, and activities.",
     "title_label": "Title",
     "date_label": "Date",
@@ -946,6 +956,65 @@
     }
   },
   "student": {
+    "title": "Student Dashboard",
+    "subtitle": "Welcome back! Continue your spiritual learning journey.",
+    "due": "Due",
+    "stats": {
+      "enrolledCourses": "Enrolled Courses",
+      "enrolledCoursesDesc": "Your active courses",
+      "averageProgress": "Average Progress",
+      "averageProgressDesc": "Overall progress",
+      "pendingAssignments": "Pending Assignments",
+      "pendingAssignmentsDesc": "Assignments due soon",
+      "certificates": "Certificates Earned",
+      "certificatesDesc": "Your achievements"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "subtitle": "Continue your learning journey",
+      "description": "Your enrolled courses and progress"
+    },
+    "upcomingAssignments": {
+      "title": "Upcoming Assignments",
+      "subtitle": "Stay on track with your coursework",
+      "view": "View",
+      "none": "No upcoming assignments"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "viewSchedule": "View Schedule",
+      "browseCourses": "Browse Courses",
+      "myCertificates": "My Certificates"
+    },
+    "courses": {
+      "loading": "Loading courses...",
+      "browseMore": "Browse More Courses",
+      "searchPlaceholder": "Search by title, description, or instructor...",
+      "progressFilter": "Filter by Progress",
+      "progressAll": "All Progress",
+      "progressNotStarted": "Not Started",
+      "progressInProgress": "In Progress",
+      "progressCompleted": "Completed",
+      "sortBy": "Sort By",
+      "sortRecent": "Recently Enrolled",
+      "sortProgressHigh": "Progress: High to Low",
+      "sortProgressLow": "Progress: Low to High",
+      "sortTitleAsc": "Title: A → Z",
+      "sortTitleDesc": "Title: Z → A",
+      "enrolledOn": "Enrolled",
+      "lastAccessed": "Last accessed",
+      "progress": "Progress",
+      "none": "No courses found",
+      "noResultsTip": "You haven't enrolled in any courses yet",
+      "noResultsTipFiltered": "Try adjusting your filters or search terms",
+      "browseAvailable": "Browse Available Courses"
+    },
+    "progress": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "gettingStarted": "Getting Started",
+      "notStarted": "Not Started"
+    },
     "assignments": {
       "title": "My Assignments",
       "subtitle": "View and manage your course assignments",
@@ -1067,9 +1136,9 @@
       "viewAssignments": "View Assignments"
     },
     "announcements": {
+      "title": "Announcements",
       "countSuffix": "announcements found",
       "messageTo": "Message to {name}",
-      "title": "Announcements",
       "subtitle": "Stay updated with course announcements and important information",
       "loading": "Loading announcements...",
       "loadError": "Failed to load announcements",

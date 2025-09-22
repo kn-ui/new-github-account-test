@@ -251,7 +251,10 @@
     "categoriesTitle": "Categories",
     "stats": { "totalTopics": "Total Topics", "totalPosts": "Total Posts", "todaysPosts": "Today's Posts" },
     "saveChanges": "Save Changes",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "deleteReply": "Delete Reply",
+    "deleteReplyConfirm": "Are you sure you want to delete this reply? This action cannot be undone.",
+    "posting": "Posting..."
   }
   ,
   "updatesPage": {
@@ -411,6 +414,17 @@
     "noResultsTipCreate": "Get started by creating your first event"
   },
   "blog": {
+    "searchPlaceholder": "Search posts...",
+    "categories": {
+      "all": "All Posts",
+      "theology": "Theology",
+      "spirituality": "Spirituality",
+      "community": "Community",
+      "education": "Education",
+      "events": "Events"
+    },
+    "loading": "Loading...",
+    "noPosts": "No posts found",
     "notFound": "Post not found."
   },
   "events": {
@@ -530,7 +544,9 @@
     "sortBy": "Sort",
     "studentOnly": "Only students can access this page.",
     "created": "Created",
-    "general": "General"
+    "general": "General",
+    "noResults": "No results found",
+    "list": "List"
   },
   "studentProgress": {
     "highest": "Students with highest progress"
@@ -571,7 +587,8 @@
     },
     "status": {
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "pendingApproval": "Pending Approval"
     },
     "stats": {
       "totalUsers": "Total Users",

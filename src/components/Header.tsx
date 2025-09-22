@@ -79,7 +79,7 @@ const Header = () => {
             </div>
 
             {/* Updates link */}
-            <Link to="/updates" className={`${location.pathname.startsWith('/updates') ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>{t('nav.updates') || 'Updates'}</Link>
+            <Link to="/updates" className={`${location.pathname.startsWith('/updates') ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600'} px-3 py-2 text-sm font-medium`}>{t('nav.updates')}</Link>
 
             {/* Remaining items */}
             {baseNavItems.map((item) => (

@@ -194,7 +194,7 @@ const CourseDetail = () => {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
-            <Link to="/dashboard/courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ChevronLeft size={20} className="text-gray-600" />
             </Link>
             <div>

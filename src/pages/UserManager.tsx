@@ -49,6 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface User {
@@ -62,7 +63,7 @@ interface User {
 
 const UserManager = () => {
   const { t } = useI18n();
-  const { createUser } = useAuth();
+  const { createUser, userProfile } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -202,6 +203,18 @@ const UserManager = () => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  // Access control - only admins and super_admins can access
+  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

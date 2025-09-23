@@ -208,7 +208,7 @@ export default function StudentOverview() {
               {enrolledCourses.length > 4 && (
                 <div className="mt-4">
                   <Button variant="outline" className="w-full" asChild>
-                    <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
+                    <Link to="/dashboard/student-courses">{t('admin.recentUsers.viewAll')}</Link>
                   </Button>
                 </div>
               )}
@@ -281,13 +281,13 @@ export default function StudentOverview() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.quickActions.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/courses">
+              <Link to="/dashboard/student-courses">
                 <BookOpen className="h-6 w-6 mb-2" />
                 {t('nav.myCourses')}
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/assignments">
+              <Link to="/dashboard/student-assignments">
                 <FileText className="h-6 w-6 mb-2" />
                 {t('nav.assignments')}
               </Link>

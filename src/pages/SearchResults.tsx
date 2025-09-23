@@ -169,7 +169,7 @@ export default function SearchResults() {
             ))}
             {courses.length > 10 && (
               <Button variant="outline" asChild>
-                <Link to="/dashboard/courses">{t('searchResults.viewAllCourses')}</Link>
+                <Link to="/courses">{t('searchResults.viewAllCourses')}</Link>
               </Button>
             )}
           </CardContent>

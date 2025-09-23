@@ -25,7 +25,7 @@ interface AssignmentRow {
 
 export default function SubmissionsPage() {
   const { t } = useI18n();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
@@ -82,6 +82,18 @@ export default function SubmissionsPage() {
     list = list.sort((a, b) => sortBy === 'newest' ? b.dueDate.getTime() - a.dueDate.getTime() : a.dueDate.getTime() - b.dueDate.getTime());
     return list;
   }, [assignments, search, sortBy]);
+
+  // Access control - only teachers and admins can access
+  if (!userProfile || (userProfile.role !== 'teacher' && userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only teachers and administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('teacher.grades.loading')}</div>;
 

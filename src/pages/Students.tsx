@@ -22,7 +22,7 @@ interface StudentRow {
 }
 
 export default function StudentsPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,19 @@ export default function StudentsPage() {
     return list;
   }, [students, search, courseFilter, sortBy]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('teacher.students.loading') || 'Loading students...'}</div>;
+  // Access control - only teachers and admins can access
+  if (!userProfile || (userProfile.role !== 'teacher' && userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only teachers and administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-600">{t('teacher.students.loading')}</div>;
 
 
 

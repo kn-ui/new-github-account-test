@@ -91,6 +91,16 @@ const App = () => (
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route 
+              path="/dashboard/course/:courseId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <CourseDetail />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/seed" element={<SeedDatabase />} />
             <Route
               path="/dashboard/submissions/:submissionId"

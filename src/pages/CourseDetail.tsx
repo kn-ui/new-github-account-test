@@ -32,6 +32,9 @@ const CourseDetail = () => {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   
+  // Check if we're in dashboard context
+  const isDashboard = window.location.pathname.startsWith('/dashboard/');
+  
   const [course, setCourse] = useState<FirestoreCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -204,13 +207,13 @@ const CourseDetail = () => {
   const status = getEnrollmentStatus();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+    <div className={isDashboard ? "space-y-6" : "min-h-screen bg-gray-50"}>
+      {!isDashboard && <Header />}
+      <main className={isDashboard ? "" : "container mx-auto px-4 py-8"}>
+        <div className={isDashboard ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
           {/* Header */}
           <div className="flex items-center gap-4">
-            <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <Link to={isDashboard ? "/dashboard/student-courses" : "/courses"} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ChevronLeft size={20} className="text-gray-600" />
             </Link>
             <div>

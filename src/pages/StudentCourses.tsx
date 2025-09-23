@@ -296,7 +296,7 @@ export default function StudentCourses() {
                   </div>
                   
                   <Button variant="outline" size="sm" className="w-full" asChild>
-                    <Link to={`/courses/${course.id}`}>
+                    <Link to={`/dashboard/course/${course.id}`}>
                       <Eye className="h-4 w-4 mr-2" />
                       {t('common.view')}
                     </Link>
@@ -348,7 +348,7 @@ export default function StudentCourses() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/courses/${course.id}`}>
+                      <Link to={`/dashboard/course/${course.id}`}>
                         <Eye className="h-4 w-4 mr-2" />
                         {t('common.view')}
                       </Link>

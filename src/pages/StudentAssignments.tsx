@@ -608,7 +608,7 @@ export default function StudentAssignments() {
                         Details
                       </Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/courses/${assignment.courseId}`}>
+                        <Link to={`/dashboard/course/${assignment.courseId}`}>
                           View Course
                         </Link>
                       </Button>
@@ -675,7 +675,7 @@ export default function StudentAssignments() {
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setSelectedAssignment(assignment)}>{t('assignments.viewDetails')}</Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/courses/${assignment.courseId}`}>
+                        <Link to={`/dashboard/course/${assignment.courseId}`}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Course
                         </Link>

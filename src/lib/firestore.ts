@@ -151,6 +151,41 @@ export interface FirestoreCertificate {
   details?: Record<string, any>;
 }
 
+export interface FirestorePasswordResetRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  userRole: string;
+  requestedAt: Timestamp;
+  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  requestedBy: string; // userId of the person making the request
+  handledBy?: string; // adminId who handled the request
+  handledAt?: Timestamp;
+  reason?: string;
+  adminNotes?: string;
+}
+
+export interface FirestoreAssignmentEditRequest {
+  id: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  courseId: string;
+  courseName: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  teacherId: string;
+  submissionId?: string;
+  requestedAt: Timestamp;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string;
+  requestedChanges?: string;
+  teacherResponse?: string;
+  handledAt?: Timestamp;
+  dueDate: Timestamp;
+}
+
 export interface FirestoreBlog {
   id: string;
   title: string;
@@ -1284,5 +1319,106 @@ export const analyticsService = {
       pendingAssignments,
     };
   },
+};
+
+// Password Reset Request Service
+export const passwordResetService = {
+  async createPasswordResetRequest(data: Omit<FirestorePasswordResetRequest, 'id' | 'requestedAt' | 'status'>) {
+    const docRef = await addDoc(collection(db, 'passwordResetRequests'), {
+      ...data,
+      requestedAt: Timestamp.now(),
+      status: 'pending'
+    });
+    return docRef.id;
+  },
+
+  async getPasswordResetRequests(limitCount = 50): Promise<FirestorePasswordResetRequest[]> {
+    const q = query(
+      collection(db, 'passwordResetRequests'),
+      orderBy('requestedAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestorePasswordResetRequest));
+  },
+
+  async getPendingPasswordResetRequests(): Promise<FirestorePasswordResetRequest[]> {
+    const q = query(
+      collection(db, 'passwordResetRequests'),
+      where('status', '==', 'pending'),
+      orderBy('requestedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestorePasswordResetRequest));
+  },
+
+  async updatePasswordResetRequest(requestId: string, updates: Partial<FirestorePasswordResetRequest>) {
+    const docRef = doc(db, 'passwordResetRequests', requestId);
+    await updateDoc(docRef, {
+      ...updates,
+      handledAt: Timestamp.now()
+    });
+  },
+
+  async deletePasswordResetRequest(requestId: string) {
+    const docRef = doc(db, 'passwordResetRequests', requestId);
+    await deleteDoc(docRef);
+  }
+};
+
+// Assignment Edit Request Service
+export const assignmentEditRequestService = {
+  async createEditRequest(data: Omit<FirestoreAssignmentEditRequest, 'id' | 'requestedAt' | 'status'>) {
+    const docRef = await addDoc(collection(db, 'assignmentEditRequests'), {
+      ...data,
+      requestedAt: Timestamp.now(),
+      status: 'pending'
+    });
+    return docRef.id;
+  },
+
+  async getEditRequestsByStudent(studentId: string): Promise<FirestoreAssignmentEditRequest[]> {
+    const q = query(
+      collection(db, 'assignmentEditRequests'),
+      where('studentId', '==', studentId),
+      orderBy('requestedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+  },
+
+  async getEditRequestsByTeacher(teacherId: string): Promise<FirestoreAssignmentEditRequest[]> {
+    const q = query(
+      collection(db, 'assignmentEditRequests'),
+      where('teacherId', '==', teacherId),
+      orderBy('requestedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+  },
+
+  async getPendingEditRequestsByTeacher(teacherId: string): Promise<FirestoreAssignmentEditRequest[]> {
+    const q = query(
+      collection(db, 'assignmentEditRequests'),
+      where('teacherId', '==', teacherId),
+      where('status', '==', 'pending'),
+      orderBy('requestedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+  },
+
+  async updateEditRequest(requestId: string, updates: Partial<FirestoreAssignmentEditRequest>) {
+    const docRef = doc(db, 'assignmentEditRequests', requestId);
+    await updateDoc(docRef, {
+      ...updates,
+      handledAt: Timestamp.now()
+    });
+  },
+
+  async deleteEditRequest(requestId: string) {
+    const docRef = doc(db, 'assignmentEditRequests', requestId);
+    await deleteDoc(docRef);
+  }
 };
 

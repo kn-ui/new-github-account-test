@@ -43,18 +43,66 @@ export default function SearchResults() {
           promises.push(assignmentService.getAssignmentsByTeacher(currentUser?.uid || 'none'));
           promises.push(courseMaterialService.getMaterialsByTeacher(currentUser?.uid || 'none'));
         } else if (role === 'teacher') {
+          // Teachers can search their own content and their students
           if (currentUser?.uid) {
             promises.push(courseService.getCoursesByInstructor(currentUser.uid));
             promises.push(assignmentService.getAssignmentsByTeacher(currentUser.uid));
             promises.push(courseMaterialService.getMaterialsByTeacher(currentUser.uid));
             promises.push(announcementService.getAnnouncementsByTeacher(currentUser.uid));
-            promises.push(enrollmentService.getEnrollmentsByStudent('')); // placeholder to keep indexes warm
+            
+            // Get students enrolled in teacher's courses only
+            const teacherCourses = await courseService.getCoursesByInstructor(currentUser.uid);
+            const allEnrollments = await enrollmentService.getAllEnrollments();
+            const enrolledStudentIds = allEnrollments
+              .filter((enrollment: any) => teacherCourses.some(course => course.id === enrollment.courseId))
+              .map((enrollment: any) => enrollment.studentId);
+            const teacherStudents = await Promise.all(enrolledStudentIds.map(id => userService.getUserById(id)));
+            setStudents(teacherStudents.filter(Boolean));
           }
-          promises.push(courseService.getCourses(1000)); // active courses
-          promises.push(eventService.getEvents(1000));
-        } else { // student
-          promises.push(courseService.getCourses(1000)); // active courses
-          promises.push(eventService.getEvents(1000));
+          // Teachers should not see all events or all users
+          setEvents([]);
+          setUsers([]);
+          return; // Skip the Promise.all below
+        } else { // student - only see their own enrolled content
+          if (currentUser?.uid) {
+            // Get student's enrolled courses only
+            const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+            const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+            const enrolledCourses = await Promise.all(enrolledCourseIds.map(id => courseService.getCourseById(id)));
+            setCourses(enrolledCourses.filter(Boolean));
+            
+            // Get announcements for enrolled courses only
+            const studentAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledCourseIds, 100);
+            setAnns(studentAnns);
+            
+            // Get assignments from enrolled courses only
+            const studentAssignments = [];
+            for (const courseId of enrolledCourseIds) {
+              try {
+                const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+                studentAssignments.push(...assignments);
+              } catch (error) {
+                console.error(`Error loading assignments for course ${courseId}:`, error);
+              }
+            }
+            setAssignments(studentAssignments);
+            
+            // Get materials from enrolled courses only
+            const studentMaterials = [];
+            for (const courseId of enrolledCourseIds) {
+              try {
+                const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
+                studentMaterials.push(...materials);
+              } catch (error) {
+                console.error(`Error loading materials for course ${courseId}:`, error);
+              }
+            }
+            setMaterials(studentMaterials);
+          }
+          // Students should not see all events or all users
+          setEvents([]);
+          setUsers([]);
+          return; // Skip the Promise.all below
         }
 
         const results = await Promise.all(promises);

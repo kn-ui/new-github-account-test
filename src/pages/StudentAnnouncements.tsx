@@ -245,10 +245,50 @@ export default function StudentAnnouncements() {
           {/* Preview Panel */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6">
-              <div className="text-center text-gray-500">
-                <Bell size={48} className="mx-auto mb-4 text-gray-300" />
-                <p>Select an announcement to view details</p>
-              </div>
+              {selectedAnnouncement ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      {selectedAnnouncement.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {selectedAnnouncement.createdAt.toDate().toLocaleDateString()}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        {selectedAnnouncement.courseId ? 'Course Specific' : 'General'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedAnnouncement.body}
+                    </p>
+                  </div>
+
+                  {(selectedAnnouncement as any).externalLink && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm font-medium text-blue-800 mb-2">External Link:</p>
+                      <a 
+                        href={(selectedAnnouncement as any).externalLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        {(selectedAnnouncement as any).externalLink}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <Bell size={48} className="mx-auto mb-4 text-gray-300" />
+                  <p>Select an announcement to view details</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

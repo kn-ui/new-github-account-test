@@ -32,6 +32,7 @@ interface CourseWithApproval extends FirestoreCourse {
 }
 
 export default function CourseManager() {
+  const { userProfile } = useAuth();
   const [courses, setCourses] = useState<CourseWithApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +49,7 @@ export default function CourseManager() {
   const [csvText, setCsvText] = useState('');
   const [createStep, setCreateStep] = useState<number>(1);
   const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
-  const { userProfile, currentUser } = useAuth();
+  const { currentUser } = useAuth();
 
   const [editForm, setEditForm] = useState<Partial<FirestoreCourse>>({});
   const [createForm, setCreateForm] = useState<Partial<FirestoreCourse>>({
@@ -231,6 +232,18 @@ export default function CourseManager() {
 
     return matchesSearch;
   });
+
+  // Access control - only admins and super_admins can access
+  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

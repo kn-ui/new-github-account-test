@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Calendar,
   BookOpen,
-  Upload
+  Upload,
+  Grid3X3,
+  List
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -66,6 +68,8 @@ export default function StudentSubmissions() {
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [submissionAttachments, setSubmissionAttachments] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<SubmissionWithDetails | null>(null);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -273,6 +277,101 @@ export default function StudentSubmissions() {
     return Array.from(new Set(submissions.map(submission => submission.courseTitle)));
   };
 
+  if (selectedSubmissionDetail) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedSubmissionDetail(null)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Submission Details</h1>
+              <p className="text-gray-600">{selectedSubmissionDetail.assignmentTitle}</p>
+            </div>
+          </div>
+
+          {/* Submission Detail */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="space-y-6">
+              {/* Assignment Info */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">Course:</span>
+                    <p>{selectedSubmissionDetail.courseTitle}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Instructor:</span>
+                    <p>{selectedSubmissionDetail.instructorName}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Submitted:</span>
+                    <p>{selectedSubmissionDetail.submittedAt.toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Status:</span>
+                    <p className="capitalize">{selectedSubmissionDetail.status}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submitted Content */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Submitted Content</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700 whitespace-pre-wrap">{selectedSubmissionDetail.content}</p>
+                </div>
+              </div>
+
+              {/* Attachments */}
+              {selectedSubmissionDetail.attachments && selectedSubmissionDetail.attachments.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h3>
+                  <div className="space-y-2">
+                    {selectedSubmissionDetail.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <FileText size={16} className="text-blue-600" />
+                        <span className="text-sm text-gray-700">{attachment}</span>
+                        <Download size={14} className="text-gray-400 ml-auto" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Grade & Feedback */}
+              {selectedSubmissionDetail.status === 'graded' && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Grade & Feedback</h3>
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-medium text-green-800">Grade:</span>
+                      <span className="text-2xl font-bold text-green-900">
+                        {selectedSubmissionDetail.grade}/{selectedSubmissionDetail.maxScore}
+                      </span>
+                    </div>
+                    {selectedSubmissionDetail.feedback && (
+                      <div>
+                        <span className="font-medium text-green-800">Feedback:</span>
+                        <p className="text-green-700 mt-2">{selectedSubmissionDetail.feedback}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!userProfile || userProfile.role !== 'student') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -349,91 +448,154 @@ export default function StudentSubmissions() {
           </div>
         </div>
 
-        {/* Sort Options */}
+        {/* Sort Options & View Mode */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <Label htmlFor="sort">{t('student.submissions.sortBy')}</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">{t('student.submissions.sortRecent')}</SelectItem>
-                <SelectItem value="oldest">{t('student.submissions.sortOldest')}</SelectItem>
-                <SelectItem value="assignment">{t('student.submissions.sortAssignment')}</SelectItem>
-                <SelectItem value="course">{t('student.submissions.sortCourse')}</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">{t('student.submissions.sortRecent')}</SelectItem>
+                  <SelectItem value="oldest">{t('student.submissions.sortOldest')}</SelectItem>
+                  <SelectItem value="assignment">{t('student.submissions.sortAssignment')}</SelectItem>
+                  <SelectItem value="course">{t('student.submissions.sortCourse')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Submissions List */}
-        <div className="grid gap-4">
+        {/* Submissions Display */}
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'grid gap-4'}>
           {filteredAndSortedSubmissions.map(submission => (
             <Card key={submission.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-blue-600" />
+              <CardContent className={viewMode === 'grid' ? 'p-4' : 'p-6'}>
+                {viewMode === 'grid' ? (
+                  // Grid View
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{submission.assignmentTitle}</h3>
+                        <p className="text-sm text-gray-600">{submission.courseTitle}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{submission.assignmentTitle}</h3>
-                        <Badge className={getStatusColor(submission.status)}>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(submission.status)}
-                            {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                          </div>
-                        </Badge>
+                    
+                    <Badge className={getStatusColor(submission.status)}>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(submission.status)}
+                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{submission.courseTitle}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="h-3 w-3" />
-                          {submission.instructorName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {t('student.submissions.submittedAt')}: {submission.submittedAt.toLocaleDateString()}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          {t('student.submissions.maxScore')}: {submission.maxScore}
-                        </span>
-                      </div>
-                      
+                    </Badge>
+                    
+                    <div className="text-xs text-gray-500">
+                      <p>Submitted: {submission.submittedAt.toLocaleDateString()}</p>
                       {submission.status === 'graded' && submission.grade !== undefined && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium">{t('student.submissions.grade')}:</span>
-                            <span className={`font-bold ${getGradeColor(submission.grade, submission.maxScore)}`}>
-                              {submission.grade}/{submission.maxScore}
-                            </span>
-                          </div>
-                          {submission.feedback && (
-                            <p className="text-sm text-gray-700">
-                              <strong>{t('student.submissions.feedback')}:</strong> {submission.feedback}
-                            </p>
-                          )}
+                        <p className="text-green-600 font-medium">Grade: {submission.grade}/{submission.maxScore}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedSubmissionDetail(submission)} className="flex-1">
+                        View Details
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/courses/${submission.courseId}`}>
+                          View Course
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // List View
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{submission.assignmentTitle}</h3>
+                          <Badge className={getStatusColor(submission.status)}>
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(submission.status)}
+                              {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                            </div>
+                          </Badge>
                         </div>
+                        <p className="text-sm text-gray-600 mb-2">{submission.courseTitle}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="h-3 w-3" />
+                            {submission.instructorName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {t('student.submissions.submittedAt')}: {submission.submittedAt.toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {t('student.submissions.maxScore')}: {submission.maxScore}
+                          </span>
+                        </div>
+                        
+                        {submission.status === 'graded' && submission.grade !== undefined && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-medium">{t('student.submissions.grade')}:</span>
+                              <span className={`font-bold ${getGradeColor(submission.grade, submission.maxScore)}`}>
+                                {submission.grade}/{submission.maxScore}
+                              </span>
+                            </div>
+                            {submission.feedback && (
+                              <p className="text-sm text-gray-700">
+                                <strong>{t('student.submissions.feedback')}:</strong> {submission.feedback}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedSubmissionDetail(submission)}>
+                        View Details
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/courses/${submission.courseId}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Course
+                        </Link>
+                      </Button>
+                      {submission.status === 'draft' && (
+                        <Button size="sm" onClick={() => handleSubmissionAction(submission.assignmentId, 'edit')}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t('student.submissions.continue')}
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/courses/${submission.courseId}`}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        {t('common.view')}
-                      </Link>
-                    </Button>
-                    {submission.status === 'draft' && (
-                      <Button size="sm" onClick={() => handleSubmissionAction(submission.assignmentId, 'edit')}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        {t('student.submissions.continue')}
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           ))}

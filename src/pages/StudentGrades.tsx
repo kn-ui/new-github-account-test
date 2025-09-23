@@ -51,6 +51,7 @@ export default function StudentGrades() {
   const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({
     '2025': true,
   });
+  const [gradeType, setGradeType] = useState<'assignments' | 'courses'>('courses');
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -240,6 +241,29 @@ export default function StudentGrades() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('student.grades.title')}</h1>
         </div>
+
+        {/* Grade Type Filter */}
+        <div className="bg-white rounded-lg shadow-sm border p-4">
+          <div className="flex items-center gap-4">
+            <Label>View Grades By:</Label>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={gradeType === 'courses' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGradeType('courses')}
+              >
+                Courses
+              </Button>
+              <Button
+                variant={gradeType === 'assignments' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGradeType('assignments')}
+              >
+                Assignments
+              </Button>
+            </div>
+          </div>
+        </div>
         {/* Grade Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
@@ -267,75 +291,159 @@ export default function StudentGrades() {
           </div>
         </div>
 
-        {/* Grades by Year */}
+        {/* Grades Display */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6">
-            {['2025', '2024', '2023', '2022', '2021'].map((year) => {
-              const yearGrades = filteredAndSortedGrades.filter(grade => 
-                grade.gradedAt.getFullYear().toString() === year
-              );
-              
-              return (
-                <div key={year} className="border-b border-gray-200 last:border-b-0">
-                  <button
-                    onClick={() => toggleYear(year)}
-                    className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {expandedYears[year] ? (
-                        <ChevronDown size={20} className="text-gray-400" />
-                      ) : (
-                        <ChevronRight size={20} className="text-gray-400" />
-                      )}
-                      <span className="font-semibold text-gray-900">{year}</span>
-                    </div>
-                  </button>
+            {gradeType === 'assignments' ? (
+              // Assignment Grades View
+              ['2025', '2024', '2023', '2022', '2021'].map((year) => {
+                const yearGrades = filteredAndSortedGrades.filter(grade => 
+                  grade.gradedAt.getFullYear().toString() === year
+                );
+                
+                return (
+                  <div key={year} className="border-b border-gray-200 last:border-b-0">
+                    <button
+                      onClick={() => toggleYear(year)}
+                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedYears[year] ? (
+                          <ChevronDown size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronRight size={20} className="text-gray-400" />
+                        )}
+                        <span className="font-semibold text-gray-900">{year}</span>
+                      </div>
+                    </button>
 
-                  {expandedYears[year] && yearGrades.length > 0 && (
-                    <div className="pl-8 pb-4 space-y-6">
-                      <div className="border-l-4 border-blue-500 pl-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                        
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-gray-200">
-                                <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
-                                <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {yearGrades.map((grade) => (
-                                <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-3 px-4 text-gray-800">{grade.assignmentTitle}</td>
-                                  <td className="py-3 px-4 text-gray-600">{grade.courseTitle}</td>
-                                  <td className="py-3 px-4 text-center">
-                                    <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                      {grade.grade}/{grade.maxScore}
-                                    </span>
-                                  </td>
-                                  <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                  <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                    {expandedYears[year] && yearGrades.length > 0 && (
+                      <div className="pl-8 pb-4 space-y-6">
+                        <div className="border-l-4 border-blue-500 pl-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                          
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-gray-200">
+                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
+                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {yearGrades.map((grade) => (
+                                  <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                    <td className="py-3 px-4 text-gray-800">{grade.assignmentTitle}</td>
+                                    <td className="py-3 px-4 text-gray-600">{grade.courseTitle}</td>
+                                    <td className="py-3 px-4 text-center">
+                                      <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                        {grade.grade}/{grade.maxScore}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                    <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {expandedYears[year] && yearGrades.length === 0 && (
-                    <div className="pl-8 pb-4">
-                      <p className="text-gray-500 italic">No grades available for this year</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    {expandedYears[year] && yearGrades.length === 0 && (
+                      <div className="pl-8 pb-4">
+                        <p className="text-gray-500 italic">No grades available for this year</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              // Course Grades View
+              ['2025', '2024', '2023', '2022', '2021'].map((year) => {
+                // Group grades by course for this year
+                const yearGrades = filteredAndSortedGrades.filter(grade => 
+                  grade.gradedAt.getFullYear().toString() === year
+                );
+                
+                const courseGrades = yearGrades.reduce((acc: any, grade) => {
+                  if (!acc[grade.courseTitle]) {
+                    acc[grade.courseTitle] = [];
+                  }
+                  acc[grade.courseTitle].push(grade);
+                  return acc;
+                }, {});
+                
+                return (
+                  <div key={year} className="border-b border-gray-200 last:border-b-0">
+                    <button
+                      onClick={() => toggleYear(year)}
+                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedYears[year] ? (
+                          <ChevronDown size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronRight size={20} className="text-gray-400" />
+                        )}
+                        <span className="font-semibold text-gray-900">{year}</span>
+                      </div>
+                    </button>
+
+                    {expandedYears[year] && Object.keys(courseGrades).length > 0 && (
+                      <div className="pl-8 pb-4 space-y-6">
+                        <div className="border-l-4 border-blue-500 pl-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                          
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-gray-200">
+                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Assignments</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Average Grade</th>
+                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(courseGrades).map(([courseTitle, grades]: [string, any]) => {
+                                  const avgGrade = Math.round(grades.reduce((sum: number, g: any) => sum + g.grade, 0) / grades.length);
+                                  const avgMaxScore = Math.round(grades.reduce((sum: number, g: any) => sum + g.maxScore, 0) / grades.length);
+                                  const letterGrade = getGradeLetter(avgGrade, avgMaxScore);
+                                  
+                                  return (
+                                    <tr key={courseTitle} className="border-b border-gray-100 hover:bg-gray-50">
+                                      <td className="py-3 px-4 text-gray-800">{courseTitle}</td>
+                                      <td className="py-3 px-4 text-center text-gray-600">{grades.length}</td>
+                                      <td className="py-3 px-4 text-center">
+                                        <span className={`font-semibold ${getGradeColor(avgGrade, avgMaxScore)}`}>
+                                          {avgGrade}%
+                                        </span>
+                                      </td>
+                                      <td className="py-3 px-4 text-center text-gray-800 font-medium">{letterGrade}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {expandedYears[year] && Object.keys(courseGrades).length === 0 && (
+                      <div className="pl-8 pb-4">
+                        <p className="text-gray-500 italic">No grades available for this year</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 

@@ -39,7 +39,7 @@ export default function SubmissionsPage() {
       try {
         setLoading(true);
         if (!currentUser?.uid) {
-          setSubmissions([]);
+          setAssignments([]);
           return;
         }
         const myCourses = await courseService.getCoursesByInstructor(currentUser.uid);

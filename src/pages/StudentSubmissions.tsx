@@ -524,7 +524,7 @@ export default function StudentSubmissions() {
                         View Details
                       </Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/courses/${submission.courseId}`}>
+                        <Link to={`/dashboard/course/${submission.courseId}`}>
                           View Course
                         </Link>
                       </Button>
@@ -584,7 +584,7 @@ export default function StudentSubmissions() {
                         View Details
                       </Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/courses/${submission.courseId}`}>
+                        <Link to={`/dashboard/course/${submission.courseId}`}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Course
                         </Link>

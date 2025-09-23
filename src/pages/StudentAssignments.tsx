@@ -84,8 +84,16 @@ export default function StudentAssignments() {
 
   const loadAssignmentResources = async (courseId: string) => {
     try {
+      // For now, we'll show course materials related to assignments
+      // In a real system, you might have assignment-specific resources
       const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
-      setAssignmentResources(materials);
+      // Filter materials that might be related to assignments (you can customize this logic)
+      const assignmentRelated = materials.filter(material => 
+        material.title.toLowerCase().includes('assignment') ||
+        material.description.toLowerCase().includes('assignment') ||
+        material.type === 'document'
+      );
+      setAssignmentResources(assignmentRelated);
     } catch (error) {
       console.error('Error loading assignment resources:', error);
       setAssignmentResources([]);

@@ -17,7 +17,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  ArrowLeft,
+  Upload,
+  Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -47,6 +50,8 @@ export default function StudentAssignments() {
   const [detailAssignment, setDetailAssignment] = useState<AssignmentWithStatus | null>(null);
   const [editRequestOpen, setEditRequestOpen] = useState(false);
   const [editReason, setEditReason] = useState('');
+  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithStatus | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -204,6 +209,161 @@ export default function StudentAssignments() {
   const getUniqueCourses = () => {
     return Array.from(new Set(assignments.map(assignment => assignment.courseTitle)));
   };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  if (selectedAssignment) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedAssignment(null)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{selectedAssignment.title}</h1>
+              <p className="text-gray-600">{selectedAssignment.courseTitle} • {selectedAssignment.instructorName}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Assignment Description */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Assignment Description</h2>
+                <p className="text-gray-700 mb-6 leading-relaxed">
+                  {selectedAssignment.description}
+                </p>
+
+                {selectedAssignment.instructions && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-800">Instructions:</h3>
+                    <p className="text-gray-700 leading-relaxed">{selectedAssignment.instructions}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Assignment */}
+              {selectedAssignment.status === 'not-started' && (
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Submit Assignment</h2>
+                  
+                  <div
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-4">Drop your file here or click to browse</p>
+                    
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                    >
+                      Choose File
+                    </label>
+                    
+                    {selectedFile && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          Selected: {selectedFile.name}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button className="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Submit Assignment
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Due Date */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar size={20} className="text-blue-600" />
+                  <h3 className="font-semibold text-gray-800">Due Date</h3>
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{selectedAssignment.dueDate.toDate().toLocaleDateString()}</p>
+                <p className={`text-sm font-medium ${getDueDateStatus(selectedAssignment.dueDate).color}`}>
+                  {getDueDateStatus(selectedAssignment.dueDate).text}
+                </p>
+              </div>
+
+              {/* Assignment Info */}
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 className="font-semibold text-gray-800 mb-4">Assignment Info</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Points</span>
+                    <span className="font-medium">{selectedAssignment.maxScore}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status</span>
+                    <span className={`font-medium ${selectedAssignment.status === 'graded' ? 'text-green-600' : selectedAssignment.status === 'submitted' ? 'text-blue-600' : 'text-orange-600'}`}>
+                      {selectedAssignment.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  {selectedAssignment.grade !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Grade</span>
+                      <span className="font-medium text-green-600">{selectedAssignment.grade}/{selectedAssignment.maxScore}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Resources */}
+              {selectedAssignment.instructions && (
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
+                  <div className="space-y-3">
+                    <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors">
+                      <FileText size={16} className="text-blue-600" />
+                      <span className="text-sm text-gray-700">Assignment Instructions</span>
+                      <Download size={14} className="text-gray-400 ml-auto" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!userProfile || userProfile.role !== 'student') {
     return (
@@ -364,7 +524,7 @@ export default function StudentAssignments() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setDetailAssignment(assignment); setDetailOpen(true); }}>{t('assignments.viewDetails')}</Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedAssignment(assignment)}>{t('assignments.viewDetails')}</Button>
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/courses/${assignment.courseId}`}>
                         <Eye className="h-4 w-4 mr-2" />

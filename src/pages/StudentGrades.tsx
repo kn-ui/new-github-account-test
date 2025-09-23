@@ -17,7 +17,9 @@ import {
   Target,
   BarChart3,
   CheckCircle,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
@@ -46,6 +48,9 @@ export default function StudentGrades() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({
+    '2025': true,
+  });
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -181,6 +186,13 @@ export default function StudentGrades() {
     return Array.from(new Set(grades.map(grade => grade.courseTitle)));
   };
 
+  const toggleYear = (year: string) => {
+    setExpandedYears(prev => ({
+      ...prev,
+      [year]: !prev[year]
+    }));
+  };
+
   const getStats = () => {
     if (grades.length === 0) {
       return { averageGrade: 0, totalAssignments: 0, highestGrade: 0, lowestGrade: 0 };
@@ -223,188 +235,110 @@ export default function StudentGrades() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHero 
-        title={t('student.grades.title')}
-        subtitle={t('student.grades.subtitle')}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                {t('student.grades.averageGrade')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{stats.averageGrade}%</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                {t('student.grades.totalAssignments')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{stats.totalAssignments}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                {t('student.grades.highestGrade')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{stats.highestGrade}%</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {t('student.grades.lowestGrade')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{stats.lowestGrade}%</div>
-            </CardContent>
-          </Card>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('student.grades.title')}</h1>
         </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="search">{t('student.grades.searchLabel')}</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder={t('student.grades.searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Grade Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex items-center gap-3 mb-2">
+              <Award size={20} className="text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">{t('student.grades.averageGrade')}</span>
             </div>
-            <div>
-              <Label htmlFor="course-filter">{t('student.grades.filterByCourse')}</Label>
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  {getUniqueCourses().map(courseTitle => (
-                    <SelectItem key={courseTitle} value={courseTitle}>
-                      {courseTitle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <p className="text-3xl font-bold text-blue-900">{stats.averageGrade}%</p>
+          </div>
+          
+          <div className="bg-green-50 rounded-xl p-6 border border-green-100">
+            <div className="flex items-center gap-3 mb-2">
+              <Award size={20} className="text-green-600" />
+              <span className="text-sm font-medium text-green-800">{t('student.grades.totalAssignments')}</span>
             </div>
-            <div>
-              <Label htmlFor="sort">{t('student.grades.sortBy')}</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">{t('student.grades.sortRecent')}</SelectItem>
-                  <SelectItem value="oldest">{t('student.grades.sortOldest')}</SelectItem>
-                  <SelectItem value="grade-high">{t('student.grades.sortGradeHigh')}</SelectItem>
-                  <SelectItem value="grade-low">{t('student.grades.sortGradeLow')}</SelectItem>
-                  <SelectItem value="course">{t('student.grades.sortCourse')}</SelectItem>
-                  <SelectItem value="assignment">{t('student.grades.sortAssignment')}</SelectItem>
-                </SelectContent>
-              </Select>
+            <p className="text-3xl font-bold text-green-900">{stats.totalAssignments}</p>
+          </div>
+          
+          <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
+            <div className="flex items-center gap-3 mb-2">
+              <Award size={20} className="text-purple-600" />
+              <span className="text-sm font-medium text-purple-800">{t('student.grades.highestGrade')}</span>
             </div>
+            <p className="text-3xl font-bold text-purple-900">{stats.highestGrade}%</p>
           </div>
         </div>
 
-        {/* Grades List */}
-        <div className="grid gap-4">
-          {filteredAndSortedGrades.map(grade => {
-            const percentage = (grade.grade / grade.maxScore) * 100;
-            const gradeLetter = getGradeLetter(grade.grade, grade.maxScore);
-            
-            return (
-              <Card key={grade.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Award className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{grade.assignmentTitle}</h3>
-                          <Badge className={getGradeColor(grade.grade, grade.maxScore)}>
-                            {gradeLetter}
-                          </Badge>
+        {/* Grades by Year */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-6">
+            {['2025', '2024', '2023', '2022', '2021'].map((year) => {
+              const yearGrades = filteredAndSortedGrades.filter(grade => 
+                grade.gradedAt.getFullYear().toString() === year
+              );
+              
+              return (
+                <div key={year} className="border-b border-gray-200 last:border-b-0">
+                  <button
+                    onClick={() => toggleYear(year)}
+                    className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedYears[year] ? (
+                        <ChevronDown size={20} className="text-gray-400" />
+                      ) : (
+                        <ChevronRight size={20} className="text-gray-400" />
+                      )}
+                      <span className="font-semibold text-gray-900">{year}</span>
+                    </div>
+                  </button>
+
+                  {expandedYears[year] && yearGrades.length > 0 && (
+                    <div className="pl-8 pb-4 space-y-6">
+                      <div className="border-l-4 border-blue-500 pl-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
+                                <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {yearGrades.map((grade) => (
+                                <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <td className="py-3 px-4 text-gray-800">{grade.assignmentTitle}</td>
+                                  <td className="py-3 px-4 text-gray-600">{grade.courseTitle}</td>
+                                  <td className="py-3 px-4 text-center">
+                                    <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                      {grade.grade}/{grade.maxScore}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                  <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{grade.courseTitle}</p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="h-3 w-3" />
-                            {grade.instructorName}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {t('student.grades.gradedAt')}: {grade.gradedAt.toLocaleDateString()}
-                          </span>
-                        </div>
-                        {grade.feedback && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-700">
-                              <strong>{t('student.grades.feedback')}:</strong> {grade.feedback}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-3xl font-bold ${getGradeColor(grade.grade, grade.maxScore).split(' ')[0]}`}>
-                        {grade.grade}/{grade.maxScore}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {percentage.toFixed(1)}%
-                      </div>
+                  )}
+
+                  {expandedYears[year] && yearGrades.length === 0 && (
+                    <div className="pl-8 pb-4">
+                      <p className="text-gray-500 italic">No grades available for this year</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {filteredAndSortedGrades.length === 0 && (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.grades.none')}</h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm || courseFilter !== 'all' 
-                    ? t('student.grades.noResultsTipFiltered')
-                    : t('student.grades.noResultsTip')
-                  }
-                </p>
-                {!searchTerm && courseFilter === 'all' && (
-                  <Button asChild>
-                    <Link to="/dashboard/student-assignments">{t('student.grades.viewAssignments')}</Link>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
+
       </div>
     </div>
   );

@@ -109,194 +109,176 @@ export default function StudentOverview() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <DashboardHero 
-        title={t('student.title')}
-        subtitle={t('student.subtitle')}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{t('student.title')}</h1>
+            <p className="text-gray-600">{t('student.subtitle')} • {new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              {t('student.stats.enrolledCourses')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.enrolledCourses || enrolledCourses.length}</div>
-            <p className="text-xs text-blue-100">
-              {t('student.stats.enrolledCoursesDesc')}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <BookOpen size={24} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('student.stats.enrolledCourses')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.enrolledCourses || enrolledCourses.length}</p>
+              </div>
+            </div>
+          </div>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              {t('student.stats.averageProgress')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{Math.round(averageProgress)}%</div>
-            <p className="text-xs text-green-100">
-              {t('student.stats.averageProgressDesc')}
-            </p>
-          </CardContent>
-        </Card>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <FileText size={24} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('student.stats.pendingAssignments')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.pendingAssignments || upcomingAssignments.length}</p>
+              </div>
+            </div>
+          </div>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              {t('student.stats.pendingAssignments')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.pendingAssignments || upcomingAssignments.length}</div>
-            <p className="text-xs text-orange-100">
-              {t('student.stats.pendingAssignmentsDesc')}
-            </p>
-          </CardContent>
-        </Card>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <TrendingUp size={24} className="text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('student.stats.averageProgress')}</p>
+                <p className="text-2xl font-bold text-gray-900">{Math.round(averageProgress)}%</p>
+              </div>
+            </div>
+          </div>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              {t('student.stats.certificates')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.certificates || certificates.length}</div>
-            <p className="text-xs text-purple-100">
-              {t('student.stats.certificatesDesc')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Award size={24} className="text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('student.stats.certificates')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.certificates || certificates.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* My Courses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5" />
-              <span>{t('student.myCourses.title')}</span>
-            </CardTitle>
-            <CardDescription>{t('student.myCourses.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {enrolledCourses.slice(0, 3).map((course) => (
-                <div key={course.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <BookOpen className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{course.title}</p>
-                      <p className="text-xs text-gray-500">{t('common.by')} {course.instructor}</p>
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* My Courses */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.myCourses.title')}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {enrolledCourses.slice(0, 4).map((course) => (
+                  <div key={course.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
+                    <Link to={`/courses/${course.id}`} className="block">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                            {course.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">{t('common.by')} {course.instructor}</p>
+                        </div>
+                        <Play className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Progress</span>
+                          <span className="text-sm font-semibold text-blue-600">{course.progress || 0}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${course.progress || 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </Link>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-blue-600">{course.progress || 0}%</span>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/courses/${course.id}`}>
-                        <Play className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
+                ))}
+              </div>
+              {enrolledCourses.length > 4 && (
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
+                  </Button>
                 </div>
-              ))}
-              {enrolledCourses.length > 3 && (
-
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/dashboard/courses">{t('admin.recentUsers.viewAll')}</Link>
-                </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Recent Announcements */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Bell className="h-5 w-5" />
-              <span>{t('student.announcements.title')}</span>
-            </CardTitle>
-            <CardDescription>{t('forum.categories.announcements')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {announcements.slice(0, 3).map((announcement) => (
-                <div key={announcement.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Bell className="h-4 w-4 text-yellow-600" />
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Upcoming Deadlines */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.upcomingAssignments.title')}</h2>
+              <div className="space-y-2">
+                {upcomingAssignments.slice(0, 3).map((assignment) => (
+                  <div key={assignment.id} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FileText size={18} className="text-blue-600" />
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{announcement.title}</p>
+                    
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">{assignment.title || 'Assignment'}</p>
+                      <p className="text-sm text-gray-600">{assignment.courseTitle || 'Course'}</p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-800">
+                        {assignment.dueDate || '-'}
+                      </p>
+                      <p className="text-xs capitalize text-blue-600">
+                        assignment
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {upcomingAssignments.length === 0 && (
+                <div className="text-center py-6 text-gray-500">{t('student.upcomingAssignments.none')}</div>
+              )}
+            </div>
+
+            {/* Recent Notifications */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.announcements.title')}</h2>
+              <div className="space-y-2">
+                {announcements.slice(0, 3).map((announcement) => (
+                  <div key={announcement.id} className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50`}>
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <Bell size={16} className="text-blue-600" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-800 font-medium">
+                        {announcement.title}
+                      </p>
                       <p className="text-xs text-gray-500">{announcement.courseTitle || t('forum.categories.all')}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/dashboard/announcements">
-                      <Eye className="h-4 w-4" />
-                    </Link>
+                ))}
+              </div>
+              {announcements.length > 3 && (
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/dashboard/announcements">{t('admin.recentUsers.viewAll')}</Link>
                   </Button>
                 </div>
-              ))}
-              {announcements.length > 3 && (
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/dashboard/announcements">{t('admin.recentUsers.viewAll')}</Link>
-                </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
 
-      {/* Upcoming Assignments Section (replaces Certificates) */}
-      <Card>
-          <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <FileText className="h-5 w-5" />
-            <span>{t('student.upcomingAssignments.title')}</span>
-          </CardTitle>
-          <CardDescription>{t('student.upcomingAssignments.subtitle')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {upcomingAssignments.length > 0 ? (
-            <div className="space-y-3">
-              {upcomingAssignments.slice(0, 4).map((a: any) => (
-                <div key={a.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <div className="font-medium text-gray-900">{a.title || 'Assignment'}</div>
-                    <div className="text-xs text-gray-600">{a.courseTitle || 'Course'}</div>
-                  </div>
-                  <div className="text-xs text-gray-500">{t('assignments.dueDate')}: {a.dueDate || '-'}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-gray-500">{t('student.upcomingAssignments.none')}</div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('admin.quickActions.title')}</CardTitle>
-          <CardDescription>{t('student.quickActions.title')}</CardDescription>
-        </CardHeader>
-        <CardContent>
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.quickActions.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/courses">
@@ -310,7 +292,12 @@ export default function StudentOverview() {
                 {t('nav.assignments')}
               </Link>
             </Button>
-            {/* Progress quick action removed */}
+            <Button variant="outline" className="h-20 flex-col" asChild>
+              <Link to="/dashboard/grades">
+                <Award className="h-6 w-6 mb-2" />
+                {t('nav.grades')}
+              </Link>
+            </Button>
             <Button variant="outline" className="h-20 flex-col" asChild>
               <Link to="/dashboard/certificates">
                 <Award className="h-6 w-6 mb-2" />
@@ -318,8 +305,7 @@ export default function StudentOverview() {
               </Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
       </div>
     </div>
   );

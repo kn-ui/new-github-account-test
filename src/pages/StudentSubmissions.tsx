@@ -21,7 +21,9 @@ import {
   BookOpen,
   Upload,
   Grid3X3,
-  List
+  List,
+  ArrowLeft,
+  Download
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';

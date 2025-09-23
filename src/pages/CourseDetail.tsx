@@ -206,10 +206,8 @@ const CourseDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        {/* Navigation would be here if using dashboard layout */}
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
             <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -452,8 +450,7 @@ const CourseDetail = () => {
             </div>
           </div>
         </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 };

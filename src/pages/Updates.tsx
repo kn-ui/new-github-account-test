@@ -2,6 +2,8 @@ import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { announcementService, blogService, eventService, FirestoreAnnouncement, FirestoreBlog, FirestoreEvent, Timestamp } from '@/lib/firestore';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Heart } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,6 +18,7 @@ export default function Updates() {
   const [blogQ, setBlogQ] = useState('');
   const [eventQ, setEventQ] = useState('');
   const [eventStatus, setEventStatus] = useState<'all'|'upcoming'|'past'>('all');
+  const [blogLikes, setBlogLikes] = useState<{ [blogId: string]: { count: number; liked: boolean } }>({});
 
   useEffect(() => {
     const load = async () => {
@@ -29,6 +32,16 @@ export default function Updates() {
         setAnnouncements(a);
         setBlogs(b);
         setEvents(e);
+        
+        // Initialize blog likes (in a real app, this would come from the database)
+        const likesData: { [blogId: string]: { count: number; liked: boolean } } = {};
+        b.forEach(blog => {
+          likesData[blog.id] = {
+            count: Math.floor(Math.random() * 50), // Random count for demo
+            liked: false
+          };
+        });
+        setBlogLikes(likesData);
       } finally {
         setLoading(false);
       }
@@ -59,6 +72,16 @@ export default function Updates() {
         return true;
       });
   }, [events, eventQ, eventStatus]);
+
+  const handleBlogLike = (blogId: string) => {
+    setBlogLikes(prev => ({
+      ...prev,
+      [blogId]: {
+        count: prev[blogId]?.liked ? prev[blogId].count - 1 : (prev[blogId]?.count || 0) + 1,
+        liked: !prev[blogId]?.liked
+      }
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,13 +135,38 @@ export default function Updates() {
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredBlogs.map(b => (
-                  <article key={b.id} className="bg-white rounded-lg border p-5">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{b.authorName}</span>
+                  <article key={b.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                      <span className="font-medium">{b.authorName}</span>
                       <span>{b.createdAt.toDate().toLocaleDateString()}</span>
                     </div>
-                    <h3 className="text-lg font-semibold mt-2 text-gray-900">{b.title}</h3>
-                    <p className="text-gray-700 mt-2 line-clamp-3">{b.content}</p>
+                    <h3 className="text-lg font-semibold mt-2 text-gray-900 mb-3">{b.title}</h3>
+                    <p className="text-gray-700 mt-2 line-clamp-3 mb-4">{b.content}</p>
+                    
+                    {/* Love Button */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleBlogLike(b.id)}
+                        className="flex items-center gap-2 hover:bg-red-50"
+                      >
+                        <Heart 
+                          size={18} 
+                          className={`transition-colors ${
+                            blogLikes[b.id]?.liked 
+                              ? 'text-red-500 fill-red-500' 
+                              : 'text-gray-400 hover:text-red-500'
+                          }`} 
+                        />
+                        <span className={`text-sm ${blogLikes[b.id]?.liked ? 'text-red-500' : 'text-gray-600'}`}>
+                          {blogLikes[b.id]?.count || 0}
+                        </span>
+                      </Button>
+                      <span className="text-xs text-gray-400">
+                        {blogLikes[b.id]?.liked ? 'You liked this' : 'Click to like'}
+                      </span>
+                    </div>
                   </article>
                 ))}
                 {!filteredBlogs.length && <div className="text-gray-500 text-center py-8 col-span-2">No blog posts match.</div>}

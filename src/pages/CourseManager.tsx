@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, Upload } from 'lucide-react';
+import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload } from 'lucide-react';
 import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,8 @@ export default function CourseManager() {
   const [studentQuery, setStudentQuery] = useState('');
   const [foundStudents, setFoundStudents] = useState<any[]>([]);
   const [csvText, setCsvText] = useState('');
+  const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
+  const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
   const [createStep, setCreateStep] = useState<number>(1);
   const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
   const { currentUser } = useAuth();
@@ -118,6 +120,49 @@ export default function CourseManager() {
     setFoundStudents([]);
     setCsvText('');
     setShowEnrollDialog(true);
+  };
+
+  const openUnenroll = async (course: CourseWithApproval) => {
+    setSelectedCourseForEnroll(course);
+    try {
+      // Load enrolled students for this course
+      const enrollments = await enrollmentService.getEnrollmentsByCourse(course.id);
+      const studentsWithDetails = await Promise.all(
+        enrollments.map(async (enrollment: any) => {
+          try {
+            const user = await userService.getUserById(enrollment.studentId);
+            return {
+              ...enrollment,
+              user: user
+            };
+          } catch (error) {
+            return {
+              ...enrollment,
+              user: { displayName: 'Unknown User', email: enrollment.studentId }
+            };
+          }
+        })
+      );
+      setEnrolledStudents(studentsWithDetails);
+      setShowUnenrollDialog(true);
+    } catch (error) {
+      console.error('Error loading enrolled students:', error);
+      toast.error('Failed to load enrolled students');
+    }
+  };
+
+  const unenrollStudent = async (enrollmentId: string) => {
+    try {
+      await enrollmentService.deleteEnrollment(enrollmentId);
+      toast.success('Student unenrolled successfully');
+      // Refresh the enrolled students list
+      if (selectedCourseForEnroll) {
+        openUnenroll(selectedCourseForEnroll);
+      }
+    } catch (error) {
+      console.error('Error unenrolling student:', error);
+      toast.error('Failed to unenroll student');
+    }
   };
 
   const searchStudents = async () => {
@@ -410,10 +455,16 @@ export default function CourseManager() {
                         Edit
                       </Button>
                       {userProfile?.role === 'admin' && (
-                        <Button variant="outline" size="sm" onClick={() => openEnroll(course)}>
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Add Students
-                        </Button>
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => openEnroll(course)}>
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Add Students
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => openUnenroll(course)}>
+                            <UserMinus className="h-4 w-4 mr-1" />
+                            Remove Students
+                          </Button>
+                        </>
                       )}
                       
                       
@@ -704,6 +755,47 @@ export default function CourseManager() {
                   <Button className="bg-green-600 hover:bg-green-700" onClick={submitCreate}>Create</Button>
                 )}
               </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Un-enrollment Dialog */}
+        <Dialog open={showUnenrollDialog} onOpenChange={setShowUnenrollDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Remove Students from {selectedCourseForEnroll?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-600">Select students to remove from this course:</p>
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {enrolledStudents.map((enrollment) => (
+                  <div key={enrollment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{enrollment.user?.displayName || 'Unknown User'}</div>
+                      <div className="text-sm text-gray-500">{enrollment.user?.email}</div>
+                      <div className="text-xs text-gray-400">Progress: {enrollment.progress || 0}%</div>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={() => unenrollStudent(enrollment.id)}
+                    >
+                      <UserMinus className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                {enrolledStudents.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No students enrolled in this course
+                  </div>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowUnenrollDialog(false)}>
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -3,10 +3,24 @@ import { X, Lightbulb } from 'lucide-react';
 import ReportGenerator from '@/components/ui/ReportGenerator';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminReportsPage() {
   const { t } = useI18n();
+  const { userProfile } = useAuth();
   const [message, setMessage] = useState<string | null>(null);
+  
+  // Access control - only admins and super_admins can access
+  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">

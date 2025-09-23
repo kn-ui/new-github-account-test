@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
@@ -67,6 +68,7 @@ interface Event {
 
 const EventsPage = () => {
   const { t } = useI18n();
+  const { userProfile } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -247,6 +249,18 @@ const EventsPage = () => {
       </Card>
     );
   };
+
+  // Access control - only admins and super_admins can access
+  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Only administrators can access this page.</div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

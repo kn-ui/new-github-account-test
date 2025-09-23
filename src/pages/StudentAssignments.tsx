@@ -20,7 +20,9 @@ import {
   TrendingUp,
   ArrowLeft,
   Upload,
-  Download
+  Download,
+  Grid3X3,
+  List
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -52,6 +54,7 @@ export default function StudentAssignments() {
   const [editReason, setEditReason] = useState('');
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -358,18 +361,37 @@ export default function StudentAssignments() {
               </div>
 
               {/* Resources */}
-              {selectedAssignment.instructions && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
-                  <div className="space-y-3">
-                    <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
+                <div className="space-y-3">
+                  {selectedAssignment.instructions && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <FileText size={16} className="text-blue-600" />
-                      <span className="text-sm text-gray-700">Assignment Instructions</span>
-                      <Download size={14} className="text-gray-400 ml-auto" />
-                    </button>
-                  </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">Assignment Instructions</p>
+                        <p className="text-xs text-gray-500">View detailed instructions</p>
+                      </div>
+                      <Download size={14} className="text-gray-400" />
+                    </div>
+                  )}
+                  {(selectedAssignment as any).resourceUrl && (
+                    <a href={(selectedAssignment as any).resourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <FileText size={16} className="text-blue-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">Course Resource</p>
+                        <p className="text-xs text-gray-500">External resource link</p>
+                      </div>
+                      <Download size={14} className="text-gray-400" />
+                    </a>
+                  )}
+                  {!selectedAssignment.instructions && !(selectedAssignment as any).resourceUrl && (
+                    <div className="text-center py-4 text-gray-500">
+                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No resources available for this assignment</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -458,118 +480,179 @@ export default function StudentAssignments() {
           </div>
         </div>
 
-        {/* Sort Options */}
+        {/* Sort Options & View Mode */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">{t('student.assignments.sortBy')}</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="due-date">{t('student.assignments.sortDueAsc')}</SelectItem>
-                <SelectItem value="due-date-desc">{t('student.assignments.sortDueDesc')}</SelectItem>
-                <SelectItem value="title-asc">{t('student.assignments.sortTitleAsc')}</SelectItem>
-                <SelectItem value="title-desc">{t('student.assignments.sortTitleDesc')}</SelectItem>
-                <SelectItem value="course">{t('student.assignments.sortCourse')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-4">
+              <Label htmlFor="sort">{t('student.assignments.sortBy')}</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="due-date">{t('student.assignments.sortDueAsc')}</SelectItem>
+                  <SelectItem value="due-date-desc">{t('student.assignments.sortDueDesc')}</SelectItem>
+                  <SelectItem value="title-asc">{t('student.assignments.sortTitleAsc')}</SelectItem>
+                  <SelectItem value="title-desc">{t('student.assignments.sortTitleDesc')}</SelectItem>
+                  <SelectItem value="course">{t('student.assignments.sortCourse')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Assignments List */}
-        <div className="grid gap-4">
+        {/* Assignments Display */}
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'grid gap-4'}>
           {filteredAndSortedAssignments.map(assignment => {
             const dueDateStatus = getDueDateStatus(assignment.dueDate);
             return (
-              <div key={assignment.id} className="bg-white border rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+              <div key={assignment.id} className={`bg-white border rounded-lg ${viewMode === 'grid' ? 'p-4' : 'p-4'}`}>
+                {viewMode === 'grid' ? (
+                  // Grid View
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
                         <h3 className="font-medium text-gray-900">{assignment.title}</h3>
-                        <Badge className={getStatusColor(assignment.status)}>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(assignment.status)}
-                            {assignment.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </div>
-                        </Badge>
+                        <p className="text-sm text-gray-600">{assignment.courseTitle}</p>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{assignment.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          {assignment.courseTitle}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {t('assignments.dueDate')}: {
-                            assignment.dueDate instanceof Date 
-                              ? assignment.dueDate.toLocaleDateString()
-                              : assignment.dueDate.toDate().toLocaleDateString()
-                          }
-                        </span>
-                        <span className={`flex items-center gap-1 ${dueDateStatus.color}`}>
-                          <Clock className="h-3 w-3" />
-                          {dueDateStatus.text}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          {t('assignments.maxScore')}: {assignment.maxScore}
-                        </span>
+                    </div>
+                    
+                    <Badge className={getStatusColor(assignment.status)}>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(assignment.status)}
+                        {assignment.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </div>
-                      {assignment.instructions && (
-                        <p className="text-xs text-gray-500 mb-2">
-                          <strong>{t('assignments.instructions')}:</strong> {assignment.instructions}
-                        </p>
-                      )}
-                      {assignment.status === 'graded' && assignment.grade !== undefined && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium text-green-600">
-                            {t('assignments.grade')}: {assignment.grade}/{assignment.maxScore}
-                          </span>
-                          {assignment.feedback && (
-                              <span className="text-gray-600">
-                              {t('assignments.feedback')}: {assignment.feedback}
-                            </span>
-                          )}
+                    </Badge>
+                    
+                    <div className="text-xs text-gray-500">
+                      <p className={dueDateStatus.color}>Due: {
+                        assignment.dueDate instanceof Date 
+                          ? assignment.dueDate.toLocaleDateString()
+                          : assignment.dueDate.toDate().toLocaleDateString()
+                      }</p>
+                      <p>Max Score: {assignment.maxScore}</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedAssignment(assignment)} className="flex-1">
+                        Details
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/courses/${assignment.courseId}`}>
+                          View Course
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // List View
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium text-gray-900">{assignment.title}</h3>
+                          <Badge className={getStatusColor(assignment.status)}>
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(assignment.status)}
+                              {assignment.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </div>
+                          </Badge>
                         </div>
+                        <p className="text-sm text-gray-600 mb-2">{assignment.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3" />
+                            {assignment.courseTitle}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {t('assignments.dueDate')}: {
+                              assignment.dueDate instanceof Date 
+                                ? assignment.dueDate.toLocaleDateString()
+                                : assignment.dueDate.toDate().toLocaleDateString()
+                            }
+                          </span>
+                          <span className={`flex items-center gap-1 ${dueDateStatus.color}`}>
+                            <Clock className="h-3 w-3" />
+                            {dueDateStatus.text}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {t('assignments.maxScore')}: {assignment.maxScore}
+                          </span>
+                        </div>
+                        {assignment.instructions && (
+                          <p className="text-xs text-gray-500 mb-2">
+                            <strong>{t('assignments.instructions')}:</strong> {assignment.instructions}
+                          </p>
+                        )}
+                        {assignment.status === 'graded' && assignment.grade !== undefined && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium text-green-600">
+                              {t('assignments.grade')}: {assignment.grade}/{assignment.maxScore}
+                            </span>
+                            {assignment.feedback && (
+                                <span className="text-gray-600">
+                                {t('assignments.feedback')}: {assignment.feedback}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedAssignment(assignment)}>{t('assignments.viewDetails')}</Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/courses/${assignment.courseId}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Course
+                        </Link>
+                      </Button>
+                      {assignment.status === 'not-started' && (
+                        <Button size="sm" asChild>
+                          <Link to={`/dashboard/student-submissions/${assignment.id}/submit`}>
+                            {t('assignments.start')}
+                          </Link>
+                        </Button>
+                      )}
+                      {assignment.status === 'in-progress' && (
+                        <Button size="sm" asChild>
+                          <Link to={`/dashboard/student-submissions/${assignment.id}/edit`}>
+                            {t('assignments.continue')}
+                          </Link>
+                        </Button>
+                      )}
+                      {assignment.status === 'submitted' && (
+                        <Button variant="outline" size="sm" onClick={() => setEditRequestOpen(true)}>
+                          {t('assignments.requestEdit')}
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedAssignment(assignment)}>{t('assignments.viewDetails')}</Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/courses/${assignment.courseId}`}>
-                        <Eye className="h-4 w-4 mr-2" />
-                          {t('common.view')}
-                      </Link>
-                    </Button>
-                    {assignment.status === 'not-started' && (
-                      <Button size="sm" asChild>
-                        <Link to={`/dashboard/student-submissions/${assignment.id}/submit`}>
-                          {t('assignments.start')}
-                        </Link>
-                      </Button>
-                    )}
-                    {assignment.status === 'in-progress' && (
-                      <Button size="sm" asChild>
-                        <Link to={`/dashboard/student-submissions/${assignment.id}/edit`}>
-                          {t('assignments.continue')}
-                        </Link>
-                      </Button>
-                    )}
-                    {assignment.status === 'submitted' && (
-                      <Button variant="outline" size="sm" onClick={() => setEditRequestOpen(true)}>
-                        {t('assignments.requestEdit')}
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
-
             );
           })}
           {filteredAndSortedAssignments.length === 0 && (

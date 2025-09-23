@@ -14,7 +14,9 @@ import {
   Eye, 
   TrendingUp,
   Calendar,
-  Clock
+  Clock,
+  Grid3X3,
+  List
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -42,6 +44,7 @@ export default function StudentCourses() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [progressFilter, setProgressFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -227,80 +230,132 @@ export default function StudentCourses() {
           </div>
         </div>
 
-        {/* Sort Options */}
+        {/* Sort Options & View Mode */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
           <div className="flex items-center justify-between">
-            <Label htmlFor="sort">{t('student.courses.sortBy')}</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">{t('student.courses.sortRecent')}</SelectItem>
-                <SelectItem value="progress-high">{t('student.courses.sortProgressHigh')}</SelectItem>
-                <SelectItem value="progress-low">{t('student.courses.sortProgressLow')}</SelectItem>
-                <SelectItem value="title-asc">{t('student.courses.sortTitleAsc')}</SelectItem>
-                <SelectItem value="title-desc">{t('student.courses.sortTitleDesc')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-4">
+              <Label htmlFor="sort">{t('student.courses.sortBy')}</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">{t('student.courses.sortRecent')}</SelectItem>
+                  <SelectItem value="progress-high">{t('student.courses.sortProgressHigh')}</SelectItem>
+                  <SelectItem value="progress-low">{t('student.courses.sortProgressLow')}</SelectItem>
+                  <SelectItem value="title-asc">{t('student.courses.sortTitleAsc')}</SelectItem>
+                  <SelectItem value="title-desc">{t('student.courses.sortTitleDesc')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">{t('common.view')}:</span>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Courses Grid */}
-        <div className="grid gap-6">
+        {/* Courses Display */}
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid gap-6'}>
           {filteredAndSortedCourses.map(course => (
-            <div key={course.id} className="bg-white border rounded-lg p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="h-16 w-16 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <BookOpen className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">{course.title}</h3>
-                      <Badge variant="outline">{course.category}</Badge>
+            <div key={course.id} className={`bg-white border rounded-lg ${viewMode === 'grid' ? 'p-4' : 'p-6'}`}>
+              {viewMode === 'grid' ? (
+                // Grid View
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-blue-600" />
                     </div>
-                    <p className="text-gray-600 mb-3">{course.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4" />
-                        {t('common.by')} {course.instructorName}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {t('student.courses.enrolledOn')} {course.enrolledAt.toLocaleDateString()}
-                      </span>
-                      {course.lastAccessed && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {t('student.courses.lastAccessed')} {course.lastAccessed.toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{t('student.courses.progress')}</span>
-                        <span className="text-gray-600">{course.progress}%</span>
-                      </div>
-                      <Progress value={course.progress} className="h-2" />
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{getProgressText(course.progress)}</span>
-                        <span className={`px-2 py-1 rounded-full ${getProgressColor(course.progress)} text-white`}>
-                          {course.progress}%
-                        </span>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{course.title}</h3>
+                      <p className="text-sm text-gray-600">{t('common.by')} {course.instructorName}</p>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
+                  
+                  <Badge variant="outline" className="text-xs">{course.category}</Badge>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{t('student.courses.progress')}</span>
+                      <span className="text-gray-600">{course.progress}%</span>
+                    </div>
+                    <Progress value={course.progress} className="h-2" />
+                  </div>
+                  
+                  <Button variant="outline" size="sm" className="w-full" asChild>
                     <Link to={`/courses/${course.id}`}>
                       <Eye className="h-4 w-4 mr-2" />
-                          {t('common.view')}
+                      {t('common.view')}
                     </Link>
                   </Button>
                 </div>
-              </div>
+              ) : (
+                // List View
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="h-16 w-16 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-xl font-semibold text-gray-900">{course.title}</h3>
+                        <Badge variant="outline">{course.category}</Badge>
+                      </div>
+                      <p className="text-gray-600 mb-3">{course.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="h-4 w-4" />
+                          {t('common.by')} {course.instructorName}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {t('student.courses.enrolledOn')} {course.enrolledAt.toLocaleDateString()}
+                        </span>
+                        {course.lastAccessed && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {t('student.courses.lastAccessed')} {course.lastAccessed.toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{t('student.courses.progress')}</span>
+                          <span className="text-gray-600">{course.progress}%</span>
+                        </div>
+                        <Progress value={course.progress} className="h-2" />
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{getProgressText(course.progress)}</span>
+                          <span className={`px-2 py-1 rounded-full ${getProgressColor(course.progress)} text-white`}>
+                            {course.progress}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/courses/${course.id}`}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {t('common.view')}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {filteredAndSortedCourses.length === 0 && (

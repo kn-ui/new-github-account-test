@@ -78,13 +78,13 @@ const Academic = () => {
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border p-5 animate-pulse h-48" />
+              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 animate-pulse h-48" />
             ))}
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(course => (
-              <div key={course.id} className="bg-white rounded-lg border p-5 hover:shadow-md transition-shadow flex flex-col">
+              <div key={course.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 hover:shadow-md transition-shadow flex flex-col">
                 <div className="flex items-start justify-between">
                   <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">{course.category || (t('common.general') as any) || 'General'}</span>
                   <span className="text-xs text-gray-500">{(course.createdAt as Timestamp).toDate().toLocaleDateString()}</span>

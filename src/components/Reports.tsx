@@ -160,7 +160,7 @@ export function Reports() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Generate Reports</h3>
@@ -182,7 +182,7 @@ export function Reports() {
                 <button
                   key={report.id}
                   onClick={() => setSelectedReport(report.id)}
-                  className={`p-4 border rounded-lg text-left transition-all ${selectedReport === report.id
+                  className={`p-4 border rounded-xl text-left transition-all hover:shadow-md ${selectedReport === report.id
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                 >

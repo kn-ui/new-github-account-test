@@ -161,7 +161,7 @@ const Forum = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
-          <div className="bg-white rounded-lg border p-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('forum.searchTopics') || t('forum.searchPlaceholder')}</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -174,7 +174,7 @@ const Forum = () => {
               />
             </div>
           </div>
-          <div className="bg-white rounded-lg border p-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('forum.categoriesTitle') || 'Categories'}</h3>
             <div className="space-y-2">
               {categories.map((cat) => (
@@ -194,15 +194,15 @@ const Forum = () => {
         <section className="lg:col-span-3">
           {/* Stats cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4">
               <div className="text-sm text-gray-500">{t('forum.stats.totalTopics') || 'Total Topics'}</div>
               <div className="text-2xl font-semibold text-gray-900">{threads.length}</div>
             </div>
-            <div className="bg-white rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4">
               <div className="text-sm text-gray-500">{t('forum.stats.totalPosts') || 'Total Posts'}</div>
               <div className="text-2xl font-semibold text-gray-900">{totalPosts}</div>
             </div>
-            <div className="bg-white rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4">
               <div className="text-sm text-gray-500">{t('forum.stats.todaysPosts') || "Today's Posts"}</div>
               <div className="text-2xl font-semibold text-gray-900">{todaysPosts}</div>
             </div>
@@ -217,7 +217,7 @@ const Forum = () => {
           )}
 
           {showCreate && (
-            <div className="bg-white rounded-lg border p-4 mb-6">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 mb-6">
               <div className="grid gap-3">
                 <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder={t('forum.create.titlePlaceholder')} className="border rounded px-3 py-2 text-sm" />
                 <textarea value={newBody} onChange={(e)=>setNewBody(e.target.value)} placeholder={t('forum.create.titlePlaceholder')} rows={4} className="border rounded px-3 py-2 text-sm" />
@@ -243,7 +243,7 @@ const Forum = () => {
           ) : (
             <div className="space-y-4">
               {paginated.map((discussion: any) => (
-                <a key={discussion.id} href={`/forum/${discussion.id}`} className="block bg-white rounded-lg border p-6 hover:shadow-md transition-shadow" onClick={async ()=>{ try { await forumService.markViewedOnce(discussion.id, visitorId); } catch {} }}>
+                <a key={discussion.id} href={`/forum/${discussion.id}`} className="block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 hover:shadow-md transition-shadow" onClick={async ()=>{ try { await forumService.markViewedOnce(discussion.id, visitorId); } catch {} }}>
                   <div className="flex items-start space-x-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-blue-600 font-semibold text-sm">{(discussion.authorName || discussion.createdByName || 'U').slice(0,2)}</span>

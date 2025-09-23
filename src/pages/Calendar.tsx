@@ -162,7 +162,7 @@ const Calendar = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border p-6">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">{safeT('calendar.sidebar.academicYear','Academic Year')}</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-600">{safeT('calendar.sidebar.fallSemester','Fall Semester:')}</span><span className="font-medium">{academicYearInfo.fallSemester}</span></div>
@@ -177,7 +177,7 @@ const Calendar = () => {
 
         {/* Upcoming Events under calendar */}
         <div className="mt-8">
-          <div className="bg-white rounded-lg border p-4 mb-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{safeT('events.upcomingEvents','Upcoming Events')}</h3>
           </div>
           <EventsList readOnly />

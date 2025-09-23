@@ -108,7 +108,7 @@ export default function SubmissionsPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <Label>{t('teacher.submissions.searchLabel')}</Label>
@@ -154,7 +154,7 @@ export default function SubmissionsPage() {
         </div>
 
         {viewMode === 'table' ? (
-          <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -190,7 +190,7 @@ export default function SubmissionsPage() {
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map(a => (
-              <div key={a.id} className="bg-white border rounded-lg p-4">
+              <div key={a.id} className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-6">
                 <div className="font-medium text-gray-900 mb-1">{a.title}</div>
                 <div className="text-sm text-gray-600 mb-2">{t('teacher.grades.courseTitle')}: {a.courseTitle}</div>
                 <div className="text-xs text-gray-500 mb-2">{t('student.due')}: {a.dueDate.toLocaleString()}</div>

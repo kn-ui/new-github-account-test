@@ -40,59 +40,82 @@ export default function StudentOverview() {
         setLoading(true);
         
         if (currentUser?.uid) {
-          // Load student stats
-          const studentStats = await analyticsService.getStudentStats(currentUser.uid);
+          // Load student stats and enrollments in parallel
+          const [studentStats, enrollments] = await Promise.all([
+            analyticsService.getStudentStats(currentUser.uid),
+            enrollmentService.getEnrollmentsByStudent(currentUser.uid)
+          ]);
+          
           setStats(studentStats);
 
-          // Load enrollments with course data
-          const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
-          const normalized = enrollments.map((enrollment: any) => ({
-            id: enrollment.courseId,
-            title: enrollment.course?.title || 'Course Title',
-            progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : undefined,
-            instructor: enrollment.course?.instructorName || 'Instructor',
-            nextLesson: 'Next lesson',
-            dueDate: undefined,
-          }));
+          // Filter and normalize enrollments - only include those with complete course data
+          const normalized = enrollments
+            .filter((enrollment: any) => 
+              enrollment.course?.title && 
+              enrollment.course?.instructorName && 
+              enrollment.courseId
+            )
+            .map((enrollment: any) => ({
+              id: enrollment.courseId,
+              title: enrollment.course.title,
+              progress: typeof enrollment.progress === 'number' ? Math.round(enrollment.progress) : 0,
+              instructor: enrollment.course.instructorName,
+              nextLesson: 'Next lesson',
+              dueDate: undefined,
+            }));
           setEnrolledCourses(normalized);
 
-          // Log today's activity for attendance
-          await activityLogService.upsertToday(currentUser.uid);
+          // Log today's activity for attendance (non-blocking)
+          activityLogService.upsertToday(currentUser.uid).catch(console.error);
 
-          // Load upcoming assignments
-          const enrolledIds = enrollments.map((e: any) => e.courseId);
-          const allAssignments = [];
-          for (const courseId of enrolledIds) {
-            try {
-              const assignments = await assignmentService.getAssignmentsByCourse(courseId);
-              const courseTitle = enrollments.find((e: any) => e.courseId === courseId)?.course?.title || 'Course';
-              allAssignments.push(...assignments.map((a: any) => ({
-                ...a,
-                courseTitle,
-                dueDate: a.dueDate.toDate().toLocaleDateString()
-              })));
-            } catch (error) {
-              console.error(`Error loading assignments for course ${courseId}:`, error);
-            }
+          // Only proceed with additional data loading if we have valid enrollments
+          if (normalized.length > 0) {
+            const enrolledIds = normalized.map(course => course.id);
+            
+            // Load remaining data in parallel for better performance
+            const [assignmentArrays, filteredAnns, certs] = await Promise.all([
+              // Load assignments
+              Promise.all(enrolledIds.map(async (courseId: string) => {
+                try {
+                  const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+                  const courseTitle = normalized.find(c => c.id === courseId)?.title || 'Course';
+                  return assignments.map((a: any) => ({
+                    ...a,
+                    courseTitle,
+                    dueDate: a.dueDate.toDate().toLocaleDateString()
+                  }));
+                } catch (error) {
+                  console.error(`Error loading assignments for course ${courseId}:`, error);
+                  return [];
+                }
+              })),
+              // Load announcements
+              announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledIds, 10).catch(() => []),
+              // Load certificates
+              certificateService.getCertificatesForUser(currentUser.uid).catch(() => [])
+            ]);
+            
+            // Process assignments
+            const allAssignments = assignmentArrays.flat();
+            const upcoming = allAssignments
+              .filter((a: any) => new Date(a.dueDate) > new Date())
+              .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+              .slice(0, 5);
+            setUpcomingAssignments(upcoming);
+            
+            // Process announcements
+            const withCourseTitles = filteredAnns.map((a: any) => ({
+              ...a,
+              courseTitle: a.courseId ? (normalized.find(c => c.id === a.courseId)?.title || 'Course') : t('forum.categories.all')
+            }));
+            setAnnouncements(withCourseTitles);
+            setCertificates(certs);
+          } else {
+            // No valid enrollments, set empty arrays
+            setUpcomingAssignments([]);
+            setAnnouncements([]);
+            setCertificates([]);
           }
-          // Sort by due date and take upcoming ones
-          const upcoming = allAssignments
-            .filter((a: any) => new Date(a.dueDate) > new Date())
-            .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-            .slice(0, 5);
-          setUpcomingAssignments(upcoming);
-
-          // Load announcements filtered for this student (general, enrolled course, or direct-recipient)
-          const filteredAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledIds, 50);
-          const withCourseTitles = filteredAnns.map((a: any) => ({
-            ...a,
-            courseTitle: a.courseId ? (enrollments.find((e: any) => e.courseId === a.courseId)?.course?.title || 'Course') : t('forum.categories.all')
-          }));
-          setAnnouncements(withCourseTitles);
-
-          // Load certificates
-          const certs = await certificateService.getCertificatesForUser(currentUser.uid);
-          setCertificates(certs);
         }
       } catch (error) {
         console.error('Failed to load student dashboard data:', error);

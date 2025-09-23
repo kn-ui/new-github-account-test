@@ -35,6 +35,10 @@ const CourseDetail = () => {
   // Check if we're in dashboard context
   const isDashboard = window.location.pathname.startsWith('/dashboard/');
   
+  useEffect(() => {
+    console.log('CourseDetail - isDashboard:', isDashboard, 'pathname:', window.location.pathname);
+  }, [isDashboard]);
+  
   const [course, setCourse] = useState<FirestoreCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);

@@ -196,7 +196,7 @@ export default function StudentOverview() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {enrolledCourses.slice(0, 4).map((course) => (
                   <div key={course.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
-                    <Link to={`/courses/${course.id}`} className="block">
+                    <Link to={`/dashboard/course/${course.id}`} className="block">
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">

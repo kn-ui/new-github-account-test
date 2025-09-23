@@ -106,7 +106,7 @@ export default function StudentGrades() {
             courseTitle: assignment.courseTitle,
             instructorName: assignment.instructorName,
             submittedAt: submission.submittedAt.toDate(),
-            gradedAt: submission.gradedAt?.toDate() || submission.submittedAt.toDate(),
+            gradedAt: (submission as any).gradedAt?.toDate() || submission.submittedAt.toDate(),
             grade: submission.grade || 0,
             maxScore: assignment.maxScore,
             feedback: submission.feedback || '',

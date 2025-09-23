@@ -98,7 +98,7 @@ export default function StudentProgress() {
             instructorName: course.instructorName,
             progress: enrollment.progress || 0,
             enrolledAt: enrollment.enrolledAt.toDate(),
-            lastAccessed: enrollment.lastAccessed?.toDate(),
+            lastAccessed: enrollment.lastAccessedAt?.toDate(),
             totalAssignments: assignments.length,
             completedAssignments,
             averageGrade: Math.round(averageGrade),

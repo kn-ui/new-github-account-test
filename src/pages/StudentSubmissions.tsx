@@ -129,8 +129,8 @@ export default function StudentSubmissions() {
             grade: submission.grade,
             maxScore: assignment.maxScore,
             feedback: submission.feedback,
-            content: submission.content,
-            attachments: submission.attachments
+            content: (submission as any).content || '',
+            attachments: (submission as any).attachments || []
           }));
         } catch (error) {
           console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
@@ -189,10 +189,11 @@ export default function StudentSubmissions() {
     try {
       const submissionData = {
         assignmentId: selectedAssignment.id,
+        courseId: selectedAssignment.courseId,
         studentId: currentUser!.uid,
         content: submissionContent,
         attachments: submissionAttachments,
-        status: 'submitted',
+        status: 'submitted' as const,
         submittedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()

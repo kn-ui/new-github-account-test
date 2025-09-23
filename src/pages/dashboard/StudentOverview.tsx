@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, assignmentService, FirestoreCertificate } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,11 +60,29 @@ export default function StudentOverview() {
           await activityLogService.upsertToday(currentUser.uid);
 
           // Load upcoming assignments
-          const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
-          setUpcomingAssignments(submissions.slice(0, 5));
+          const enrolledIds = enrollments.map((e: any) => e.courseId);
+          const allAssignments = [];
+          for (const courseId of enrolledIds) {
+            try {
+              const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+              const courseTitle = enrollments.find((e: any) => e.courseId === courseId)?.course?.title || 'Course';
+              allAssignments.push(...assignments.map((a: any) => ({
+                ...a,
+                courseTitle,
+                dueDate: a.dueDate.toDate().toLocaleDateString()
+              })));
+            } catch (error) {
+              console.error(`Error loading assignments for course ${courseId}:`, error);
+            }
+          }
+          // Sort by due date and take upcoming ones
+          const upcoming = allAssignments
+            .filter((a: any) => new Date(a.dueDate) > new Date())
+            .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            .slice(0, 5);
+          setUpcomingAssignments(upcoming);
 
           // Load announcements filtered for this student (general, enrolled course, or direct-recipient)
-          const enrolledIds = enrollments.map((e: any) => e.courseId);
           const filteredAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledIds, 50);
           const withCourseTitles = filteredAnns.map((a: any) => ({
             ...a,
@@ -222,25 +240,27 @@ export default function StudentOverview() {
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.upcomingAssignments.title')}</h2>
               <div className="space-y-2">
                 {upcomingAssignments.slice(0, 3).map((assignment) => (
-                  <div key={assignment.id} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText size={18} className="text-blue-600" />
+                  <Link key={assignment.id} to={`/dashboard/student-assignments`}>
+                    <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FileText size={18} className="text-blue-600" />
+                      </div>
+                      
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">{assignment.title || 'Assignment'}</p>
+                        <p className="text-sm text-gray-600">{assignment.courseTitle || 'Course'}</p>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-800">
+                          {assignment.dueDate || '-'}
+                        </p>
+                        <p className="text-xs capitalize text-blue-600">
+                          assignment
+                        </p>
+                      </div>
                     </div>
-                    
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">{assignment.title || 'Assignment'}</p>
-                      <p className="text-sm text-gray-600">{assignment.courseTitle || 'Course'}</p>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-800">
-                        {assignment.dueDate || '-'}
-                      </p>
-                      <p className="text-xs capitalize text-blue-600">
-                        assignment
-                      </p>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               {upcomingAssignments.length === 0 && (
@@ -268,7 +288,7 @@ export default function StudentOverview() {
               {announcements.length > 3 && (
                 <div className="mt-4">
                   <Button variant="outline" className="w-full" asChild>
-                    <Link to="/dashboard/announcements">{t('admin.recentUsers.viewAll')}</Link>
+                    <Link to="/dashboard/student-announcements">{t('admin.recentUsers.viewAll')}</Link>
                   </Button>
                 </div>
               )}
@@ -276,36 +296,6 @@ export default function StudentOverview() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.quickActions.title')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/student-courses">
-                <BookOpen className="h-6 w-6 mb-2" />
-                {t('nav.myCourses')}
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/student-assignments">
-                <FileText className="h-6 w-6 mb-2" />
-                {t('nav.assignments')}
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/grades">
-                <Award className="h-6 w-6 mb-2" />
-                {t('nav.grades')}
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col" asChild>
-              <Link to="/dashboard/certificates">
-                <Award className="h-6 w-6 mb-2" />
-                {t('student.quickActions.myCertificates')}
-              </Link>
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );

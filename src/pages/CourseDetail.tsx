@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { courseService, enrollmentService, courseMaterialService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial } from '@/lib/firestore';
+import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,8 @@ const CourseDetail = () => {
   const [courseMaterials, setCourseMaterials] = useState<FirestoreCourseMaterial[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
+  const [courseAssignments, setCourseAssignments] = useState<any[]>([]);
+  const [courseGrades, setCourseGrades] = useState<any[]>([]);
 
   useEffect(() => {
     if (courseId) {
@@ -100,6 +102,19 @@ const CourseDetail = () => {
       setMaterialsLoading(true);
       const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
       setCourseMaterials(materials);
+      
+      // Load assignments for this course
+      const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+      setCourseAssignments(assignments);
+      
+      // Load grades for this course if enrolled
+      if (isEnrolled && currentUser?.uid) {
+        const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
+        const courseSubmissions = submissions.filter((sub: any) => 
+          assignments.some(assign => assign.id === sub.assignmentId)
+        );
+        setCourseGrades(courseSubmissions);
+      }
     } catch (error) {
       console.error('Error loading course materials:', error);
     } finally {
@@ -203,21 +218,54 @@ const CourseDetail = () => {
             </div>
           </div>
 
-          {/* Course Progress */}
+          {/* Course Progress Timeline */}
           {isEnrolled && (
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800">Course Progress</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-800">Course Timeline</h2>
                 <span className="text-2xl font-bold text-blue-600">{enrollmentPercentage}%</span>
               </div>
               
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                <div className="bg-blue-600 h-3 rounded-full transition-all duration-500" style={{ width: `${enrollmentPercentage}%` }}></div>
+              {/* Timeline */}
+              <div className="space-y-4">
+                {/* Enrollment */}
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">Course Enrolled</p>
+                    <p className="text-sm text-gray-600">{enrollment?.enrolledAt.toDate().toLocaleDateString()}</p>
+                  </div>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+
+                {/* Progress */}
+                <div className="flex items-center gap-4">
+                  <div className={`w-4 h-4 rounded-full ${enrollmentPercentage > 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">In Progress</p>
+                    <p className="text-sm text-gray-600">{enrollmentPercentage}% completed</p>
+                  </div>
+                  {enrollmentPercentage > 0 && <Clock className="h-5 w-5 text-blue-500" />}
+                </div>
+
+                {/* Completion */}
+                <div className="flex items-center gap-4">
+                  <div className={`w-4 h-4 rounded-full ${enrollmentPercentage === 100 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">Course Completed</p>
+                    <p className="text-sm text-gray-600">
+                      {enrollmentPercentage === 100 ? 'Congratulations!' : 'Keep going!'}
+                    </p>
+                  </div>
+                  {enrollmentPercentage === 100 && <Award className="h-5 w-5 text-green-500" />}
+                </div>
               </div>
-              
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>{enrollment?.completedLessons?.length || 0} lessons completed</span>
-                <span>{course.duration} week course</span>
+
+              {/* Progress Bar */}
+              <div className="mt-6">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${enrollmentPercentage}%` }}></div>
+                </div>
               </div>
             </div>
           )}
@@ -226,7 +274,7 @@ const CourseDetail = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="border-b border-gray-200">
               <nav className="flex space-x-8 px-6">
-                {['Overview', 'Lessons', 'Assignments', 'Resources', 'Grades'].map((tab) => (
+                {['Overview', 'Assignments', 'Resources', 'Grades'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -272,17 +320,30 @@ const CourseDetail = () => {
                 </div>
               )}
 
-              {activeTab === 'Lessons' && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Course Lessons</h3>
-                  <p className="text-gray-600">Lesson content will be displayed here.</p>
-                </div>
-              )}
-
               {activeTab === 'Assignments' && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800">Course Assignments</h3>
-                  <p className="text-gray-600">Assignment list will be displayed here.</p>
+                  {courseAssignments.length > 0 ? (
+                    <div className="space-y-3">
+                      {courseAssignments.map((assignment) => (
+                        <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div>
+                            <h4 className="font-medium text-gray-800">{assignment.title}</h4>
+                            <p className="text-sm text-gray-600">{assignment.description}</p>
+                            <p className="text-xs text-gray-500">Due: {assignment.dueDate.toDate().toLocaleDateString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">Max Score: {assignment.maxScore}</p>
+                            <Link to={`/dashboard/student-assignments`}>
+                              <Button variant="outline" size="sm">View Assignment</Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No assignments available for this course.</p>
+                  )}
                 </div>
               )}
 
@@ -321,9 +382,9 @@ const CourseDetail = () => {
                     <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">Current Grade</span>
+                        <span className="text-sm font-medium text-blue-800">Course Progress</span>
                       </div>
-                      <p className="text-3xl font-bold text-blue-900">B+</p>
+                      <p className="text-3xl font-bold text-blue-900">{enrollmentPercentage}%</p>
                     </div>
                     
                     <div className="bg-green-50 rounded-xl p-6 border border-green-100">
@@ -331,17 +392,47 @@ const CourseDetail = () => {
                         <Award size={20} className="text-green-600" />
                         <span className="text-sm font-medium text-green-800">Assignments</span>
                       </div>
-                      <p className="text-3xl font-bold text-green-900">{enrollmentPercentage}%</p>
+                      <p className="text-3xl font-bold text-green-900">{courseGrades.length}</p>
                     </div>
                     
                     <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-purple-600" />
-                        <span className="text-sm font-medium text-purple-800">Participation</span>
+                        <span className="text-sm font-medium text-purple-800">Average Grade</span>
                       </div>
-                      <p className="text-3xl font-bold text-purple-900">92%</p>
+                      <p className="text-3xl font-bold text-purple-900">
+                        {courseGrades.length > 0 
+                          ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
+                          : 0}%
+                      </p>
                     </div>
                   </div>
+
+                  {/* Grades List */}
+                  {courseGrades.length > 0 ? (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-800">Assignment Grades</h4>
+                      {courseGrades.map((grade: any) => {
+                        const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
+                        return (
+                          <div key={grade.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <h5 className="font-medium text-gray-800">{assignment?.title || 'Assignment'}</h5>
+                              <p className="text-sm text-gray-600">Submitted: {grade.submittedAt.toDate().toLocaleDateString()}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-green-600">{grade.grade || 0}/{assignment?.maxScore || 100}</p>
+                              {grade.feedback && (
+                                <p className="text-xs text-gray-500">Feedback available</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No grades available yet.</p>
+                  )}
                 </div>
               )}
             </div>

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { assignmentService, enrollmentService, submissionService, FirestoreAssignment } from '@/lib/firestore';
+import { assignmentService, enrollmentService, submissionService, courseMaterialService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,12 +55,42 @@ export default function StudentAssignments() {
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [assignmentResources, setAssignmentResources] = useState<any[]>([]);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
       loadAssignments();
     }
   }, [currentUser?.uid, userProfile?.role]);
+
+  useEffect(() => {
+    // Check for assignmentId in URL query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const assignmentId = urlParams.get('assignmentId');
+    if (assignmentId && assignments.length > 0) {
+      const assignment = assignments.find(a => a.id === assignmentId);
+      if (assignment) {
+        setSelectedAssignment(assignment);
+      }
+    }
+  }, [assignments]);
+
+  useEffect(() => {
+    // Load resources when assignment is selected
+    if (selectedAssignment) {
+      loadAssignmentResources(selectedAssignment.courseId);
+    }
+  }, [selectedAssignment]);
+
+  const loadAssignmentResources = async (courseId: string) => {
+    try {
+      const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
+      setAssignmentResources(materials);
+    } catch (error) {
+      console.error('Error loading assignment resources:', error);
+      setAssignmentResources([]);
+    }
+  };
 
   const loadAssignments = async () => {
     try {
@@ -369,26 +399,38 @@ export default function StudentAssignments() {
                       <FileText size={16} className="text-blue-600" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-700">Assignment Instructions</p>
-                        <p className="text-xs text-gray-500">View detailed instructions</p>
+                        <p className="text-xs text-gray-500">{selectedAssignment.instructions}</p>
                       </div>
-                      <Download size={14} className="text-gray-400" />
                     </div>
                   )}
-                  {(selectedAssignment as any).resourceUrl && (
-                    <a href={(selectedAssignment as any).resourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <FileText size={16} className="text-blue-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">Course Resource</p>
-                        <p className="text-xs text-gray-500">External resource link</p>
+                  
+                  {assignmentResources.length > 0 ? (
+                    assignmentResources.map((resource) => (
+                      <div key={resource.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <FileText size={16} className="text-blue-600" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700">{resource.title}</p>
+                          <p className="text-xs text-gray-500">{resource.description}</p>
+                        </div>
+                        {resource.fileUrl && (
+                          <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <Download size={14} className="text-gray-400 hover:text-blue-600" />
+                          </a>
+                        )}
+                        {resource.externalLink && (
+                          <a href={resource.externalLink} target="_blank" rel="noopener noreferrer">
+                            <Download size={14} className="text-gray-400 hover:text-blue-600" />
+                          </a>
+                        )}
                       </div>
-                      <Download size={14} className="text-gray-400" />
-                    </a>
-                  )}
-                  {!selectedAssignment.instructions && !(selectedAssignment as any).resourceUrl && (
-                    <div className="text-center py-4 text-gray-500">
-                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No resources available for this assignment</p>
-                    </div>
+                    ))
+                  ) : (
+                    !selectedAssignment.instructions && (
+                      <div className="text-center py-4 text-gray-500">
+                        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No resources available for this assignment</p>
+                      </div>
+                    )
                   )}
                 </div>
               </div>

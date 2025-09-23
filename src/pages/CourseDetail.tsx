@@ -42,6 +42,7 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [courseAssignments, setCourseAssignments] = useState<any[]>([]);
   const [courseGrades, setCourseGrades] = useState<any[]>([]);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -205,8 +206,10 @@ const CourseDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex">
+        {/* Navigation would be here if using dashboard layout */}
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
             <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -221,52 +224,63 @@ const CourseDetail = () => {
           {/* Course Progress Timeline */}
           {isEnrolled && (
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-800">Course Timeline</h2>
-                <span className="text-2xl font-bold text-blue-600">{enrollmentPercentage}%</span>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Course Progress</h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold text-blue-600">{enrollmentPercentage}%</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTimelineExpanded(!timelineExpanded)}
+                  >
+                    {timelineExpanded ? 'Hide Timeline' : 'Show Timeline'}
+                  </Button>
+                </div>
               </div>
               
-              {/* Timeline */}
-              <div className="space-y-4">
-                {/* Enrollment */}
-                <div className="flex items-center gap-4">
-                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Course Enrolled</p>
-                    <p className="text-sm text-gray-600">{enrollment?.enrolledAt.toDate().toLocaleDateString()}</p>
-                  </div>
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-
-                {/* Progress */}
-                <div className="flex items-center gap-4">
-                  <div className={`w-4 h-4 rounded-full ${enrollmentPercentage > 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">In Progress</p>
-                    <p className="text-sm text-gray-600">{enrollmentPercentage}% completed</p>
-                  </div>
-                  {enrollmentPercentage > 0 && <Clock className="h-5 w-5 text-blue-500" />}
-                </div>
-
-                {/* Completion */}
-                <div className="flex items-center gap-4">
-                  <div className={`w-4 h-4 rounded-full ${enrollmentPercentage === 100 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Course Completed</p>
-                    <p className="text-sm text-gray-600">
-                      {enrollmentPercentage === 100 ? 'Congratulations!' : 'Keep going!'}
-                    </p>
-                  </div>
-                  {enrollmentPercentage === 100 && <Award className="h-5 w-5 text-green-500" />}
+              {/* Progress Bar - Always Visible */}
+              <div className="mb-4">
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="bg-blue-600 h-3 rounded-full transition-all duration-500" style={{ width: `${enrollmentPercentage}%` }}></div>
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="mt-6">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${enrollmentPercentage}%` }}></div>
+              {/* Expandable Timeline */}
+              {timelineExpanded && (
+                <div className="space-y-4 mt-6 pt-4 border-t border-gray-200">
+                  {/* Enrollment */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">Course Enrolled</p>
+                      <p className="text-sm text-gray-600">{enrollment?.enrolledAt.toDate().toLocaleDateString()}</p>
+                    </div>
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+
+                  {/* Progress */}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-4 h-4 rounded-full ${enrollmentPercentage > 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">In Progress</p>
+                      <p className="text-sm text-gray-600">{enrollmentPercentage}% completed</p>
+                    </div>
+                    {enrollmentPercentage > 0 && <Clock className="h-5 w-5 text-blue-500" />}
+                  </div>
+
+                  {/* Completion */}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-4 h-4 rounded-full ${enrollmentPercentage === 100 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">Course Completed</p>
+                      <p className="text-sm text-gray-600">
+                        {enrollmentPercentage === 100 ? 'Congratulations!' : 'Keep going!'}
+                      </p>
+                    </div>
+                    {enrollmentPercentage === 100 && <Award className="h-5 w-5 text-green-500" />}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -438,7 +452,8 @@ const CourseDetail = () => {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

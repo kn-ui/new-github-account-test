@@ -42,6 +42,8 @@ import StudentAnnouncements from "./pages/StudentAnnouncements";
 import StudentSubmissions from "./pages/StudentSubmissions";
 import StudentProgress from "./pages/StudentProgress";
 import AdminReports from "./pages/AdminReports";
+import PasswordResetRequests from "./pages/PasswordResetRequests";
+import AssignmentEditRequests from "./pages/AssignmentEditRequests";
 import AdminSettings from "./pages/AdminSettings";
 import TeacherCourses from "./pages/TeacherCourses";
 import TeacherCourseDetail from "./pages/TeacherCourseDetail";
@@ -170,6 +172,26 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminReports />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/password-reset-requests" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <PasswordResetRequests />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/assignment-edit-requests" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AssignmentEditRequests />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

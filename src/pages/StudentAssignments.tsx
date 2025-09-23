@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { assignmentService, enrollmentService, submissionService, courseMaterialService, FirestoreAssignment } from '@/lib/firestore';
+import { assignmentService, enrollmentService, submissionService, courseMaterialService, assignmentEditRequestService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -181,6 +181,40 @@ export default function StudentAssignments() {
     }
   };
 
+  const handleEditRequest = async (assignment: AssignmentWithStatus) => {
+    setSelectedAssignment(assignment);
+    setEditRequestOpen(true);
+  };
+
+  const submitEditRequest = async () => {
+    if (!selectedAssignment || !currentUser?.uid || !userProfile || !editReason.trim()) {
+      toast.error('Please provide a reason for the edit request');
+      return;
+    }
+
+    try {
+      await assignmentEditRequestService.createEditRequest({
+        assignmentId: selectedAssignment.id,
+        assignmentTitle: selectedAssignment.title,
+        courseId: selectedAssignment.courseId,
+        courseName: selectedAssignment.courseTitle || 'Unknown Course',
+        studentId: currentUser.uid,
+        studentName: userProfile.displayName || 'Unknown Student',
+        studentEmail: userProfile.email || currentUser.email || '',
+        teacherId: selectedAssignment.teacherId || '',
+        reason: editReason.trim(),
+        dueDate: selectedAssignment.dueDate
+      });
+
+      toast.success('Edit request submitted successfully. Your teacher will review it.');
+      setEditRequestOpen(false);
+      setEditReason('');
+      setSelectedAssignment(null);
+    } catch (error) {
+      console.error('Error submitting edit request:', error);
+      toast.error('Failed to submit edit request');
+    }
+  };
 
   const filteredAndSortedAssignments = useMemo(() => {
     let filtered = assignments.filter(assignment => {
@@ -695,8 +729,8 @@ export default function StudentAssignments() {
                         </Button>
                       )}
                       {assignment.status === 'submitted' && (
-                        <Button variant="outline" size="sm" onClick={() => setEditRequestOpen(true)}>
-                          {t('assignments.requestEdit')}
+                        <Button variant="outline" size="sm" onClick={() => handleEditRequest(assignment)}>
+                          Request Edit
                         </Button>
                       )}
                     </div>
@@ -713,6 +747,54 @@ export default function StudentAssignments() {
           )}
         </div>
       </div>
+      
+      {/* Edit Request Dialog */}
+      <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Assignment Edit</DialogTitle>
+          </DialogHeader>
+          
+          {selectedAssignment && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <p><strong>Assignment:</strong> {selectedAssignment.title}</p>
+                <p><strong>Course:</strong> {selectedAssignment.courseTitle}</p>
+                <p><strong>Due Date:</strong> {selectedAssignment.dueDate.toDate().toLocaleDateString()}</p>
+              </div>
+              
+              <div>
+                <Label htmlFor="editReason">Reason for Edit Request *</Label>
+                <textarea
+                  id="editReason"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  placeholder="Please explain why you need to edit this assignment (e.g., technical issues, need clarification, etc.)"
+                  rows={4}
+                  className="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <p><strong>Note:</strong> Your teacher will review this request and may approve or reject it. You will be notified of their decision.</p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRequestOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitEditRequest}
+              disabled={!editReason.trim()}
+            >
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

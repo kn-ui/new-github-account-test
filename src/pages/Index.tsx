@@ -64,7 +64,7 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               {top3.map(ev => (
-                <div key={ev.id} className="bg-white rounded-lg border p-5">
+                <div key={ev.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6">
                   <div className="flex items-center text-sm text-gray-600 mb-2">
                     <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
                     {(ev.date as Timestamp).toDate().toLocaleDateString()}

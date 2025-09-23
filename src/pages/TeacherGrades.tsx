@@ -225,7 +225,7 @@ export default function TeacherGrades() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="bg-blue-100 p-3 rounded-full">
                 <FileText className="h-6 w-6 text-blue-600" />
@@ -237,7 +237,7 @@ export default function TeacherGrades() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="bg-green-100 p-3 rounded-full">
                 <CheckCircle className="h-6 w-6 text-green-600" />
@@ -249,7 +249,7 @@ export default function TeacherGrades() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="bg-yellow-100 p-3 rounded-full">
                 <Clock className="h-6 w-6 text-yellow-600" />
@@ -261,7 +261,7 @@ export default function TeacherGrades() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="bg-purple-100 p-3 rounded-full">
                 <Star className="h-6 w-6 text-purple-600" />
@@ -275,7 +275,7 @@ export default function TeacherGrades() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hover:shadow-md transition-shadow">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="search">{t('teacher.grades.searchPlaceholder')}</Label>
@@ -323,7 +323,7 @@ export default function TeacherGrades() {
         </div>
 
         {/* Sort & View */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Label htmlFor="sort">{t('teacher.courses.sortBy')}</Label>
@@ -351,7 +351,7 @@ export default function TeacherGrades() {
         {/* Assignments List */}
         <div className={viewMode === 'grid' ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid gap-4'}>
           {filteredAssignments.map(a => (
-            <div key={a.id} className="bg-white border rounded-lg p-4 flex flex-col h-full">
+            <div key={a.id} className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col h-full">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <FileText className="h-5 w-5 text-blue-600" />

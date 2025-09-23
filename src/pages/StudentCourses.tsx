@@ -182,7 +182,7 @@ export default function StudentCourses() {
           </Button>
         </div>
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hover:shadow-md transition-shadow">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="search">{t('courses.searchLabel')}</Label>
@@ -231,7 +231,7 @@ export default function StudentCourses() {
         </div>
 
         {/* Sort Options & View Mode */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Label htmlFor="sort">{t('student.courses.sortBy')}</Label>
@@ -271,7 +271,7 @@ export default function StudentCourses() {
         {/* Courses Display */}
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid gap-6'}>
           {filteredAndSortedCourses.map(course => (
-            <div key={course.id} className={`bg-white border rounded-lg ${viewMode === 'grid' ? 'p-4' : 'p-6'}`}>
+            <div key={course.id} className={`bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow ${viewMode === 'grid' ? 'p-4' : 'p-6'}`}>
               {viewMode === 'grid' ? (
                 // Grid View
                 <div className="space-y-4">

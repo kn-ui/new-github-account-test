@@ -111,7 +111,7 @@ export default function StudentsPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <Label>{t('searchResults.title') || 'Search'}</Label>
@@ -150,7 +150,7 @@ export default function StudentsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>

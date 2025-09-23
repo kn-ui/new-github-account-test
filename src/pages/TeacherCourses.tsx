@@ -157,7 +157,7 @@ export default function TeacherCourses() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hover:shadow-md transition-shadow">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <Label htmlFor="search">{t('teacher.courses.searchPlaceholder')}</Label>
@@ -215,7 +215,7 @@ export default function TeacherCourses() {
 
         {/* Courses */}
         {viewMode === 'table' ? (
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="p-6 border-b">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 text-blue-600" />
@@ -297,7 +297,7 @@ export default function TeacherCourses() {
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredAndSortedCourses.map(course => (
-              <div key={course.id} className="bg-white rounded-lg shadow-sm border p-4">
+              <div key={course.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-2 mb-2">
                   <BookOpen className="h-5 w-5 text-blue-600" />
                   <h3 className="font-semibold text-gray-900">{course.title}</h3>

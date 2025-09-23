@@ -29,6 +29,7 @@ import { useI18n } from '@/contexts/I18nContext';
 interface AnnouncementWithDetails extends FirestoreAnnouncement {
   course?: any;
   isRead?: boolean;
+  isImportant?: boolean;
 }
 
 export default function StudentAnnouncements() {

@@ -156,10 +156,18 @@ export default function StudentAssignments() {
     // Sort assignments
     switch (sortBy) {
       case 'due-date':
-        filtered.sort((a, b) => a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime());
+        filtered.sort((a, b) => {
+          const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
+          const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
+          return aDate.getTime() - bDate.getTime();
+        });
         break;
       case 'due-date-desc':
-        filtered.sort((a, b) => b.dueDate.toDate().getTime() - a.dueDate.toDate().getTime());
+        filtered.sort((a, b) => {
+          const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
+          const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
+          return bDate.getTime() - aDate.getTime();
+        });
         break;
       case 'title-asc':
         filtered.sort((a, b) => a.title.localeCompare(b.title));
@@ -195,9 +203,9 @@ export default function StudentAssignments() {
     }
   };
 
-  const getDueDateStatus = (dueDate: Date) => {
+  const getDueDateStatus = (dueDate: any) => {
     const now = new Date();
-    const due = dueDate.toDate();
+    const due = dueDate instanceof Date ? dueDate : dueDate.toDate();
     if (due < now) {
       return { text: t('student.assignments.overdue'), color: 'text-red-600' };
     } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
@@ -316,7 +324,11 @@ export default function StudentAssignments() {
                   <Calendar size={20} className="text-blue-600" />
                   <h3 className="font-semibold text-gray-800">Due Date</h3>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 mb-1">{selectedAssignment.dueDate.toDate().toLocaleDateString()}</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{
+                  selectedAssignment.dueDate instanceof Date 
+                    ? selectedAssignment.dueDate.toLocaleDateString()
+                    : selectedAssignment.dueDate.toDate().toLocaleDateString()
+                }</p>
                 <p className={`text-sm font-medium ${getDueDateStatus(selectedAssignment.dueDate).color}`}>
                   {getDueDateStatus(selectedAssignment.dueDate).text}
                 </p>
@@ -494,7 +506,11 @@ export default function StudentAssignments() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {t('assignments.dueDate')}: {assignment.dueDate.toDate().toLocaleDateString()}
+                          {t('assignments.dueDate')}: {
+                            assignment.dueDate instanceof Date 
+                              ? assignment.dueDate.toLocaleDateString()
+                              : assignment.dueDate.toDate().toLocaleDateString()
+                          }
                         </span>
                         <span className={`flex items-center gap-1 ${dueDateStatus.color}`}>
                           <Clock className="h-3 w-3" />

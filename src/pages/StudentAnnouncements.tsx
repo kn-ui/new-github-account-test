@@ -13,7 +13,8 @@ import {
   SortAsc,
   SortDesc,
   Clock,
-  Eye
+  Eye,
+  ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { announcementService, enrollmentService, courseService, FirestoreAnnouncement } from '@/lib/firestore';
@@ -42,6 +43,7 @@ export default function StudentAnnouncements() {
   const [selectedType, setSelectedType] = useState<'all' | 'course' | 'general'>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<AnnouncementWithDetails | null>(null);
 
   useEffect(() => {
     loadAnnouncements();
@@ -158,196 +160,94 @@ export default function StudentAnnouncements() {
 
 
 
+  if (selectedAnnouncement) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedAnnouncement(null)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{t('student.announcements.title')}</h1>
+            </div>
+          </div>
+
+          {/* Announcement Detail */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                {selectedAnnouncement.title}
+              </h2>
+              <p className="text-sm text-gray-500">{selectedAnnouncement.createdAt.toDate().toLocaleDateString()}</p>
+            </div>
+            
+            <div className="prose max-w-none">
+              <p className="text-gray-700 leading-relaxed">
+                {selectedAnnouncement.body}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHero 
-        title={t('student.announcements.title') || 'Announcements'}
-        subtitle={t('student.announcements.subtitle') || 'Stay updated with course announcements and important information'}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('searchResults.title') || 'Search'}</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={t('student.announcements.searchPlaceholder') || 'Search announcements...'}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.course') || 'Course'}</label>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('student.announcements.allCourses') || 'All Courses'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('student.announcements.allCourses') || 'All Courses'}</SelectItem>
-                  {enrolledCourses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.type') || 'Type'}</label>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('student.announcements.allTypes') || 'All Types'}</SelectItem>
-                  <SelectItem value="course">{t('student.announcements.courseSpecific') || 'Course-specific'}</SelectItem>
-                  <SelectItem value="general">{t('student.announcements.general') || 'General'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('student.announcements.sortBy') || 'Sort By'}</label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">{t('student.announcements.sortRecent') || 'Most Recent'}</SelectItem>
-                  <SelectItem value="oldest">{t('student.announcements.sortOldest') || 'Oldest First'}</SelectItem>
-                  <SelectItem value="important">{t('student.announcements.sortImportant') || 'Important First'}</SelectItem>
-                  <SelectItem value="title-asc">{t('student.announcements.sortTitleAsc') || 'Title A→Z'}</SelectItem>
-                  <SelectItem value="title-desc">{t('student.announcements.sortTitleDesc') || 'Title Z→A'}</SelectItem>
-                  <SelectItem value="course">{t('student.announcements.sortCourse') || 'Course'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={showUnreadOnly}
-                  onChange={(e) => setShowUnreadOnly(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm text-gray-700">{t('student.announcements.showUnreadOnly') || 'Show unread only'}</span>
-              </label>
-            </div>
-            
-            <div className="text-sm text-gray-500">
-              {filteredAndSortedAnnouncements.length} {t('student.announcements.countSuffix') || 'announcements found'}
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('student.announcements.title')}</h1>
         </div>
 
         {/* Announcements List */}
-        <div className="space-y-4">
-          {filteredAndSortedAnnouncements.length === 0 ? (
-            <div className="text-center py-12">
-              <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('student.announcements.none') || 'No announcements found'}</h3>
-              <p className="text-gray-600 mb-4">
-                {announcements.length === 0 
-                  ? (t('student.announcements.noneAvailable') || 'No announcements available yet')
-                  : (t('student.announcements.noResultsTipFiltered') || 'No announcements match your current filters')
-                }
-              </p>
-              {announcements.length === 0 && (
-                <Button onClick={() => navigate('/courses')}>
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  {t('student.courses.browseAvailable') || 'Browse Courses'}
-                </Button>
-              )}
-            </div>
-          ) : (
-            filteredAndSortedAnnouncements.map((announcement) => (
-              <div 
-                key={announcement.id} 
-                className={`bg-white border rounded-lg p-6 hover:shadow-md transition-shadow ${
-                  announcement.isImportant ? 'border-l-4 border-l-yellow-500 bg-yellow-50' : ''
-                }`}
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 mt-1">
-                    {getAnnouncementIcon(announcement)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-medium text-gray-900">{announcement.title}</h3>
-                        {announcement.isImportant && (
-                          <Badge variant="default" className="bg-yellow-600">
-                            <Pin className="h-3 w-3 mr-1" />
-                            {t('student.announcements.important') || 'Important'}
-                          </Badge>
-                        )}
-                        <Badge variant="outline">
-                          {announcement.recipientStudentId ? (t('student.announcements.direct') || 'Direct') : (announcement.courseId ? (t('student.announcements.courseSpecific') || 'Course-specific') : (t('student.announcements.general') || 'General'))}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-gray-500">
-                        {formatDate(announcement.createdAt)}
-                      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Announcement List */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-6">
+              <div className="space-y-2">
+                {filteredAndSortedAnnouncements.map((announcement) => (
+                  <button
+                    key={announcement.id}
+                    onClick={() => setSelectedAnnouncement(announcement)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-lg transition-colors text-left ${
+                      announcement.isRead 
+                        ? 'hover:bg-gray-50' 
+                        : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      announcement.isRead ? 'bg-gray-100' : 'bg-blue-100'
+                    }`}>
+                      <Bell size={18} className={announcement.isRead ? 'text-gray-400' : 'text-blue-600'} />
                     </div>
                     
-                    <div className="prose prose-sm text-gray-600 mb-4">
-                      <p className="whitespace-pre-wrap">{announcement.body}</p>
+                    <div className="flex-1">
+                      <p className={`font-medium ${
+                        announcement.isRead ? 'text-gray-700' : 'text-gray-900'
+                      }`}>
+                        {announcement.title}
+                      </p>
+                      <p className="text-sm text-gray-500">{announcement.createdAt.toDate().toLocaleDateString()}</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-6 text-sm text-gray-500">
-                      {announcement.courseId && (
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{announcement.course?.title || 'Unknown Course'}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4" />
-                          <span>{t('student.announcements.allStudents') || 'All students'}</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-1">
-                        <MessageSquare className="h-4 w-4" />
-                          <span>{t('student.announcements.announcement') || 'Announcement'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  </button>
+                ))}
               </div>
-            ))
-          )}
-        </div>
+            </div>
+          </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={() => navigate('/dashboard/student-assignments')}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                View Assignments
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/dashboard/student-progress')}>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                View Progress
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/courses')}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                Browse Courses
-              </Button>
+          {/* Preview Panel */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-6">
+              <div className="text-center text-gray-500">
+                <Bell size={48} className="mx-auto mb-4 text-gray-300" />
+                <p>Select an announcement to view details</p>
+              </div>
             </div>
           </div>
         </div>

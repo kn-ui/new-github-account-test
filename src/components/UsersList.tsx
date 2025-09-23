@@ -115,7 +115,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
             </Select>
           </div>
         </div>
-        <div className="max-h-[70vh] overflow-auto">
+        <div className="min-h-[60vh] max-h-[80vh] overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-white z-10">
             <TableRow className="bg-gray-50">

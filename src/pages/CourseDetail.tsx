@@ -150,10 +150,10 @@ const CourseDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-6">
+      <div className={isDashboard ? "space-y-6" : "min-h-screen bg-background"}>
+        {!isDashboard && <Header />}
+        <main className={isDashboard ? "" : "container mx-auto px-4 py-8"}>
+          <div className={isDashboard ? "space-y-6" : "max-w-4xl mx-auto space-y-6"}>
             <Skeleton className="h-8 w-32" />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
@@ -183,18 +183,18 @@ const CourseDetail = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
+      <div className={isDashboard ? "space-y-6" : "min-h-screen bg-background"}>
+        {!isDashboard && <Header />}
+        <main className={isDashboard ? "" : "container mx-auto px-4 py-8"}>
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-4">Course Not Found</h1>
             <p className="text-muted-foreground mb-6">
               The course you're looking for doesn't exist or has been removed.
             </p>
-            <Link to="/courses">
+            <Link to={isDashboard ? "/dashboard/student-courses" : "/courses"}>
               <Button>
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Back to Courses
+                {isDashboard ? "Back to My Courses" : "Back to Courses"}
               </Button>
             </Link>
           </div>

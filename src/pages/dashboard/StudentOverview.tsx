@@ -240,8 +240,10 @@ export default function StudentOverview() {
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.upcomingAssignments.title')}</h2>
               <div className="space-y-2">
                 {upcomingAssignments.slice(0, 3).map((assignment) => (
-                  <Link key={assignment.id} to={`/dashboard/student-assignments`}>
-                    <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div key={assignment.id} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
+                    // Navigate to assignments page and trigger detail view
+                    window.location.href = `/dashboard/student-assignments?assignmentId=${assignment.id}`;
+                  }}>
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                         <FileText size={18} className="text-blue-600" />
                       </div>
@@ -260,7 +262,6 @@ export default function StudentOverview() {
                         </p>
                       </div>
                     </div>
-                  </Link>
                 ))}
               </div>
               {upcomingAssignments.length === 0 && (

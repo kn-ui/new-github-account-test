@@ -217,7 +217,9 @@ export default function StudentAnnouncements() {
                     key={announcement.id}
                     onClick={() => setSelectedAnnouncement(announcement)}
                     className={`w-full flex items-center gap-4 p-4 rounded-lg transition-colors text-left ${
-                      announcement.isRead 
+                      selectedAnnouncement?.id === announcement.id
+                        ? 'bg-blue-100 border border-blue-300'
+                        : announcement.isRead 
                         ? 'hover:bg-gray-50' 
                         : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'
                     }`}

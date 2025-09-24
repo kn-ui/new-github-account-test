@@ -157,11 +157,15 @@ export default function CourseManager() {
       toast.success('Student unenrolled successfully');
       // Refresh the enrolled students list
       if (selectedCourseForEnroll) {
-        openUnenroll(selectedCourseForEnroll);
+        await openUnenroll(selectedCourseForEnroll);
       }
     } catch (error) {
       console.error('Error unenrolling student:', error);
-      toast.error('Failed to unenroll student');
+      if (error instanceof Error) {
+        toast.error(`Failed to unenroll student: ${error.message}`);
+      } else {
+        toast.error('Failed to unenroll student. Please try again.');
+      }
     }
   };
 
@@ -169,40 +173,124 @@ export default function CourseManager() {
     try {
       const all = await userService.getUsers(500);
       const q = studentQuery.toLowerCase();
-      setFoundStudents(all.filter(u => (u.displayName||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.id||'').toLowerCase().includes(q)).slice(0,10));
-    } catch { setFoundStudents([]); }
+      
+      // Filter to only include students, exclude current user, and apply search criteria
+      const studentsOnly = all.filter(u => {
+        const isStudent = u.role === 'student';
+        const isNotCurrentUser = u.id !== currentUser?.uid && u.uid !== currentUser?.uid;
+        const matchesSearch = (u.displayName||'').toLowerCase().includes(q) || 
+                             (u.email||'').toLowerCase().includes(q) || 
+                             (u.id||'').toLowerCase().includes(q);
+        
+        return isStudent && isNotCurrentUser && matchesSearch;
+      }).slice(0, 10);
+      
+      setFoundStudents(studentsOnly);
+      
+      if (studentsOnly.length === 0 && q.length > 0) {
+        toast.info('No students found matching your search criteria.');
+      }
+    } catch (error) {
+      console.error('Error searching students:', error);
+      setFoundStudents([]);
+      toast.error('Failed to search students. Please try again.');
+    }
   };
 
   const enrollStudent = async (studentId: string) => {
     if (!selectedCourseForEnroll) return;
+    
+    // Prevent self-enrollment
+    if (studentId === currentUser?.uid) {
+      toast.error('You cannot enroll yourself in a course.');
+      return;
+    }
+    
     try {
-      await enrollmentService.createEnrollment({ courseId: selectedCourseForEnroll.id, studentId, status: 'active', progress: 0, completedLessons: [] } as any);
-      toast.success('Student enrolled');
-    } catch { toast.error('Failed to enroll student'); }
+      await enrollmentService.createEnrollment({ 
+        courseId: selectedCourseForEnroll.id, 
+        studentId, 
+        status: 'active', 
+        progress: 0, 
+        completedLessons: [] 
+      } as any);
+      toast.success('Student enrolled successfully');
+      
+      // Clear search results after successful enrollment
+      setFoundStudents([]);
+      setStudentQuery('');
+    } catch (error) {
+      console.error('Error enrolling student:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('already enrolled')) {
+          toast.error('This student is already enrolled in this course.');
+        } else {
+          toast.error(`Failed to enroll student: ${error.message}`);
+        }
+      } else {
+        toast.error('Failed to enroll student. Please try again.');
+      }
+    }
   };
 
   const processCsv = async () => {
     if (!selectedCourseForEnroll) return;
     const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     let count = 0;
+    let errors = 0;
+    
     for (const line of lines) {
       const [emailOrId] = line.split(',').map(s => s.trim());
       if (!emailOrId) continue;
+      
       try {
         let uid = emailOrId;
+        let userRole = '';
+        
         if (!uid.includes('@')) {
-          // treat as uid
+          // treat as uid - check if user exists and is a student
+          try {
+            const user = await userService.getUserById(emailOrId);
+            uid = user?.id || emailOrId;
+            userRole = user?.role || '';
+          } catch {
+            uid = emailOrId; // Fallback
+          }
         } else {
           const u = await userService.getUserByEmail(emailOrId);
           uid = u?.uid || u?.id || '';
+          userRole = u?.role || '';
         }
-        if (uid) {
-          await enrollmentService.createEnrollment({ courseId: selectedCourseForEnroll.id, studentId: uid, status: 'active', progress: 0, completedLessons: [] } as any);
+        
+        // Only enroll students and prevent self-enrollment
+        if (uid && userRole === 'student' && uid !== currentUser?.uid) {
+          await enrollmentService.createEnrollment({ 
+            courseId: selectedCourseForEnroll.id, 
+            studentId: uid, 
+            status: 'active', 
+            progress: 0, 
+            completedLessons: [] 
+          } as any);
           count++;
+        } else if (userRole !== 'student') {
+          errors++;
         }
-      } catch {}
+      } catch (error) {
+        errors++;
+      }
     }
-    toast.success(`Enrolled ${count} students`);
+    
+    if (count > 0) {
+      toast.success(`Successfully enrolled ${count} students`);
+    }
+    if (errors > 0) {
+      toast.warning(`${errors} entries were skipped (not students or already enrolled)`);
+    }
+    if (count === 0 && errors === 0) {
+      toast.error('No valid student entries found');
+    }
+    
+    setCsvText('');
   };
 
   const openEdit = (course: CourseWithApproval) => {

@@ -35,7 +35,7 @@ export default function SearchResults() {
       try {
         setLoading(true);
         const promises: Array<Promise<any>> = [];
-        if (role === 'admin') {
+        if (role === 'admin' || role === 'super_admin') {
           promises.push(userService.getUsers(1000));
           promises.push(courseService.getAllCourses(1000));
           promises.push(eventService.getEvents(1000));
@@ -107,7 +107,7 @@ export default function SearchResults() {
 
         const results = await Promise.all(promises);
 
-        if (role === 'admin') {
+        if (role === 'admin' || role === 'super_admin') {
           const [allUsers, allCourses, allEvents, allAnns, asgs, mats] = results as [FirestoreUser[], FirestoreCourse[], FirestoreEvent[], FirestoreAnnouncement[], FirestoreAssignment[], FirestoreCourseMaterial[]];
           setUsers(allUsers.filter(u => 
             (u.displayName || '').toLowerCase().includes(normalizedQuery) ||

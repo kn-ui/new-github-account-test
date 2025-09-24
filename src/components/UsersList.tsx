@@ -1,27 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Users,
-  GraduationCap,
-  BookOpen,
-  Shield,
-  Eye,
-  Search
-} from 'lucide-react';
-import { userService } from '@/lib/firestore';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  Users,
+  Search,
+  Filter,
+  UserCheck,
+  UserX,
+  Shield,
+  GraduationCap,
+  BookOpen,
+  Crown
+} from 'lucide-react';
+import { userService } from '@/lib/firestore';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface User {
@@ -30,7 +26,7 @@ interface User {
   email: string;
   role: string;
   isActive: boolean;
-  createdAt: any; // Timestamp from Firestore
+  createdAt: any;
 }
 
 interface UsersListProps {
@@ -43,27 +39,22 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin'
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterRole === 'all' || user.role === filterRole)
-    );
-    setFilteredUsers(filtered);
-  }, [searchTerm, users, filterRole]);
+    filterUsers();
+  }, [users, searchTerm, filterRole, filterStatus]);
 
   const fetchUsers = async () => {
     try {
-      const fetchedUsers = await userService.getUsers();
-      setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers);
+      setLoading(true);
+      const usersData = await userService.getUsers(1000);
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -71,106 +62,247 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
     }
   };
 
+  const filterUsers = () => {
+    let filtered = users.filter(user => {
+      const matchesSearch = user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === 'all' || user.role === filterRole;
+      const matchesStatus = filterStatus === 'all' || 
+                           (filterStatus === 'active' && user.isActive) ||
+                           (filterStatus === 'inactive' && !user.isActive);
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+
+    setFilteredUsers(filtered);
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'super_admin': return <Crown className="h-4 w-4 text-purple-600" />;
+      case 'admin': return <Shield className="h-4 w-4 text-red-600" />;
+      case 'teacher': return <BookOpen className="h-4 w-4 text-blue-600" />;
+      case 'student': return <GraduationCap className="h-4 w-4 text-green-600" />;
+      default: return <Users className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'super_admin': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
+      case 'teacher': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'student': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (isActive: boolean) => {
+    return isActive 
+      ? 'bg-green-100 text-green-800 border-green-200'
+      : 'bg-red-100 text-red-800 border-red-200';
+  };
+
+  const getInitials = (name: string) => {
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            <Users className="h-6 w-6 text-blue-600" />
+            Loading Users...
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-        <CardTitle className="flex items-center gap-3 text-gray-900">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Users className="h-6 w-6 text-gray-600" />
-          </div>
-          {t('users.all')} ({filteredUsers.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="p-4">
-          <div className="flex items-center space-x-8">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={t('users.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+    <div className="w-full space-y-6">
+      {/* Header Card */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-blue-900">
+            <div className="p-2 bg-blue-100 rounded-xl">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('users.filterByRole')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('users.roles.all')}</SelectItem>
-                <SelectItem value="student">{t('users.roles.student')}</SelectItem>
-                <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
-              </SelectContent>
-            </Select>
+            {t('users.all')} ({filteredUsers.length})
+          </CardTitle>
+        </CardHeader>
+      </Card>
+
+      {/* Filters Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Search Users</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Role Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Filter by Role</label>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Filter by Status</label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <div className="min-h-[60vh] max-h-[80vh] overflow-auto">
-        <Table>
-          <TableHeader className="sticky top-0 bg-white z-10">
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
-              <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
-              <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
-              <TableHead className="font-semibold text-gray-900">{t('users.table.created')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10 border-2 border-gray-200">
-                      <AvatarImage src="" alt={user.displayName} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold">
-                        {user.displayName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-semibold text-gray-900">{user.displayName}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+        </CardContent>
+      </Card>
+
+      {/* Users Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredUsers.map((user) => (
+          <Card key={user.id} className="hover:shadow-lg transition-all duration-300 border-gray-200 hover:border-blue-300">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <Avatar className="h-12 w-12 border-2 border-gray-200">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                    {getInitials(user.displayName)}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* User Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {user.displayName || 'Unknown User'}
+                      </h3>
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
-                </TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
-                    className="flex items-center gap-1"
-                  >
-                    {user.role === 'admin' && <Shield className="h-3 w-3" />}
-                    {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
-                    {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
-                    {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
-                    {t(`users.roles.${user.role}`)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={user.isActive ? 'default' : 'secondary'}
-                    className={user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}
-                  >
-                    {user.isActive ? t('users.status.active') : t('users.status.inactive')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">
-                  {user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+
+                  {/* Badges */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <Badge className={`flex items-center gap-1 ${getRoleColor(user.role)}`}>
+                      {getRoleIcon(user.role)}
+                      <span className="capitalize text-xs font-medium">
+                        {user.role?.replace('_', ' ')}
+                      </span>
+                    </Badge>
+                    
+                    <Badge className={`flex items-center gap-1 ${getStatusColor(user.isActive)}`}>
+                      {user.isActive ? (
+                        <UserCheck className="h-3 w-3" />
+                      ) : (
+                        <UserX className="h-3 w-3" />
+                      )}
+                      <span className="text-xs font-medium">
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </Badge>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="mt-3 text-xs text-gray-500">
+                    Joined: {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredUsers.length === 0 && !loading && (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+              <p className="text-gray-600">
+                Try adjusting your search or filter criteria.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Footer */}
+      <Card className="bg-gray-50">
+        <CardContent className="py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-purple-600">
+                {users.filter(u => u.role === 'super_admin').length}
+              </div>
+              <div className="text-sm text-gray-600">Super Admins</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">
+                {users.filter(u => u.role === 'admin').length}
+              </div>
+              <div className="text-sm text-gray-600">Admins</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">
+                {users.filter(u => u.role === 'teacher').length}
+              </div>
+              <div className="text-sm text-gray-600">Teachers</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">
+                {users.filter(u => u.role === 'student').length}
+              </div>
+              <div className="text-sm text-gray-600">Students</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

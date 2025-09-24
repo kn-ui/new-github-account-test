@@ -151,20 +151,6 @@ export interface FirestoreCertificate {
   details?: Record<string, any>;
 }
 
-export interface FirestorePasswordResetRequest {
-  id: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-  userRole: string;
-  requestedAt: Timestamp;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
-  requestedBy: string; // userId of the person making the request
-  handledBy?: string; // adminId who handled the request
-  handledAt?: Timestamp;
-  reason?: string;
-  adminNotes?: string;
-}
 
 export interface FirestoreAssignmentEditRequest {
   id: string;
@@ -499,6 +485,11 @@ export const enrollmentService = {
       completedLessons,
       lastAccessedAt: Timestamp.now(),
     });
+  },
+
+  async deleteEnrollment(enrollmentId: string): Promise<void> {
+    const docRef = doc(db, 'enrollments', enrollmentId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -1321,50 +1312,6 @@ export const analyticsService = {
   },
 };
 
-// Password Reset Request Service
-export const passwordResetService = {
-  async createPasswordResetRequest(data: Omit<FirestorePasswordResetRequest, 'id' | 'requestedAt' | 'status'>) {
-    const docRef = await addDoc(collection(db, 'passwordResetRequests'), {
-      ...data,
-      requestedAt: Timestamp.now(),
-      status: 'pending'
-    });
-    return docRef.id;
-  },
-
-  async getPasswordResetRequests(limitCount = 50): Promise<FirestorePasswordResetRequest[]> {
-    const q = query(
-      collection(db, 'passwordResetRequests'),
-      orderBy('requestedAt', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestorePasswordResetRequest));
-  },
-
-  async getPendingPasswordResetRequests(): Promise<FirestorePasswordResetRequest[]> {
-    const q = query(
-      collection(db, 'passwordResetRequests'),
-      where('status', '==', 'pending'),
-      orderBy('requestedAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestorePasswordResetRequest));
-  },
-
-  async updatePasswordResetRequest(requestId: string, updates: Partial<FirestorePasswordResetRequest>) {
-    const docRef = doc(db, 'passwordResetRequests', requestId);
-    await updateDoc(docRef, {
-      ...updates,
-      handledAt: Timestamp.now()
-    });
-  },
-
-  async deletePasswordResetRequest(requestId: string) {
-    const docRef = doc(db, 'passwordResetRequests', requestId);
-    await deleteDoc(docRef);
-  }
-};
 
 // Assignment Edit Request Service
 export const assignmentEditRequestService = {

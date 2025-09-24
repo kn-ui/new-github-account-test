@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 import LoginHeroAside from '@/components/LoginHeroAside';
-import PasswordResetRequest from '@/components/PasswordResetRequest';
 
 import logo from '@/assets/logo.jpg';
 
@@ -15,7 +14,6 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -134,13 +132,9 @@ const Login = () => {
                   {t('auth.rememberMe') || 'Remember me'}
                 </label>
               </div>
-              <button 
-                type="button"
-                onClick={() => setShowPasswordResetDialog(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-              >
+              <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
                 {t('auth.forgotPassword') || 'Forgot password?'}
-              </button>
+              </a>
             </div>
 
             {/* Submit Button */}
@@ -165,12 +159,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
-      {/* Password Reset Request Dialog */}
-      <PasswordResetRequest 
-        open={showPasswordResetDialog} 
-        onOpenChange={setShowPasswordResetDialog} 
-      />
     </div>
   );
 };

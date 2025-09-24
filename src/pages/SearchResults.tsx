@@ -69,11 +69,23 @@ export default function SearchResults() {
             const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
             const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
             const enrolledCourses = await Promise.all(enrolledCourseIds.map(id => courseService.getCourseById(id)));
-            setCourses(enrolledCourses.filter(Boolean));
+            
+            // Filter courses by search query
+            const filteredCourses = enrolledCourses.filter(Boolean).filter(c => 
+              (c.title || '').toLowerCase().includes(normalizedQuery) ||
+              (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
+              (c.category || '').toLowerCase().includes(normalizedQuery) ||
+              (c.description || '').toLowerCase().includes(normalizedQuery)
+            );
+            setCourses(filteredCourses);
             
             // Get announcements for enrolled courses only
             const studentAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledCourseIds, 100);
-            setAnns(studentAnns);
+            const filteredAnns = studentAnns.filter(a => 
+              (a.title || '').toLowerCase().includes(normalizedQuery) || 
+              (a.body || '').toLowerCase().includes(normalizedQuery)
+            );
+            setAnns(filteredAnns);
             
             // Get assignments from enrolled courses only
             const studentAssignments = [];
@@ -85,7 +97,11 @@ export default function SearchResults() {
                 console.error(`Error loading assignments for course ${courseId}:`, error);
               }
             }
-            setAssignments(studentAssignments);
+            const filteredAssignments = studentAssignments.filter(a => 
+              (a.title || '').toLowerCase().includes(normalizedQuery) || 
+              (a.description || '').toLowerCase().includes(normalizedQuery)
+            );
+            setAssignments(filteredAssignments);
             
             // Get materials from enrolled courses only
             const studentMaterials = [];
@@ -97,10 +113,27 @@ export default function SearchResults() {
                 console.error(`Error loading materials for course ${courseId}:`, error);
               }
             }
-            setMaterials(studentMaterials);
+            const filteredMaterials = studentMaterials.filter(m => 
+              (m.title || '').toLowerCase().includes(normalizedQuery) || 
+              (m.description || '').toLowerCase().includes(normalizedQuery)
+            );
+            setMaterials(filteredMaterials);
+            
+            // Get public events (students can see events)
+            try {
+              const allEvents = await eventService.getEvents(100);
+              const filteredEvents = allEvents.filter(e => 
+                (e.title || '').toLowerCase().includes(normalizedQuery) ||
+                (e.description || '').toLowerCase().includes(normalizedQuery) ||
+                (e.type || '').toLowerCase().includes(normalizedQuery)
+              );
+              setEvents(filteredEvents);
+            } catch (error) {
+              console.error('Error loading events for student:', error);
+              setEvents([]);
+            }
           }
-          // Students should not see all events or all users
-          setEvents([]);
+          // Students should not see all users
           setUsers([]);
           return; // Skip the Promise.all below
         }

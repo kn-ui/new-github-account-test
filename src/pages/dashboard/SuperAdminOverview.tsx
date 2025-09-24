@@ -72,76 +72,70 @@ const SuperAdminOverview = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {t('admin.systemStats.totalUsers')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
-              <div className="text-blue-100 text-sm flex items-center gap-1">
-                <Activity className="h-4 w-4" />
-                {t('admin.analytics.realtime')}
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.systemStats.totalUsers')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                {t('admin.systemStats.activeCourses')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.activeCourses}</div>
-              <div className="text-green-100 text-sm flex items-center gap-1">
-                <Target className="h-4 w-4" />
-                Published courses
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.systemStats.activeCourses')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeCourses}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                {t('admin.systemStats.systemHealth')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.systemHealth}%</div>
-              <div className="text-purple-100 text-sm flex items-center gap-1">
-                <Activity className="h-4 w-4" />
-                All systems operational
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.systemStats.systemHealth')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.systemHealth}%</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                {t('superadmin.completionRate')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.completionRate}%</div>
-              <div className="text-orange-100 text-sm flex items-center gap-1">
-                <TrendingUp className="h-4 w-4" />
-                {t('superadmin.completionRate')}
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('superadmin.completionRate')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Role Distribution Chart */}
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
-            <CardTitle className="flex items-center gap-3 text-blue-900">
-              <Users className="h-6 w-6 text-blue-600" />
+        <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-3 text-gray-900">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
               {t('superadmin.roleDistribution')}
             </CardTitle>
           </CardHeader>

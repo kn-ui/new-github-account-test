@@ -114,64 +114,66 @@ const AdminOverview = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-                <Users className="h-5 w-5" />
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Users className="h-4 w-4 text-blue-600" />
+                </div>
                 {t('admin.systemStats.totalUsers')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
-              <div className="text-blue-100 text-sm flex items-center gap-1">
+              <div className="text-3xl font-bold mb-2 text-gray-900">{stats.totalUsers}</div>
+              <div className="text-gray-600 text-sm flex items-center gap-1">
                 <Activity className="h-4 w-4" />
                 {t('admin.analytics.realtime')}
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
                 {t('admin.systemStats.activeCourses')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalCourses}</div>
-              <div className="text-green-100 text-sm flex items-center gap-1">
+              <div className="text-gray-600 text-sm flex items-center gap-1">
                 <Target className="h-4 w-4" />
                 {t('admin.quickActions.createCourse')}
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Zap className="h-5 w-5" />
                 {t('admin.systemStats.systemHealth')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">98%</div>
-              <div className="text-purple-100 text-sm flex items-center gap-1">
+              <div className="text-gray-600 text-sm flex items-center gap-1">
                 <Activity className="h-4 w-4" />
                 {t('admin.analytics.placeholder')}
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 {t('admin.systemStats.totalEvents')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalEvents}</div>
-              <div className="text-orange-100 text-sm flex items-center gap-1">
+              <div className="text-gray-600 text-sm flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 {t('admin.systemStats.totalEvents')}
               </div>

@@ -409,44 +409,44 @@ export default function CourseManager() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
                 Total Courses
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{totalCourses}</div>
-              <div className="text-blue-100 text-sm">All courses</div>
+              <div className="text-gray-600 text-sm">All courses</div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Target className="h-5 w-5" />
                 Active Courses
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{activeCourses}</div>
-              <div className="text-green-100 text-sm">Published & active</div>
+              <div className="text-gray-600 text-sm">Published & active</div>
             </CardContent>
           </Card>
           
 
                     
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Total Students
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{totalStudents}</div>
-              <div className="text-purple-100 text-sm">Enrolled students</div>
+              <div className="text-gray-600 text-sm">Enrolled students</div>
             </CardContent>
           </Card>
         </div>

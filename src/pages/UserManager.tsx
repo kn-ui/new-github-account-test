@@ -387,55 +387,59 @@ const UserManager = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {t('users.stats.totalUsers')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{totalUsers}</div>
-              <div className="text-blue-100 text-sm">All registered users</div>
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('users.stats.totalUsers')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
-                {t('users.stats.activeUsers')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{activeUsers}</div>
-              <div className="text-green-100 text-sm">Currently active</div>
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <UserCheck className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('users.stats.activeUsers')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{activeUsers}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                {t('users.stats.teachers')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{totalTeachers}</div>
-              <div className="text-purple-100 text-sm">Teaching staff</div>
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('users.stats.teachers')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalTeachers}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                {t('users.stats.students')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{totalStudents}</div>
-              <div className="text-orange-100 text-sm">Enrolled students</div>
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <GraduationCap className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('users.stats.students')}</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalStudents}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

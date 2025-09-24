@@ -121,63 +121,59 @@ export default function TeacherOverview() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-100 flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              {t('teacher.stats.activeCourses')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.activeCourses || 0}</div>
-            <p className="text-xs text-blue-100">
-              {myCourses.length} {t('nav.courses').toLowerCase()}
-            </p>
+        <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('teacher.stats.activeCourses')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.activeCourses || 0}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-100 flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {t('teacher.stats.totalStudents')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.totalStudents || 0}</div>
-            <p className="text-xs text-green-100">
-              {t('teacher.stats.activeStudents')}
-            </p>
+        <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('teacher.stats.totalStudents')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.totalStudents || 0}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-orange-100 flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              {t('teacher.stats.pendingReviews')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.pendingReviews || 0}</div>
-            <p className="text-xs text-orange-100">
-              {t('teacher.recentSubmissions.title')}
-            </p>
+        <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Clock className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('teacher.stats.pendingReviews')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.pendingReviews || 0}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              {t('teacher.stats.avgRating')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-2">{stats?.avgRating || 4.8}</div>
-            <p className="text-xs text-purple-100">
-              {t('teacher.myCourses.rating')}
-            </p>
+        <Card className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('teacher.stats.avgRating')}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats?.avgRating || 4.8}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

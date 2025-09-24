@@ -270,7 +270,13 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               <form className="relative max-w-md w-full" onSubmit={handleSearchSubmit}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder={t('search.placeholder')}
+                  placeholder={
+                    userRole === 'student' 
+                      ? 'Search courses, events...' 
+                      : userRole === 'teacher' 
+                        ? 'Search courses, students...' 
+                        : 'Search users, courses, events...'
+                  }
                   className="pl-10 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

@@ -12,8 +12,6 @@ import {
 import { analyticsService } from '@/lib/firestore';
 import { 
   RoleDistributionChart, 
-  CourseCompletionChart, 
-  UserActivityChart, 
   ChartData 
 } from '@/components/ui/AnalyticsChart';
 import DashboardHero from '@/components/DashboardHero';
@@ -33,8 +31,6 @@ const SuperAdminOverview = () => {
   });
   const [loading, setLoading] = useState(true);
   const [roleDistributionData, setRoleDistributionData] = useState<ChartData[]>([]);
-  const [courseCompletionData, setCourseCompletionData] = useState<ChartData[]>([]);
-  const [userActivityData, setUserActivityData] = useState<ChartData[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,16 +42,6 @@ const SuperAdminOverview = () => {
         setRoleDistributionData([
           { name: 'Students', value: adminStats.totalStudents, fill: '#8884d8' },
           { name: 'Teachers', value: adminStats.totalTeachers, fill: '#82ca9d' },
-        ]);
-
-        setCourseCompletionData([
-          { name: 'Completed', value: adminStats.completionRate, fill: '#82ca9d' },
-          { name: 'In Progress', value: 100 - adminStats.completionRate, fill: '#ffc658' },
-        ]);
-
-        setUserActivityData([
-          { name: 'Active Courses', value: adminStats.activeCourses, fill: '#8884d8' },
-          { name: 'Pending Courses', value: adminStats.pendingCourses, fill: '#ffc658' },
         ]);
 
       } catch (error) {
@@ -151,41 +137,16 @@ const SuperAdminOverview = () => {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
-              <CardTitle className="flex items-center gap-3 text-blue-900">
-                <Users className="h-6 w-6 text-blue-600" />
-                {t('superadmin.roleDistribution')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <RoleDistributionChart data={roleDistributionData} />
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b">
-              <CardTitle className="flex items-center gap-3 text-green-900">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-                {t('superadmin.courseCompletion')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <CourseCompletionChart data={courseCompletionData} />
-            </CardContent>
-          </Card>
-        </div>
-
+        {/* Role Distribution Chart */}
         <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
-            <CardTitle className="flex items-center gap-3 text-purple-900">
-              <Activity className="h-6 w-6 text-purple-600" />
-              {t('superadmin.userActivity')}
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+            <CardTitle className="flex items-center gap-3 text-blue-900">
+              <Users className="h-6 w-6 text-blue-600" />
+              {t('superadmin.roleDistribution')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <UserActivityChart data={userActivityData} />
+            <RoleDistributionChart data={roleDistributionData} />
           </CardContent>
         </Card>
       </div>

@@ -93,7 +93,7 @@ const CourseDetail = () => {
     } catch (error) {
       console.error('Error loading course:', error);
       toast.error('Failed to load course details');
-      navigate('/courses');
+        navigate('/dashboard/student-courses');
     } finally {
       setLoading(false);
     }
@@ -191,7 +191,7 @@ const CourseDetail = () => {
             <p className="text-muted-foreground mb-6">
               The course you're looking for doesn't exist or has been removed.
             </p>
-            <Link to={isDashboard ? "/dashboard/student-courses" : "/courses"}>
+            <Link to="/dashboard/student-courses">
               <Button>
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 {isDashboard ? "Back to My Courses" : "Back to Courses"}
@@ -213,7 +213,7 @@ const CourseDetail = () => {
         <div className={isDashboard ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
           {/* Header */}
           <div className="flex items-center gap-4">
-            <Link to={isDashboard ? "/dashboard/student-courses" : "/courses"} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ChevronLeft size={20} className="text-gray-600" />
             </Link>
             <div>

@@ -135,60 +135,80 @@ export default function SearchResults() {
           }
           
         } else if (role === 'student') {
-          // 3. Student: taking courses, own assignments, own submissions, events
+          // 3. Student: taking courses, own assignments, events (optimized for performance)
           if (currentUser?.uid) {
-            const [enrollments, studentSubmissions, allEvents] = await Promise.all([
-              enrollmentService.getEnrollmentsByStudent(currentUser.uid),
-              submissionService.getSubmissionsByStudent(currentUser.uid),
-              eventService.getEvents(1000)
-            ]);
-            
-            // Get student's enrolled courses (taking courses)
-            const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
-            const enrolledCourses = await Promise.all(
-              enrolledCourseIds.map(async (id) => {
-                try {
-                  return await courseService.getCourseById(id);
-                } catch (error) {
-                  return null;
-                }
-              })
-            );
-            
-            setCourses(enrolledCourses.filter(Boolean).filter(c => 
-              (c.title || '').toLowerCase().includes(normalizedQuery) ||
-              (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
-              (c.category || '').toLowerCase().includes(normalizedQuery) ||
-              (c.description || '').toLowerCase().includes(normalizedQuery)
-            ));
-            
-            // Get student's own assignments from enrolled courses
-            const studentAssignments = [];
-            for (const courseId of enrolledCourseIds) {
-              try {
-                const assignments = await assignmentService.getAssignmentsByCourse(courseId);
-                studentAssignments.push(...assignments);
-              } catch (error) {
-                console.error(`Error loading assignments for course ${courseId}:`, error);
+            try {
+              // Get basic data first
+              const [enrollments, allEvents] = await Promise.all([
+                enrollmentService.getEnrollmentsByStudent(currentUser.uid),
+                eventService.getEvents(100) // Reduced from 1000 to 100 for performance
+              ]);
+              
+              // Get enrolled course IDs
+              const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+              
+              if (enrolledCourseIds.length > 0) {
+                // Parallel fetch for courses and assignments
+                const [enrolledCoursesResults, assignmentResults] = await Promise.all([
+                  // Get all enrolled courses in parallel
+                  Promise.all(
+                    enrolledCourseIds.map(async (id) => {
+                      try {
+                        return await courseService.getCourseById(id);
+                      } catch (error) {
+                        return null;
+                      }
+                    })
+                  ),
+                  // Get all assignments in parallel
+                  Promise.all(
+                    enrolledCourseIds.map(async (courseId) => {
+                      try {
+                        return await assignmentService.getAssignmentsByCourse(courseId);
+                      } catch (error) {
+                        return [];
+                      }
+                    })
+                  )
+                ]);
+                
+                // Process courses
+                const validCourses = enrolledCoursesResults.filter(Boolean);
+                setCourses(validCourses.filter(c => 
+                  (c.title || '').toLowerCase().includes(normalizedQuery) ||
+                  (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
+                  (c.category || '').toLowerCase().includes(normalizedQuery) ||
+                  (c.description || '').toLowerCase().includes(normalizedQuery)
+                ));
+                
+                // Process assignments (flatten the array)
+                const allStudentAssignments = assignmentResults.flat();
+                setAssignments(allStudentAssignments.filter(a => 
+                  (a.title || '').toLowerCase().includes(normalizedQuery) ||
+                  (a.description || '').toLowerCase().includes(normalizedQuery)
+                ));
+              } else {
+                setCourses([]);
+                setAssignments([]);
               }
+              
+              // Filter events
+              setEvents(allEvents.filter(e => 
+                (e.title || '').toLowerCase().includes(normalizedQuery) ||
+                (e.description || '').toLowerCase().includes(normalizedQuery) ||
+                (e.type || '').toLowerCase().includes(normalizedQuery)
+              ));
+              
+              // Clear data students shouldn't see
+              setUsers([]);
+              setAnns([]);
+              setMaterials([]);
+              
+            } catch (error) {
+              console.error('Error in student search:', error);
+              // Clear all data on error
+              setUsers([]); setCourses([]); setEvents([]); setAnns([]); setAssignments([]); setMaterials([]);
             }
-            
-            setAssignments(studentAssignments.filter(a => 
-              (a.title || '').toLowerCase().includes(normalizedQuery) ||
-              (a.description || '').toLowerCase().includes(normalizedQuery)
-            ));
-            
-            // Filter events
-            setEvents(allEvents.filter(e => 
-              (e.title || '').toLowerCase().includes(normalizedQuery) ||
-              (e.description || '').toLowerCase().includes(normalizedQuery) ||
-              (e.type || '').toLowerCase().includes(normalizedQuery)
-            ));
-            
-            // Clear data students shouldn't see
-            setUsers([]);
-            setAnns([]);
-            setMaterials([]);
           } else {
             // No current user - clear all data
             setUsers([]); setCourses([]); setEvents([]); setAnns([]); setAssignments([]); setMaterials([]);
@@ -283,7 +303,7 @@ export default function SearchResults() {
                           ) : role === 'super_admin' ? (
                             <Link to="/dashboard/courses">View All Courses</Link>
                           ) : role === 'teacher' ? (
-                            <Link to={`/dashboard/teacher-courses/${course.id}`}>View Course</Link>
+                            <Link to={`/dashboard/teacher-course-detail/${course.id}`}>View Course</Link>
                           ) : (
                             <Link to={`/course/${course.id}`}>View Course</Link>
                           )}
@@ -365,7 +385,7 @@ export default function SearchResults() {
                           {role === 'student' ? (
                             <Link to={`/dashboard/student-assignments?assignmentId=${assignment.id}`}>View Details</Link>
                           ) : (
-                            <Link to={`/dashboard/teacher-assignments`}>View Assignment</Link>
+                            <Link to="/dashboard/teacher-assignments">View Assignments</Link>
                           )}
                         </Button>
                       </div>

@@ -303,7 +303,7 @@ export default function SearchResults() {
                           ) : role === 'super_admin' ? (
                             <Link to="/dashboard/courses">View All Courses</Link>
                           ) : role === 'teacher' ? (
-                            <Link to={`/dashboard/teacher-course-detail/${course.id}`}>View Course</Link>
+                            <Link to={`/dashboard/my-courses/${course.id}`}>View Course</Link>
                           ) : (
                             <Link to={`/course/${course.id}`}>View Course</Link>
                           )}
@@ -385,7 +385,7 @@ export default function SearchResults() {
                           {role === 'student' ? (
                             <Link to={`/dashboard/student-assignments?assignmentId=${assignment.id}`}>View Details</Link>
                           ) : (
-                            <Link to="/dashboard/teacher-assignments">View Assignments</Link>
+                            <Link to="/dashboard/assignments">View Assignments</Link>
                           )}
                         </Button>
                       </div>
@@ -421,7 +421,7 @@ export default function SearchResults() {
                           <div className="text-sm text-gray-600">{material.description}</div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                          <Link to="/dashboard/teacher-course-materials">View Materials</Link>
+                          <Link to="/dashboard/materials">View Materials</Link>
                         </Button>
                       </div>
                     ))}

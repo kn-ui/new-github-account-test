@@ -338,7 +338,7 @@ export default function StudentProgress() {
                       
                       <div className="mt-4">
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/courses/${course.courseId}`}>
+                          <Link to={`/course/${course.courseId}`}>
                             Continue Learning
                           </Link>
                         </Button>

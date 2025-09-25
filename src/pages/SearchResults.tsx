@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, FirestoreUser, FirestoreCourse, FirestoreEvent, FirestoreCourseMaterial, FirestoreAnnouncement, FirestoreAssignment } from '@/lib/firestore';
+import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, submissionService, FirestoreUser, FirestoreCourse, FirestoreEvent, FirestoreCourseMaterial, FirestoreAnnouncement, FirestoreAssignment } from '@/lib/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, Calendar, FileText, Bell, FolderOpen } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 
-type Role = 'admin' | 'teacher' | 'student';
+type Role = 'admin' | 'teacher' | 'student' | 'super_admin';
 
 export default function SearchResults() {
   const { t } = useI18n();
@@ -22,72 +22,147 @@ export default function SearchResults() {
   const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
   const [anns, setAnns] = useState<FirestoreAnnouncement[]>([]);
   const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
-  const [students, setStudents] = useState<FirestoreUser[]>([]);
 
   const normalizedQuery = useMemo(() => initialQ.trim().toLowerCase(), [initialQ]);
 
   useEffect(() => {
-    const run = async () => {
+    const searchData = async () => {
       if (!normalizedQuery) {
-        setUsers([]); setCourses([]); setEvents([]);
+        setUsers([]); setCourses([]); setEvents([]); setAnns([]); setAssignments([]); setMaterials([]);
         return;
       }
+      
       try {
         setLoading(true);
-        const promises: Array<Promise<any>> = [];
+        
         if (role === 'admin' || role === 'super_admin') {
-          promises.push(userService.getUsers(1000));
-          promises.push(courseService.getAllCourses(1000));
-          promises.push(eventService.getEvents(1000));
-          promises.push(announcementService.getAllAnnouncements(1000));
-          promises.push(assignmentService.getAssignmentsByTeacher(currentUser?.uid || 'none'));
-          promises.push(courseMaterialService.getMaterialsByTeacher(currentUser?.uid || 'none'));
+          // 1. SuperAdmin and Admin: search all users, all courses, all events
+          const [allUsers, allCourses, allEvents] = await Promise.all([
+            userService.getUsers(1000),
+            courseService.getAllCourses(1000),
+            eventService.getEvents(1000)
+          ]);
+          
+          // Filter by search query
+          setUsers(allUsers.filter(u => 
+            (u.displayName || '').toLowerCase().includes(normalizedQuery) ||
+            (u.email || '').toLowerCase().includes(normalizedQuery) ||
+            (u.role || '').toLowerCase().includes(normalizedQuery)
+          ));
+          
+          setCourses(allCourses.filter(c => 
+            (c.title || '').toLowerCase().includes(normalizedQuery) ||
+            (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
+            (c.category || '').toLowerCase().includes(normalizedQuery) ||
+            (c.description || '').toLowerCase().includes(normalizedQuery)
+          ));
+          
+          setEvents(allEvents.filter(e => 
+            (e.title || '').toLowerCase().includes(normalizedQuery) ||
+            (e.description || '').toLowerCase().includes(normalizedQuery) ||
+            (e.type || '').toLowerCase().includes(normalizedQuery)
+          ));
+          
+          // Clear other data for admins
+          setAnns([]);
+          setAssignments([]);
+          setMaterials([]);
+          
         } else if (role === 'teacher') {
-          // Teachers can search their own content and their students
+          // 2. Teacher: own courses, own students, own assignments, own submissions, events, own course materials
           if (currentUser?.uid) {
-            promises.push(courseService.getCoursesByInstructor(currentUser.uid));
-            promises.push(assignmentService.getAssignmentsByTeacher(currentUser.uid));
-            promises.push(courseMaterialService.getMaterialsByTeacher(currentUser.uid));
-            promises.push(announcementService.getAnnouncementsByTeacher(currentUser.uid));
+            const [teacherCourses, teacherAssignments, teacherMaterials, allEvents] = await Promise.all([
+              courseService.getCoursesByInstructor(currentUser.uid),
+              assignmentService.getAssignmentsByTeacher(currentUser.uid),
+              courseMaterialService.getMaterialsByTeacher(currentUser.uid),
+              eventService.getEvents(1000)
+            ]);
             
-            // Get students enrolled in teacher's courses only
-            const teacherCourses = await courseService.getCoursesByInstructor(currentUser.uid);
-            const allEnrollments = await enrollmentService.getAllEnrollments();
-            const enrolledStudentIds = allEnrollments
-              .filter((enrollment: any) => teacherCourses.some(course => course.id === enrollment.courseId))
-              .map((enrollment: any) => enrollment.studentId);
-            const teacherStudents = await Promise.all(enrolledStudentIds.map(id => userService.getUserById(id)));
-            setStudents(teacherStudents.filter(Boolean));
-          }
-          // Teachers should not see all events or all users
-          setEvents([]);
-          setUsers([]);
-          return; // Skip the Promise.all below
-        } else { // student - only see their own enrolled content
-          if (currentUser?.uid) {
-            // Get student's enrolled courses only
-            const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
-            const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
-            const enrolledCourses = await Promise.all(enrolledCourseIds.map(id => courseService.getCourseById(id)));
-            
-            // Filter courses by search query
-            const filteredCourses = enrolledCourses.filter(Boolean).filter(c => 
+            // Filter teacher's own courses
+            setCourses(teacherCourses.filter(c => 
               (c.title || '').toLowerCase().includes(normalizedQuery) ||
               (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
               (c.category || '').toLowerCase().includes(normalizedQuery) ||
               (c.description || '').toLowerCase().includes(normalizedQuery)
-            );
-            setCourses(filteredCourses);
+            ));
             
-            // Get announcements for enrolled courses only
-            const studentAnns = await announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledCourseIds, 100);
-            const filteredAnns = studentAnns.filter(a => 
-              (a.title || '').toLowerCase().includes(normalizedQuery) || 
-              (a.body || '').toLowerCase().includes(normalizedQuery)
-            );
-            setAnns(filteredAnns);
+            // Filter teacher's own assignments
+            setAssignments(teacherAssignments.filter(a => 
+              (a.title || '').toLowerCase().includes(normalizedQuery) ||
+              (a.description || '').toLowerCase().includes(normalizedQuery)
+            ));
             
-            // Get assignments from enrolled courses only
+            // Filter teacher's own course materials
+            setMaterials(teacherMaterials.filter(m => 
+              (m.title || '').toLowerCase().includes(normalizedQuery) ||
+              (m.description || '').toLowerCase().includes(normalizedQuery)
+            ));
+            
+            // Get students enrolled in teacher's courses only
+            const allEnrollments = await enrollmentService.getAllEnrollments();
+            const enrolledStudentIds = allEnrollments
+              .filter((enrollment: any) => teacherCourses.some(course => course.id === enrollment.courseId))
+              .map((enrollment: any) => enrollment.studentId);
+            
+            const teacherStudents = await Promise.all(
+              enrolledStudentIds.map(async (id) => {
+                try {
+                  return await userService.getUserById(id);
+                } catch (error) {
+                  return null;
+                }
+              })
+            );
+            
+            // Filter teacher's own students
+            setUsers(teacherStudents.filter(Boolean).filter(u => 
+              (u.displayName || '').toLowerCase().includes(normalizedQuery) ||
+              (u.email || '').toLowerCase().includes(normalizedQuery)
+            ));
+            
+            // Filter events
+            setEvents(allEvents.filter(e => 
+              (e.title || '').toLowerCase().includes(normalizedQuery) ||
+              (e.description || '').toLowerCase().includes(normalizedQuery) ||
+              (e.type || '').toLowerCase().includes(normalizedQuery)
+            ));
+            
+            // Clear announcements for teachers
+            setAnns([]);
+          } else {
+            // No current user - clear all data
+            setUsers([]); setCourses([]); setEvents([]); setAnns([]); setAssignments([]); setMaterials([]);
+          }
+          
+        } else if (role === 'student') {
+          // 3. Student: taking courses, own assignments, own submissions, events
+          if (currentUser?.uid) {
+            const [enrollments, studentSubmissions, allEvents] = await Promise.all([
+              enrollmentService.getEnrollmentsByStudent(currentUser.uid),
+              submissionService.getSubmissionsByStudent(currentUser.uid),
+              eventService.getEvents(1000)
+            ]);
+            
+            // Get student's enrolled courses (taking courses)
+            const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+            const enrolledCourses = await Promise.all(
+              enrolledCourseIds.map(async (id) => {
+                try {
+                  return await courseService.getCourseById(id);
+                } catch (error) {
+                  return null;
+                }
+              })
+            );
+            
+            setCourses(enrolledCourses.filter(Boolean).filter(c => 
+              (c.title || '').toLowerCase().includes(normalizedQuery) ||
+              (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
+              (c.category || '').toLowerCase().includes(normalizedQuery) ||
+              (c.description || '').toLowerCase().includes(normalizedQuery)
+            ));
+            
+            // Get student's own assignments from enrolled courses
             const studentAssignments = [];
             for (const courseId of enrolledCourseIds) {
               try {
@@ -97,251 +172,255 @@ export default function SearchResults() {
                 console.error(`Error loading assignments for course ${courseId}:`, error);
               }
             }
-            const filteredAssignments = studentAssignments.filter(a => 
-              (a.title || '').toLowerCase().includes(normalizedQuery) || 
+            
+            setAssignments(studentAssignments.filter(a => 
+              (a.title || '').toLowerCase().includes(normalizedQuery) ||
               (a.description || '').toLowerCase().includes(normalizedQuery)
-            );
-            setAssignments(filteredAssignments);
+            ));
             
-            // Get materials from enrolled courses only
-            const studentMaterials = [];
-            for (const courseId of enrolledCourseIds) {
-              try {
-                const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
-                studentMaterials.push(...materials);
-              } catch (error) {
-                console.error(`Error loading materials for course ${courseId}:`, error);
-              }
-            }
-            const filteredMaterials = studentMaterials.filter(m => 
-              (m.title || '').toLowerCase().includes(normalizedQuery) || 
-              (m.description || '').toLowerCase().includes(normalizedQuery)
-            );
-            setMaterials(filteredMaterials);
+            // Filter events
+            setEvents(allEvents.filter(e => 
+              (e.title || '').toLowerCase().includes(normalizedQuery) ||
+              (e.description || '').toLowerCase().includes(normalizedQuery) ||
+              (e.type || '').toLowerCase().includes(normalizedQuery)
+            ));
             
-            // Get public events (students can see events)
-            try {
-              const allEvents = await eventService.getEvents(100);
-              const filteredEvents = allEvents.filter(e => 
-                (e.title || '').toLowerCase().includes(normalizedQuery) ||
-                (e.description || '').toLowerCase().includes(normalizedQuery) ||
-                (e.type || '').toLowerCase().includes(normalizedQuery)
-              );
-              setEvents(filteredEvents);
-            } catch (error) {
-              console.error('Error loading events for student:', error);
-              setEvents([]);
-            }
+            // Clear data students shouldn't see
+            setUsers([]);
+            setAnns([]);
+            setMaterials([]);
+          } else {
+            // No current user - clear all data
+            setUsers([]); setCourses([]); setEvents([]); setAnns([]); setAssignments([]); setMaterials([]);
           }
-          // Students should not see all users
-          setUsers([]);
-          return; // Skip the Promise.all below
         }
-
-        const results = await Promise.all(promises);
-
-        if (role === 'admin' || role === 'super_admin') {
-          const [allUsers, allCourses, allEvents, allAnns, asgs, mats] = results as [FirestoreUser[], FirestoreCourse[], FirestoreEvent[], FirestoreAnnouncement[], FirestoreAssignment[], FirestoreCourseMaterial[]];
-          setUsers(allUsers.filter(u => 
-            (u.displayName || '').toLowerCase().includes(normalizedQuery) ||
-            (u.email || '').toLowerCase().includes(normalizedQuery) ||
-            (u.role || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setCourses(allCourses.filter(c => 
-            (c.title || '').toLowerCase().includes(normalizedQuery) ||
-            (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
-            (c.category || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setEvents(allEvents.filter(e => 
-            (e.title || '').toLowerCase().includes(normalizedQuery) ||
-            (e.description || '').toLowerCase().includes(normalizedQuery) ||
-            (e.type || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setAnns(allAnns.filter(a => (a.title || '').toLowerCase().includes(normalizedQuery) || (a.body || '').toLowerCase().includes(normalizedQuery)));
-          setAssignments(asgs.filter(a => (a.title || '').toLowerCase().includes(normalizedQuery) || (a.description || '').toLowerCase().includes(normalizedQuery)));
-          setMaterials(mats.filter(m => (m.title || '').toLowerCase().includes(normalizedQuery) || (m.description || '').toLowerCase().includes(normalizedQuery)));
-        } else if (role === 'teacher') {
-          const [myCourses, asgs, mats, myAnns, activeCourses, allEvents] = results as [FirestoreCourse[], FirestoreAssignment[], FirestoreCourseMaterial[], FirestoreAnnouncement[], FirestoreCourse[], FirestoreEvent[]];
-          const mergedCourses: FirestoreCourse[] = Array.from(new Map([...myCourses, ...activeCourses].map(c => [c.id, c])).values());
-          setCourses(mergedCourses.filter(c => 
-            (c.title || '').toLowerCase().includes(normalizedQuery) ||
-            (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
-            (c.category || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setEvents(allEvents.filter(e => 
-            (e.title || '').toLowerCase().includes(normalizedQuery) ||
-            (e.description || '').toLowerCase().includes(normalizedQuery) ||
-            (e.type || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setUsers([]);
-          setAssignments(asgs.filter(a => (a.title || '').toLowerCase().includes(normalizedQuery) || (a.description || '').toLowerCase().includes(normalizedQuery)));
-          setMaterials(mats.filter(m => (m.title || '').toLowerCase().includes(normalizedQuery) || (m.description || '').toLowerCase().includes(normalizedQuery)));
-          setAnns(myAnns.filter(a => (a.title || '').toLowerCase().includes(normalizedQuery) || (a.body || '').toLowerCase().includes(normalizedQuery)));
-        } else { // student
-          const [activeCourses, allEvents] = results as [FirestoreCourse[], FirestoreEvent[]];
-          setCourses(activeCourses.filter(c => 
-            (c.title || '').toLowerCase().includes(normalizedQuery) ||
-            (c.instructorName || '').toLowerCase().includes(normalizedQuery) ||
-            (c.category || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setEvents(allEvents.filter(e => 
-            (e.title || '').toLowerCase().includes(normalizedQuery) ||
-            (e.description || '').toLowerCase().includes(normalizedQuery) ||
-            (e.type || '').toLowerCase().includes(normalizedQuery)
-          ));
-          setUsers([]);
-        }
+        
+      } catch (error) {
+        console.error('Search error:', error);
       } finally {
         setLoading(false);
       }
     };
-    run();
+    
+    searchData();
   }, [normalizedQuery, role, currentUser?.uid]);
 
+  const hasResults = users.length > 0 || courses.length > 0 || events.length > 0 || anns.length > 0 || assignments.length > 0 || materials.length > 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('searchResults.title')}</h1>
-          <p className="text-gray-600">{t('searchResults.showingFor', { q: initialQ })}</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {t('searchResults.title')} "{initialQ}"
+          </h1>
+          <p className="text-gray-600">
+            {loading ? 'Searching...' : hasResults ? `Found results in ${[users.length > 0 && 'users', courses.length > 0 && 'courses', events.length > 0 && 'events', assignments.length > 0 && 'assignments', materials.length > 0 && 'materials'].filter(Boolean).join(', ')}` : 'No results found'}
+          </p>
         </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Users Results (Admin/SuperAdmin/Teacher only) */}
+            {users.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    {role === 'teacher' ? 'Your Students' : 'Users'} ({users.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {users.slice(0, 5).map(user => (
+                      <div key={user.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{user.displayName}</div>
+                          <div className="text-sm text-gray-600">{user.email} • {user.role}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {users.length > 5 && (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        And {users.length - 5} more users...
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Courses Results */}
+            {courses.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    {role === 'teacher' ? 'Your Courses' : role === 'student' ? 'Your Enrolled Courses' : 'Courses'} ({courses.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {courses.slice(0, 5).map(course => (
+                      <div key={course.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{course.title}</div>
+                          <div className="text-sm text-gray-600">by {course.instructorName} • {course.category}</div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/courses/${course.id}`}>View</Link>
+                        </Button>
+                      </div>
+                    ))}
+                    {courses.length > 5 && (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        And {courses.length - 5} more courses...
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Events Results */}
+            {events.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Events ({events.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {events.slice(0, 5).map(event => (
+                      <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{event.title}</div>
+                          <div className="text-sm text-gray-600">{event.description} • {event.type}</div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/events/${event.id}`}>View</Link>
+                        </Button>
+                      </div>
+                    ))}
+                    {events.length > 5 && (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        And {events.length - 5} more events...
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Assignments Results (Teacher/Student only) */}
+            {assignments.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    {role === 'teacher' ? 'Your Assignments' : 'Your Assignments'} ({assignments.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {assignments.slice(0, 5).map(assignment => (
+                      <div key={assignment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <FileText className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{assignment.title}</div>
+                          <div className="text-sm text-gray-600">{assignment.description}</div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/assignments/${assignment.id}`}>View</Link>
+                        </Button>
+                      </div>
+                    ))}
+                    {assignments.length > 5 && (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        And {assignments.length - 5} more assignments...
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Course Materials Results (Teacher only) */}
+            {materials.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5" />
+                    Your Course Materials ({materials.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {materials.slice(0, 5).map(material => (
+                      <div key={material.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                          <FolderOpen className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{material.title}</div>
+                          <div className="text-sm text-gray-600">{material.description}</div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          View Material
+                        </Button>
+                      </div>
+                    ))}
+                    {materials.length > 5 && (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        And {materials.length - 5} more materials...
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Results */}
+            {!hasResults && !loading && (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+                    <p className="text-gray-600 mb-4">
+                      We couldn't find anything matching "{initialQ}"
+                    </p>
+                    <div className="text-sm text-gray-500">
+                      {role === 'student' && "You can search for your enrolled courses, assignments, and events."}
+                      {role === 'teacher' && "You can search for your courses, students, assignments, materials, and events."}
+                      {(role === 'admin' || role === 'super_admin') && "You can search for users, courses, and events."}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
-
-      {role === 'admin' && users.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> {t('searchResults.users')} ({users.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {users.slice(0, 10).map(u => (
-              <div key={u.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{u.displayName || 'Unnamed'}</div>
-                  <div className="text-sm text-gray-600">{u.email}</div>
-                </div>
-                <span className="text-xs px-2 py-1 rounded bg-gray-100 capitalize">{u.role}</span>
-              </div>
-            ))}
-            {users.length > 10 && (
-              <Button variant="outline" asChild>
-                <Link to="/dashboard/users">{t('searchResults.viewAllUsers')}</Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {courses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" /> {t('searchResults.courses')} ({courses.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {courses.slice(0, 10).map(c => (
-              <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{c.title}</div>
-                  <div className="text-sm text-gray-600">{c.instructorName} • {c.category}</div>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link to={`/courses/${c.id}`}>{t('searchResults.open')}</Link>
-                </Button>
-              </div>
-            ))}
-            {courses.length > 10 && (
-              <Button variant="outline" asChild>
-                <Link to="/courses">{t('searchResults.viewAllCourses')}</Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {events.length > 0 && (
-        <Card>
-      {assignments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> {t('searchResults.assignments')} ({assignments.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {assignments.slice(0, 10).map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{a.title}</div>
-                  <div className="text-sm text-gray-600">{t('searchResults.due')} {a.dueDate?.toDate ? a.dueDate.toDate().toLocaleDateString() : ''}</div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {materials.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FolderOpen className="h-5 w-5" /> {t('searchResults.materials')} ({materials.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {materials.slice(0, 10).map(m => (
-              <div key={m.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{m.title}</div>
-                  <div className="text-sm text-gray-600">{m.type}</div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {anns.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> {t('searchResults.announcements')} ({anns.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {anns.slice(0, 10).map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{a.title}</div>
-                  <div className="text-sm text-gray-600 line-clamp-1">{a.body}</div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> {t('searchResults.events')} ({events.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {events.slice(0, 10).map(e => (
-              <div key={e.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{e.title}</div>
-                  <div className="text-sm text-gray-600">{(e.type || 'event')}</div>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link to="/dashboard/events">{t('searchResults.open')}</Link>
-                </Button>
-              </div>
-            ))}
-            {events.length > 10 && (
-              <Button variant="outline" asChild>
-                <Link to="/dashboard/events">{t('searchResults.viewAllEvents')}</Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {!loading && normalizedQuery && users.length === 0 && courses.length === 0 && events.length === 0 && (
-        <div className="text-center text-gray-500 py-12">
-          <h3 className="text-lg font-medium">{t('common.noResults') || 'No results found'}</h3>
-          <p className="text-sm">{t('searchResults.showingFor', { q: initialQ })}</p>
-        </div>
-      )}
     </div>
   );
 }

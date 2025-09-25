@@ -68,6 +68,7 @@ const UserManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin' 
+  const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
@@ -90,7 +91,7 @@ const UserManager = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => {
     const filtered = users.filter(user =>
@@ -104,7 +105,9 @@ const UserManager = () => {
 
   const fetchUsers = async () => {
     try {
-      const fetchedUsers = await userService.getUsers();
+      const fetchedUsers = showArchived 
+        ? await userService.getAllUsersIncludingInactive()
+        : await userService.getUsers();
       setUsers(fetchedUsers);
       setFilteredUsers(fetchedUsers);
     } catch (error) {
@@ -447,8 +450,8 @@ const UserManager = () => {
         {/* Search and Filters */}
         <Card className="mb-6 shadow-lg">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-8">
-              <div className="relative flex-1 max-w-md"> {/* Removed max-w-md here */}
+            <div className="flex items-center space-x-4">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={t('users.searchPlaceholder')}
@@ -469,6 +472,13 @@ const UserManager = () => {
                   <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                variant={showArchived ? "default" : "outline"}
+                onClick={() => setShowArchived(!showArchived)}
+                className="whitespace-nowrap"
+              >
+                {showArchived ? "Hide Archived" : "Show Archived"}
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -60,6 +60,7 @@ export interface FirestoreEnrollment {
   completedLessons: string[];
   enrolledAt: Timestamp;
   lastAccessedAt: Timestamp;
+  isActive: boolean;
 }
 
 export interface FirestoreSubmission {
@@ -73,6 +74,7 @@ export interface FirestoreSubmission {
   feedback?: string;
   maxScore?: number;
   instructions?: string;
+  isActive: boolean;
 }
 
 // Consolidated Assignment interface
@@ -88,6 +90,7 @@ export interface FirestoreAssignment {
   attachments?: { type: 'file' | 'link'; url: string; title?: string }[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  isActive: boolean;
 }
 
 // Consolidated CourseMaterial interface (was a duplicate)
@@ -101,6 +104,7 @@ export interface FirestoreCourseMaterial {
   externalLink?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  isActive: boolean;
 }
 
 export interface FirestoreExam {
@@ -205,6 +209,7 @@ export interface FirestoreEvent {
   maxAttendees: number;
   currentAttendees: number;
   status: string;
+  isActive: boolean;
 }
 
 export interface FirestoreForumThread {
@@ -250,10 +255,11 @@ export const userService = {
     const q = limitCount
       ? query(
           collections.users(),
+          where('isActive', '==', true),
           orderBy('createdAt', 'desc'),
           limit(limitCount)
         )
-      : query(collections.users(), orderBy('createdAt', 'desc'));
+      : query(collections.users(), where('isActive', '==', true), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
@@ -322,7 +328,35 @@ export const userService = {
 
   async deleteUser(userId: string): Promise<void> {
     const docRef = doc(db, 'users', userId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async getInactiveUsers(limitCount?: number): Promise<FirestoreUser[]> {
+    const q = limitCount
+      ? query(
+          collections.users(),
+          where('isActive', '==', false),
+          orderBy('updatedAt', 'desc'),
+          limit(limitCount)
+        )
+      : query(collections.users(), where('isActive', '==', false), orderBy('updatedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
+  },
+
+  async getAllUsersIncludingInactive(limitCount?: number): Promise<FirestoreUser[]> {
+    const q = limitCount
+      ? query(
+          collections.users(),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
+        )
+      : query(collections.users(), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 };
 
@@ -342,6 +376,7 @@ export const courseService = {
   async getAllCourses(limitCount = 1000): Promise<FirestoreCourse[]> {
     const q = query(
       collections.courses(),
+      where('isActive', '==', true),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
@@ -364,6 +399,7 @@ export const courseService = {
     const q = query(
       collections.courses(),
       where('instructor', '==', instructorId),
+      where('isActive', '==', true),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -387,6 +423,7 @@ export const courseService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courses(), {
       ...courseData,
+      isActive: courseData.isActive !== undefined ? courseData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -403,7 +440,33 @@ export const courseService = {
 
   async deleteCourse(courseId: string): Promise<void> {
     const docRef = doc(db, 'courses', courseId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async deleteCourseWithDependencies(courseId: string): Promise<void> {
+    // Soft delete the course
+    await this.deleteCourse(courseId);
+    
+    // Soft delete all related assignments
+    const assignments = await assignmentService.getAssignmentsByCourse(courseId);
+    await Promise.all(
+      assignments.map(assignment => assignmentService.deleteAssignment(assignment.id))
+    );
+    
+    // Soft delete all related course materials
+    const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
+    await Promise.all(
+      materials.map(material => courseMaterialService.deleteCourseMaterial(material.id))
+    );
+    
+    // Soft delete all related enrollments
+    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+    await Promise.all(
+      enrollments.map(enrollment => enrollmentService.deleteEnrollment(enrollment.id))
+    );
   },
 };
 
@@ -413,6 +476,7 @@ export const enrollmentService = {
     const q = query(
       collections.enrollments(),
       where('studentId', '==', studentId),
+      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -438,18 +502,20 @@ export const enrollmentService = {
     const q = query(
       collections.enrollments(),
       where('courseId', '==', courseId),
+      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
   },
 
-  async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt'>): Promise<string> {
+  async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.enrollments(), {
       ...enrollmentData,
       enrolledAt: now,
       lastAccessedAt: now,
+      isActive: true,
     });
     return docRef.id;
   },
@@ -457,6 +523,7 @@ export const enrollmentService = {
   async getAllEnrollments(): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
     const q = query(
       collections.enrollments(),
+      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -489,7 +556,10 @@ export const enrollmentService = {
 
   async deleteEnrollment(enrollmentId: string): Promise<void> {
     const docRef = doc(db, 'enrollments', enrollmentId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      lastAccessedAt: Timestamp.now()
+    });
   },
 };
 
@@ -854,7 +924,10 @@ export const assignmentService = {
 
   async deleteAssignment(assignmentId: string): Promise<void> {
     const docRef = doc(db, 'assignments', assignmentId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      updatedAt: Timestamp.now()
+    });
   },
 };
 
@@ -891,7 +964,10 @@ export const courseMaterialService = {
 
   async deleteCourseMaterial(materialId: string): Promise<void> {
     const docRef = doc(db, 'courseMaterials', materialId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      updatedAt: Timestamp.now()
+    });
   },
 
   async getMaterialsByTeacher(teacherId: string): Promise<FirestoreCourseMaterial[]> {
@@ -1049,7 +1125,9 @@ export const eventService = {
 
   async deleteEvent(eventId: string): Promise<void> {
     const docRef = doc(db, 'events', eventId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false
+    });
   },
 };
 

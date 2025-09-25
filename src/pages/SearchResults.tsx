@@ -278,7 +278,15 @@ export default function SearchResults() {
                           <div className="text-sm text-gray-600">by {course.instructorName} • {course.category}</div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/course/${course.id}`}>View</Link>
+                          {role === 'admin' ? (
+                            <Link to="/dashboard/courses">Go to Course Manager</Link>
+                          ) : role === 'super_admin' ? (
+                            <Link to="/dashboard/courses">View All Courses</Link>
+                          ) : role === 'teacher' ? (
+                            <Link to={`/dashboard/teacher-courses/${course.id}`}>View Course</Link>
+                          ) : (
+                            <Link to={`/course/${course.id}`}>View Course</Link>
+                          )}
                         </Button>
                       </div>
                     ))}
@@ -312,9 +320,15 @@ export default function SearchResults() {
                           <div className="font-medium text-gray-900">{event.title}</div>
                           <div className="text-sm text-gray-600">{event.description} • {event.type}</div>
                         </div>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/events/${event.id}`}>View</Link>
-                        </Button>
+                        {(role === 'admin' || role === 'super_admin') ? (
+                          <Button variant="outline" size="sm" asChild>
+                            {role === 'admin' ? (
+                              <Link to="/dashboard/events">Go to Events</Link>
+                            ) : (
+                              <Link to="/dashboard/events">View All Events</Link>
+                            )}
+                          </Button>
+                        ) : null}
                       </div>
                     ))}
                     {events.length > 5 && (
@@ -348,7 +362,11 @@ export default function SearchResults() {
                           <div className="text-sm text-gray-600">{assignment.description}</div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/assignments/${assignment.id}`}>View</Link>
+                          {role === 'student' ? (
+                            <Link to={`/dashboard/student-assignments?assignmentId=${assignment.id}`}>View Details</Link>
+                          ) : (
+                            <Link to={`/dashboard/teacher-assignments`}>View Assignment</Link>
+                          )}
                         </Button>
                       </div>
                     ))}
@@ -382,8 +400,8 @@ export default function SearchResults() {
                           <div className="font-medium text-gray-900">{material.title}</div>
                           <div className="text-sm text-gray-600">{material.description}</div>
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Material
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/dashboard/teacher-course-materials">View Materials</Link>
                         </Button>
                       </div>
                     ))}

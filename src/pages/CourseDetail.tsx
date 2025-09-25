@@ -60,7 +60,7 @@ const CourseDetail = () => {
       
       if (!courseId) {
         toast.error('Course ID is required');
-        navigate('/courses');
+        navigate('/dashboard/student-courses');
         return;
       }
 
@@ -88,7 +88,7 @@ const CourseDetail = () => {
         await loadCourseMaterials();
       } else {
         toast.error('Course not found');
-        navigate('/courses');
+        navigate('/dashboard/student-courses');
       }
     } catch (error) {
       console.error('Error loading course:', error);

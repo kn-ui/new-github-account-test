@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import DashboardWrapper from "./components/DashboardWrapper";
-import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CreateCourse from "./pages/CreateCourse";
 import UserManager from "./pages/UserManager";
@@ -90,8 +89,7 @@ const App = () => (
             {/* Public events page */}
             <Route path="/events" element={<Events />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
             <Route 
               path="/dashboard/course/:courseId" 
               element={

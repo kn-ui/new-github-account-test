@@ -278,7 +278,7 @@ export default function SearchResults() {
                           <div className="text-sm text-gray-600">by {course.instructorName} • {course.category}</div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/courses/${course.id}`}>View</Link>
+                          <Link to={`/course/${course.id}`}>View</Link>
                         </Button>
                       </div>
                     ))}

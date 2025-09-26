@@ -255,13 +255,14 @@ export const userService = {
     const q = limitCount
       ? query(
           collections.users(),
-          where('isActive', '==', true),
           orderBy('createdAt', 'desc'),
           limit(limitCount)
         )
-      : query(collections.users(), where('isActive', '==', true), orderBy('createdAt', 'desc'));
+      : query(collections.users(), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser))
+      .filter(user => user.isActive !== false); // Client-side filter for isActive
   },
 
   async getUserById(uid: string): Promise<FirestoreUser | null> {
@@ -376,12 +377,13 @@ export const courseService = {
   async getAllCourses(limitCount = 1000): Promise<FirestoreCourse[]> {
     const q = query(
       collections.courses(),
-      where('isActive', '==', true),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse))
+      .filter(course => course.isActive !== false); // Client-side filter for isActive
   },
 
   // Pending courses flow removed
@@ -399,11 +401,12 @@ export const courseService = {
     const q = query(
       collections.courses(),
       where('instructor', '==', instructorId),
-      where('isActive', '==', true),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse))
+      .filter(course => course.isActive !== false); // Client-side filter for isActive
   },
 
   async getCoursesByTitle(title: string): Promise<FirestoreCourse | null> {
@@ -476,11 +479,12 @@ export const enrollmentService = {
     const q = query(
       collections.enrollments(),
       where('studentId', '==', studentId),
-      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    const enrollments = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment))
+      .filter(enrollment => enrollment.isActive !== false); // Client-side filter for isActive
     
     // Fetch course data for each enrollment
     const enrollmentsWithCourses = await Promise.all(
@@ -502,11 +506,12 @@ export const enrollmentService = {
     const q = query(
       collections.enrollments(),
       where('courseId', '==', courseId),
-      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment))
+      .filter(enrollment => enrollment.isActive !== false); // Client-side filter for isActive
   },
 
   async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
@@ -523,11 +528,12 @@ export const enrollmentService = {
   async getAllEnrollments(): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
     const q = query(
       collections.enrollments(),
-      where('isActive', '==', true),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    const enrollments = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment))
+      .filter(enrollment => enrollment.isActive !== false); // Client-side filter for isActive
     
     // Fetch course data for each enrollment
     const enrollmentsWithCourses = await Promise.all(
@@ -855,6 +861,7 @@ export const assignmentService = {
     const docRef = await addDoc(collections.assignments(), {
       ...assignmentData,
       dueDate: (assignmentData as any).dueDate instanceof Date ? Timestamp.fromDate((assignmentData as any).dueDate) : (assignmentData as any).dueDate,
+      isActive: assignmentData.isActive !== undefined ? assignmentData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -876,7 +883,9 @@ export const assignmentService = {
       };
       return { id: doc.id, ...normalized } as FirestoreAssignment;
     });
-    return list.sort((a, b) => a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime());
+    return list
+      .filter(assignment => assignment.isActive !== false) // Client-side filter for isActive
+      .sort((a, b) => a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime());
   },
   
   async getAssignmentsByIds(ids: string[]): Promise<Record<string, FirestoreAssignment | null>> {
@@ -907,7 +916,9 @@ export const assignmentService = {
       };
       return { id: doc.id, ...normalized } as FirestoreAssignment;
     });
-    return list.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+    return list
+      .filter(assignment => assignment.isActive !== false) // Client-side filter for isActive
+      .sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
   },
 
   async updateAssignment(assignmentId: string, updates: Partial<FirestoreAssignment>): Promise<void> {
@@ -937,6 +948,7 @@ export const courseMaterialService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courseMaterials(), {
       ...materialData,
+      isActive: materialData.isActive !== undefined ? materialData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -951,7 +963,9 @@ export const courseMaterialService = {
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial))
+      .filter(material => material.isActive !== false); // Client-side filter for isActive
   },
 
   async updateCourseMaterial(materialId: string, updates: Partial<FirestoreCourseMaterial>): Promise<void> {

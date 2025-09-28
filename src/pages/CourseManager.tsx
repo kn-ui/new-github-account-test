@@ -51,6 +51,7 @@ export default function CourseManager() {
   const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
   const [createStep, setCreateStep] = useState<number>(1);
   const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
+  const [showArchived, setShowArchived] = useState(false);
   const { currentUser } = useAuth();
 
   const [editForm, setEditForm] = useState<Partial<FirestoreCourse>>({});
@@ -73,18 +74,22 @@ export default function CourseManager() {
 
   useEffect(() => {
     loadCourses();
-  }, []);
+  }, [showArchived]);
 
   const loadCourses = async () => {
     try {
       setLoading(true);
 
-      const courses = await courseService.getCourses(1000);
+      const courses = showArchived 
+        ? await courseService.getAllCourses(1000)
+        : await courseService.getCourses(1000);
       setCourses(courses); // Added this line
-      // compute total enrolled students across all courses
+      // compute total unique enrolled students across all courses
       try {
         const enrollments = await enrollmentService.getAllEnrollments();
-        setTotalEnrolledStudents(enrollments.length);
+        // Get unique student IDs
+        const uniqueStudentIds = new Set(enrollments.map(e => e.studentId));
+        setTotalEnrolledStudents(uniqueStudentIds.size);
       } catch {
         setTotalEnrolledStudents(0);
       }
@@ -479,6 +484,15 @@ export default function CourseManager() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-end">
+                <Button
+                  variant={showArchived ? "default" : "outline"}
+                  onClick={() => setShowArchived(!showArchived)}
+                  className="whitespace-nowrap"
+                >
+                  {showArchived ? "Hide Archived" : "Show Archived"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -645,7 +659,9 @@ export default function CourseManager() {
               </div>
               <div>
                 <span className="font-medium text-gray-700">Syllabus:</span>
-                <p className="text-gray-600 mt-1">{selectedCourse.syllabus}</p>
+                <div className="mt-1 max-h-40 overflow-y-auto">
+                  <p className="text-gray-600 whitespace-pre-wrap break-words">{selectedCourse.syllabus}</p>
+                </div>
               </div>
             </div>
           )}

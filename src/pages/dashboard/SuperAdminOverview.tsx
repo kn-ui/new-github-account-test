@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Users, 
   BookOpen, 
-  TrendingUp, 
+  Calendar, 
   Activity,
   Target,
   Zap
@@ -22,7 +22,7 @@ const SuperAdminOverview = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
-    completionRate: 0,
+    totalEvents: 0,
     systemHealth: 0,
     totalStudents: 0,
     totalTeachers: 0,
@@ -118,11 +118,11 @@ const SuperAdminOverview = () => {
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                  <Calendar className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{t('superadmin.completionRate')}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{t('superadmin.totalEvents') || 'Total Events'}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalEvents || 0}</p>
                 </div>
               </div>
             </CardContent>

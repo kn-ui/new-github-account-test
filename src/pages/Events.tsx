@@ -110,11 +110,35 @@ const EventsPage = () => {
     setFilteredEvents(filtered);
   }, [searchTerm, statusFilter, events]);
 
+  const getEventStatus = (eventDate: Date | Timestamp) => {
+    const now = new Date();
+    const date = eventDate instanceof Date ? eventDate : (eventDate as Timestamp)?.toDate();
+    
+    if (!date) return 'upcoming';
+    
+    // Clear time portion for date comparison
+    const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (eventDay > today) {
+      return 'upcoming';
+    } else if (eventDay.getTime() === today.getTime()) {
+      return 'ongoing';
+    } else {
+      return 'completed';
+    }
+  };
+
   const fetchEvents = async () => {
     try {
       const fetchedEvents = await eventService.getAllEvents();
       console.log('Fetched events:', fetchedEvents);
-      setEvents(fetchedEvents);
+      // Update status based on current date
+      const eventsWithUpdatedStatus = fetchedEvents.map(event => ({
+        ...event,
+        status: getEventStatus(event.date)
+      }));
+      setEvents(eventsWithUpdatedStatus);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -183,7 +207,7 @@ const EventsPage = () => {
         location: createForm.location || '',
         maxAttendees: createForm.maxAttendees || 50,
         currentAttendees: createForm.currentAttendees || 0,
-        status: createForm.status || 'upcoming',
+        status: getEventStatus(date),
       });
       setIsCreateOpen(false);
       fetchEvents();
@@ -378,15 +402,15 @@ const EventsPage = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900">{event.title}</h3>
+                              <h3 className="text-xl font-semibold text-gray-900 truncate flex-1">{event.title}</h3>
                               <Badge 
                                 variant={getTypeBadgeVariant(event.type)}
-                                className="text-xs"
+                                className="text-xs flex-shrink-0"
                               >
                                 {event.type}
                               </Badge>
                             </div>
-                            <p className="text-gray-600 mb-3 line-clamp-2">{event.description}</p>
+                            <p className="text-gray-600 mb-3 line-clamp-2 break-words">{event.description}</p>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />

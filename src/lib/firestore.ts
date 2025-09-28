@@ -1124,7 +1124,9 @@ export const eventService = {
       orderBy('date', 'asc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent))
+      .filter(event => event.isActive !== false); // Filter out soft-deleted events
   },
 
   async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
@@ -1333,10 +1335,11 @@ export const forumService = {
 // Analytics and statistics
 export const analyticsService = {
   async getAdminStats() {
-    const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot] = await Promise.all([
+    const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot, eventsSnapshot] = await Promise.all([
       getDocs(collections.users()),
       getDocs(collections.courses()),
       getDocs(collections.enrollments()),
+      getDocs(collections.events()),
     ]);
 
     const totalUsers = usersSnapshot.size;
@@ -1344,6 +1347,7 @@ export const analyticsService = {
     const totalTeachers = usersSnapshot.docs.filter(doc => doc.data().role === 'teacher').length;
     const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
     const pendingCourses = coursesSnapshot.docs.filter(doc => !doc.data().isActive).length;
+    const totalEvents = eventsSnapshot.size;
 
     const totalEnrollments = enrollmentsSnapshot.size;
     const completedEnrollments = enrollmentsSnapshot.docs.filter(doc => doc.data().status === 'completed').length;
@@ -1356,6 +1360,7 @@ export const analyticsService = {
       activeCourses,
       pendingCourses,
       completionRate,
+      totalEvents,
       systemHealth: 99.9, // Placeholder
     };
   },

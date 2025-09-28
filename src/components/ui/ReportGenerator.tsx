@@ -68,7 +68,20 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
 
       switch (selectedReport) {
         case 'user-list':
-          data = await userService.getUsers(1000); // Get all users
+          const users = await userService.getUsers(1000); // Get all users
+          data = users.map(user => ({
+            id: user.id,
+            displayName: user.displayName,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+            createdAt: user.createdAt?.toDate ? user.createdAt.toDate().toISOString() : 
+                      (user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toISOString() : 
+                       'N/A'),
+            updatedAt: user.updatedAt?.toDate ? user.updatedAt.toDate().toISOString() : 
+                      (user.updatedAt?.seconds ? new Date(user.updatedAt.seconds * 1000).toISOString() : 
+                       'N/A'),
+          }));
           filename = `user-list-${new Date().toISOString().split('T')[0]}`;
           break;
 

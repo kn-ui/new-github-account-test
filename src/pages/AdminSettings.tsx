@@ -172,12 +172,10 @@ export default function AdminSettings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="activity" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="activity">Activity Logs</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="access">Access Control</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="activity" className="space-y-4">
@@ -274,86 +272,6 @@ export default function AdminSettings() {
                 <Button variant="outline" className="w-full">
                   <Shield className="h-4 w-4 mr-2" />
                   Manage Permissions
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>Report Generation</span>
-              </CardTitle>
-              <CardDescription>Generate and manage system reports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-20 flex-col">
-                    <Users className="h-6 w-6 mb-2" />
-                    User Analytics
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col">
-                    <BookOpen className="h-6 w-6 mb-2" />
-                    Course Reports
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col">
-                    <Activity className="h-6 w-6 mb-2" />
-                    System Health
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col">
-                    <Calendar className="h-6 w-6 mb-2" />
-                    Event Summary
-                  </Button>
-                </div>
-                <Button className="w-full">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Generate All Reports
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="integrations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>System Integrations</span>
-              </CardTitle>
-              <CardDescription>Connect with external services and APIs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">Email Service</h4>
-                    <p className="text-sm text-gray-600">SMTP configuration</p>
-                    <Badge variant="outline" className="mt-2">Configured</Badge>
-                  </div>
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">File Storage</h4>
-                    <p className="text-sm text-gray-600">Cloud storage integration</p>
-                    <Badge variant="outline" className="mt-2">Available</Badge>
-                  </div>
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">Analytics</h4>
-                    <p className="text-sm text-gray-600">Google Analytics</p>
-                    <Badge variant="outline" className="mt-2">Not Connected</Badge>
-                  </div>
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">Backup Service</h4>
-                    <p className="text-sm text-gray-600">Automated backups</p>
-                    <Badge variant="outline" className="mt-2">Active</Badge>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Integrations
                 </Button>
               </div>
             </CardContent>

@@ -186,6 +186,20 @@ export interface FirestoreBlog {
   likes: number;
 }
 
+export interface FirestoreGrade {
+  id: string;
+  courseId: string;
+  studentId: string;
+  finalGrade: number;
+  letterGrade: string;
+  gradePoints: number;
+  calculatedAt: Timestamp;
+  calculatedBy: string;
+  calculationMethod: 'weighted_average' | 'simple_average' | 'manual';
+  assignmentGrades?: { assignmentId: string; grade: number; weight: number }[];
+  notes?: string;
+}
+
 export interface FirestoreAnnouncement {
   id: string;
   courseId?: string;
@@ -247,6 +261,7 @@ const collections = {
   forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
   courseMaterials: () => collection(db, 'courseMaterials'),
   exams: () => collection(db, 'exams'),
+  grades: () => collection(db, 'grades'),
 };
 
 // User operations
@@ -723,6 +738,19 @@ export const blogService = {
       const currentLikes = docSnap.data().likes || 0;
       await updateDoc(docRef, { likes: currentLikes + 1 });
     }
+  },
+
+  async updateBlogPost(blogId: string, blogData: Partial<Omit<FirestoreBlog, 'id' | 'createdAt' | 'likes' | 'authorId' | 'authorName'>>): Promise<void> {
+    const docRef = doc(db, 'blogs', blogId);
+    await updateDoc(docRef, {
+      ...blogData,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteBlogPost(blogId: string): Promise<void> {
+    const docRef = doc(db, 'blogs', blogId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -1462,6 +1490,99 @@ export const assignmentEditRequestService = {
   async deleteEditRequest(requestId: string) {
     const docRef = doc(db, 'assignmentEditRequests', requestId);
     await deleteDoc(docRef);
+  }
+};
+
+// Grade operations
+export const gradeService = {
+  async getGradesByCourse(courseId: string): Promise<FirestoreGrade[]> {
+    const q = query(
+      collections.grades(),
+      where('courseId', '==', courseId),
+      orderBy('calculatedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreGrade));
+  },
+
+  async getGradeByStudentAndCourse(courseId: string, studentId: string): Promise<FirestoreGrade | null> {
+    const q = query(
+      collections.grades(),
+      where('courseId', '==', courseId),
+      where('studentId', '==', studentId)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as FirestoreGrade;
+  },
+
+  async createGrade(gradeData: Omit<FirestoreGrade, 'id' | 'calculatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.grades(), {
+      ...gradeData,
+      calculatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async updateGrade(gradeId: string, gradeData: Partial<Omit<FirestoreGrade, 'id' | 'calculatedAt' | 'courseId' | 'studentId'>>): Promise<void> {
+    const docRef = doc(db, 'grades', gradeId);
+    await updateDoc(docRef, {
+      ...gradeData,
+      calculatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteGrade(gradeId: string): Promise<void> {
+    const docRef = doc(db, 'grades', gradeId);
+    await deleteDoc(docRef);
+  },
+
+  // Helper function to calculate letter grade and grade points
+  calculateLetterGradeAndPoints(finalGrade: number): { letterGrade: string; gradePoints: number } {
+    if (finalGrade >= 97) return { letterGrade: 'A+', gradePoints: 4.0 };
+    if (finalGrade >= 93) return { letterGrade: 'A', gradePoints: 4.0 };
+    if (finalGrade >= 90) return { letterGrade: 'A-', gradePoints: 3.7 };
+    if (finalGrade >= 87) return { letterGrade: 'B+', gradePoints: 3.3 };
+    if (finalGrade >= 83) return { letterGrade: 'B', gradePoints: 3.0 };
+    if (finalGrade >= 80) return { letterGrade: 'B-', gradePoints: 2.7 };
+    if (finalGrade >= 77) return { letterGrade: 'C+', gradePoints: 2.3 };
+    if (finalGrade >= 73) return { letterGrade: 'C', gradePoints: 2.0 };
+    if (finalGrade >= 70) return { letterGrade: 'C-', gradePoints: 1.7 };
+    if (finalGrade >= 67) return { letterGrade: 'D+', gradePoints: 1.3 };
+    if (finalGrade >= 63) return { letterGrade: 'D', gradePoints: 1.0 };
+    if (finalGrade >= 60) return { letterGrade: 'D-', gradePoints: 0.7 };
+    return { letterGrade: 'F', gradePoints: 0.0 };
+  },
+
+  // Calculate final grade based on assignment grades
+  async calculateFinalGrade(
+    courseId: string, 
+    studentId: string, 
+    assignmentGrades: { assignmentId: string; grade: number; weight: number }[],
+    method: 'weighted_average' | 'simple_average' = 'weighted_average'
+  ): Promise<{ finalGrade: number; letterGrade: string; gradePoints: number }> {
+    if (assignmentGrades.length === 0) {
+      return { finalGrade: 0, letterGrade: 'F', gradePoints: 0.0 };
+    }
+
+    let finalGrade: number;
+    
+    if (method === 'weighted_average') {
+      const totalWeight = assignmentGrades.reduce((sum, ag) => sum + ag.weight, 0);
+      if (totalWeight === 0) {
+        // Fallback to simple average if no weights
+        finalGrade = assignmentGrades.reduce((sum, ag) => sum + ag.grade, 0) / assignmentGrades.length;
+      } else {
+        finalGrade = assignmentGrades.reduce((sum, ag) => sum + (ag.grade * ag.weight), 0) / totalWeight;
+      }
+    } else {
+      // Simple average
+      finalGrade = assignmentGrades.reduce((sum, ag) => sum + ag.grade, 0) / assignmentGrades.length;
+    }
+
+    const { letterGrade, gradePoints } = this.calculateLetterGradeAndPoints(finalGrade);
+    return { finalGrade: Math.round(finalGrade * 100) / 100, letterGrade, gradePoints };
   }
 };
 

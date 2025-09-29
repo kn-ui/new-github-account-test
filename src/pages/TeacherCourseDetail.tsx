@@ -9,12 +9,14 @@ import {
   submissionService,
   courseMaterialService,
   examService,
+  gradeService,
   FirestoreCourse,
   FirestoreEnrollment,
   FirestoreAssignment,
   FirestoreCourseMaterial,
   FirestoreSubmission,
   FirestoreExam,
+  FirestoreGrade,
 } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,13 +88,14 @@ export default function TeacherCourseDetail() {
     const load = async () => {
       try {
         setLoading(true);
-        const [c, ens, asgs, subs, mats, exs] = await Promise.all([
+        const [c, ens, asgs, subs, mats, exs, grades] = await Promise.all([
           courseService.getCourseById(courseId),
           enrollmentService.getEnrollmentsByCourse(courseId),
           assignmentService.getAssignmentsByCourse(courseId, 1000),
           submissionService.getSubmissionsByCourse(courseId),
           courseMaterialService.getCourseMaterialsByCourse(courseId, 1000),
           examService.getExamsByCourse(courseId),
+          gradeService.getGradesByCourse(courseId),
         ]);
         setCourse(c);
         setEnrollments(ens);
@@ -100,6 +103,7 @@ export default function TeacherCourseDetail() {
         setSubmissions(subs);
         setMaterials(mats);
         setExams(exs);
+        setFinalGrades(grades);
         // resolve student names
         try {
           const ids = Array.from(new Set(ens.map(e => e.studentId)));
@@ -126,12 +130,115 @@ export default function TeacherCourseDetail() {
   const assignmentsCount = assignments.length;
   const [exams, setExams] = useState<FirestoreExam[]>([]);
   const examsCount = exams.length;
+  const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final'>('assignments');
+  const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
+  const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<FirestoreEnrollment | null>(null);
+  const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
+  const [manualGrade, setManualGrade] = useState<number>(0);
   const averageGrade = useMemo(() => {
-    const graded = submissions.filter(s => typeof s.grade === 'number');
-    if (graded.length === 0) return 0;
-    const sum = graded.reduce((acc, s: any) => acc + (s.grade || 0), 0);
-    return Math.round((sum / graded.length) * 10) / 10;
-  }, [submissions]);
+    if (gradeViewMode === 'final') {
+      if (finalGrades.length === 0) return 0;
+      const sum = finalGrades.reduce((acc, g) => acc + g.finalGrade, 0);
+      return Math.round((sum / finalGrades.length) * 10) / 10;
+    } else {
+      const graded = submissions.filter(s => typeof s.grade === 'number');
+      if (graded.length === 0) return 0;
+      const sum = graded.reduce((acc, s: any) => acc + (s.grade || 0), 0);
+      return Math.round((sum / graded.length) * 10) / 10;
+    }
+  }, [submissions, finalGrades, gradeViewMode]);
+
+  const openGradeCalculation = (student: FirestoreEnrollment) => {
+    setSelectedStudentForGrade(student);
+    setGradeCalculationDialogOpen(true);
+    setManualGrade(0);
+  };
+
+  const calculateFinalGrade = async () => {
+    if (!selectedStudentForGrade || !courseId || !userProfile) return;
+
+    try {
+      let finalGrade: number;
+      let letterGrade: string;
+      let gradePoints: number;
+      let assignmentGrades: { assignmentId: string; grade: number; weight: number }[] = [];
+
+      if (gradeCalculationMethod === 'manual') {
+        if (manualGrade < 0 || manualGrade > 100) {
+          toast.error('Grade must be between 0 and 100');
+          return;
+        }
+        const result = gradeService.calculateLetterGradeAndPoints(manualGrade);
+        finalGrade = manualGrade;
+        letterGrade = result.letterGrade;
+        gradePoints = result.gradePoints;
+      } else {
+        // Get assignment grades for this student
+        const studentSubmissions = submissions.filter(s => 
+          s.studentId === selectedStudentForGrade.studentId && 
+          typeof s.grade === 'number'
+        );
+
+        if (studentSubmissions.length === 0) {
+          toast.error('No graded assignments found for this student');
+          return;
+        }
+
+        assignmentGrades = studentSubmissions.map(sub => ({
+          assignmentId: sub.assignmentId,
+          grade: sub.grade as number,
+          weight: 1 // Default weight, could be enhanced to use assignment weights
+        }));
+
+        const result = await gradeService.calculateFinalGrade(
+          courseId,
+          selectedStudentForGrade.studentId,
+          assignmentGrades,
+          gradeCalculationMethod
+        );
+        finalGrade = result.finalGrade;
+        letterGrade = result.letterGrade;
+        gradePoints = result.gradePoints;
+      }
+
+      // Check if grade already exists
+      const existingGrade = await gradeService.getGradeByStudentAndCourse(courseId, selectedStudentForGrade.studentId);
+      
+      if (existingGrade) {
+        await gradeService.updateGrade(existingGrade.id, {
+          finalGrade,
+          letterGrade,
+          gradePoints,
+          calculatedBy: userProfile.id || userProfile.uid || 'unknown',
+          calculationMethod: gradeCalculationMethod,
+          assignmentGrades: assignmentGrades.length > 0 ? assignmentGrades : undefined,
+        });
+        toast.success('Final grade updated');
+      } else {
+        await gradeService.createGrade({
+          courseId,
+          studentId: selectedStudentForGrade.studentId,
+          finalGrade,
+          letterGrade,
+          gradePoints,
+          calculatedBy: userProfile.id || userProfile.uid || 'unknown',
+          calculationMethod: gradeCalculationMethod,
+          assignmentGrades: assignmentGrades.length > 0 ? assignmentGrades : undefined,
+        });
+        toast.success('Final grade calculated and saved');
+      }
+
+      // Refresh grades
+      const updatedGrades = await gradeService.getGradesByCourse(courseId);
+      setFinalGrades(updatedGrades);
+      setGradeCalculationDialogOpen(false);
+      setSelectedStudentForGrade(null);
+    } catch (error) {
+      console.error('Error calculating final grade:', error);
+      toast.error('Failed to calculate final grade');
+    }
+  };
 
   if (!userProfile || userProfile.role !== 'teacher') {
     return (
@@ -429,33 +536,85 @@ export default function TeacherCourseDetail() {
               </TabsContent>
 
               <TabsContent value="grades" className="mt-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">Sort:</span>
-                  <Select value={gradeSort} onValueChange={(v) => setGradeSort(v as any)}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="recent">Most Recent</SelectItem>
-                      <SelectItem value="oldest">Oldest</SelectItem>
-                      <SelectItem value="grade-desc">Grade High→Low</SelectItem>
-                      <SelectItem value="grade-asc">Grade Low→High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    // export CSV for graded submissions
-                    const rows = [['Student','Assignment','Grade','Submitted At']];
-                    submissions.filter(s => s.status === 'graded').forEach(s => {
-                      const student = studentNames[s.studentId] || s.studentId;
-                      const asg = assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId;
-                      rows.push([student, asg, String(s.grade ?? ''), s.submittedAt.toDate().toISOString()]);
-                    });
-                    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = `${course.title}-grades.csv`; a.click(); URL.revokeObjectURL(url);
-                  }}>
-                    <Download className="h-4 w-4 mr-2" /> Export CSV
-                  </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600">View:</span>
+                    <Select value={gradeViewMode} onValueChange={(v) => setGradeViewMode(v as any)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="assignments">Assignment Grades</SelectItem>
+                        <SelectItem value="final">Final Grades</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-gray-600">Sort:</span>
+                    <Select value={gradeSort} onValueChange={(v) => setGradeSort(v as any)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="recent">Most Recent</SelectItem>
+                        <SelectItem value="oldest">Oldest</SelectItem>
+                        <SelectItem value="grade-desc">Grade High→Low</SelectItem>
+                        <SelectItem value="grade-asc">Grade Low→High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {gradeViewMode === 'final' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          // Show students without final grades
+                          const studentsWithoutGrades = enrollments.filter(e => 
+                            !finalGrades.some(g => g.studentId === e.studentId)
+                          );
+                          if (studentsWithoutGrades.length === 0) {
+                            toast.info('All students have final grades');
+                            return;
+                          }
+                          // For now, just show first student without grade
+                          openGradeCalculation(studentsWithoutGrades[0]);
+                        }}
+                      >
+                        Calculate Grades
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => {
+                      if (gradeViewMode === 'final') {
+                        // export CSV for final grades
+                        const rows = [['Student','Final Grade','Letter Grade','Grade Points','Calculated At']];
+                        finalGrades.forEach(g => {
+                          const student = studentNames[g.studentId] || g.studentId;
+                          rows.push([
+                            student, 
+                            String(g.finalGrade), 
+                            g.letterGrade, 
+                            String(g.gradePoints),
+                            g.calculatedAt.toDate().toISOString()
+                          ]);
+                        });
+                        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${course.title}-final-grades.csv`; a.click(); URL.revokeObjectURL(url);
+                      } else {
+                        // export CSV for graded submissions
+                        const rows = [['Student','Assignment','Grade','Submitted At']];
+                        submissions.filter(s => s.status === 'graded').forEach(s => {
+                          const student = studentNames[s.studentId] || s.studentId;
+                          const asg = assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId;
+                          rows.push([student, asg, String(s.grade ?? ''), s.submittedAt.toDate().toISOString()]);
+                        });
+                        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${course.title}-grades.csv`; a.click(); URL.revokeObjectURL(url);
+                      }
+                    }}>
+                      <Download className="h-4 w-4 mr-2" /> Export CSV
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Card>
@@ -464,19 +623,35 @@ export default function TeacherCourseDetail() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Highest Grade</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{Math.max(0, ...submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number)) || 0}</div></CardContent>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {gradeViewMode === 'final' 
+                          ? (finalGrades.length > 0 ? Math.max(...finalGrades.map(g => g.finalGrade)) : 0)
+                          : (Math.max(0, ...submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number)) || 0)
+                        }
+                      </div>
+                    </CardContent>
                   </Card>
                   <Card>
                     <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Lowest Grade</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{(submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number).sort((a,b)=>a-b)[0]) ?? 0}</div></CardContent>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {gradeViewMode === 'final' 
+                          ? (finalGrades.length > 0 ? Math.min(...finalGrades.map(g => g.finalGrade)) : 0)
+                          : ((submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number).sort((a,b)=>a-b)[0]) ?? 0)
+                        }
+                      </div>
+                    </CardContent>
                   </Card>
                 </div>
                 <div className="bg-white border rounded p-3">
                   <div className="text-sm font-medium mb-2">Grade distribution</div>
                   {(() => {
-                    const graded = submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number);
+                    const grades = gradeViewMode === 'final' 
+                      ? finalGrades.map(g => g.finalGrade)
+                      : submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number);
                     const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
-                    graded.forEach(g => {
+                    grades.forEach(g => {
                       if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
                     });
                     const items = Object.entries(dist);
@@ -486,7 +661,7 @@ export default function TeacherCourseDetail() {
                           <div key={k} className="text-center">
                             <div className="text-xs text-gray-500 mb-1">{k}</div>
                             <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
-                              <div className="w-full bg-blue-500 rounded-b" style={{ height: `${graded.length? (v/graded.length)*100 : 0}%` }} />
+                              <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
                             </div>
                             <div className="text-xs mt-1">{v} students</div>
                           </div>
@@ -495,44 +670,106 @@ export default function TeacherCourseDetail() {
                     );
                   })()}
                 </div>
-                {submissions.filter(s => s.status === 'graded').length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="text-left px-4 py-2">Student</th>
-                          <th className="text-left px-4 py-2">Grade</th>
-                          <th className="text-left px-4 py-2">Status</th>
-                          <th className="text-left px-4 py-2">Submitted</th>
-                          <th className="text-left px-4 py-2"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {submissions
-                          .filter(s => s.status === 'graded')
-                          .slice()
-                          .sort((a,b) => {
-                            switch (gradeSort) {
-                              case 'recent': return b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime();
-                              case 'oldest': return a.submittedAt.toDate().getTime() - b.submittedAt.toDate().getTime();
-                              case 'grade-desc': return (b.grade || 0) - (a.grade || 0);
-                              case 'grade-asc': return (a.grade || 0) - (b.grade || 0);
-                            }
-                          })
-                          .map(s => (
-                          <tr key={s.id}>
-                            <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
-                            <td className="px-4 py-2">{typeof s.grade === 'number' ? s.grade : '-'}</td>
-                            <td className="px-4 py-2 capitalize">{s.status}</td>
-                            <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
-                            <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
+                {gradeViewMode === 'final' ? (
+                  finalGrades.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left px-4 py-2">Student</th>
+                            <th className="text-left px-4 py-2">Final Grade</th>
+                            <th className="text-left px-4 py-2">Letter Grade</th>
+                            <th className="text-left px-4 py-2">Grade Points</th>
+                            <th className="text-left px-4 py-2">Method</th>
+                            <th className="text-left px-4 py-2">Calculated</th>
+                            <th className="text-left px-4 py-2"></th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y">
+                          {finalGrades
+                            .slice()
+                            .sort((a,b) => {
+                              switch (gradeSort) {
+                                case 'recent': return b.calculatedAt.toDate().getTime() - a.calculatedAt.toDate().getTime();
+                                case 'oldest': return a.calculatedAt.toDate().getTime() - b.calculatedAt.toDate().getTime();
+                                case 'grade-desc': return b.finalGrade - a.finalGrade;
+                                case 'grade-asc': return a.finalGrade - b.finalGrade;
+                              }
+                            })
+                            .map(g => (
+                            <tr key={g.id}>
+                              <td className="px-4 py-2">{studentNames[g.studentId] || g.studentId}</td>
+                              <td className="px-4 py-2 font-semibold">{g.finalGrade}</td>
+                              <td className="px-4 py-2">
+                                <Badge variant={g.letterGrade.startsWith('A') ? 'default' : g.letterGrade.startsWith('B') ? 'secondary' : g.letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
+                                  {g.letterGrade}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-2">{g.gradePoints}</td>
+                              <td className="px-4 py-2 capitalize text-xs">{g.calculationMethod.replace('_', ' ')}</td>
+                              <td className="px-4 py-2">{g.calculatedAt.toDate().toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    const student = enrollments.find(e => e.studentId === g.studentId);
+                                    if (student) openGradeCalculation(student);
+                                  }}
+                                >
+                                  Recalculate
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 text-sm">No final grades calculated yet.</div>
+                  )
                 ) : (
-                  <div className="text-gray-500 text-sm">No graded submissions yet.</div>
+                  submissions.filter(s => s.status === 'graded').length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left px-4 py-2">Student</th>
+                            <th className="text-left px-4 py-2">Assignment</th>
+                            <th className="text-left px-4 py-2">Grade</th>
+                            <th className="text-left px-4 py-2">Status</th>
+                            <th className="text-left px-4 py-2">Submitted</th>
+                            <th className="text-left px-4 py-2"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {submissions
+                            .filter(s => s.status === 'graded')
+                            .slice()
+                            .sort((a,b) => {
+                              switch (gradeSort) {
+                                case 'recent': return b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime();
+                                case 'oldest': return a.submittedAt.toDate().getTime() - b.submittedAt.toDate().getTime();
+                                case 'grade-desc': return (b.grade || 0) - (a.grade || 0);
+                                case 'grade-asc': return (a.grade || 0) - (b.grade || 0);
+                              }
+                            })
+                            .map(s => (
+                            <tr key={s.id}>
+                              <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
+                              <td className="px-4 py-2">{assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId}</td>
+                              <td className="px-4 py-2">{typeof s.grade === 'number' ? s.grade : '-'}</td>
+                              <td className="px-4 py-2 capitalize">{s.status}</td>
+                              <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 text-sm">No graded submissions yet.</div>
+                  )
                 )}
               </TabsContent>
             </Tabs>
@@ -894,6 +1131,68 @@ export default function TeacherCourseDetail() {
                 setGradeDialogOpen(false);
               } catch { toast.error('Failed to update grade'); }
             }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grade Calculation Dialog */}
+      <Dialog open={gradeCalculationDialogOpen} onOpenChange={setGradeCalculationDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Calculate Final Grade</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedStudentForGrade && (
+              <div>
+                <Label>Student</Label>
+                <div className="text-sm text-gray-600">
+                  {studentNames[selectedStudentForGrade.studentId] || selectedStudentForGrade.studentId}
+                </div>
+              </div>
+            )}
+            <div>
+              <Label>Calculation Method</Label>
+              <Select value={gradeCalculationMethod} onValueChange={(v) => setGradeCalculationMethod(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weighted_average">Weighted Average</SelectItem>
+                  <SelectItem value="simple_average">Simple Average</SelectItem>
+                  <SelectItem value="manual">Manual Entry</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {gradeCalculationMethod === 'manual' && (
+              <div>
+                <Label htmlFor="manual-grade">Final Grade (0-100)</Label>
+                <Input
+                  id="manual-grade"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={manualGrade}
+                  onChange={(e) => setManualGrade(Number(e.target.value))}
+                  placeholder="Enter final grade"
+                />
+              </div>
+            )}
+            {gradeCalculationMethod !== 'manual' && selectedStudentForGrade && (
+              <div className="text-sm text-gray-600">
+                <p>This will calculate the final grade based on all graded assignments for this student.</p>
+                <p className="mt-2">
+                  Method: {gradeCalculationMethod === 'weighted_average' ? 'Weighted Average' : 'Simple Average'}
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGradeCalculationDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={calculateFinalGrade} className="bg-blue-600 hover:bg-blue-700">
+              {gradeCalculationMethod === 'manual' ? 'Save Grade' : 'Calculate Grade'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

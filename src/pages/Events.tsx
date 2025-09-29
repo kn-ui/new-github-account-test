@@ -179,8 +179,8 @@ const EventsPage = () => {
       toast.error('Title is required');
       return;
     }
-    if (!editForm.description || editForm.description.trim().length < 500) {
-      toast.error('Description must be at least 500 characters long');
+    if (!editForm.description || editForm.description.trim().length === 0) {
+      toast.error('Description is required');
       return;
     }
     if (!editForm.type || editForm.type.trim().length === 0) {
@@ -224,8 +224,8 @@ const EventsPage = () => {
         toast.error('Title is required');
         return;
       }
-      if (!createForm.description || createForm.description.trim().length < 500) {
-        toast.error('Description must be at least 500 characters long');
+      if (!createForm.description || createForm.description.trim().length === 0) {
+        toast.error('Description is required');
         return;
       }
       if (!createForm.type || createForm.type.trim().length === 0) {
@@ -646,12 +646,11 @@ const EventsPage = () => {
               <p className="text-xs text-gray-500 mt-1">{(createForm.location || '').length}/150 characters</p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.description_label')} (500-1,000 characters)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
               <Textarea 
                 value={String(createForm.description || '')} 
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value.slice(0, 1000) } as any)}
                 placeholder="Event description..."
-                minLength={500}
                 maxLength={1000}
                 rows={4}
               />
@@ -752,11 +751,10 @@ const EventsPage = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.description_label')} (500-1,000 characters)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
               <Textarea 
                 value={String(editForm.description || '')} 
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value.slice(0, 1000) } as any)}
-                minLength={500}
                 maxLength={1000}
                 rows={4}
               />

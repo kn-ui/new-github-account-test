@@ -312,8 +312,8 @@ export default function CourseManager() {
       toast.error('Title is required');
       return;
     }
-    if (!editForm.description || editForm.description.trim().length < 200) {
-      toast.error('Description must be at least 200 characters long');
+    if (!editForm.description || editForm.description.trim().length === 0) {
+      toast.error('Description is required');
       return;
     }
     if (!editForm.category || editForm.category.trim().length === 0) {
@@ -328,8 +328,8 @@ export default function CourseManager() {
       toast.error('Max students must be at least 1');
       return;
     }
-    if (!editForm.syllabus || editForm.syllabus.trim().length < 10000) {
-      toast.error('Syllabus must be at least 10,000 characters long');
+    if (!editForm.syllabus || editForm.syllabus.trim().length === 0) {
+      toast.error('Syllabus is required');
       return;
     }
     
@@ -377,8 +377,8 @@ export default function CourseManager() {
         toast.error('Title is required');
         return;
       }
-      if (!createForm.description || createForm.description.trim().length < 200) {
-        toast.error('Description must be at least 200 characters long');
+      if (!createForm.description || createForm.description.trim().length === 0) {
+        toast.error('Description is required');
         return;
       }
       if (!createForm.category || createForm.category.trim().length === 0) {
@@ -393,8 +393,8 @@ export default function CourseManager() {
         toast.error('Max students must be at least 1');
         return;
       }
-      if (!createForm.syllabus || createForm.syllabus.trim().length < 10000) {
-        toast.error('Syllabus must be at least 10,000 characters long');
+      if (!createForm.syllabus || createForm.syllabus.trim().length === 0) {
+        toast.error('Syllabus is required');
         return;
       }
       
@@ -787,23 +787,21 @@ export default function CourseManager() {
               />
             </div>
             <div>
-              <Label htmlFor="desc">Description (200-300 characters)</Label>
+              <Label htmlFor="desc">Description</Label>
               <Textarea 
                 id="desc" 
                 value={editForm.description || ''} 
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value.slice(0, 300) })}
-                minLength={200}
                 maxLength={300}
               />
               <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/300 characters</p>
             </div>
             <div>
-              <Label htmlFor="syllabus">Syllabus (10,000-25,000 characters)</Label>
+              <Label htmlFor="syllabus">Syllabus</Label>
               <Textarea 
                 id="syllabus" 
                 value={editForm.syllabus || ''} 
                 onChange={(e) => setEditForm({ ...editForm, syllabus: e.target.value.slice(0, 25000) })}
-                minLength={10000}
                 maxLength={25000}
                 rows={6}
               />
@@ -893,11 +891,10 @@ export default function CourseManager() {
                     <p className="text-xs text-gray-500 mt-1">{(createForm.category || '').length}/50 characters</p>
                   </div>
                   <div>
-                    <Label>Description (200-300 characters)</Label>
+                    <Label>Description</Label>
                     <Textarea 
                       value={String(createForm.description || '')} 
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value.slice(0, 300) } as any)}
-                      minLength={200}
                       maxLength={300}
                     />
                     <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/300 characters</p>
@@ -935,11 +932,10 @@ export default function CourseManager() {
                     />
                   </div>
                   <div>
-                    <Label>Syllabus (10,000-25,000 characters)</Label>
+                    <Label>Syllabus</Label>
                     <Textarea 
                       value={String(createForm.syllabus || '')} 
                       onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value.slice(0, 25000) } as any)}
-                      minLength={10000}
                       maxLength={25000}
                       rows={6}
                     />

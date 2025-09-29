@@ -49,6 +49,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
@@ -172,6 +173,29 @@ const EventsPage = () => {
 
   const saveEdit = async () => {
     if (!selectedEvent) return;
+    
+    // Validation for required fields
+    if (!editForm.title || editForm.title.trim().length < 75) {
+      toast.error('Title must be at least 75 characters long');
+      return;
+    }
+    if (!editForm.description || editForm.description.trim().length < 500) {
+      toast.error('Description must be at least 500 characters long');
+      return;
+    }
+    if (!editForm.type || editForm.type.trim().length === 0) {
+      toast.error('Event type is required');
+      return;
+    }
+    if (!editForm.location || editForm.location.trim().length === 0) {
+      toast.error('Location is required');
+      return;
+    }
+    if (!editForm.time || editForm.time.trim().length === 0) {
+      toast.error('Time is required');
+      return;
+    }
+    
     try {
       const date = editForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
@@ -195,6 +219,28 @@ const EventsPage = () => {
 
   const submitCreate = async () => {
     try {
+      // Validation for required fields
+      if (!createForm.title || createForm.title.trim().length < 75) {
+        toast.error('Title must be at least 75 characters long');
+        return;
+      }
+      if (!createForm.description || createForm.description.trim().length < 500) {
+        toast.error('Description must be at least 500 characters long');
+        return;
+      }
+      if (!createForm.type || createForm.type.trim().length === 0) {
+        toast.error('Event type is required');
+        return;
+      }
+      if (!createForm.location || createForm.location.trim().length === 0) {
+        toast.error('Location is required');
+        return;
+      }
+      if (!createForm.time || createForm.time.trim().length === 0) {
+        toast.error('Time is required');
+        return;
+      }
+      
       const date = createForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 

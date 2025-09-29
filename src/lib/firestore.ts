@@ -320,6 +320,16 @@ export const userService = {
     return result;
   },
 
+  async getTeachers(): Promise<FirestoreUser[]> {
+    const q = query(
+      collections.users(),
+      where('role', '==', 'teacher'),
+      where('isActive', '==', true)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
+  },
+
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     if (!userData.uid) {

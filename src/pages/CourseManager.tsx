@@ -64,6 +64,8 @@ export default function CourseManager() {
     syllabus: '',
     isActive: false,
   });
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [selectedInstructor, setSelectedInstructor] = useState<string>('');
 
   // Calculate stats
   const totalCourses = courses.length;
@@ -74,6 +76,7 @@ export default function CourseManager() {
 
   useEffect(() => {
     loadCourses();
+    loadTeachers();
   }, [showArchived]);
 
   const loadCourses = async () => {
@@ -98,6 +101,16 @@ export default function CourseManager() {
       toast.error('Failed to load courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTeachers = async () => {
+    try {
+      const teachersList = await userService.getTeachers();
+      setTeachers(teachersList);
+    } catch (error) {
+      console.error('Error loading teachers:', error);
+      toast.error('Failed to load teachers');
     }
   };
 
@@ -332,6 +345,16 @@ export default function CourseManager() {
       toast.error('Syllabus is required');
       return;
     }
+    if (!editForm.instructor) {
+      toast.error('Please select an instructor');
+      return;
+    }
+
+    const selectedTeacher = teachers.find(t => t.uid === editForm.instructor);
+    if (!selectedTeacher) {
+      toast.error('Selected instructor not found');
+      return;
+    }
     
     try {
       await courseService.updateCourse(selectedCourse.id, {
@@ -342,6 +365,8 @@ export default function CourseManager() {
         maxStudents: editForm.maxStudents,
         syllabus: editForm.syllabus,
         isActive: editForm.isActive,
+        instructor: editForm.instructor,
+        instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
       } as Partial<FirestoreCourse>);
       toast.success('Course updated');
       setIsEditOpen(false);
@@ -356,6 +381,7 @@ export default function CourseManager() {
     setCreateForm({
       title: '', description: '', category: '', duration: 8 as any, maxStudents: 30 as any, syllabus: '', isActive: userProfile?.role === 'admin',
     } as any);
+    setSelectedInstructor('');
     setCreateStep(1);
     setIsCreateOpen(true);
   };
@@ -397,7 +423,17 @@ export default function CourseManager() {
         toast.error('Syllabus is required');
         return;
       }
-      
+      if (!selectedInstructor) {
+        toast.error('Please select an instructor');
+        return;
+      }
+
+      const selectedTeacher = teachers.find(t => t.uid === selectedInstructor);
+      if (!selectedTeacher) {
+        toast.error('Selected instructor not found');
+        return;
+      }
+
       await courseService.createCourse({
         title: String(createForm.title || ''),
         description: String(createForm.description || ''),
@@ -406,8 +442,8 @@ export default function CourseManager() {
         maxStudents: Number(createForm.maxStudents || 1),
         syllabus: String(createForm.syllabus || ''),
         isActive: !!createForm.isActive,
-        instructor: currentUser.uid,
-        instructorName: userProfile.displayName || userProfile.email || 'Instructor',
+        instructor: selectedInstructor,
+        instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
       } as any);
       toast.success('Course created');
       setIsCreateOpen(false);
@@ -787,6 +823,24 @@ export default function CourseManager() {
               />
             </div>
             <div>
+              <Label htmlFor="instructor">Instructor</Label>
+              <Select 
+                value={editForm.instructor || ''} 
+                onValueChange={(value) => setEditForm({ ...editForm, instructor: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an instructor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((teacher) => (
+                    <SelectItem key={teacher.uid} value={teacher.uid}>
+                      {teacher.displayName || teacher.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="desc">Description</Label>
               <Textarea 
                 id="desc" 
@@ -932,6 +986,21 @@ export default function CourseManager() {
                     />
                   </div>
                   <div>
+                    <Label>Instructor</Label>
+                    <Select value={selectedInstructor} onValueChange={setSelectedInstructor}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an instructor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.uid} value={teacher.uid}>
+                            {teacher.displayName || teacher.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label>Syllabus</Label>
                     <Textarea 
                       value={String(createForm.syllabus || '')} 
@@ -949,6 +1018,7 @@ export default function CourseManager() {
                   <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
                   <div><span className="font-medium">Duration:</span> {Number(createForm.duration || 1)} hours</div>
                   <div><span className="font-medium">Max Students:</span> {Number(createForm.maxStudents || 1)}</div>
+                  <div><span className="font-medium">Instructor:</span> {teachers.find(t => t.uid === selectedInstructor)?.displayName || teachers.find(t => t.uid === selectedInstructor)?.email || 'Not selected'}</div>
                   <div><span className="font-medium">Active:</span> {userProfile?.role === 'admin' ? 'Yes' : 'No (awaiting approval)'}</div>
                 </div>
               )}

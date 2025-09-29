@@ -306,6 +306,33 @@ export default function CourseManager() {
 
   const saveEdit = async () => {
     if (!selectedCourse) return;
+    
+    // Validation for required fields
+    if (!editForm.title || editForm.title.trim().length < 75) {
+      toast.error('Title must be at least 75 characters long');
+      return;
+    }
+    if (!editForm.description || editForm.description.trim().length < 200) {
+      toast.error('Description must be at least 200 characters long');
+      return;
+    }
+    if (!editForm.category || editForm.category.trim().length === 0) {
+      toast.error('Category is required');
+      return;
+    }
+    if (!editForm.duration || Number(editForm.duration) < 1) {
+      toast.error('Duration must be at least 1 hour');
+      return;
+    }
+    if (!editForm.maxStudents || Number(editForm.maxStudents) < 1) {
+      toast.error('Max students must be at least 1');
+      return;
+    }
+    if (!editForm.syllabus || editForm.syllabus.trim().length < 10000) {
+      toast.error('Syllabus must be at least 10,000 characters long');
+      return;
+    }
+    
     try {
       await courseService.updateCourse(selectedCourse.id, {
         title: editForm.title,
@@ -344,6 +371,33 @@ export default function CourseManager() {
         toast.error('Only administrators can create courses.');
         return;
       }
+      
+      // Validation for required fields
+      if (!createForm.title || createForm.title.trim().length < 75) {
+        toast.error('Title must be at least 75 characters long');
+        return;
+      }
+      if (!createForm.description || createForm.description.trim().length < 200) {
+        toast.error('Description must be at least 200 characters long');
+        return;
+      }
+      if (!createForm.category || createForm.category.trim().length === 0) {
+        toast.error('Category is required');
+        return;
+      }
+      if (!createForm.duration || Number(createForm.duration) < 1) {
+        toast.error('Duration must be at least 1 hour');
+        return;
+      }
+      if (!createForm.maxStudents || Number(createForm.maxStudents) < 1) {
+        toast.error('Max students must be at least 1');
+        return;
+      }
+      if (!createForm.syllabus || createForm.syllabus.trim().length < 10000) {
+        toast.error('Syllabus must be at least 10,000 characters long');
+        return;
+      }
+      
       await courseService.createCourse({
         title: String(createForm.title || ''),
         description: String(createForm.description || ''),
@@ -681,7 +735,7 @@ export default function CourseManager() {
               Edit Course
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-2 scrollbar-thin">
             <div>
               <Label htmlFor="title">Title (75-100 characters)</Label>
               <Input 

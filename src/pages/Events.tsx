@@ -186,6 +186,7 @@ const EventsPage = () => {
         maxAttendees: editForm.maxAttendees,
       });
       setIsEditOpen(false);
+      setSelectedEvent(null); // Clear selected event to prevent view detail popup
       fetchEvents();
     } catch (e) {
       console.error(e);

@@ -403,10 +403,10 @@ const EventsPage = () => {
                             <CalendarIcon className="h-8 w-8 text-white" />
                           </div>
 
-                          <div className="flex-1 min-w-0 max-w-2xl">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900 truncate flex-1 max-w-full">
-                                {event.title && event.title.length > 40 ? event.title.substring(0, 40) + '...' : event.title}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-lg font-semibold text-gray-900 truncate flex-1">
+                                {event.title && event.title.length > 25 ? event.title.substring(0, 25) + '...' : event.title}
                               </h3>
 
                               <Badge 
@@ -414,11 +414,11 @@ const EventsPage = () => {
                                 className="text-xs flex-shrink-0"
                               >
 
-                                {event.type && event.type.length > 15 ? event.type.substring(0, 15) + '...' : event.type}
+                                {event.type && event.type.length > 10 ? event.type.substring(0, 10) + '...' : event.type}
                               </Badge>
                             </div>
-                            <p className="text-gray-600 mb-3 line-clamp-2 max-w-full">
-                              {event.description && event.description.length > 100 ? event.description.substring(0, 100) + '...' : event.description}
+                            <p className="text-gray-600 mb-2 text-sm line-clamp-1">
+                              {event.description && event.description.length > 50 ? event.description.substring(0, 50) + '...' : event.description}
                             </p>
 
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">

@@ -511,22 +511,22 @@ export default function CourseManager() {
                         <BookOpen className="h-8 w-8 text-white" />
                       </div>
 
-                      <div className="flex-1 min-w-0 max-w-2xl">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate max-w-full">{course.title.length > 50 ? course.title.substring(0, 50) + '...' : course.title}</h3>
-                        <p className="text-gray-600 mb-3 line-clamp-2 max-w-full">{course.description.length > 100 ? course.description.substring(0, 100) + '...' : course.description}</p>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1 min-w-0">
-                            <Users className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate max-w-[150px]">Instructor: {course.instructorName.length > 20 ? course.instructorName.substring(0, 20) + '...' : course.instructorName}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">{course.title.length > 25 ? course.title.substring(0, 25) + '...' : course.title}</h3>
+                        <p className="text-gray-600 mb-3 line-clamp-2">{course.description.length > 50 ? course.description.substring(0, 50) + '...' : course.description}</p>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span className="truncate max-w-[80px]">{course.instructorName.length > 10 ? course.instructorName.substring(0, 10) + '...' : course.instructorName}</span>
                           </span>
-                          <span className="flex items-center gap-1 min-w-0">
-                            <Target className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate max-w-[100px]">{course.category.length > 15 ? course.category.substring(0, 15) + '...' : course.category}</span>
+                          <span className="flex items-center gap-1">
+                            <Target className="h-4 w-4" />
+                            <span className="truncate max-w-[60px]">{course.category.length > 8 ? course.category.substring(0, 8) + '...' : course.category}</span>
 
                           </span>
                           <span className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />
-                            {course.duration} hours
+                            {course.duration}h
                           </span>
                         </div>
                       </div>
@@ -674,14 +674,14 @@ export default function CourseManager() {
 
       {/* Edit Course Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="h-5 w-5 text-green-600" />
               Edit Course
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
             <div>
               <Label htmlFor="title">Title (75-100 characters)</Label>
               <Input 

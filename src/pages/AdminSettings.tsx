@@ -252,18 +252,14 @@ export default function AdminSettings() {
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={activity.id} className="flex items-center p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       {getActivityIcon(activity.type)}
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium">{activity.details}</p>
                         <p className="text-xs text-gray-500">{activity.user} • {activity.timestamp.toLocaleString()}</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
                   </div>
                 ))}
                 <Button variant="outline" className="w-full">

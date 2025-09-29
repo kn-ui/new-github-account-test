@@ -445,9 +445,9 @@ const EventsPage = () => {
                                 </span>
                               )}
                               {event.location && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="h-4 w-4" />
-                                  {event.location}
+                                <span className="flex items-center gap-1 min-w-0">
+                                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate max-w-[200px]">{event.location}</span>
                                 </span>
                               )}
                               <span className="flex items-center gap-1">
@@ -538,8 +538,14 @@ const EventsPage = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
-              <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')} (75-100 characters)</label>
+              <Input 
+                value={String(createForm.title || '')} 
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value.slice(0, 100) } as any)}
+                minLength={75}
+                maxLength={100}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(createForm.title || '').length}/100 characters</p>
             </div>
             <div>
               <DualDateInput
@@ -559,29 +565,37 @@ const EventsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')} (max 50 characters)</label>
                 <Input 
                   value={String(createForm.type || '')} 
-                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value.slice(0, 50) } as any)}
                   placeholder="e.g., meeting, conference, workshop"
+                  maxLength={50}
                 />
+                <p className="text-xs text-gray-500 mt-1">{(createForm.type || '').length}/50 characters</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.location_label')}</label>
+              <label className="block text-sm font-medium mb-1">{t('events.location_label')} (max 150 characters)</label>
               <Input 
                 value={String(createForm.location || '')} 
-                onChange={(e) => setCreateForm({ ...createForm, location: e.target.value } as any)}
+                onChange={(e) => setCreateForm({ ...createForm, location: e.target.value.slice(0, 150) } as any)}
                 placeholder="e.g., Main Hall, Room 101"
+                maxLength={150}
               />
+              <p className="text-xs text-gray-500 mt-1">{(createForm.location || '').length}/150 characters</p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')} (500-1,000 characters)</label>
               <Textarea 
                 value={String(createForm.description || '')} 
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value.slice(0, 1000) } as any)}
                 placeholder="Event description..."
+                minLength={500}
+                maxLength={1000}
+                rows={4}
               />
+              <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/1,000 characters</p>
             </div>
           </div>
           <DialogFooter>
@@ -600,13 +614,27 @@ const EventsPage = () => {
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-2 text-sm text-gray-700">
-              <div><span className="font-medium">{t('events.title_label')}:</span> {selectedEvent.title}</div>
+              <div className="flex gap-2">
+                <span className="font-medium flex-shrink-0">{t('events.title_label')}:</span> 
+                <span className="break-words">{selectedEvent.title}</span>
+              </div>
               <div><span className="font-medium">{t('events.date_label')}:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
               {selectedEvent.time && (<div><span className="font-medium">{t('events.time_label')}:</span> {selectedEvent.time}</div>)}
-              {selectedEvent.location && (<div><span className="font-medium">{t('events.location_label')}:</span> {selectedEvent.location}</div>)}
-              <div><span className="font-medium">{t('events.type_label')}:</span> {selectedEvent.type}</div>
+              {selectedEvent.location && (
+                <div className="flex gap-2">
+                  <span className="font-medium flex-shrink-0">{t('events.location_label')}:</span> 
+                  <span className="break-words">{selectedEvent.location}</span>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <span className="font-medium flex-shrink-0">{t('events.type_label')}:</span> 
+                <span className="break-words">{selectedEvent.type}</span>
+              </div>
               <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
-              <div><span className="font-medium">{t('events.description_label')}:</span> {selectedEvent.description}</div>
+              <div className="flex gap-2">
+                <span className="font-medium flex-shrink-0">{t('events.description_label')}:</span> 
+                <span className="break-words max-h-40 overflow-y-auto block">{selectedEvent.description}</span>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -622,8 +650,14 @@ const EventsPage = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
-              <Input value={String(editForm.title || '')} onChange={(e) => setEditForm({ ...editForm, title: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')} (75-100 characters)</label>
+              <Input 
+                value={String(editForm.title || '')} 
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value.slice(0, 100) } as any)}
+                minLength={75}
+                maxLength={100}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.title || '').length}/100 characters</p>
             </div>
             <div>
               <DualDateInput
@@ -639,18 +673,35 @@ const EventsPage = () => {
                 <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
-                <Input value={String(editForm.type || '')} onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)} />
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')} (max 50 characters)</label>
+                <Input 
+                  value={String(editForm.type || '')} 
+                  onChange={(e) => setEditForm({ ...editForm, type: e.target.value.slice(0, 50) } as any)}
+                  maxLength={50}
+                />
+                <p className="text-xs text-gray-500 mt-1">{(editForm.type || '').length}/50 characters</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.location_label')}</label>
-              <Input value={String(editForm.location || '')} onChange={(e) => setEditForm({ ...editForm, location: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">{t('events.location_label')} (max 150 characters)</label>
+              <Input 
+                value={String(editForm.location || '')} 
+                onChange={(e) => setEditForm({ ...editForm, location: e.target.value.slice(0, 150) } as any)}
+                maxLength={150}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.location || '').length}/150 characters</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
-              <Textarea value={String(editForm.description || '')} onChange={(e) => setEditForm({ ...editForm, description: e.target.value } as any)} />
+              <label className="block text-sm font-medium mb-1">{t('events.description_label')} (500-1,000 characters)</label>
+              <Textarea 
+                value={String(editForm.description || '')} 
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value.slice(0, 1000) } as any)}
+                minLength={500}
+                maxLength={1000}
+                rows={4}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/1,000 characters</p>
             </div>
           </div>
           <DialogFooter>

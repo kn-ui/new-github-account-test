@@ -229,7 +229,7 @@ export default function Updates() {
                         <span>{b.createdAt.toDate().toLocaleDateString()}</span>
                       </div>
                       {(userProfile?.role === 'teacher' || userProfile?.role === 'admin') && 
-                       (b.authorId === currentUser?.uid || userProfile?.role === 'admin') && (
+                       b.authorId === currentUser?.uid && (
                         <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"

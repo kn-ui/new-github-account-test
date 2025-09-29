@@ -201,26 +201,23 @@ export default function TeacherCourseDetail() {
       // Check if grade already exists
       const existingGrade = await gradeService.getGradeByStudentAndCourse(courseId, selectedStudentForGrade.studentId);
       
+      const gradeData = {
+        finalGrade,
+        letterGrade,
+        gradePoints,
+        calculatedBy: userProfile.id || userProfile.uid || 'unknown',
+        calculationMethod: gradeCalculationMethod,
+        ...(assignmentGrades.length > 0 && { assignmentGrades })
+      };
+
       if (existingGrade) {
-        await gradeService.updateGrade(existingGrade.id, {
-          finalGrade,
-          letterGrade,
-          gradePoints,
-          calculatedBy: userProfile.id || userProfile.uid || 'unknown',
-          calculationMethod: gradeCalculationMethod,
-          assignmentGrades: assignmentGrades.length > 0 ? assignmentGrades : undefined,
-        });
+        await gradeService.updateGrade(existingGrade.id, gradeData);
         toast.success('Final grade updated');
       } else {
         await gradeService.createGrade({
           courseId,
           studentId: selectedStudentForGrade.studentId,
-          finalGrade,
-          letterGrade,
-          gradePoints,
-          calculatedBy: userProfile.id || userProfile.uid || 'unknown',
-          calculationMethod: gradeCalculationMethod,
-          assignmentGrades: assignmentGrades.length > 0 ? assignmentGrades : undefined,
+          ...gradeData
         });
         toast.success('Final grade calculated and saved');
       }

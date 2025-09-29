@@ -175,8 +175,8 @@ const EventsPage = () => {
     if (!selectedEvent) return;
     
     // Validation for required fields
-    if (!editForm.title || editForm.title.trim().length < 75) {
-      toast.error('Title must be at least 75 characters long');
+    if (!editForm.title || editForm.title.trim().length === 0) {
+      toast.error('Title is required');
       return;
     }
     if (!editForm.description || editForm.description.trim().length < 500) {
@@ -220,8 +220,8 @@ const EventsPage = () => {
   const submitCreate = async () => {
     try {
       // Validation for required fields
-      if (!createForm.title || createForm.title.trim().length < 75) {
-        toast.error('Title must be at least 75 characters long');
+      if (!createForm.title || createForm.title.trim().length === 0) {
+        toast.error('Title is required');
         return;
       }
       if (!createForm.description || createForm.description.trim().length < 500) {
@@ -599,11 +599,10 @@ const EventsPage = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.title_label')} (75-100 characters)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input 
                 value={String(createForm.title || '')} 
                 onChange={(e) => setCreateForm({ ...createForm, title: e.target.value.slice(0, 100) } as any)}
-                minLength={75}
                 maxLength={100}
               />
               <p className="text-xs text-gray-500 mt-1">{(createForm.title || '').length}/100 characters</p>
@@ -711,11 +710,10 @@ const EventsPage = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t('events.title_label')} (75-100 characters)</label>
+              <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input 
                 value={String(editForm.title || '')} 
                 onChange={(e) => setEditForm({ ...editForm, title: e.target.value.slice(0, 100) } as any)}
-                minLength={75}
                 maxLength={100}
               />
               <p className="text-xs text-gray-500 mt-1">{(editForm.title || '').length}/100 characters</p>

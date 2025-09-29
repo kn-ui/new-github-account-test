@@ -137,26 +137,22 @@ export default function TeacherCourseDetail() {
   const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
   const [manualGrade, setManualGrade] = useState<number>(0);
   const averageGrade = useMemo(() => {
-    if (gradeViewMode === 'final') {
-      if (finalGrades.length === 0) return 0;
-      const sum = finalGrades.reduce((acc, g) => acc + g.finalGrade, 0);
-      return Math.round((sum / finalGrades.length) * 10) / 10;
-    } else {
-      const graded = submissions.filter(s => typeof s.grade === 'number');
-      if (graded.length === 0) return 0;
-      const sum = graded.reduce((acc, s: any) => acc + (s.grade || 0), 0);
-      return Math.round((sum / graded.length) * 10) / 10;
-    }
-  }, [submissions, finalGrades, gradeViewMode]);
+    if (finalGrades.length === 0) return 0;
+    const sum = finalGrades.reduce((acc, g) => acc + g.finalGrade, 0);
+    return Math.round((sum / finalGrades.length) * 10) / 10;
+  }, [finalGrades]);
 
-  const openGradeCalculation = (student: FirestoreEnrollment) => {
-    setSelectedStudentForGrade(student);
+  const openGradeCalculation = (student?: FirestoreEnrollment) => {
+    setSelectedStudentForGrade(student || null);
     setGradeCalculationDialogOpen(true);
     setManualGrade(0);
   };
 
   const calculateFinalGrade = async () => {
-    if (!selectedStudentForGrade || !courseId || !userProfile) return;
+    if (!selectedStudentForGrade || !courseId || !userProfile) {
+      toast.error('Please select a student');
+      return;
+    }
 
     try {
       let finalGrade: number;
@@ -563,16 +559,8 @@ export default function TeacherCourseDetail() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
-                          // Show students without final grades
-                          const studentsWithoutGrades = enrollments.filter(e => 
-                            !finalGrades.some(g => g.studentId === e.studentId)
-                          );
-                          if (studentsWithoutGrades.length === 0) {
-                            toast.info('All students have final grades');
-                            return;
-                          }
-                          // For now, just show first student without grade
-                          openGradeCalculation(studentsWithoutGrades[0]);
+                          setSelectedStudentForGrade(null);
+                          setGradeCalculationDialogOpen(true);
                         }}
                       >
                         Calculate Grades
@@ -616,60 +604,56 @@ export default function TeacherCourseDetail() {
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Class Average</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{averageGrade}</div></CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Highest Grade</CardTitle></CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {gradeViewMode === 'final' 
-                          ? (finalGrades.length > 0 ? Math.max(...finalGrades.map(g => g.finalGrade)) : 0)
-                          : (Math.max(0, ...submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number)) || 0)
-                        }
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Lowest Grade</CardTitle></CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {gradeViewMode === 'final' 
-                          ? (finalGrades.length > 0 ? Math.min(...finalGrades.map(g => g.finalGrade)) : 0)
-                          : ((submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number).sort((a,b)=>a-b)[0]) ?? 0)
-                        }
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="bg-white border rounded p-3">
-                  <div className="text-sm font-medium mb-2">Grade distribution</div>
-                  {(() => {
-                    const grades = gradeViewMode === 'final' 
-                      ? finalGrades.map(g => g.finalGrade)
-                      : submissions.filter(s => typeof s.grade==='number').map(s => s.grade as number);
-                    const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
-                    grades.forEach(g => {
-                      if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
-                    });
-                    const items = Object.entries(dist);
-                    return (
-                      <div className="grid grid-cols-5 gap-2">
-                        {items.map(([k,v]) => (
-                          <div key={k} className="text-center">
-                            <div className="text-xs text-gray-500 mb-1">{k}</div>
-                            <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
-                              <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
-                            </div>
-                            <div className="text-xs mt-1">{v} students</div>
+                {gradeViewMode === 'final' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Class Average</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{averageGrade}</div></CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Highest Grade</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">
+                            {finalGrades.length > 0 ? Math.max(...finalGrades.map(g => g.finalGrade)) : 0}
                           </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Lowest Grade</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">
+                            {finalGrades.length > 0 ? Math.min(...finalGrades.map(g => g.finalGrade)) : 0}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <div className="bg-white border rounded p-3">
+                      <div className="text-sm font-medium mb-2">Grade distribution</div>
+                      {(() => {
+                        const grades = finalGrades.map(g => g.finalGrade);
+                        const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
+                        grades.forEach(g => {
+                          if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
+                        });
+                        const items = Object.entries(dist);
+                        return (
+                          <div className="grid grid-cols-5 gap-2">
+                            {items.map(([k,v]) => (
+                              <div key={k} className="text-center">
+                                <div className="text-xs text-gray-500 mb-1">{k}</div>
+                                <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
+                                  <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
+                                </div>
+                                <div className="text-xs mt-1">{v} students</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                )}
                 {gradeViewMode === 'final' ? (
                   finalGrades.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -1142,14 +1126,27 @@ export default function TeacherCourseDetail() {
             <DialogTitle>Calculate Final Grade</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedStudentForGrade && (
-              <div>
-                <Label>Student</Label>
-                <div className="text-sm text-gray-600">
-                  {studentNames[selectedStudentForGrade.studentId] || selectedStudentForGrade.studentId}
-                </div>
-              </div>
-            )}
+            <div>
+              <Label>Student</Label>
+              <Select 
+                value={selectedStudentForGrade?.studentId || ''} 
+                onValueChange={(studentId) => {
+                  const student = enrollments.find(e => e.studentId === studentId);
+                  setSelectedStudentForGrade(student || null);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a student" />
+                </SelectTrigger>
+                <SelectContent>
+                  {enrollments.map(enrollment => (
+                    <SelectItem key={enrollment.studentId} value={enrollment.studentId}>
+                      {studentNames[enrollment.studentId] || enrollment.studentId}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Calculation Method</Label>
               <Select value={gradeCalculationMethod} onValueChange={(v) => setGradeCalculationMethod(v as any)}>

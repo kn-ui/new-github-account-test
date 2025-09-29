@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useI18n } from '@/contexts/I18nContext';
-import { userService, courseService, eventService } from '@/lib/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Users, 
-  BookOpen, 
-  Calendar, 
-  Bell, 
-  Shield, 
-  BarChart3, 
-  Settings,
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/I18nContext";
+import { courseService, eventService, userService } from "@/lib/firestore";
+import {
   Activity,
-  Eye,
-  Download
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Bell,
+  BookOpen,
+  Calendar,
+  Download,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminSettings() {
   const { t } = useI18n();
@@ -32,103 +36,117 @@ export default function AdminSettings() {
     const loadSettingsData = async () => {
       try {
         setLoading(true);
-        
+
         if (currentUser?.uid) {
           // Load basic stats
           const [users, courses, events] = await Promise.all([
             userService.getUsers(1000),
             courseService.getCourses(1000),
-            eventService.getEvents(1000)
+            eventService.getEvents(1000),
           ]);
 
           setStats({
             totalUsers: users.length,
             totalCourses: courses.length,
             totalEvents: events.length,
-            activeUsers: users.filter(u => u.isActive).length,
-            pendingCourses: courses.filter(c => !c.isActive).length
+            activeUsers: users.filter((u) => u.isActive).length,
+            pendingCourses: courses.filter((c) => !c.isActive).length,
           });
 
           // Generate real activity data based on recent users and courses
           const recentUsers = users.slice(0, 5);
           const recentCourses = courses.slice(0, 5);
-          
+
           const activities: any[] = [];
-          
+
           // Add recent user registrations
           recentUsers.forEach((user, index) => {
             if (user.createdAt) {
               activities.push({
                 id: `user-${index}`,
-                type: 'user_registered',
+                type: "user_registered",
                 user: user.email,
-                timestamp: user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt.seconds * 1000),
-                details: `New ${user.role} registered: ${user.displayName || user.email}`
+                timestamp: user.createdAt.toDate
+                  ? user.createdAt.toDate()
+                  : new Date(user.createdAt.seconds * 1000),
+                details: `New ${user.role} registered: ${
+                  user.displayName || user.email
+                }`,
               });
             }
           });
-          
+
           // Add recent course creations
           recentCourses.forEach((course, index) => {
             if (course.createdAt) {
               activities.push({
                 id: `course-${index}`,
-                type: 'course_created',
+                type: "course_created",
                 user: course.instructorName,
-                timestamp: course.createdAt.toDate ? course.createdAt.toDate() : new Date(course.createdAt.seconds * 1000),
-                details: `Course created: ${course.title}`
+                timestamp: course.createdAt.toDate
+                  ? course.createdAt.toDate()
+                  : new Date(course.createdAt.seconds * 1000),
+                details: `Course created: ${course.title}`,
               });
             }
           });
-          
+
           // Sort by timestamp (most recent first)
-          activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          activities.sort(
+            (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+          );
           setRecentActivity(activities.slice(0, 10));
 
           // Generate real notifications based on system state
           const notificationList: any[] = [];
-          
+
           // Check for pending courses
-          const pendingCoursesCount = courses.filter(c => !c.isActive).length;
+          const pendingCoursesCount = courses.filter((c) => !c.isActive).length;
           if (pendingCoursesCount > 0) {
             notificationList.push({
-              id: 'pending-courses',
-              type: 'warning',
-              message: `${pendingCoursesCount} course${pendingCoursesCount > 1 ? 's' : ''} pending approval`,
-              timestamp: new Date()
+              id: "pending-courses",
+              type: "warning",
+              message: `${pendingCoursesCount} course${
+                pendingCoursesCount > 1 ? "s" : ""
+              } pending approval`,
+              timestamp: new Date(),
             });
           }
-          
+
           // Check for upcoming events
           if (events.length > 0) {
-            const upcomingEvents = events.filter(e => {
-              const eventDate = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+            const upcomingEvents = events.filter((e) => {
+              const eventDate = e.date?.toDate
+                ? e.date.toDate()
+                : new Date(e.date);
               return eventDate > new Date();
             }).length;
-            
+
             if (upcomingEvents > 0) {
               notificationList.push({
-                id: 'upcoming-events',
-                type: 'info',
-                message: `${upcomingEvents} upcoming event${upcomingEvents > 1 ? 's' : ''} scheduled`,
-                timestamp: new Date()
+                id: "upcoming-events",
+                type: "info",
+                message: `${upcomingEvents} upcoming event${
+                  upcomingEvents > 1 ? "s" : ""
+                } scheduled`,
+                timestamp: new Date(),
               });
             }
           }
-          
+
           // System health notification
           notificationList.push({
-            id: 'system-health',
-            type: 'success',
-            message: 'System is running smoothly',
-            timestamp: new Date()
+            id: "system-health",
+            type: "success",
+            message: "System is running smoothly",
+            timestamp: new Date(),
           });
-          
+
           setNotifications(notificationList);
         }
       } catch (error) {
-        console.error('Failed to load settings data:', error);
-        toast.error('Failed to load settings data');
+        console.error("Failed to load settings data:", error);
+        toast.error("Failed to load settings data");
       } finally {
         setLoading(false);
       }
@@ -139,20 +157,29 @@ export default function AdminSettings() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'user_login': return <Users className="h-4 w-4 text-blue-600" />;
-      case 'course_created': return <BookOpen className="h-4 w-4 text-green-600" />;
-      case 'user_registered': return <Users className="h-4 w-4 text-purple-600" />;
-      case 'system_backup': return <Settings className="h-4 w-4 text-gray-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      case "user_login":
+        return <Users className="h-4 w-4 text-blue-600" />;
+      case "course_created":
+        return <BookOpen className="h-4 w-4 text-green-600" />;
+      case "user_registered":
+        return <Users className="h-4 w-4 text-purple-600" />;
+      case "system_backup":
+        return <Settings className="h-4 w-4 text-gray-600" />;
+      default:
+        return <Activity className="h-4 w-4 text-gray-600" />;
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'warning': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'info': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'success': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "warning":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "info":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "success":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -161,7 +188,10 @@ export default function AdminSettings() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+            <div
+              key={i}
+              className="h-32 bg-gray-200 rounded-lg animate-pulse"
+            />
           ))}
         </div>
         <div className="h-64 bg-gray-200 rounded-lg animate-pulse" />
@@ -169,12 +199,14 @@ export default function AdminSettings() {
     );
   }
 
-  if (!userProfile || userProfile.role !== 'admin') {
+  if (!userProfile || userProfile.role !== "admin") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-xl mb-4">Access Denied</div>
-          <div className="text-gray-600">Only administrators can access system settings.</div>
+          <div className="text-gray-600">
+            Only administrators can access system settings.
+          </div>
         </div>
       </div>
     );
@@ -186,7 +218,9 @@ export default function AdminSettings() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
-          <p className="text-gray-600">Manage system configuration and monitor activity</p>
+          <p className="text-gray-600">
+            Manage system configuration and monitor activity
+          </p>
         </div>
       </div>
 
@@ -225,9 +259,7 @@ export default function AdminSettings() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalEvents || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Scheduled events
-            </p>
+            <p className="text-xs text-muted-foreground">Scheduled events</p>
           </CardContent>
         </Card>
       </div>
@@ -247,23 +279,29 @@ export default function AdminSettings() {
                 <Activity className="h-5 w-5" />
                 <span>Recent User Activity</span>
               </CardTitle>
-              <CardDescription>Monitor user actions and system events</CardDescription>
+              <CardDescription>
+                Monitor user actions and system events
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={activity.id}
+                    className="flex items-center p-3 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       {getActivityIcon(activity.type)}
-                      <div>
-                        <p className="text-sm font-medium">{activity.details}</p>
-                        <p className="text-xs text-gray-500">{activity.user} • {activity.timestamp.toLocaleString()}</p>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {activity.details}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {activity.user} •{" "}
+                          {activity.timestamp.toLocaleString()}
+                        </p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
                   </div>
                 ))}
                 <Button variant="outline" className="w-full">
@@ -282,15 +320,26 @@ export default function AdminSettings() {
                 <Bell className="h-5 w-5" />
                 <span>System Notifications</span>
               </CardTitle>
-              <CardDescription>Manage system alerts and notifications</CardDescription>
+              <CardDescription>
+                Manage system alerts and notifications
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {notifications.map((notification) => (
-                  <div key={notification.id} className={`p-3 rounded-lg border ${getNotificationColor(notification.type)}`}>
+                  <div
+                    key={notification.id}
+                    className={`p-3 rounded-lg border ${getNotificationColor(
+                      notification.type
+                    )}`}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{notification.message}</p>
-                      <span className="text-xs">{notification.timestamp.toLocaleString()}</span>
+                      <p className="text-sm font-medium">
+                        {notification.message}
+                      </p>
+                      <span className="text-xs">
+                        {notification.timestamp.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -310,7 +359,9 @@ export default function AdminSettings() {
                 <Shield className="h-5 w-5" />
                 <span>Role-Based Access Control</span>
               </CardTitle>
-              <CardDescription>Manage user permissions and roles</CardDescription>
+              <CardDescription>
+                Manage user permissions and roles
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -323,12 +374,16 @@ export default function AdminSettings() {
                   <div className="p-4 border rounded-lg">
                     <h4 className="font-medium mb-2">Teacher</h4>
                     <p className="text-sm text-gray-600">Course management</p>
-                    <Badge variant="secondary" className="mt-2">Limited</Badge>
+                    <Badge variant="secondary" className="mt-2">
+                      Limited
+                    </Badge>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <h4 className="font-medium mb-2">Student</h4>
                     <p className="text-sm text-gray-600">Course access only</p>
-                    <Badge variant="outline" className="mt-2">Restricted</Badge>
+                    <Badge variant="outline" className="mt-2">
+                      Restricted
+                    </Badge>
                   </div>
                 </div>
               </div>

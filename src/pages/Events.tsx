@@ -392,25 +392,35 @@ const EventsPage = () => {
 
             <div className="space-y-4">
               {filteredEvents.map((event) => (
-                <Card key={event.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6">
+
+                <Card key={event.id} className="shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-6 h-full">
+
                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
                           <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                             <CalendarIcon className="h-8 w-8 text-white" />
                           </div>
-                          <div className="flex-1 min-w-0">
+
+                          <div className="flex-1 min-w-0 max-w-2xl">
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900 truncate flex-1">{event.title}</h3>
+                              <h3 className="text-xl font-semibold text-gray-900 truncate flex-1 max-w-full">
+                                {event.title && event.title.length > 40 ? event.title.substring(0, 40) + '...' : event.title}
+                              </h3>
+
                               <Badge 
                                 variant={getTypeBadgeVariant(event.type)}
                                 className="text-xs flex-shrink-0"
                               >
-                                {event.type}
+
+                                {event.type && event.type.length > 15 ? event.type.substring(0, 15) + '...' : event.type}
                               </Badge>
                             </div>
-                            <p className="text-gray-600 mb-3 line-clamp-2 break-words">{event.description}</p>
+                            <p className="text-gray-600 mb-3 line-clamp-2 max-w-full">
+                              {event.description && event.description.length > 100 ? event.description.substring(0, 100) + '...' : event.description}
+                            </p>
+
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
@@ -447,7 +457,11 @@ const EventsPage = () => {
                               {event.location && (
                                 <span className="flex items-center gap-1 min-w-0">
                                   <MapPin className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate max-w-[200px]">{event.location}</span>
+
+                                  <span className="truncate max-w-[150px]">
+                                    {event.location.length > 20 ? event.location.substring(0, 20) + '...' : event.location}
+                                  </span>
+
                                 </span>
                               )}
                               <span className="flex items-center gap-1">

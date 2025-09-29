@@ -500,25 +500,29 @@ export default function CourseManager() {
         {/* Courses Grid */}
         <div className="grid gap-6">
           {filteredCourses.map((course) => (
-            <Card key={course.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6">
+
+            <Card key={course.id} className="shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <CardContent className="p-6 h-full">
+
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-4">
                       <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                         <BookOpen className="h-8 w-8 text-white" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">{course.title}</h3>
-                        <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+
+                      <div className="flex-1 min-w-0 max-w-2xl">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate max-w-full">{course.title.length > 50 ? course.title.substring(0, 50) + '...' : course.title}</h3>
+                        <p className="text-gray-600 mb-3 line-clamp-2 max-w-full">{course.description.length > 100 ? course.description.substring(0, 100) + '...' : course.description}</p>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                           <span className="flex items-center gap-1 min-w-0">
                             <Users className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">Instructor: {course.instructorName}</span>
+                            <span className="truncate max-w-[150px]">Instructor: {course.instructorName.length > 20 ? course.instructorName.substring(0, 20) + '...' : course.instructorName}</span>
                           </span>
                           <span className="flex items-center gap-1 min-w-0">
                             <Target className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">{course.category}</span>
+                            <span className="truncate max-w-[100px]">{course.category.length > 15 ? course.category.substring(0, 15) + '...' : course.category}</span>
+
                           </span>
                           <span className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />

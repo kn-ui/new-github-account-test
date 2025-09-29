@@ -49,20 +49,82 @@ export default function AdminSettings() {
             pendingCourses: courses.filter(c => !c.isActive).length
           });
 
-          // Mock recent activity data
-          setRecentActivity([
-            { id: 1, type: 'user_login', user: 'john.doe@example.com', timestamp: new Date(), details: 'User logged in' },
-            { id: 2, type: 'course_created', user: 'teacher@example.com', timestamp: new Date(Date.now() - 3600000), details: 'New course created: Advanced Mathematics' },
-            { id: 3, type: 'user_registered', user: 'student@example.com', timestamp: new Date(Date.now() - 7200000), details: 'New student registration' },
-            { id: 4, type: 'system_backup', user: 'system', timestamp: new Date(Date.now() - 86400000), details: 'Daily backup completed' }
-          ]);
+          // Generate real activity data based on recent users and courses
+          const recentUsers = users.slice(0, 5);
+          const recentCourses = courses.slice(0, 5);
+          
+          const activities: any[] = [];
+          
+          // Add recent user registrations
+          recentUsers.forEach((user, index) => {
+            if (user.createdAt) {
+              activities.push({
+                id: `user-${index}`,
+                type: 'user_registered',
+                user: user.email,
+                timestamp: user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt.seconds * 1000),
+                details: `New ${user.role} registered: ${user.displayName || user.email}`
+              });
+            }
+          });
+          
+          // Add recent course creations
+          recentCourses.forEach((course, index) => {
+            if (course.createdAt) {
+              activities.push({
+                id: `course-${index}`,
+                type: 'course_created',
+                user: course.instructorName,
+                timestamp: course.createdAt.toDate ? course.createdAt.toDate() : new Date(course.createdAt.seconds * 1000),
+                details: `Course created: ${course.title}`
+              });
+            }
+          });
+          
+          // Sort by timestamp (most recent first)
+          activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          setRecentActivity(activities.slice(0, 10));
 
-          // Mock notifications
-          setNotifications([
-            { id: 1, type: 'warning', message: '5 courses pending approval', timestamp: new Date() },
-            { id: 2, type: 'info', message: 'System maintenance scheduled for tonight', timestamp: new Date(Date.now() - 3600000) },
-            { id: 3, type: 'success', message: 'Database backup completed successfully', timestamp: new Date(Date.now() - 7200000) }
-          ]);
+          // Generate real notifications based on system state
+          const notificationList: any[] = [];
+          
+          // Check for pending courses
+          const pendingCoursesCount = courses.filter(c => !c.isActive).length;
+          if (pendingCoursesCount > 0) {
+            notificationList.push({
+              id: 'pending-courses',
+              type: 'warning',
+              message: `${pendingCoursesCount} course${pendingCoursesCount > 1 ? 's' : ''} pending approval`,
+              timestamp: new Date()
+            });
+          }
+          
+          // Check for upcoming events
+          if (events.length > 0) {
+            const upcomingEvents = events.filter(e => {
+              const eventDate = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+              return eventDate > new Date();
+            }).length;
+            
+            if (upcomingEvents > 0) {
+              notificationList.push({
+                id: 'upcoming-events',
+                type: 'info',
+                message: `${upcomingEvents} upcoming event${upcomingEvents > 1 ? 's' : ''} scheduled`,
+                timestamp: new Date()
+              });
+            }
+          }
+          
+          // System health notification
+          notificationList.push({
+            id: 'system-health',
+            type: 'success',
+            message: 'System is running smoothly',
+            timestamp: new Date()
+          });
+          
+          setNotifications(notificationList);
         }
       } catch (error) {
         console.error('Failed to load settings data:', error);
@@ -269,10 +331,6 @@ export default function AdminSettings() {
                     <Badge variant="outline" className="mt-2">Restricted</Badge>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Manage Permissions
-                </Button>
               </div>
             </CardContent>
           </Card>

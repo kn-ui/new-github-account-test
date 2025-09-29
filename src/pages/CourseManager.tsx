@@ -509,16 +509,16 @@ export default function CourseManager() {
                         <BookOpen className="h-8 w-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{course.title}</h3>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">{course.title}</h3>
                         <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            Instructor: {course.instructorName}
+                          <span className="flex items-center gap-1 min-w-0">
+                            <Users className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">Instructor: {course.instructorName}</span>
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Target className="h-4 w-4" />
-                            {course.category}
+                          <span className="flex items-center gap-1 min-w-0">
+                            <Target className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{course.category}</span>
                           </span>
                           <span className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />
@@ -679,12 +679,25 @@ export default function CourseManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" value={editForm.title || ''} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              <Label htmlFor="title">Title (75-100 characters)</Label>
+              <Input 
+                id="title" 
+                value={editForm.title || ''} 
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value.slice(0, 100) })}
+                minLength={75}
+                maxLength={100}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.title || '').length}/100 characters</p>
             </div>
             <div>
-              <Label htmlFor="category">Category</Label>
-              <Input id="category" value={editForm.category || ''} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+              <Label htmlFor="category">Category (max 50 characters)</Label>
+              <Input 
+                id="category" 
+                value={editForm.category || ''} 
+                onChange={(e) => setEditForm({ ...editForm, category: e.target.value.slice(0, 50) })}
+                maxLength={50}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.category || '').length}/50 characters</p>
             </div>
             <div>
               <Label htmlFor="duration">Duration (hours)</Label>
@@ -717,8 +730,27 @@ export default function CourseManager() {
               />
             </div>
             <div>
-              <Label htmlFor="desc">Description</Label>
-              <Textarea id="desc" value={editForm.description || ''} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+              <Label htmlFor="desc">Description (200-300 characters)</Label>
+              <Textarea 
+                id="desc" 
+                value={editForm.description || ''} 
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value.slice(0, 300) })}
+                minLength={200}
+                maxLength={300}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/300 characters</p>
+            </div>
+            <div>
+              <Label htmlFor="syllabus">Syllabus (10,000-25,000 characters)</Label>
+              <Textarea 
+                id="syllabus" 
+                value={editForm.syllabus || ''} 
+                onChange={(e) => setEditForm({ ...editForm, syllabus: e.target.value.slice(0, 25000) })}
+                minLength={10000}
+                maxLength={25000}
+                rows={6}
+              />
+              <p className="text-xs text-gray-500 mt-1">{(editForm.syllabus || '').length}/25,000 characters</p>
             </div>
           </div>
           <DialogFooter>
@@ -786,16 +818,33 @@ export default function CourseManager() {
               {createStep === 1 && (
                 <div className="space-y-4">
                   <div>
-                    <Label>Title</Label>
-                    <Input value={String(createForm.title || '')} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value } as any)} />
+                    <Label>Title (75-100 characters)</Label>
+                    <Input 
+                      value={String(createForm.title || '')} 
+                      onChange={(e) => setCreateForm({ ...createForm, title: e.target.value.slice(0, 100) } as any)}
+                      minLength={75}
+                      maxLength={100}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{(createForm.title || '').length}/100 characters</p>
                   </div>
                   <div>
-                    <Label>Category</Label>
-                    <Input value={String(createForm.category || '')} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value } as any)} />
+                    <Label>Category (max 50 characters)</Label>
+                    <Input 
+                      value={String(createForm.category || '')} 
+                      onChange={(e) => setCreateForm({ ...createForm, category: e.target.value.slice(0, 50) } as any)}
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{(createForm.category || '').length}/50 characters</p>
                   </div>
                   <div>
-                    <Label>Description</Label>
-                    <Textarea value={String(createForm.description || '')} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value } as any)} />
+                    <Label>Description (200-300 characters)</Label>
+                    <Textarea 
+                      value={String(createForm.description || '')} 
+                      onChange={(e) => setCreateForm({ ...createForm, description: e.target.value.slice(0, 300) } as any)}
+                      minLength={200}
+                      maxLength={300}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/300 characters</p>
                   </div>
                 </div>
               )}
@@ -830,8 +879,15 @@ export default function CourseManager() {
                     />
                   </div>
                   <div>
-                    <Label>Syllabus</Label>
-                    <Textarea value={String(createForm.syllabus || '')} onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value } as any)} />
+                    <Label>Syllabus (10,000-25,000 characters)</Label>
+                    <Textarea 
+                      value={String(createForm.syllabus || '')} 
+                      onChange={(e) => setCreateForm({ ...createForm, syllabus: e.target.value.slice(0, 25000) } as any)}
+                      minLength={10000}
+                      maxLength={25000}
+                      rows={6}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{(createForm.syllabus || '').length}/25,000 characters</p>
                   </div>
                 </div>
               )}

@@ -121,7 +121,7 @@ const SuperAdminOverview = () => {
                   <Calendar className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{t('superadmin.totalEvents') || 'Total Events'}</p>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Events</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.totalEvents || 0}</p>
                 </div>
               </div>

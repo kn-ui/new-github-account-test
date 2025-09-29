@@ -382,8 +382,7 @@ export const courseService = {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse))
-      .filter(course => course.isActive !== false); // Client-side filter for isActive
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
   },
 
   // Pending courses flow removed

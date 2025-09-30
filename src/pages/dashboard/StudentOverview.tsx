@@ -221,11 +221,11 @@ export default function StudentOverview() {
                   <div key={course.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
                     <Link to={`/dashboard/course/${course.id}`} className="block">
                       <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors truncate">
                             {course.title}
                           </h3>
-                          <p className="text-sm text-gray-600">{t('common.by')} {course.instructor}</p>
+                          <p className="text-sm text-gray-600 truncate">{t('common.by')} {course.instructor}</p>
                         </div>
                         <Play className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
                       </div>
@@ -271,9 +271,9 @@ export default function StudentOverview() {
                         <FileText size={18} className="text-blue-600" />
                       </div>
                       
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800">{assignment.title || 'Assignment'}</p>
-                        <p className="text-sm text-gray-600">{assignment.courseTitle || 'Course'}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate">{assignment.title || 'Assignment'}</p>
+                        <p className="text-sm text-gray-600 truncate">{assignment.courseTitle || 'Course'}</p>
                       </div>
                       
                       <div className="text-right">
@@ -300,11 +300,11 @@ export default function StudentOverview() {
                   <div key={announcement.id} className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50`}>
                     <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                     <Bell size={16} className="text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-800 font-medium">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800 font-medium truncate">
                         {announcement.title}
                       </p>
-                      <p className="text-xs text-gray-500">{announcement.courseTitle || t('forum.categories.all')}</p>
+                      <p className="text-xs text-gray-500 truncate">{announcement.courseTitle || t('forum.categories.all')}</p>
                     </div>
                   </div>
                 ))}

@@ -209,9 +209,9 @@ export default function TeacherOverview() {
                       <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                         <FileText className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{submission.courseTitle}</p>
-                        <p className="text-xs text-gray-500">{t('users.roles.student')}: {studentNames[submission.studentId] || submission.studentId}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{submission.courseTitle}</p>
+                        <p className="text-xs text-gray-500 truncate">{t('users.roles.student')}: {studentNames[submission.studentId] || submission.studentId}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -257,9 +257,9 @@ export default function TeacherOverview() {
                       <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                         <BookOpen className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{course.title}</p>
-                        <p className="text-xs text-gray-500">{course.category}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{course.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{course.category}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">

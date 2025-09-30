@@ -63,7 +63,8 @@ export default function TeacherOverview() {
           const assignmentsMap = await assignmentService.getAssignmentsByIds(assignmentIds);
           
           const validSubmissions = ok.flat().filter((submission: any) => {
-            return assignmentsMap[submission.assignmentId] !== null;
+            const assignment = assignmentsMap[submission.assignmentId];
+            return assignment !== null && assignment.isActive !== false;
           });
           
           const flatSubmissions = validSubmissions

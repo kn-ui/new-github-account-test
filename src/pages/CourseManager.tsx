@@ -602,16 +602,16 @@ export default function CourseManager() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">{course.title.length > 25 ? course.title.substring(0, 25) + '...' : course.title}</h3>
-                        <p className="text-gray-600 mb-3 line-clamp-2">{course.description.length > 50 ? course.description.substring(0, 50) + '...' : course.description}</p>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{course.title}</h3>
+                        <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <Users className="h-4 w-4" />
-                            <span className="truncate max-w-[80px]">{course.instructorName.length > 10 ? course.instructorName.substring(0, 10) + '...' : course.instructorName}</span>
+                            <span className="truncate max-w-[100px]">{course.instructorName}</span>
                           </span>
                           <span className="flex items-center gap-1">
                             <Target className="h-4 w-4" />
-                            <span className="truncate max-w-[60px]">{course.category.length > 8 ? course.category.substring(0, 8) + '...' : course.category}</span>
+                            <span className="truncate max-w-[80px]">{course.category}</span>
 
                           </span>
                           <span className="flex items-center gap-1">
@@ -753,8 +753,8 @@ export default function CourseManager() {
               </div>
               <div>
                 <span className="font-medium text-gray-700">Syllabus:</span>
-                <div className="mt-1 max-h-40 overflow-y-auto">
-                  <p className="text-gray-600 whitespace-pre-wrap break-words">{selectedCourse.syllabus}</p>
+                <div className="mt-1 max-h-40 overflow-y-auto scrollbar-thin">
+                  <p className="text-gray-600 whitespace-pre-wrap break-words text-sm">{selectedCourse.syllabus}</p>
                 </div>
               </div>
             </div>
@@ -1049,7 +1049,7 @@ export default function CourseManager() {
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-gray-600">Select students to remove from this course:</p>
-              <div className="max-h-96 overflow-y-auto space-y-2">
+              <div className="max-h-96 overflow-y-auto space-y-2 scrollbar-thin">
                 {enrolledStudents.map((enrollment) => (
                   <div key={enrollment.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>

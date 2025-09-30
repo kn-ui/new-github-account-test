@@ -70,7 +70,7 @@ export default function AdminDashboard() {
             </div>
             <p className="text-gray-600 text-sm mt-1">Recently submitted courses requiring approval</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-thin">
             {loading ? (
               <div className="p-6 text-gray-600">Loading pending courses...</div>
             ) : (

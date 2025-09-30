@@ -461,7 +461,7 @@ const UserManager = () => {
                 />
               </div>
               <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder={t('users.filterByRole')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -501,7 +501,7 @@ const UserManager = () => {
                   <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.created')}</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -515,9 +515,9 @@ const UserManager = () => {
                             {user.displayName.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <div className="font-semibold text-gray-900">{user.displayName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-gray-900 truncate">{user.displayName}</div>
+                          <div className="text-sm text-gray-500 truncate">{user.email}</div>
                         </div>
                       </div>
                     </TableCell>

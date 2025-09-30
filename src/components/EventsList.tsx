@@ -268,10 +268,10 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-purple-700 transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-purple-700 transition-colors break-words">
                       {event.title}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-1 break-words">
                       {event.description}
                     </p>
                   </div>

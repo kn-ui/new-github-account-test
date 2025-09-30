@@ -505,8 +505,8 @@ const EventsPage = () => {
                                 <span className="flex items-center gap-1 min-w-0">
                                   <MapPin className="h-4 w-4 flex-shrink-0" />
 
-                                  <span className="truncate max-w-[150px]">
-                                    {event.location.length > 20 ? event.location.substring(0, 20) + '...' : event.location}
+                                  <span className="truncate max-w-[200px]">
+                                    {event.location}
                                   </span>
 
                                 </span>
@@ -692,7 +692,7 @@ const EventsPage = () => {
               <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
               <div className="flex gap-2">
                 <span className="font-medium flex-shrink-0">{t('events.description_label')}:</span> 
-                <span className="break-words max-h-40 overflow-y-auto block">{selectedEvent.description}</span>
+                <span className="break-words max-h-40 overflow-y-auto block text-sm">{selectedEvent.description}</span>
               </div>
             </div>
           )}

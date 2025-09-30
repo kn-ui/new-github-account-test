@@ -65,7 +65,7 @@ export default function SeedDatabase() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <div className="bg-muted rounded p-3 text-sm min-h-[120px] whitespace-pre-wrap">
+              <div className="bg-muted rounded p-3 text-sm min-h-[120px] max-h-[300px] overflow-y-auto whitespace-pre-wrap">
                 {logs.join('\n') || 'Logs will appear here...'}
               </div>
             </div>

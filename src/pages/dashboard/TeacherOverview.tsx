@@ -56,9 +56,18 @@ export default function TeacherOverview() {
             })
           );
           const ok = allRes.flatMap((r: any) => (r.status === 'fulfilled' ? r.value : []));
-          const flatSubmissions = ok
-            .flat()
-            .filter((s: any) => !!s?.submittedAt)
+          
+          // Filter out submissions for deleted/inactive assignments
+          const { assignmentService } = await import('@/lib/firestore');
+          const assignmentIds = Array.from(new Set(ok.flat().map((s: any) => s.assignmentId)));
+          const assignmentsMap = await assignmentService.getAssignmentsByIds(assignmentIds);
+          
+          const validSubmissions = ok.flat().filter((submission: any) => {
+            return assignmentsMap[submission.assignmentId] !== null;
+          });
+          
+          const flatSubmissions = validSubmissions
+            .filter((s: any) => s && !!s?.submittedAt)
             .sort((a: any, b: any) => {
               const at = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(0);
               const bt = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(0);

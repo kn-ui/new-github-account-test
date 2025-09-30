@@ -363,7 +363,7 @@ export default function TeacherAnnouncements() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('teacher.announcements.allCourses')}</SelectItem>
-                  <SelectItem value="general">{t('teacher.announcements.general') || 'General Announcements'}</SelectItem>
+                  <SelectItem value="general">General Announcements</SelectItem>
                   {courses.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -417,7 +417,7 @@ export default function TeacherAnnouncements() {
                           </Badge>
                         ) : (
                           <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                            {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel')}
+                            {announcement.courseId ? 'Course' : 'General'}
                           </Badge>
                         )}
                       </div>
@@ -485,7 +485,7 @@ export default function TeacherAnnouncements() {
                     </Badge>
                   ) : (
                     <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
-                      {announcement.courseId ? t('teacher.announcements.course') : t('teacher.announcements.generalLabel') || 'General'}
+                      {announcement.courseId ? 'Course' : 'General'}
                     </Badge>
                   )}
                 </div>

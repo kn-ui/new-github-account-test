@@ -192,6 +192,17 @@ export default function StudentSubmissions() {
       return;
     }
 
+    // Check if assignment is overdue
+    const now = new Date();
+    const dueDate = selectedAssignment.dueDate instanceof Date 
+      ? selectedAssignment.dueDate 
+      : selectedAssignment.dueDate.toDate();
+    
+    if (now > dueDate) {
+      toast.error('Cannot submit assignment after the due date');
+      return;
+    }
+
     try {
       const submissionData = {
         assignmentId: selectedAssignment.id,
@@ -201,6 +212,7 @@ export default function StudentSubmissions() {
         attachments: submissionAttachments,
         status: 'submitted' as const,
         submittedAt: new Date(),
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -265,6 +277,12 @@ export default function StudentSubmissions() {
       case 'graded': return <CheckCircle className="h-4 w-4" />;
       default: return <AlertCircle className="h-4 w-4" />;
     }
+  };
+
+  const isAssignmentOverdue = (assignment: any) => {
+    const now = new Date();
+    const dueDate = assignment.dueDate instanceof Date ? assignment.dueDate : assignment.dueDate.toDate();
+    return now > dueDate;
   };
 
   const getGradeColor = (grade: number, maxScore: number) => {
@@ -636,6 +654,11 @@ export default function StudentSubmissions() {
                 <Label>{t('student.submissions.dialog.assignment')}: {selectedAssignment.title}</Label>
                 <p className="text-sm text-gray-600">{selectedAssignment.description}</p>
                 <p className="text-sm text-gray-600">{t('student.submissions.maxScore')}: {selectedAssignment.maxScore}</p>
+                {isAssignmentOverdue(selectedAssignment) && (
+                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600"><strong>⚠️ Assignment Overdue:</strong> This assignment is past its due date and cannot be submitted.</p>
+                  </div>
+                )}
                 {selectedAssignment.instructions && (
                   <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm"><strong>{t('assignments.instructions')}:</strong> {selectedAssignment.instructions}</p>
@@ -670,7 +693,10 @@ export default function StudentSubmissions() {
             <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleSubmitSubmission} disabled={!submissionContent.trim()}>
+            <Button 
+              onClick={handleSubmitSubmission} 
+              disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
+            >
               {t('student.submissions.dialog.submit')}
             </Button>
           </DialogFooter>

@@ -149,6 +149,25 @@ export default function TeacherGrades() {
 
   const filteredAssignments = useMemo(() => {
     let list = assignments.filter(a => [a.title, a.courseTitle].some(v => v.toLowerCase().includes(searchTerm.toLowerCase())));
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      list = list.filter(a => {
+        if (statusFilter === 'submitted') {
+          return a.pending > 0; // Has pending submissions
+        } else if (statusFilter === 'graded') {
+          return a.pending === 0 && a.graded > 0; // All submissions are graded
+        }
+        return true;
+      });
+    }
+    
+    // Apply course filter
+    if (courseFilter !== 'all') {
+      list = list.filter(a => a.courseTitle === courseFilter);
+    }
+    
+    // Apply sorting
     switch (sortBy) {
       case 'recent': list = list.sort((a,b) => b.dueDate.getTime() - a.dueDate.getTime()); break;
       case 'oldest': list = list.sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()); break;
@@ -156,7 +175,7 @@ export default function TeacherGrades() {
       case 'assignment': list = list.sort((a,b) => a.title.localeCompare(b.title)); break;
     }
     return list;
-  }, [assignments, searchTerm, sortBy]);
+  }, [assignments, searchTerm, sortBy, statusFilter, courseFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

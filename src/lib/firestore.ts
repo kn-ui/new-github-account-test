@@ -203,7 +203,8 @@ export interface FirestoreGrade {
 export interface FirestoreAnnouncement {
   id: string;
   courseId?: string;
-  recipientStudentId?: string;
+  targetAudience?: 'ALL_STUDENTS' | 'COURSE_STUDENTS' | 'SPECIFIC_STUDENT';
+  recipientStudentId?: string; // Keep for backward compatibility and specific student targeting
   title: string;
   body: string;
   authorId: string;
@@ -882,26 +883,82 @@ export const announcementService = {
     
     if (courseIds.length === 0) return [];
     
-    // Get announcements for all teacher's courses plus general announcements by the teacher
-    const courseAnnouncementsPromises = courseIds.map(courseId => 
-      announcementService.getAnnouncements(courseId, 1000)
-    );
-    const courseAnnouncementsArrays = await Promise.all(courseAnnouncementsPromises);
-    const allCourseAnnouncements = courseAnnouncementsArrays.flat();
-    
-    // Get general announcements by the teacher
-    const generalAnnouncementsQuery = query(
+    // Get all announcements by the teacher (using new targeting system)
+    const teacherAnnouncementsQuery = query(
       collections.announcements(),
-      where('courseId', '==', null),
       where('authorId', '==', teacherId),
       orderBy('createdAt', 'desc')
     );
-    const generalSnapshot = await getDocs(generalAnnouncementsQuery);
-    const generalAnnouncements = generalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    const teacherSnapshot = await getDocs(teacherAnnouncementsQuery);
+    const allAnnouncements = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
     
-    // Combine and sort by creation date (newest first)
-    const allAnnouncements = [...allCourseAnnouncements, ...generalAnnouncements];
-    return allAnnouncements.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+    return allAnnouncements;
+  },
+
+  async getAnnouncementsForStudent(studentId: string): Promise<FirestoreAnnouncement[]> {
+    // Get all courses the student is enrolled in
+    const studentEnrollments = await enrollmentService.getEnrollmentsByStudent(studentId);
+    const enrolledCourseIds = studentEnrollments.map(enrollment => enrollment.courseId);
+    
+    if (enrolledCourseIds.length === 0) return [];
+    
+    // Get all teachers of the student's courses
+    const allTeachers = new Set<string>();
+    for (const courseId of enrolledCourseIds) {
+      const course = await courseService.getCourseById(courseId);
+      if (course?.instructor) {
+        allTeachers.add(course.instructor);
+      }
+    }
+    
+    if (allTeachers.size === 0) return [];
+    
+    // Get announcements that target this student
+    const announcements: FirestoreAnnouncement[] = [];
+    
+    // Get ALL_STUDENTS announcements from student's teachers
+    for (const teacherId of allTeachers) {
+      const allStudentsQuery = query(
+        collections.announcements(),
+        where('authorId', '==', teacherId),
+        where('targetAudience', '==', 'ALL_STUDENTS'),
+        orderBy('createdAt', 'desc')
+      );
+      const allStudentsSnapshot = await getDocs(allStudentsQuery);
+      const allStudentsAnnouncements = allStudentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+      announcements.push(...allStudentsAnnouncements);
+    }
+    
+    // Get COURSE_STUDENTS announcements for enrolled courses
+    for (const courseId of enrolledCourseIds) {
+      const courseStudentsQuery = query(
+        collections.announcements(),
+        where('courseId', '==', courseId),
+        where('targetAudience', '==', 'COURSE_STUDENTS'),
+        orderBy('createdAt', 'desc')
+      );
+      const courseStudentsSnapshot = await getDocs(courseStudentsQuery);
+      const courseStudentsAnnouncements = courseStudentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+      announcements.push(...courseStudentsAnnouncements);
+    }
+    
+    // Get SPECIFIC_STUDENT announcements for this student
+    const specificStudentQuery = query(
+      collections.announcements(),
+      where('recipientStudentId', '==', studentId),
+      where('targetAudience', '==', 'SPECIFIC_STUDENT'),
+      orderBy('createdAt', 'desc')
+    );
+    const specificStudentSnapshot = await getDocs(specificStudentQuery);
+    const specificStudentAnnouncements = specificStudentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    announcements.push(...specificStudentAnnouncements);
+    
+    // Remove duplicates and sort by creation date (newest first)
+    const uniqueAnnouncements = announcements.filter((announcement, index, self) => 
+      index === self.findIndex(a => a.id === announcement.id)
+    );
+    
+    return uniqueAnnouncements.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
   },
 
   async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {

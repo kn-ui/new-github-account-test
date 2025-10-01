@@ -172,62 +172,43 @@ export default function TeacherAnnouncements() {
     try {
       const isGeneral = formData.isGeneral;
       
+      // Build base announcement data
+      const base: any = {
+        title: formData.title,
+        body: formData.body,
+        authorId: currentUser!.uid,
+      };
+      
+      if (!editingAnnouncement) {
+        base.createdAt = new Date();
+      }
+      
+      if (formData.externalLink) base.externalLink = formData.externalLink;
+      
+      // Set targeting based on announcement type
       if (isGeneral) {
-        // For general announcements, create individual announcements for each of the teacher's students
-        const teacherStudents = await userService.getStudentsByTeacher(currentUser!.uid);
-        
-        if (teacherStudents.length === 0) {
-          toast.error('No students found for your courses');
-          return;
-        }
-        
-        const baseAnnouncement = {
-          title: formData.title,
-          body: formData.body,
-          authorId: currentUser!.uid,
-          courseId: null,
-          createdAt: new Date(),
-        };
-        
-        if (formData.externalLink) baseAnnouncement.externalLink = formData.externalLink;
-        
-        // Create individual announcements for each student
-        const announcementPromises = teacherStudents.map(student => 
-          announcementService.createAnnouncement({
-            ...baseAnnouncement,
-            recipientStudentId: student.id
-          })
-        );
-        
-        await Promise.all(announcementPromises);
-        toast.success(`General announcement sent to ${teacherStudents.length} students`);
-      } else {
-        // Build payload for course-specific or direct announcements
-        const base: any = {
-          title: formData.title,
-          body: formData.body,
-          authorId: currentUser!.uid,
-        };
-        if (!editingAnnouncement) {
-          base.createdAt = new Date();
-        }
-        
-        // direct > course
-        if (formData.recipientStudentId) {
-          base.recipientStudentId = formData.recipientStudentId;
-          base.courseId = null;
-        } else if (formData.courseId) {
-          base.courseId = formData.courseId;
-        }
-        if (formData.externalLink) base.externalLink = formData.externalLink;
+        // General announcement to all teacher's students
+        base.targetAudience = 'ALL_STUDENTS';
+        base.courseId = null;
+        base.recipientStudentId = null;
+      } else if (formData.recipientStudentId) {
+        // Direct message to specific student
+        base.targetAudience = 'SPECIFIC_STUDENT';
+        base.recipientStudentId = formData.recipientStudentId;
+        base.courseId = null;
+      } else if (formData.courseId) {
+        // Course-specific announcement
+        base.targetAudience = 'COURSE_STUDENTS';
+        base.courseId = formData.courseId;
+        base.recipientStudentId = null;
+      }
 
-        if (editingAnnouncement) {
-          await announcementService.updateAnnouncement(editingAnnouncement.id, base);
-          toast.success('Announcement updated successfully');
-        } else {
-          await announcementService.createAnnouncement(base);
-          toast.success('Announcement created successfully');
-        }
+      if (editingAnnouncement) {
+        await announcementService.updateAnnouncement(editingAnnouncement.id, base);
+        toast.success('Announcement updated successfully');
+      } else {
+        await announcementService.createAnnouncement(base);
+        toast.success('Announcement created successfully');
       }
 
       setShowCreateDialog(false);
@@ -443,13 +424,21 @@ export default function TeacherAnnouncements() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-medium text-gray-900">{truncateTitle(announcement.title)}</h3>
-                        {announcement.recipientStudentId ? (
+                        {announcement.targetAudience === 'SPECIFIC_STUDENT' ? (
                           <Badge variant="outline" className="flex-shrink-0">
-                            {t('teacher.announcements.messageTo')} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                            {t('teacher.announcements.messageTo')} {recipientNames[announcement.recipientStudentId!] || announcement.recipientStudentId}
+                          </Badge>
+                        ) : announcement.targetAudience === 'COURSE_STUDENTS' ? (
+                          <Badge variant="default" className="flex-shrink-0">
+                            Course Students
+                          </Badge>
+                        ) : announcement.targetAudience === 'ALL_STUDENTS' ? (
+                          <Badge variant="secondary" className="flex-shrink-0">
+                            All My Students
                           </Badge>
                         ) : (
-                          <Badge variant={announcement.courseId ? 'default' : 'secondary'} className="flex-shrink-0">
-                            {announcement.courseId ? 'Course' : 'General'}
+                          <Badge variant="secondary" className="flex-shrink-0">
+                            General
                           </Badge>
                         )}
                       </div>
@@ -461,7 +450,7 @@ export default function TeacherAnnouncements() {
                         </span>
                         <span className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
-                          {truncateText(getCourseName(announcement.courseId))}
+                          {announcement.targetAudience === 'ALL_STUDENTS' ? 'All My Students' : truncateText(getCourseName(announcement.courseId))}
                         </span>
                       </div>
                     </div>
@@ -511,20 +500,28 @@ export default function TeacherAnnouncements() {
                     <Bell className="h-4 w-4 text-blue-600" />
                     <h3 className="font-medium text-gray-900">{truncateTitle(announcement.title)}</h3>
                   </div>
-                  {announcement.recipientStudentId ? (
+                  {announcement.targetAudience === 'SPECIFIC_STUDENT' ? (
                     <Badge variant="outline" className="flex-shrink-0">
-                      {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
+                      {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId!] || announcement.recipientStudentId}
+                    </Badge>
+                  ) : announcement.targetAudience === 'COURSE_STUDENTS' ? (
+                    <Badge variant="default" className="flex-shrink-0">
+                      Course Students
+                    </Badge>
+                  ) : announcement.targetAudience === 'ALL_STUDENTS' ? (
+                    <Badge variant="secondary" className="flex-shrink-0">
+                      All My Students
                     </Badge>
                   ) : (
-                    <Badge variant={announcement.courseId ? 'default' : 'secondary'} className="flex-shrink-0">
-                      {announcement.courseId ? 'Course' : 'General'}
+                    <Badge variant="secondary" className="flex-shrink-0">
+                      General
                     </Badge>
                   )}
                 </div>
                 <p className="text-sm text-gray-600 mb-3">{truncateText(announcement.body)}</p>
                 <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.createdAt.toDate().toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {getCourseName(announcement.courseId)}</span>
+                  <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {announcement.targetAudience === 'ALL_STUDENTS' ? 'All My Students' : getCourseName(announcement.courseId)}</span>
                 </div>
                 <div className="flex items-center justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>

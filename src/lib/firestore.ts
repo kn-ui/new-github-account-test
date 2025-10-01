@@ -494,6 +494,26 @@ export const courseService = {
     return null;
   },
 
+  async getCoursesByIds(courseIds: string[]): Promise<{ [key: string]: FirestoreCourse }> {
+    if (courseIds.length === 0) return {};
+    
+    // Get courses in parallel
+    const coursePromises = courseIds.map(async (courseId) => {
+      try {
+        const course = await this.getCourseById(courseId);
+        return course ? { [courseId]: course } : {};
+      } catch (error) {
+        console.error(`Error loading course ${courseId}:`, error);
+        return {};
+      }
+    });
+    
+    const courseResults = await Promise.all(coursePromises);
+    
+    // Merge all course objects into one
+    return courseResults.reduce((acc, courseObj) => ({ ...acc, ...courseObj }), {});
+  },
+
   async createCourse(courseData: Omit<FirestoreCourse, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courses(), {

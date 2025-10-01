@@ -370,7 +370,7 @@ export default function StudentCourses() {
               </p>
               {!searchTerm && categoryFilter === 'all' && progressFilter === 'all' && (
                 <Button asChild className="mt-4">
-                  <Link to="/courses">{t('student.courses.browseAvailable')}</Link>
+                  <Link to="/academic">{t('student.courses.browseAvailable')}</Link>
                 </Button>
               )}
             </div>

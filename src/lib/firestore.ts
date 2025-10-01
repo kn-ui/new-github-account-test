@@ -330,6 +330,32 @@ export const userService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 
+  async getStudentsByTeacher(teacherId: string): Promise<FirestoreUser[]> {
+    // Get all courses by the teacher
+    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const courseIds = teacherCourses.map(course => course.id);
+    
+    if (courseIds.length === 0) return [];
+    
+    // Get all enrollments for these courses
+    const enrollmentPromises = courseIds.map(courseId => 
+      enrollmentService.getEnrollmentsByCourse(courseId)
+    );
+    const enrollmentArrays = await Promise.all(enrollmentPromises);
+    const allEnrollments = enrollmentArrays.flat();
+    
+    // Get unique student IDs
+    const studentIds = [...new Set(allEnrollments.map(enrollment => enrollment.studentId))];
+    
+    // Get student details
+    const studentPromises = studentIds.map(studentId => 
+      userService.getUserById(studentId)
+    );
+    const students = await Promise.all(studentPromises);
+    
+    return students.filter(student => student !== null) as FirestoreUser[];
+  },
+
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
     if (!userData.uid) {

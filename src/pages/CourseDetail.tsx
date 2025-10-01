@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Header from '@/components/Header';
 import { 
   BookOpen, 
@@ -47,6 +48,8 @@ const CourseDetail = () => {
   const [courseAssignments, setCourseAssignments] = useState<any[]>([]);
   const [courseGrades, setCourseGrades] = useState<any[]>([]);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -308,31 +311,68 @@ const CourseDetail = () => {
 
             <div className="p-6">
               {activeTab === 'Overview' && (
-                <div className="space-y-6">
-                  {/* Course Info */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Course Information</h3>
-                    <p className="text-gray-700 leading-relaxed mb-6">{truncateText(course.description, 100)}</p>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span>{course.duration} weeks</span>
+                <div className="space-y-8">
+                  {/* Course Description */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-blue-600" />
+                      Course Description
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed text-base">{course.description}</p>
+                  </div>
+
+                  {/* Course Details */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-green-600" />
+                      Course Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <Clock className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <p className="text-sm text-gray-500">Duration</p>
+                          <p className="font-semibold text-gray-900">{course.duration} weeks</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <span>Max {course.maxStudents} students</span>
+                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <Users className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="text-sm text-gray-500">Max Students</p>
+                          <p className="font-semibold text-gray-900">{course.maxStudents}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span>{course.instructorName}</span>
+                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <User className="h-6 w-6 text-purple-600" />
+                        <div>
+                          <p className="text-sm text-gray-500">Instructor</p>
+                          <p className="font-semibold text-gray-900">{course.instructorName}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <BookOpen className="h-4 w-4 text-gray-400" />
-                        <span>{course.category}</span>
+                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <BookOpen className="h-6 w-6 text-orange-600" />
+                        <div>
+                          <p className="text-sm text-gray-500">Category</p>
+                          <p className="font-semibold text-gray-900">{course.category}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Course Syllabus */}
+                  {course.syllabus && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-indigo-600" />
+                        Course Syllabus
+                      </h3>
+                      <div className="prose prose-gray max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                          {course.syllabus}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -350,9 +390,13 @@ const CourseDetail = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium">Max Score: {assignment.maxScore}</p>
-                            <Link to={`/dashboard/student-assignments`}>
-                              <Button variant="outline" size="sm">View Assignment</Button>
-                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/student-assignments?assignmentId=${assignment.id}`)}
+                            >
+                              View Assignment
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -375,13 +419,25 @@ const CourseDetail = () => {
                             <p className="font-medium text-gray-800">{truncateTitle(material.title)}</p>
                             <p className="text-sm text-gray-600">{truncateText(material.description)}</p>
                           </div>
-                          {material.fileUrl && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                                View
-                              </a>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedMaterial(material);
+                                setMaterialDialogOpen(true);
+                              }}
+                            >
+                              View Details
                             </Button>
-                          )}
+                            {material.fileUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  Download
+                                </a>
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -394,7 +450,7 @@ const CourseDetail = () => {
               {activeTab === 'Grades' && isEnrolled && (
                 <div className="space-y-6">
                   {/* Grade Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-blue-600" />
@@ -422,32 +478,101 @@ const CourseDetail = () => {
                           : 0}%
                       </p>
                     </div>
+
+                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Award size={20} className="text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800">Final Grade</span>
+                      </div>
+                      <p className="text-3xl font-bold text-orange-900">
+                        {courseGrades.length > 0 
+                          ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
+                          : 'N/A'
+                        }
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Grades List */}
+                  {/* Grade Distribution Chart */}
+                  {courseGrades.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Grade Distribution</h3>
+                      <div className="grid grid-cols-5 gap-4">
+                        {(() => {
+                          const grades = courseGrades.map((g: any) => g.grade || 0);
+                          const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
+                          grades.forEach(g => {
+                            if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
+                          });
+                          const items = Object.entries(dist);
+                          return items.map(([k,v]) => (
+                            <div key={k} className="text-center">
+                              <div className="text-xs text-gray-500 mb-1">{k}</div>
+                              <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
+                                <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
+                              </div>
+                              <div className="text-xs mt-1">{v} assignments</div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Assignment Grades Table */}
                   {courseGrades.length > 0 ? (
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-800">Assignment Grades</h4>
-                      {courseGrades.map((grade: any) => {
-                        const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
-                        return (
-                          <div key={grade.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                              <h5 className="font-medium text-gray-800">{assignment?.title || 'Assignment'}</h5>
-                              <p className="text-sm text-gray-600">Submitted: {grade.submittedAt.toDate().toLocaleDateString()}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-lg font-bold text-green-600">{grade.grade || 0}/{assignment?.maxScore || 100}</p>
-                              {grade.feedback && (
-                                <p className="text-xs text-gray-500">Feedback available</p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Grades</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="text-left px-4 py-2">Assignment</th>
+                              <th className="text-left px-4 py-2">Grade</th>
+                              <th className="text-left px-4 py-2">Letter Grade</th>
+                              <th className="text-left px-4 py-2">Submitted</th>
+                              <th className="text-left px-4 py-2">Feedback</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {courseGrades
+                              .slice()
+                              .sort((a: any, b: any) => new Date(b.submittedAt.toDate()).getTime() - new Date(a.submittedAt.toDate()).getTime())
+                              .map((grade: any, index: number) => {
+                                const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
+                                const letterGrade = (grade.grade || 0) >= 90 ? 'A' : (grade.grade || 0) >= 80 ? 'B' : (grade.grade || 0) >= 70 ? 'C' : (grade.grade || 0) >= 60 ? 'D' : 'F';
+                                return (
+                                  <tr key={index}>
+                                    <td className="px-4 py-2 font-medium">{assignment?.title || 'Assignment'}</td>
+                                    <td className="px-4 py-2 font-semibold">{grade.grade || 0}%</td>
+                                    <td className="px-4 py-2">
+                                      <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
+                                        {letterGrade}
+                                      </Badge>
+                                    </td>
+                                    <td className="px-4 py-2">{grade.submittedAt.toDate().toLocaleDateString()}</td>
+                                    <td className="px-4 py-2">
+                                      {grade.feedback ? (
+                                        <span className="text-xs text-gray-600 max-w-xs truncate block">
+                                          {grade.feedback}
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">No feedback</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-gray-600">No grades available yet.</p>
+                    <div className="text-center py-12 text-gray-500">
+                      <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No Grades Yet</h3>
+                      <p className="text-gray-400">Your assignment grades will appear here once they're graded by your instructor.</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -455,6 +580,110 @@ const CourseDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Material Detail Dialog */}
+      <Dialog open={materialDialogOpen} onOpenChange={setMaterialDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-600" />
+              {selectedMaterial?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMaterial && (
+            <div className="space-y-6">
+              {/* Material Type Badge */}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="capitalize">
+                  {selectedMaterial.type}
+                </Badge>
+                <span className="text-sm text-gray-500">
+                  Created: {selectedMaterial.createdAt.toDate().toLocaleDateString()}
+                </span>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Description</h3>
+                <p className="text-gray-700 leading-relaxed">{selectedMaterial.description}</p>
+              </div>
+
+              {/* File/Link Information */}
+              {selectedMaterial.fileUrl && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">File Information</h3>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      <strong>File URL:</strong> 
+                      <a 
+                        href={selectedMaterial.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 ml-2 break-all"
+                      >
+                        {selectedMaterial.fileUrl}
+                      </a>
+                    </p>
+                    <Button asChild className="mt-2">
+                      <a 
+                        href={selectedMaterial.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download File
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {selectedMaterial.externalLink && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">External Link</h3>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      <strong>External URL:</strong> 
+                      <a 
+                        href={selectedMaterial.externalLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 ml-2 break-all"
+                      >
+                        {selectedMaterial.externalLink}
+                      </a>
+                    </p>
+                    <Button asChild className="mt-2">
+                      <a 
+                        href={selectedMaterial.externalLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Open Link
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Course Information */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Course Information</h3>
+                <p className="text-sm text-gray-600">
+                  <strong>Course:</strong> {course?.title}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Instructor:</strong> {course?.instructorName}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

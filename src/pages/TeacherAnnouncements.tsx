@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { announcementService, courseService, FirestoreAnnouncement } from '@/lib/firestore';
+import { announcementService, courseService, userService, FirestoreAnnouncement } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -170,33 +170,64 @@ export default function TeacherAnnouncements() {
     }
 
     try {
-      // Build payload without undefined fields
       const isGeneral = formData.isGeneral;
-      const base: any = {
-        title: formData.title,
-        body: formData.body,
-        authorId: currentUser!.uid,
-      };
-      if (!editingAnnouncement) {
-        base.createdAt = new Date();
-      }
-      // direct > course > general
-      if (formData.recipientStudentId) {
-        base.recipientStudentId = formData.recipientStudentId;
-        base.courseId = null;
-      } else if (formData.courseId) {
-        base.courseId = formData.courseId;
-      } else if (isGeneral) {
-        base.courseId = null;
-      }
-      if (formData.externalLink) base.externalLink = formData.externalLink;
-
-      if (editingAnnouncement) {
-        await announcementService.updateAnnouncement(editingAnnouncement.id, base);
-        toast.success('Announcement updated successfully');
+      
+      if (isGeneral) {
+        // For general announcements, create individual announcements for each of the teacher's students
+        const teacherStudents = await userService.getStudentsByTeacher(currentUser!.uid);
+        
+        if (teacherStudents.length === 0) {
+          toast.error('No students found for your courses');
+          return;
+        }
+        
+        const baseAnnouncement = {
+          title: formData.title,
+          body: formData.body,
+          authorId: currentUser!.uid,
+          courseId: null,
+          createdAt: new Date(),
+        };
+        
+        if (formData.externalLink) baseAnnouncement.externalLink = formData.externalLink;
+        
+        // Create individual announcements for each student
+        const announcementPromises = teacherStudents.map(student => 
+          announcementService.createAnnouncement({
+            ...baseAnnouncement,
+            recipientStudentId: student.id
+          })
+        );
+        
+        await Promise.all(announcementPromises);
+        toast.success(`General announcement sent to ${teacherStudents.length} students`);
       } else {
-        await announcementService.createAnnouncement(base);
-        toast.success('Announcement created successfully');
+        // Build payload for course-specific or direct announcements
+        const base: any = {
+          title: formData.title,
+          body: formData.body,
+          authorId: currentUser!.uid,
+        };
+        if (!editingAnnouncement) {
+          base.createdAt = new Date();
+        }
+        
+        // direct > course
+        if (formData.recipientStudentId) {
+          base.recipientStudentId = formData.recipientStudentId;
+          base.courseId = null;
+        } else if (formData.courseId) {
+          base.courseId = formData.courseId;
+        }
+        if (formData.externalLink) base.externalLink = formData.externalLink;
+
+        if (editingAnnouncement) {
+          await announcementService.updateAnnouncement(editingAnnouncement.id, base);
+          toast.success('Announcement updated successfully');
+        } else {
+          await announcementService.createAnnouncement(base);
+          toast.success('Announcement created successfully');
+        }
       }
 
       setShowCreateDialog(false);
@@ -576,7 +607,7 @@ export default function TeacherAnnouncements() {
                 }))}
                 className="rounded border-gray-300"
               />
-              <Label htmlFor="isGeneral">General announcement (not tied to a specific course)</Label>
+              <Label htmlFor="isGeneral">General announcement to all your students (not tied to a specific course)</Label>
             </div>
             
             {!formData.isGeneral && !formData.recipientStudentId && (

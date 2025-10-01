@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, FirestoreGrade } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,7 @@ export default function StudentGrades() {
   const { currentUser, userProfile } = useAuth();
   const { t } = useI18n();
   const [grades, setGrades] = useState<GradeWithDetails[]>([]);
+  const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
@@ -123,6 +124,21 @@ export default function StudentGrades() {
       const allGrades = submissionsArrays.flat();
       setGrades(allGrades);
 
+      // Load final grades for courses
+      const finalGradesPromises = courseIds.map(async (courseId) => {
+        try {
+          const finalGrade = await gradeService.getGradeByStudentAndCourse(currentUser!.uid, courseId);
+          return finalGrade;
+        } catch (error) {
+          console.error(`Error loading final grade for course ${courseId}:`, error);
+          return null;
+        }
+      });
+
+      const finalGradesResults = await Promise.all(finalGradesPromises);
+      const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
+      setFinalGrades(validFinalGrades);
+
     } catch (error) {
       console.error('Error loading grades:', error);
     } finally {
@@ -166,6 +182,48 @@ export default function StudentGrades() {
     return filtered;
   }, [grades, searchTerm, courseFilter, sortBy]);
 
+  const filteredAndSortedFinalGrades = useMemo(() => {
+    // Get course names for final grades
+    const finalGradesWithCourseNames = finalGrades.map(grade => {
+      const course = grades.find(g => g.courseId === grade.courseId);
+      return {
+        ...grade,
+        courseTitle: course?.courseTitle || 'Unknown Course',
+        instructorName: course?.instructorName || 'Unknown Instructor'
+      };
+    });
+
+    let filtered = finalGradesWithCourseNames.filter(grade => {
+      const matchesSearch = grade.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           grade.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCourse = courseFilter === 'all' || grade.courseTitle === courseFilter;
+      
+      return matchesSearch && matchesCourse;
+    });
+
+    // Sort final grades
+    switch (sortBy) {
+      case 'recent':
+        filtered.sort((a, b) => b.calculatedAt.toDate().getTime() - a.calculatedAt.toDate().getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => a.calculatedAt.toDate().getTime() - b.calculatedAt.toDate().getTime());
+        break;
+      case 'grade-high':
+        filtered.sort((a, b) => b.finalGrade - a.finalGrade);
+        break;
+      case 'grade-low':
+        filtered.sort((a, b) => a.finalGrade - b.finalGrade);
+        break;
+      case 'course':
+        filtered.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
+        break;
+    }
+
+    return filtered;
+  }, [finalGrades, grades, searchTerm, courseFilter, sortBy]);
+
   const getGradeColor = (grade: number, maxScore: number) => {
     const percentage = (grade / maxScore) * 100;
     if (percentage >= 90) return 'text-green-600 bg-green-100';
@@ -195,22 +253,41 @@ export default function StudentGrades() {
   };
 
   const getStats = () => {
-    if (grades.length === 0) {
-      return { averageGrade: 0, totalAssignments: 0, highestGrade: 0, lowestGrade: 0 };
+    if (gradeType === 'courses') {
+      // Stats for final course grades
+      if (finalGrades.length === 0) {
+        return { averageGrade: 0, totalCourses: 0, highestGrade: 0, lowestGrade: 0 };
+      }
+
+      const averageGrade = finalGrades.reduce((sum, grade) => sum + grade.finalGrade, 0) / finalGrades.length;
+      const highestGrade = Math.max(...finalGrades.map(grade => grade.finalGrade));
+      const lowestGrade = Math.min(...finalGrades.map(grade => grade.finalGrade));
+
+      return {
+        averageGrade: Math.round(averageGrade),
+        totalCourses: finalGrades.length,
+        highestGrade: Math.round(highestGrade),
+        lowestGrade: Math.round(lowestGrade)
+      };
+    } else {
+      // Stats for assignment grades
+      if (grades.length === 0) {
+        return { averageGrade: 0, totalAssignments: 0, highestGrade: 0, lowestGrade: 0 };
+      }
+
+      const totalPoints = grades.reduce((sum, grade) => sum + grade.grade, 0);
+      const maxPoints = grades.reduce((sum, grade) => sum + grade.maxScore, 0);
+      const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+      const highestGrade = Math.max(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
+      const lowestGrade = Math.min(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
+
+      return {
+        averageGrade: Math.round(averageGrade),
+        totalAssignments: grades.length,
+        highestGrade: Math.round(highestGrade),
+        lowestGrade: Math.round(lowestGrade)
+      };
     }
-
-    const totalPoints = grades.reduce((sum, grade) => sum + grade.grade, 0);
-    const maxPoints = grades.reduce((sum, grade) => sum + grade.maxScore, 0);
-    const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
-    const highestGrade = Math.max(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
-    const lowestGrade = Math.min(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
-
-    return {
-      averageGrade: Math.round(averageGrade),
-      totalAssignments: grades.length,
-      highestGrade: Math.round(highestGrade),
-      lowestGrade: Math.round(lowestGrade)
-    };
   };
 
   const stats = getStats();
@@ -269,7 +346,9 @@ export default function StudentGrades() {
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
             <div className="flex items-center gap-3 mb-2">
               <Award size={20} className="text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">{t('student.grades.averageGrade')}</span>
+              <span className="text-sm font-medium text-blue-800">
+                {gradeType === 'courses' ? 'Average Final Grade' : t('student.grades.averageGrade')}
+              </span>
             </div>
             <p className="text-3xl font-bold text-blue-900">{stats.averageGrade}%</p>
           </div>
@@ -277,9 +356,13 @@ export default function StudentGrades() {
           <div className="bg-green-50 rounded-xl p-6 border border-green-100">
             <div className="flex items-center gap-3 mb-2">
               <Award size={20} className="text-green-600" />
-              <span className="text-sm font-medium text-green-800">{t('student.grades.totalAssignments')}</span>
+              <span className="text-sm font-medium text-green-800">
+                {gradeType === 'courses' ? 'Total Courses' : t('student.grades.totalAssignments')}
+              </span>
             </div>
-            <p className="text-3xl font-bold text-green-900">{stats.totalAssignments}</p>
+            <p className="text-3xl font-bold text-green-900">
+              {gradeType === 'courses' ? stats.totalCourses : stats.totalAssignments}
+            </p>
           </div>
           
           <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
@@ -363,86 +446,58 @@ export default function StudentGrades() {
                 );
               })
             ) : (
-              // Course Grades View
-              ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                // Group grades by course for this year
-                const yearGrades = filteredAndSortedGrades.filter(grade => 
-                  grade.gradedAt.getFullYear().toString() === year
-                );
-                
-                const courseGrades = yearGrades.reduce((acc: any, grade) => {
-                  if (!acc[grade.courseTitle]) {
-                    acc[grade.courseTitle] = [];
-                  }
-                  acc[grade.courseTitle].push(grade);
-                  return acc;
-                }, {});
-                
-                return (
-                  <div key={year} className="border-b border-gray-200 last:border-b-0">
-                    <button
-                      onClick={() => toggleYear(year)}
-                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        {expandedYears[year] ? (
-                          <ChevronDown size={20} className="text-gray-400" />
-                        ) : (
-                          <ChevronRight size={20} className="text-gray-400" />
-                        )}
-                        <span className="font-semibold text-gray-900">{year}</span>
-                      </div>
-                    </button>
-
-                    {expandedYears[year] && Object.keys(courseGrades).length > 0 && (
-                      <div className="pl-8 pb-4 space-y-6">
-                        <div className="border-l-4 border-blue-500 pl-6">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                          
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Assignments</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Average Grade</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {Object.entries(courseGrades).map(([courseTitle, grades]: [string, any]) => {
-                                  const avgGrade = Math.round(grades.reduce((sum: number, g: any) => sum + g.grade, 0) / grades.length);
-                                  const avgMaxScore = Math.round(grades.reduce((sum: number, g: any) => sum + g.maxScore, 0) / grades.length);
-                                  const letterGrade = getGradeLetter(avgGrade, avgMaxScore);
-                                  
-                                  return (
-                                    <tr key={courseTitle} className="border-b border-gray-100 hover:bg-gray-50">
-                                      <td className="py-3 px-4 text-gray-800">{courseTitle}</td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grades.length}</td>
-                                      <td className="py-3 px-4 text-center">
-                                        <span className={`font-semibold ${getGradeColor(avgGrade, avgMaxScore)}`}>
-                                          {avgGrade}%
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4 text-center text-gray-800 font-medium">{letterGrade}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {expandedYears[year] && Object.keys(courseGrades).length === 0 && (
-                      <div className="pl-8 pb-4">
-                        <p className="text-gray-500 italic">No grades available for this year</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+              // Final Course Grades View
+              filteredAndSortedFinalGrades.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAndSortedFinalGrades.map((grade) => {
+                        const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
+                        return (
+                          <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
+                            <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={`font-semibold ${getGradeColor(grade.finalGrade, 100)}`}>
+                                {grade.finalGrade}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
+                                {letterGrade}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
+                            <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
+                              {grade.calculationMethod.replace('_', ' ')}
+                            </td>
+                            <td className="py-3 px-4 text-center text-gray-600 text-sm">
+                              {grade.calculatedAt.toDate().toLocaleDateString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Final Grades Yet</h3>
+                  <p className="text-gray-400">Your final course grades will appear here once they're calculated by your instructors.</p>
+                </div>
+              )
             )}
           </div>
         </div>

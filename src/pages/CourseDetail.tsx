@@ -423,7 +423,9 @@ const CourseDetail = () => {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setSelectedMaterial(material);
                                 setMaterialDialogOpen(true);
                               }}

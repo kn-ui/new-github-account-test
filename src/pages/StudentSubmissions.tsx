@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, assignmentEditRequestService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +73,10 @@ export default function StudentSubmissions() {
   const [submissionAttachments, setSubmissionAttachments] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<SubmissionWithDetails | null>(null);
+  const [editRequestOpen, setEditRequestOpen] = useState(false);
+  const [editReason, setEditReason] = useState('');
+  const [selectedSubmissionForEdit, setSelectedSubmissionForEdit] = useState<SubmissionWithDetails | null>(null);
+  const [editRequests, setEditRequests] = useState<any[]>([]);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -148,6 +152,10 @@ export default function StudentSubmissions() {
       const submissionsArrays = await Promise.all(submissionsPromises);
       const allSubmissions = submissionsArrays.flat();
       setSubmissions(allSubmissions);
+
+      // Load edit requests for this student
+      const requests = await assignmentEditRequestService.getEditRequestsByStudent(currentUser!.uid);
+      setEditRequests(requests);
 
     } catch (error) {
       console.error('Error loading submissions:', error);
@@ -298,6 +306,57 @@ export default function StudentSubmissions() {
     return Array.from(new Set(submissions.map(submission => submission.courseTitle)));
   };
 
+  const getEditRequestForSubmission = (submissionId: string) => {
+    return editRequests.find(req => req.submissionId === submissionId);
+  };
+
+  const handleRequestEdit = (submission: SubmissionWithDetails) => {
+    setSelectedSubmissionForEdit(submission);
+    setEditRequestOpen(true);
+  };
+
+  const submitEditRequest = async () => {
+    if (!selectedSubmissionForEdit || !currentUser?.uid || !userProfile || !editReason.trim()) {
+      toast.error('Please provide a reason for the edit request');
+      return;
+    }
+
+    try {
+      // Get the assignment to find the teacher ID
+      const assignment = await assignmentService.getAssignmentsByIds([selectedSubmissionForEdit.assignmentId]);
+      const assignmentData = assignment[selectedSubmissionForEdit.assignmentId];
+      
+      if (!assignmentData) {
+        toast.error('Assignment not found');
+        return;
+      }
+
+      const editRequestData = {
+        submissionId: selectedSubmissionForEdit.id,
+        assignmentId: selectedSubmissionForEdit.assignmentId,
+        assignmentTitle: selectedSubmissionForEdit.assignmentTitle,
+        courseId: selectedSubmissionForEdit.courseId,
+        courseTitle: selectedSubmissionForEdit.courseTitle,
+        studentId: currentUser.uid,
+        studentName: userProfile.displayName || 'Unknown Student',
+        studentEmail: userProfile.email || currentUser.email || '',
+        teacherId: assignmentData.teacherId,
+        reason: editReason.trim(),
+        isActive: true
+      };
+
+      await assignmentEditRequestService.createEditRequest(editRequestData);
+      toast.success('Edit request submitted successfully. Your teacher will review it.');
+      
+      setEditRequestOpen(false);
+      setEditReason('');
+      setSelectedSubmissionForEdit(null);
+    } catch (error) {
+      console.error('Error submitting edit request:', error);
+      toast.error('Failed to submit edit request');
+    }
+  };
+
   if (selectedSubmissionDetail) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -386,6 +445,76 @@ export default function StudentSubmissions() {
                   </div>
                 </div>
               )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
+                {selectedSubmissionDetail.status === 'draft' && (
+                  <Button 
+                    onClick={() => handleSubmissionAction(selectedSubmissionDetail.assignmentId, 'edit')}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Continue Working
+                  </Button>
+                )}
+                {selectedSubmissionDetail.status === 'submitted' && (() => {
+                  const editRequest = getEditRequestForSubmission(selectedSubmissionDetail.id);
+                  if (editRequest) {
+                    if (editRequest.status === 'approved') {
+                      return (
+                        <Button 
+                          onClick={() => handleSubmissionAction(selectedSubmissionDetail.assignmentId, 'edit')}
+                          className="flex items-center gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit Assignment (Approved)
+                        </Button>
+                      );
+                    } else if (editRequest.status === 'denied') {
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" disabled className="flex items-center gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit Request Denied
+                          </Button>
+                          {editRequest.response && (
+                            <div className="text-sm text-gray-600">
+                              <strong>Teacher Response:</strong> {editRequest.response}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" disabled className="flex items-center gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit Request Pending
+                          </Button>
+                          <span className="text-sm text-gray-600">Waiting for teacher response</span>
+                        </div>
+                      );
+                    }
+                  } else {
+                    return (
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleRequestEdit(selectedSubmissionDetail)}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Request Edit
+                      </Button>
+                    );
+                  }
+                })()}
+                <Button variant="outline" asChild>
+                  <Link to={`/dashboard/course/${selectedSubmissionDetail.courseId}`}>
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    View Course
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -699,6 +828,53 @@ export default function StudentSubmissions() {
               disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
             >
               {t('student.submissions.dialog.submit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Assignment Edit</DialogTitle>
+          </DialogHeader>
+          
+          {selectedSubmissionForEdit && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <p><strong>Assignment:</strong> {selectedSubmissionForEdit.assignmentTitle}</p>
+                <p><strong>Course:</strong> {selectedSubmissionForEdit.courseTitle}</p>
+                <p><strong>Submitted:</strong> {selectedSubmissionForEdit.submittedAt.toLocaleDateString()}</p>
+              </div>
+              
+              <div>
+                <Label htmlFor="editReason">Reason for Edit Request *</Label>
+                <Textarea
+                  id="editReason"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  placeholder="Please explain why you need to edit this assignment (e.g., technical issues, need clarification, etc.)"
+                  rows={4}
+                  required
+                />
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <p><strong>Note:</strong> Your teacher will review this request and may approve or reject it. You will be notified of their decision.</p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRequestOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitEditRequest}
+              disabled={!editReason.trim()}
+            >
+              Submit Request
             </Button>
           </DialogFooter>
         </DialogContent>

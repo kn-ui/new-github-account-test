@@ -200,6 +200,26 @@ export interface FirestoreGrade {
   notes?: string;
 }
 
+export interface FirestoreEditRequest {
+  id: string;
+  submissionId: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  courseId: string;
+  courseTitle: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  teacherId: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'denied';
+  requestedAt: Timestamp;
+  respondedAt?: Timestamp;
+  response?: string;
+  respondedBy?: string;
+  isActive: boolean;
+}
+
 export interface FirestoreAnnouncement {
   id: string;
   courseId?: string;
@@ -263,6 +283,7 @@ const collections = {
   courseMaterials: () => collection(db, 'courseMaterials'),
   exams: () => collection(db, 'exams'),
   grades: () => collection(db, 'grades'),
+  editRequests: () => collection(db, 'editRequests'),
 };
 
 // User operations
@@ -1530,57 +1551,81 @@ export const analyticsService = {
 
 // Assignment Edit Request Service
 export const assignmentEditRequestService = {
-  async createEditRequest(data: Omit<FirestoreAssignmentEditRequest, 'id' | 'requestedAt' | 'status'>) {
-    const docRef = await addDoc(collection(db, 'assignmentEditRequests'), {
+  async createEditRequest(data: Omit<FirestoreEditRequest, 'id' | 'requestedAt' | 'status'>) {
+    const docRef = await addDoc(collections.editRequests(), {
       ...data,
       requestedAt: Timestamp.now(),
-      status: 'pending'
+      status: 'pending' as const,
+      isActive: true
     });
     return docRef.id;
   },
 
-  async getEditRequestsByStudent(studentId: string): Promise<FirestoreAssignmentEditRequest[]> {
+  async getEditRequestsByStudent(studentId: string): Promise<FirestoreEditRequest[]> {
     const q = query(
-      collection(db, 'assignmentEditRequests'),
+      collections.editRequests(),
       where('studentId', '==', studentId),
+      where('isActive', '==', true),
       orderBy('requestedAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEditRequest));
   },
 
-  async getEditRequestsByTeacher(teacherId: string): Promise<FirestoreAssignmentEditRequest[]> {
+  async getEditRequestsByTeacher(teacherId: string): Promise<FirestoreEditRequest[]> {
     const q = query(
-      collection(db, 'assignmentEditRequests'),
+      collections.editRequests(),
       where('teacherId', '==', teacherId),
+      where('isActive', '==', true),
       orderBy('requestedAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEditRequest));
   },
 
-  async getPendingEditRequestsByTeacher(teacherId: string): Promise<FirestoreAssignmentEditRequest[]> {
+  async getPendingEditRequestsByTeacher(teacherId: string): Promise<FirestoreEditRequest[]> {
     const q = query(
-      collection(db, 'assignmentEditRequests'),
+      collections.editRequests(),
       where('teacherId', '==', teacherId),
       where('status', '==', 'pending'),
+      where('isActive', '==', true),
       orderBy('requestedAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAssignmentEditRequest));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEditRequest));
   },
 
-  async updateEditRequest(requestId: string, updates: Partial<FirestoreAssignmentEditRequest>) {
-    const docRef = doc(db, 'assignmentEditRequests', requestId);
+  async updateEditRequest(requestId: string, updates: Partial<FirestoreEditRequest>) {
+    const docRef = doc(db, 'editRequests', requestId);
     await updateDoc(docRef, {
       ...updates,
-      handledAt: Timestamp.now()
+      respondedAt: Timestamp.now()
     });
   },
 
   async deleteEditRequest(requestId: string) {
-    const docRef = doc(db, 'assignmentEditRequests', requestId);
+    const docRef = doc(db, 'editRequests', requestId);
     await deleteDoc(docRef);
+  },
+
+  async approveEditRequest(requestId: string, response: string, respondedBy: string) {
+    const docRef = doc(db, 'editRequests', requestId);
+    await updateDoc(docRef, {
+      status: 'approved' as const,
+      response,
+      respondedBy,
+      respondedAt: Timestamp.now()
+    });
+  },
+
+  async denyEditRequest(requestId: string, response: string, respondedBy: string) {
+    const docRef = doc(db, 'editRequests', requestId);
+    await updateDoc(docRef, {
+      status: 'denied' as const,
+      response,
+      respondedBy,
+      respondedAt: Timestamp.now()
+    });
   }
 };
 

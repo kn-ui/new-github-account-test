@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { assignmentService, courseService, submissionService } from '@/lib/firestore';
+import { assignmentService, courseService, submissionService, assignmentEditRequestService, FirestoreEditRequest } from '@/lib/firestore';
 import { FileText, BookOpen, Clock, Edit, ArrowLeft } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function AssignmentSubmissions() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -24,6 +25,10 @@ export default function AssignmentSubmissions() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'graded'>('all');
   const [grading, setGrading] = useState<{ id: string; grade: number; feedback: string } | null>(null);
+  const [editRequests, setEditRequests] = useState<FirestoreEditRequest[]>([]);
+  const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
+  const [selectedEditRequest, setSelectedEditRequest] = useState<FirestoreEditRequest | null>(null);
+  const [editResponse, setEditResponse] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +48,11 @@ export default function AssignmentSubmissions() {
         Object.entries(usersMap).forEach(([id, u]: any) => { if (u?.displayName) names[id] = u.displayName; });
         setStudentMap(names);
         setSubmissions(subs);
+
+        // Load edit requests for this assignment
+        const requests = await assignmentEditRequestService.getEditRequestsByTeacher(currentUser.uid);
+        const assignmentRequests = requests.filter(req => req.assignmentId === assignmentId);
+        setEditRequests(assignmentRequests);
       } catch (e) {
         console.error(e);
         toast.error('Failed to load submissions');
@@ -59,6 +69,63 @@ export default function AssignmentSubmissions() {
       .filter((s: any) => statusFilter === 'all' || s.status === statusFilter)
       .sort((a: any, b: any) => b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime());
   }, [submissions, search, statusFilter, assignment?.title, courseTitle, studentMap]);
+
+  const handleEditRequestResponse = (request: FirestoreEditRequest) => {
+    setSelectedEditRequest(request);
+    setShowEditRequestDialog(true);
+  };
+
+  const approveEditRequest = async () => {
+    if (!selectedEditRequest || !editResponse.trim()) {
+      toast.error('Please provide a response');
+      return;
+    }
+
+    try {
+      await assignmentEditRequestService.approveEditRequest(
+        selectedEditRequest.id, 
+        editResponse, 
+        currentUser!.uid
+      );
+      toast.success('Edit request approved');
+      setShowEditRequestDialog(false);
+      setEditResponse('');
+      setSelectedEditRequest(null);
+      // Reload edit requests
+      const requests = await assignmentEditRequestService.getEditRequestsByTeacher(currentUser!.uid);
+      const assignmentRequests = requests.filter(req => req.assignmentId === assignmentId);
+      setEditRequests(assignmentRequests);
+    } catch (error) {
+      console.error('Error approving edit request:', error);
+      toast.error('Failed to approve edit request');
+    }
+  };
+
+  const denyEditRequest = async () => {
+    if (!selectedEditRequest || !editResponse.trim()) {
+      toast.error('Please provide a response');
+      return;
+    }
+
+    try {
+      await assignmentEditRequestService.denyEditRequest(
+        selectedEditRequest.id, 
+        editResponse, 
+        currentUser!.uid
+      );
+      toast.success('Edit request denied');
+      setShowEditRequestDialog(false);
+      setEditResponse('');
+      setSelectedEditRequest(null);
+      // Reload edit requests
+      const requests = await assignmentEditRequestService.getEditRequestsByTeacher(currentUser!.uid);
+      const assignmentRequests = requests.filter(req => req.assignmentId === assignmentId);
+      setEditRequests(assignmentRequests);
+    } catch (error) {
+      console.error('Error denying edit request:', error);
+      toast.error('Failed to deny edit request');
+    }
+  };
 
   if (!userProfile || userProfile.role !== 'teacher') {
     return (
@@ -85,6 +152,52 @@ export default function AssignmentSubmissions() {
             <Link to="/dashboard/assignments"><Button variant="outline"><ArrowLeft className="h-4 w-4 mr-1" />Back</Button></Link>
           </div>
         </div>
+
+        {/* Edit Requests Section */}
+        {editRequests.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Requests ({editRequests.length})</h3>
+            <div className="space-y-3">
+              {editRequests.map((request) => (
+                <div key={request.id} className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium text-gray-900">{request.studentName}</h4>
+                        <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'secondary' : 'destructive'}>
+                          {request.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Assignment:</strong> {request.assignmentTitle}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Reason:</strong> {request.reason}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Requested: {request.requestedAt.toDate().toLocaleString()}
+                      </p>
+                      {request.response && (
+                        <div className="mt-2 p-2 bg-gray-100 rounded text-sm">
+                          <strong>Your Response:</strong> {request.response}
+                        </div>
+                      )}
+                    </div>
+                    {request.status === 'pending' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleEditRequestResponse(request)}
+                        className="ml-4"
+                      >
+                        Respond
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -167,6 +280,60 @@ export default function AssignmentSubmissions() {
           )}
         </div>
       </div>
+
+      {/* Edit Request Response Dialog */}
+      <Dialog open={showEditRequestDialog} onOpenChange={setShowEditRequestDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Respond to Edit Request</DialogTitle>
+          </DialogHeader>
+          
+          {selectedEditRequest && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <p><strong>Student:</strong> {selectedEditRequest.studentName}</p>
+                <p><strong>Assignment:</strong> {selectedEditRequest.assignmentTitle}</p>
+                <p><strong>Reason:</strong> {selectedEditRequest.reason}</p>
+              </div>
+              
+              <div>
+                <Label htmlFor="editResponse">Your Response *</Label>
+                <Textarea
+                  id="editResponse"
+                  value={editResponse}
+                  onChange={(e) => setEditResponse(e.target.value)}
+                  placeholder="Provide feedback on the edit request..."
+                  rows={4}
+                  required
+                />
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <p><strong>Note:</strong> The student will be notified of your decision and can see your response.</p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowEditRequestDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={denyEditRequest}
+              disabled={!editResponse.trim()}
+            >
+              Deny Request
+            </Button>
+            <Button 
+              onClick={approveEditRequest}
+              disabled={!editResponse.trim()}
+            >
+              Approve Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -133,7 +133,6 @@ const EventsPage = () => {
   const fetchEvents = async () => {
     try {
       const fetchedEvents = await eventService.getAllEvents();
-      console.log('Fetched events:', fetchedEvents);
       // Update status based on current date
       const eventsWithUpdatedStatus = fetchedEvents.map(event => ({
         ...event,
@@ -148,11 +147,11 @@ const EventsPage = () => {
   };
 
   useEffect(() => {
-    console.log('Events state updated:', events);
+    // Events state updated
   }, [events]);
 
   useEffect(() => {
-    console.log('Search term or status filter changed:', searchTerm, statusFilter);
+    // Search term or status filter changed
   }, [searchTerm, statusFilter]);
 
   const handleDeleteEvent = async (eventId: string) => {

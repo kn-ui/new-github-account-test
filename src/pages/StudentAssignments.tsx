@@ -28,7 +28,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { truncateTitle, truncateText } from '@/lib/utils';
+import { truncateTitle, truncateText, truncateInstructions } from '@/lib/utils';
 
 interface AssignmentWithStatus extends FirestoreAssignment {
   courseTitle: string;
@@ -690,7 +690,7 @@ export default function StudentAssignments() {
                         </div>
                         {assignment.instructions && (
                           <p className="text-xs text-gray-500 mb-2">
-                            <strong>{t('assignments.instructions')}:</strong> {assignment.instructions}
+                            <strong>{t('assignments.instructions')}:</strong> {truncateInstructions(assignment.instructions)}
                           </p>
                         )}
                         {assignment.status === 'graded' && assignment.grade !== undefined && (

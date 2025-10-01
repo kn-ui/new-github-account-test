@@ -81,7 +81,7 @@ const CourseDetail = () => {
               setEnrollment(userEnrollment);
             }
           } catch (error) {
-            console.log('No enrollment found for this course');
+            // No enrollment found for this course
           }
         }
 

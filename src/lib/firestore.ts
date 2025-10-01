@@ -514,7 +514,6 @@ export const enrollmentService = {
     const enrollmentsWithCourses = await Promise.all(
       enrollments.map(async (enrollment) => {
         try {
-          console.log(enrollment);
           const course = await courseService.getCourseById(enrollment.courseId);
           return Object.assign({}, enrollment, { course });
         } catch (error) {
@@ -563,7 +562,6 @@ export const enrollmentService = {
     const enrollmentsWithCourses = await Promise.all(
       enrollments.map(async (enrollment) => {
         try {
-          console.log(enrollment);
           const course = await courseService.getCourseById(enrollment.courseId);
           return Object.assign({}, enrollment, { course });
         } catch (error) {

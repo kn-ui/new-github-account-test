@@ -102,9 +102,9 @@ export default function StudentExams() {
             <div key={e.id} className="bg-white border rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center"><FileText className="h-5 w-5 text-blue-600" /></div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{e.title}</div>
-                  <div className="text-sm text-gray-600">{e.courseTitle}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate">{e.title}</div>
+                  <div className="text-sm text-gray-600 truncate">{e.courseTitle}</div>
                   <div className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Calendar className="h-3 w-3" /> {e.date.toDate().toLocaleString()}</div>
                   {e.status === 'completed' && (
                     <div className="text-xs text-green-700 flex items-center gap-1 mt-1"><CheckCircle className="h-3 w-3" /> Score: {typeof e.score === 'number' ? e.score : '-'} </div>

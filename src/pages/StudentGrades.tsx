@@ -336,8 +336,8 @@ export default function StudentGrades() {
                               <tbody>
                                 {yearGrades.map((grade) => (
                                   <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                    <td className="py-3 px-4 text-gray-800">{grade.assignmentTitle}</td>
-                                    <td className="py-3 px-4 text-gray-600">{grade.courseTitle}</td>
+                                    <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
+                                    <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
                                     <td className="py-3 px-4 text-center">
                                       <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
                                         {grade.grade}/{grade.maxScore}

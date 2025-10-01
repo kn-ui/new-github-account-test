@@ -279,9 +279,9 @@ export default function StudentCourses() {
                     <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
                       <BookOpen className="h-6 w-6 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{course.title}</h3>
-                      <p className="text-sm text-gray-600">{t('common.by')} {course.instructorName}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{course.title}</h3>
+                      <p className="text-sm text-gray-600 truncate">{t('common.by')} {course.instructorName}</p>
                     </div>
                   </div>
                   
@@ -311,10 +311,10 @@ export default function StudentCourses() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{course.title}</h3>
-                        <Badge variant="outline">{course.category}</Badge>
+                        <h3 className="text-xl font-semibold text-gray-900 truncate">{course.title}</h3>
+                        <Badge variant="outline" className="flex-shrink-0">{course.category}</Badge>
                       </div>
-                      <p className="text-gray-600 mb-3">{course.description}</p>
+                      <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                         <span className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4" />

@@ -193,8 +193,8 @@ export default function StudentAnnouncements() {
                       <Bell size={18} className={announcement.isRead ? 'text-gray-400' : 'text-blue-600'} />
                     </div>
                     
-                    <div className="flex-1">
-                      <p className={`font-medium ${
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium truncate ${
                         announcement.isRead ? 'text-gray-700' : 'text-gray-900'
                       }`}>
                         {announcement.title}

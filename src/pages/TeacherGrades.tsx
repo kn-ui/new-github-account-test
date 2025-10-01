@@ -375,10 +375,10 @@ export default function TeacherGrades() {
                 <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-medium text-gray-900">{a.title}</h3>
-                    <Badge className={getStatusColor(a.pending ? 'submitted' : 'graded')}>
+                    <h3 className="font-medium text-gray-900 truncate">{a.title}</h3>
+                    <Badge className={`${getStatusColor(a.pending ? 'submitted' : 'graded')} flex-shrink-0`}>
                       <div className="flex items-center gap-1">
                         {getStatusIcon(a.pending ? 'submitted' : 'graded')}
                         {a.pending ? 'Pending' : 'All Graded'}

@@ -408,20 +408,20 @@ export default function TeacherAnnouncements() {
                     <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                       <Bell className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                        <h3 className="font-medium text-gray-900 truncate">{announcement.title}</h3>
                         {announcement.recipientStudentId ? (
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="flex-shrink-0">
                             {t('teacher.announcements.messageTo')} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
                           </Badge>
                         ) : (
-                          <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                          <Badge variant={announcement.courseId ? 'default' : 'secondary'} className="flex-shrink-0">
                             {announcement.courseId ? 'Course' : 'General'}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{announcement.body}</p>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{announcement.body}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
@@ -477,14 +477,14 @@ export default function TeacherAnnouncements() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Bell className="h-4 w-4 text-blue-600" />
-                    <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                    <h3 className="font-medium text-gray-900 truncate">{announcement.title}</h3>
                   </div>
                   {announcement.recipientStudentId ? (
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="flex-shrink-0">
                       {t('teacher.announcements.messageTo') || 'Message to'} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
                     </Badge>
                   ) : (
-                    <Badge variant={announcement.courseId ? 'default' : 'secondary'}>
+                    <Badge variant={announcement.courseId ? 'default' : 'secondary'} className="flex-shrink-0">
                       {announcement.courseId ? 'Course' : 'General'}
                     </Badge>
                   )}

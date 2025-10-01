@@ -448,51 +448,89 @@ export default function StudentGrades() {
                 );
               })
             ) : (
-              // Final Course Grades View
+              // Final Course Grades View - Grouped by Year
               filteredAndSortedFinalGrades.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAndSortedFinalGrades.map((grade) => {
-                        const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
-                        return (
-                          <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
-                            <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
-                            <td className="py-3 px-4 text-center">
-                              <span className={`font-semibold ${getGradeColor(grade.finalGrade, 100)}`}>
-                                {grade.finalGrade}%
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
-                                {letterGrade}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
-                            <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
-                              {grade.calculationMethod.replace('_', ' ')}
-                            </td>
-                            <td className="py-3 px-4 text-center text-gray-600 text-sm">
-                              {grade.calculatedAt.toDate().toLocaleDateString()}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
+                  const yearGrades = filteredAndSortedFinalGrades.filter(grade => 
+                    grade.calculatedAt.toDate().getFullYear().toString() === year
+                  );
+                  
+                  return (
+                    <div key={year} className="border-b border-gray-200 last:border-b-0">
+                      <button
+                        onClick={() => toggleYear(year)}
+                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expandedYears[year] ? (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronRight size={20} className="text-gray-400" />
+                          )}
+                          <span className="font-semibold text-gray-900">{year}</span>
+                        </div>
+                      </button>
+
+                      {expandedYears[year] && yearGrades.length > 0 && (
+                        <div className="pl-8 pb-4 space-y-6">
+                          <div className="border-l-4 border-blue-500 pl-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                            
+                            <div className="overflow-x-auto">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="border-b border-gray-200">
+                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {yearGrades.map((grade) => {
+                                    const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
+                                    return (
+                                      <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                        <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
+                                        <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
+                                        <td className="py-3 px-4 text-center">
+                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, 100)}`}>
+                                            {grade.finalGrade}%
+                                          </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                          <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
+                                            {letterGrade}
+                                          </Badge>
+                                        </td>
+                                        <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
+                                        <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
+                                          {grade.calculationMethod.replace('_', ' ')}
+                                        </td>
+                                        <td className="py-3 px-4 text-center text-gray-600 text-sm">
+                                          {grade.calculatedAt.toDate().toLocaleDateString()}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {expandedYears[year] && yearGrades.length === 0 && (
+                        <div className="pl-8 pb-4">
+                          <p className="text-gray-500 italic">No final grades available for this year</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <div className="text-center py-12 text-gray-500">
                   <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />

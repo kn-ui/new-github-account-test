@@ -122,16 +122,23 @@ const CourseDetail = () => {
       
       // Load grades for this course if enrolled
       if (isEnrolled && currentUser?.uid) {
-        const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
-        const courseSubmissions = submissions.filter((sub: any) => 
-          assignments.some(assign => assign.id === sub.assignmentId)
-        );
-        setCourseGrades(courseSubmissions);
+        try {
+          const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
+          const courseSubmissions = submissions.filter((sub: any) => 
+            assignments.some(assign => assign.id === sub.assignmentId)
+          );
+          setCourseGrades(courseSubmissions);
+          console.log('Loaded course submissions:', courseSubmissions);
+        } catch (error) {
+          console.error('Error loading submissions:', error);
+          setCourseGrades([]);
+        }
         
         // Load final grade for this course
         try {
           const finalGradeData = await gradeService.getGradeByStudentAndCourse(courseId, currentUser.uid);
           setFinalGrade(finalGradeData);
+          console.log('Loaded final grade:', finalGradeData);
         } catch (error) {
           console.error('Error loading final grade:', error);
           setFinalGrade(null);
@@ -465,23 +472,38 @@ const CourseDetail = () => {
                 </div>
               )}
 
-              {activeTab === 'Grades' && isEnrolled && (
+              {activeTab === 'Grades' && (
                 <div className="space-y-6">
-                  {/* Grade View Mode Selector */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium text-gray-700">View Grades:</span>
-                      <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final') => setGradeViewMode(value)}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="assignments">Assignment Grades</SelectItem>
-                          <SelectItem value="final">Final Grade</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  {!isEnrolled ? (
+                    // Not enrolled state
+                    <div className="text-center py-12 text-gray-500">
+                      <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">Enrollment Required</h3>
+                      <p className="text-gray-400 mb-4">You need to be enrolled in this course to view your grades.</p>
+                      <div className="bg-blue-50 rounded-lg p-4 max-w-md mx-auto">
+                        <p className="text-sm text-blue-800">
+                          <strong>Note:</strong> Enrollment is managed by administrators. Please contact your admin to enroll in this course.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    // Enrolled state - show grade content
+                    <>
+                      {/* Grade View Mode Selector */}
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-medium text-gray-700">View Grades:</span>
+                          <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final') => setGradeViewMode(value)}>
+                            <SelectTrigger className="w-48">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="assignments">Assignment Grades</SelectItem>
+                              <SelectItem value="final">Final Grade</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
                   {/* Grade Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -670,6 +692,8 @@ const CourseDetail = () => {
                       <h3 className="text-lg font-medium mb-2">No Grades Yet</h3>
                       <p className="text-gray-400">Your assignment grades will appear here once they're graded by your instructor.</p>
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               )}

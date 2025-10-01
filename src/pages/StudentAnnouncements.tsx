@@ -17,7 +17,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { announcementService, enrollmentService, courseService, FirestoreAnnouncement } from '@/lib/firestore';
+import { studentDataService, FirestoreAnnouncement } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -54,21 +54,23 @@ export default function StudentAnnouncements() {
     if (!currentUser?.uid) return;
     try {
       setLoading(true);
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
-      const courseIds = enrollments.map((e: any) => e.courseId);
-      const courses = await Promise.all(courseIds.map(async (courseId) => {
-        try { return await courseService.getCourseById(courseId); } catch { return null; }
-      }));
-      const validCourses = courses.filter(Boolean);
+      
+      // Use optimized service to get dashboard data which includes announcements
+      const data = await studentDataService.getStudentDashboardData(currentUser.uid);
+      
+      // Set enrolled courses for filtering
+      const validCourses = data.enrollments
+        .filter(e => e.course)
+        .map(e => e.course);
       setEnrolledCourses(validCourses);
 
-      // Use filtered API that includes: general, enrolled courses, and direct-recipient announcements
-      const filtered = await announcementService.getAnnouncementsForStudent(currentUser.uid, courseIds, 100);
-      const withDetails = filtered.map((a: any) => ({
+      // Process announcements with course details
+      const withDetails = data.announcements.map((a: any) => ({
         ...a,
         course: a.courseId ? validCourses.find((c: any) => c?.id === a.courseId) : null,
         isRead: false,
       }));
+      
       withDetails.sort((a: any, b: any) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
       setAnnouncements(withDetails);
     } catch (error) {

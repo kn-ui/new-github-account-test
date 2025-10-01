@@ -1629,6 +1629,279 @@ export const assignmentEditRequestService = {
   }
 };
 
+// Simple in-memory cache for student data
+const studentDataCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const getCachedData = (key: string) => {
+  const cached = studentDataCache.get(key);
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedData = (key: string, data: any, ttl = CACHE_TTL) => {
+  studentDataCache.set(key, { data, timestamp: Date.now(), ttl });
+};
+
+// Retry utility function
+const retry = async <T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0) {
+      console.warn(`Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return retry(fn, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
+// Student Data Service - Optimized batch loading
+export const studentDataService = {
+  async getStudentDashboardData(studentId: string) {
+    const cacheKey = `dashboard_${studentId}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // Load all student data in parallel with optimized queries and retry logic
+      const [
+        enrollments,
+        stats,
+        announcements,
+        certificates
+      ] = await Promise.all([
+        // Get enrollments with course data
+        retry(() => this.getEnrollmentsWithCourses(studentId)),
+        // Get student stats
+        retry(() => analyticsService.getStudentStats(studentId)),
+        // Get announcements (limited to 10 for dashboard)
+        retry(() => announcementService.getAnnouncementsForStudent(studentId, [], 10)),
+        // Get certificates
+        retry(() => certificateService.getCertificatesForUser(studentId)).catch(() => [])
+      ]);
+
+      // Get course IDs for additional data
+      const courseIds = enrollments.map(e => e.courseId);
+      
+      // Load assignments for all courses in parallel
+      const assignments = courseIds.length > 0 
+        ? await this.getAssignmentsForCourses(courseIds)
+        : [];
+
+      const result = {
+        enrollments,
+        stats,
+        announcements,
+        certificates,
+        assignments
+      };
+
+      setCachedData(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error loading student dashboard data:', error);
+      throw error;
+    }
+  },
+
+  async getEnrollmentsWithCourses(studentId: string) {
+    const q = query(
+      collections.enrollments(),
+      where('studentId', '==', studentId),
+      where('isActive', '==', true),
+      orderBy('enrolledAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const enrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    
+    // Get course data for all enrollments in parallel
+    const courseIds = enrollments.map(e => e.courseId);
+    const courses = await this.getCoursesByIds(courseIds);
+    
+    // Merge course data with enrollments
+    return enrollments.map(enrollment => ({
+      ...enrollment,
+      course: courses[enrollment.courseId] || null
+    }));
+  },
+
+  async getCoursesByIds(courseIds: string[]) {
+    if (courseIds.length === 0) return {};
+    
+    const courses = await courseService.getCoursesByIds(courseIds);
+    return courses;
+  },
+
+  async getAssignmentsForCourses(courseIds: string[]) {
+    if (courseIds.length === 0) return [];
+    
+    // Load assignments for all courses in parallel
+    const assignmentPromises = courseIds.map(courseId => 
+      assignmentService.getAssignmentsByCourse(courseId).catch(() => [])
+    );
+    
+    const assignmentArrays = await Promise.all(assignmentPromises);
+    return assignmentArrays.flat();
+  },
+
+  async getStudentCoursesData(studentId: string) {
+    const cacheKey = `courses_${studentId}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const enrollments = await this.getEnrollmentsWithCourses(studentId);
+      
+      // Filter out enrollments without course data
+      const validEnrollments = enrollments.filter(e => e.course);
+      
+      const result = validEnrollments.map(enrollment => ({
+        id: enrollment.courseId,
+        title: enrollment.course!.title,
+        description: enrollment.course!.description,
+        category: enrollment.course!.category,
+        instructorName: enrollment.course!.instructorName,
+        progress: enrollment.progress || 0,
+        enrolledAt: enrollment.enrolledAt.toDate(),
+        lastAccessed: enrollment.lastAccessedAt?.toDate()
+      }));
+
+      setCachedData(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error loading student courses data:', error);
+      throw error;
+    }
+  },
+
+  async getStudentAssignmentsData(studentId: string) {
+    const cacheKey = `assignments_${studentId}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const enrollments = await this.getEnrollmentsWithCourses(studentId);
+      const courseIds = enrollments.map(e => e.courseId);
+      
+      if (courseIds.length === 0) return [];
+
+      // Load assignments and submissions in parallel
+      const [assignments, submissions] = await Promise.all([
+        this.getAssignmentsForCourses(courseIds),
+        submissionService.getSubmissionsByStudent(studentId)
+      ]);
+
+      // Create a map of submissions by assignment ID
+      const submissionMap = new Map();
+      submissions.forEach(sub => {
+        submissionMap.set(sub.assignmentId, sub);
+      });
+
+      // Merge assignment data with submission status
+      const result = assignments.map(assignment => {
+        const submission = submissionMap.get(assignment.id);
+        const course = enrollments.find(e => e.courseId === assignment.courseId)?.course;
+        
+        let status: 'not-started' | 'in-progress' | 'submitted' | 'graded' = 'not-started';
+        let submissionId: string | undefined;
+        let grade: number | undefined;
+        let feedback: string | undefined;
+
+        if (submission) {
+          submissionId = submission.id;
+          if (submission.status === 'graded') {
+            status = 'graded';
+            grade = submission.grade;
+            feedback = submission.feedback;
+          } else if (submission.status === 'submitted') {
+            status = 'submitted';
+          }
+        }
+
+        return {
+          ...assignment,
+          courseTitle: course?.title || 'Unknown Course',
+          instructorName: course?.instructorName || 'Unknown Instructor',
+          status,
+          submissionId,
+          grade,
+          feedback
+        };
+      });
+
+      setCachedData(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error loading student assignments data:', error);
+      throw error;
+    }
+  },
+
+  async getStudentSubmissionsData(studentId: string) {
+    const cacheKey = `submissions_${studentId}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const enrollments = await this.getEnrollmentsWithCourses(studentId);
+      const courseIds = enrollments.map(e => e.courseId);
+      
+      if (courseIds.length === 0) return [];
+
+      // Load assignments and submissions in parallel
+      const [assignments, submissions] = await Promise.all([
+        this.getAssignmentsForCourses(courseIds),
+        submissionService.getSubmissionsByStudent(studentId)
+      ]);
+
+      // Create a map of assignments by ID
+      const assignmentMap = new Map();
+      assignments.forEach(assignment => {
+        assignmentMap.set(assignment.id, assignment);
+      });
+
+      // Merge submission data with assignment details
+      const result = submissions.map(submission => {
+        const assignment = assignmentMap.get(submission.assignmentId);
+        const course = enrollments.find(e => e.courseId === assignment?.courseId)?.course;
+        
+        return {
+          id: submission.id,
+          assignmentId: submission.assignmentId,
+          assignmentTitle: assignment?.title || 'Unknown Assignment',
+          courseId: assignment?.courseId || '',
+          courseTitle: course?.title || 'Unknown Course',
+          instructorName: course?.instructorName || 'Unknown Instructor',
+          submittedAt: submission.submittedAt.toDate(),
+          status: submission.status,
+          grade: submission.grade,
+          maxScore: assignment?.maxScore || 100,
+          feedback: submission.feedback,
+          content: (submission as any).content || '',
+          attachments: (submission as any).attachments || []
+        };
+      });
+
+      setCachedData(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error loading student submissions data:', error);
+      throw error;
+    }
+  },
+
+  // Clear cache for a specific student (useful when data changes)
+  clearStudentCache(studentId: string) {
+    const keys = [`dashboard_${studentId}`, `courses_${studentId}`, `assignments_${studentId}`, `submissions_${studentId}`];
+    keys.forEach(key => studentDataCache.delete(key));
+  }
+};
+
 // Grade operations
 export const gradeService = {
   async getGradesByCourse(courseId: string): Promise<FirestoreGrade[]> {

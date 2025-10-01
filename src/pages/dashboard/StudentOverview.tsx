@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, assignmentService, FirestoreCertificate } from '@/lib/firestore';
+import { studentDataService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,21 +41,15 @@ export default function StudentOverview() {
         setLoading(true);
         
         if (currentUser?.uid) {
-          // Load student stats and enrollments in parallel
-          const [studentStats, enrollments] = await Promise.all([
-            analyticsService.getStudentStats(currentUser.uid),
-            enrollmentService.getEnrollmentsByStudent(currentUser.uid)
-          ]);
+          // Use optimized batch loading service
+          const data = await studentDataService.getStudentDashboardData(currentUser.uid);
           
-          setStats(studentStats);
+          setStats(data.stats);
+          setCertificates(data.certificates);
 
-          // Filter and normalize enrollments - only include those with complete course data
-          const normalized = enrollments
-            .filter((enrollment: any) => 
-              enrollment.course?.title && 
-              enrollment.course?.instructorName && 
-              enrollment.courseId
-            )
+          // Normalize enrollments for display
+          const normalized = data.enrollments
+            .filter((enrollment: any) => enrollment.course)
             .map((enrollment: any) => ({
               id: enrollment.courseId,
               title: enrollment.course.title,
@@ -65,57 +60,34 @@ export default function StudentOverview() {
             }));
           setEnrolledCourses(normalized);
 
+          // Process assignments
+          const upcoming = data.assignments
+            .filter((a: any) => {
+              const dueDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
+              return dueDate > new Date();
+            })
+            .sort((a: any, b: any) => {
+              const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
+              const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
+              return aDate.getTime() - bDate.getTime();
+            })
+            .slice(0, 5)
+            .map((a: any) => ({
+              ...a,
+              courseTitle: data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course',
+              dueDate: (a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate()).toLocaleDateString()
+            }));
+          setUpcomingAssignments(upcoming);
+          
+          // Process announcements
+          const withCourseTitles = data.announcements.map((a: any) => ({
+            ...a,
+            courseTitle: a.courseId ? (data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course') : t('forum.categories.all')
+          }));
+          setAnnouncements(withCourseTitles);
+
           // Log today's activity for attendance (non-blocking)
           activityLogService.upsertToday(currentUser.uid).catch(console.error);
-
-          // Only proceed with additional data loading if we have valid enrollments
-          if (normalized.length > 0) {
-            const enrolledIds = normalized.map(course => course.id);
-            
-            // Load remaining data in parallel for better performance
-            const [assignmentArrays, filteredAnns, certs] = await Promise.all([
-              // Load assignments
-              Promise.all(enrolledIds.map(async (courseId: string) => {
-                try {
-                  const assignments = await assignmentService.getAssignmentsByCourse(courseId);
-                  const courseTitle = normalized.find(c => c.id === courseId)?.title || 'Course';
-                  return assignments.map((a: any) => ({
-                    ...a,
-                    courseTitle,
-                    dueDate: a.dueDate.toDate().toLocaleDateString()
-                  }));
-                } catch (error) {
-                  console.error(`Error loading assignments for course ${courseId}:`, error);
-                  return [];
-                }
-              })),
-              // Load announcements
-              announcementService.getAnnouncementsForStudent(currentUser.uid, enrolledIds, 10).catch(() => []),
-              // Load certificates
-              certificateService.getCertificatesForUser(currentUser.uid).catch(() => [])
-            ]);
-            
-            // Process assignments
-            const allAssignments = assignmentArrays.flat();
-            const upcoming = allAssignments
-              .filter((a: any) => new Date(a.dueDate) > new Date())
-              .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-              .slice(0, 5);
-            setUpcomingAssignments(upcoming);
-            
-            // Process announcements
-            const withCourseTitles = filteredAnns.map((a: any) => ({
-              ...a,
-              courseTitle: a.courseId ? (normalized.find(c => c.id === a.courseId)?.title || 'Course') : t('forum.categories.all')
-            }));
-            setAnnouncements(withCourseTitles);
-            setCertificates(certs);
-          } else {
-            // No valid enrollments, set empty arrays
-            setUpcomingAssignments([]);
-            setAnnouncements([]);
-            setCertificates([]);
-          }
         }
       } catch (error) {
         console.error('Failed to load student dashboard data:', error);
@@ -131,16 +103,40 @@ export default function StudentOverview() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          {/* Header Skeleton */}
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 animate-pulse">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Main Content Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <SkeletonLoader type="card" count={1} />
+            </div>
+            <div className="space-y-6">
+              <SkeletonLoader type="card" count={2} />
+            </div>
+          </div>
         </div>
       </div>
     );

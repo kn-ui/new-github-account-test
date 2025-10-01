@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { assignmentService, enrollmentService, submissionService, courseMaterialService, FirestoreAssignment } from '@/lib/firestore';
+import { studentDataService, courseMaterialService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,76 +102,8 @@ export default function StudentAssignments() {
   const loadAssignments = async () => {
     try {
       setLoading(true);
-      
-      // Get student's enrollments
-
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
-      
-      if (courseIds.length === 0) {
-        setAssignments([]);
-        return;
-      }
-
-      // Get assignments for enrolled courses
-      const assignmentsPromises = courseIds.map(async (courseId) => {
-        try {
-          const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
-          return courseAssignments.map(assignment => ({
-            ...assignment,
-            courseTitle: enrollments.find(e => e.courseId === courseId)?.course?.title || 'Unknown Course',
-            instructorName: enrollments.find(e => e.courseId === courseId)?.course?.instructorName || 'Unknown Instructor'
-          }));
-        } catch (error) {
-          console.error(`Error loading assignments for course ${courseId}:`, error);
-          return [];
-        }
-      });
-
-      const assignmentsArrays = await Promise.all(assignmentsPromises);
-      const allAssignments = assignmentsArrays.flat();
-
-      // Get submission status for each assignment
-      const assignmentsWithStatus = await Promise.all(
-        allAssignments.map(async (assignment) => {
-          try {
-            const submissions = await submissionService.getSubmissionsByStudent(currentUser!.uid);
-            const submission = submissions.find(s => s.assignmentId === assignment.id);
-            
-            let status: 'not-started' | 'in-progress' | 'submitted' | 'graded' = 'not-started';
-            let submissionId: string | undefined;
-            let grade: number | undefined;
-            let feedback: string | undefined;
-
-            if (submission) {
-              submissionId = submission.id;
-              if (submission.status === 'graded') {
-                status = 'graded';
-                grade = submission.grade;
-                feedback = submission.feedback;
-              } else if (submission.status === 'submitted') {
-                status = 'submitted';
-              }
-            }
-
-            return {
-              ...assignment,
-              status,
-              submissionId,
-              grade,
-              feedback
-            };
-          } catch (error) {
-            console.error(`Error loading submission for assignment ${assignment.id}:`, error);
-            return {
-              ...assignment,
-              status: 'not-started' as const
-            };
-          }
-        })
-      );
-
-      setAssignments(assignmentsWithStatus);
+      const assignments = await studentDataService.getStudentAssignmentsData(currentUser!.uid);
+      setAssignments(assignments);
     } catch (error) {
       console.error('Error loading assignments:', error);
       toast.error(t('student.assignments.loadError'));

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, assignmentEditRequestService } from '@/lib/firestore';
+import { studentDataService, assignmentEditRequestService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,69 +94,14 @@ export default function StudentSubmissions() {
     try {
       setLoading(true);
       
-      // Get student's enrollments
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
-      
-      if (courseIds.length === 0) {
-        setSubmissions([]);
-        return;
-      }
+      // Load submissions and edit requests in parallel
+      const [submissions, requests] = await Promise.all([
+        studentDataService.getStudentSubmissionsData(currentUser!.uid),
+        assignmentEditRequestService.getEditRequestsByStudent(currentUser!.uid)
+      ]);
 
-      // Get all assignments for enrolled courses
-      const assignmentsPromises = courseIds.map(async (courseId) => {
-        try {
-          const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
-          const course = await courseService.getCourseById(courseId);
-          return courseAssignments.map(assignment => ({
-            ...assignment,
-            courseTitle: course?.title || 'Unknown Course',
-            instructorName: course?.instructorName || 'Unknown Instructor'
-          }));
-        } catch (error) {
-          console.error(`Error loading assignments for course ${courseId}:`, error);
-          return [];
-        }
-      });
-
-      const assignmentsArrays = await Promise.all(assignmentsPromises);
-      const allAssignments = assignmentsArrays.flat();
-
-      // Get student's submissions for all assignments
-      const submissionsPromises = allAssignments.map(async (assignment) => {
-        try {
-          const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
-          const studentSubmissions = submissions.filter(s => s.studentId === currentUser!.uid);
-          
-          return studentSubmissions.map(submission => ({
-            id: submission.id,
-            assignmentId: submission.assignmentId,
-            assignmentTitle: assignment.title,
-            courseId: assignment.courseId,
-            courseTitle: assignment.courseTitle,
-            instructorName: assignment.instructorName,
-            submittedAt: submission.submittedAt.toDate(),
-            status: submission.status,
-            grade: submission.grade,
-            maxScore: assignment.maxScore,
-            feedback: submission.feedback,
-            content: (submission as any).content || '',
-            attachments: (submission as any).attachments || []
-          }));
-        } catch (error) {
-          console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
-          return [];
-        }
-      });
-
-      const submissionsArrays = await Promise.all(submissionsPromises);
-      const allSubmissions = submissionsArrays.flat();
-      setSubmissions(allSubmissions);
-
-      // Load edit requests for this student
-      const requests = await assignmentEditRequestService.getEditRequestsByStudent(currentUser!.uid);
+      setSubmissions(submissions);
       setEditRequests(requests);
-
     } catch (error) {
       console.error('Error loading submissions:', error);
       toast.error(t('student.submissions.loadError'));
@@ -167,25 +112,23 @@ export default function StudentSubmissions() {
 
   const handleSubmissionAction = async (assignmentId: string, action: string) => {
     try {
-      // Find the assignment
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
-      
-      let assignment = null;
-      for (const courseId of courseIds) {
-        try {
-          const assignments = await assignmentService.getAssignmentsByCourse(courseId);
-          assignment = assignments.find(a => a.id === assignmentId);
-          if (assignment) break;
-        } catch (error) {
-          continue;
-        }
-      }
-
-      if (!assignment) {
+      // Find the assignment from the loaded submissions
+      const submission = submissions.find(s => s.assignmentId === assignmentId);
+      if (!submission) {
         toast.error(t('student.submissions.assignmentNotFound'));
         return;
       }
+
+      // Create assignment object from submission data
+      const assignment = {
+        id: submission.assignmentId,
+        title: submission.assignmentTitle,
+        courseId: submission.courseId,
+        maxScore: submission.maxScore,
+        dueDate: new Date(), // This would need to be loaded separately if needed
+        description: '', // This would need to be loaded separately if needed
+        instructions: '' // This would need to be loaded separately if needed
+      };
 
       setSelectedAssignment(assignment);
       setShowSubmissionDialog(true);

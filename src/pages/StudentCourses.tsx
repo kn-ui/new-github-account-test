@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { enrollmentService, courseService, FirestoreEnrollment } from '@/lib/firestore';
+import { studentDataService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +34,7 @@ interface EnrolledCourse {
   lastAccessed?: Date;
 }
 
-export default function StudentCourses() {
+const StudentCourses = React.memo(() => {
   const { currentUser, userProfile } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -55,35 +55,8 @@ export default function StudentCourses() {
   const loadEnrolledCourses = async () => {
     try {
       setLoading(true);
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
-      
-      // Get course details for each enrollment
-      const coursesWithDetails = await Promise.all(
-        enrollments.map(async (enrollment: any) => {
-          try {
-            const course = await courseService.getCourseById(enrollment.courseId);
-            if (course) {
-              return {
-                id: course.id,
-                title: course.title,
-                description: course.description,
-                category: course.category,
-                instructorName: course.instructorName,
-                progress: enrollment.progress || 0,
-                enrolledAt: enrollment.enrolledAt.toDate(),
-                lastAccessed: enrollment.lastAccessed?.toDate()
-              };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error loading course ${enrollment.courseId}:`, error);
-            return null;
-          }
-        })
-      );
-
-      const validCourses = coursesWithDetails.filter(course => course !== null) as EnrolledCourse[];
-      setEnrolledCourses(validCourses);
+      const courses = await studentDataService.getStudentCoursesData(currentUser!.uid);
+      setEnrolledCourses(courses);
     } catch (error) {
       console.error('Error loading enrolled courses:', error);
       toast.error(t('errors.loadCourses') || 'Failed to load enrolled courses');
@@ -93,10 +66,13 @@ export default function StudentCourses() {
   };
 
   const filteredAndSortedCourses = useMemo(() => {
+    if (!enrolledCourses.length) return [];
+    
     let filtered = enrolledCourses.filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = course.title.toLowerCase().includes(searchLower) ||
+                           course.description.toLowerCase().includes(searchLower) ||
+                           course.instructorName.toLowerCase().includes(searchLower);
       
       const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
       
@@ -379,4 +355,8 @@ export default function StudentCourses() {
       </div>
     </div>
   );
-}
+});
+
+StudentCourses.displayName = 'StudentCourses';
+
+export default StudentCourses;

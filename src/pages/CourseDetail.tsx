@@ -102,7 +102,7 @@ const CourseDetail = () => {
     } catch (error) {
       console.error('Error loading course:', error);
       toast.error('Failed to load course details');
-        navigate('/dashboard/student-courses');
+      navigate('/dashboard/student-courses');
     } finally {
       setLoading(false);
     }

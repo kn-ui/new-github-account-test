@@ -127,7 +127,7 @@ export default function StudentGrades() {
       // Load final grades for courses
       const finalGradesPromises = courseIds.map(async (courseId) => {
         try {
-          const finalGrade = await gradeService.getGradeByStudentAndCourse(currentUser!.uid, courseId);
+          const finalGrade = await gradeService.getGradeByStudentAndCourse(courseId, currentUser!.uid);
           return finalGrade;
         } catch (error) {
           console.error(`Error loading final grade for course ${courseId}:`, error);

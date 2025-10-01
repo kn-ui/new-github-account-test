@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial } from '@/lib/firestore';
+import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, gradeService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial, FirestoreGrade } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
 import { 
   BookOpen, 
@@ -52,6 +53,8 @@ const CourseDetail = () => {
   const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<FirestoreCourseMaterial | null>(null);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
+  const [finalGrade, setFinalGrade] = useState<FirestoreGrade | null>(null);
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final'>('assignments');
 
   useEffect(() => {
     if (courseId) {
@@ -124,6 +127,15 @@ const CourseDetail = () => {
           assignments.some(assign => assign.id === sub.assignmentId)
         );
         setCourseGrades(courseSubmissions);
+        
+        // Load final grade for this course
+        try {
+          const finalGradeData = await gradeService.getGradeByStudentAndCourse(courseId, currentUser.uid);
+          setFinalGrade(finalGradeData);
+        } catch (error) {
+          console.error('Error loading final grade:', error);
+          setFinalGrade(null);
+        }
       }
     } catch (error) {
       console.error('Error loading course materials:', error);
@@ -455,6 +467,22 @@ const CourseDetail = () => {
 
               {activeTab === 'Grades' && isEnrolled && (
                 <div className="space-y-6">
+                  {/* Grade View Mode Selector */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium text-gray-700">View Grades:</span>
+                      <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final') => setGradeViewMode(value)}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="assignments">Assignment Grades</SelectItem>
+                          <SelectItem value="final">Final Grade</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   {/* Grade Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
@@ -468,39 +496,54 @@ const CourseDetail = () => {
                     <div className="bg-green-50 rounded-xl p-6 border border-green-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-green-600" />
-                        <span className="text-sm font-medium text-green-800">Assignments</span>
+                        <span className="text-sm font-medium text-green-800">
+                          {gradeViewMode === 'final' ? 'Final Grade' : 'Assignments'}
+                        </span>
                       </div>
-                      <p className="text-3xl font-bold text-green-900">{courseGrades.length}</p>
+                      <p className="text-3xl font-bold text-green-900">
+                        {gradeViewMode === 'final' 
+                          ? (finalGrade ? `${finalGrade.finalGrade}%` : 'N/A')
+                          : courseGrades.length
+                        }
+                      </p>
                     </div>
                     
                     <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-purple-600" />
-                        <span className="text-sm font-medium text-purple-800">Average Grade</span>
+                        <span className="text-sm font-medium text-purple-800">
+                          {gradeViewMode === 'final' ? 'Letter Grade' : 'Average Grade'}
+                        </span>
                       </div>
                       <p className="text-3xl font-bold text-purple-900">
-                        {courseGrades.length > 0 
-                          ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
-                          : 0}%
+                        {gradeViewMode === 'final' 
+                          ? (finalGrade ? finalGrade.letterGrade : 'N/A')
+                          : (courseGrades.length > 0 
+                              ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
+                              : 0) + '%'
+                            )
+                        }
                       </p>
                     </div>
 
                     <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-orange-600" />
-                        <span className="text-sm font-medium text-orange-800">Final Grade</span>
+                        <span className="text-sm font-medium text-orange-800">
+                          {gradeViewMode === 'final' ? 'Grade Points' : 'Final Grade'}
+                        </span>
                       </div>
                       <p className="text-3xl font-bold text-orange-900">
-                        {courseGrades.length > 0 
-                          ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
-                          : 'N/A'
+                        {gradeViewMode === 'final' 
+                          ? (finalGrade ? finalGrade.gradePoints : 'N/A')
+                          : (finalGrade ? `${finalGrade.finalGrade}%` : 'N/A')
                         }
                       </p>
                     </div>
                   </div>
 
-                  {/* Grade Distribution Chart */}
-                  {courseGrades.length > 0 && (
+                  {/* Grade Distribution Chart - Only show for assignment grades */}
+                  {gradeViewMode === 'assignments' && courseGrades.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Grade Distribution</h3>
                       <div className="grid grid-cols-5 gap-4">
@@ -525,8 +568,56 @@ const CourseDetail = () => {
                     </div>
                   )}
 
-                  {/* Assignment Grades Table */}
-                  {courseGrades.length > 0 ? (
+                  {/* Final Grade Details - Only show for final grade view */}
+                  {gradeViewMode === 'final' && finalGrade && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Final Grade Details</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Final Grade</span>
+                            <span className="text-lg font-semibold text-gray-900">{finalGrade.finalGrade}%</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Letter Grade</span>
+                            <Badge variant={finalGrade.letterGrade === 'A' ? 'default' : finalGrade.letterGrade === 'B' ? 'secondary' : finalGrade.letterGrade === 'C' ? 'outline' : 'destructive'}>
+                              {finalGrade.letterGrade}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Grade Points</span>
+                            <span className="text-lg font-semibold text-gray-900">{finalGrade.gradePoints}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Calculation Method</span>
+                            <span className="text-sm text-gray-900 capitalize">{finalGrade.calculationMethod.replace('_', ' ')}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Calculated At</span>
+                            <span className="text-sm text-gray-900">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">Calculated By</span>
+                            <span className="text-sm text-gray-900">{course?.instructorName || 'Instructor'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Final Grade State */}
+                  {gradeViewMode === 'final' && !finalGrade && (
+                    <div className="text-center py-12 text-gray-500">
+                      <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No Final Grade Yet</h3>
+                      <p className="text-gray-400">Your final grade will appear here once it's calculated by your instructor.</p>
+                    </div>
+                  )}
+
+                  {/* Assignment Grades Table - Only show for assignment grades view */}
+                  {gradeViewMode === 'assignments' && courseGrades.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Grades</h3>
                       <div className="overflow-x-auto">

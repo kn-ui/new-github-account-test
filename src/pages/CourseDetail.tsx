@@ -521,7 +521,7 @@ const CourseDetail = () => {
                           : (courseGrades.length > 0 
                               ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
                               : 0) + '%'
-                            )
+                            
                         }
                       </p>
                     </div>

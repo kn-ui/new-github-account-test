@@ -137,6 +137,7 @@ export default function StudentGrades() {
 
       const finalGradesResults = await Promise.all(finalGradesPromises);
       const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
+      console.log('Final grades loaded:', validFinalGrades);
       setFinalGrades(validFinalGrades);
 
     } catch (error) {
@@ -255,6 +256,7 @@ export default function StudentGrades() {
   const getStats = () => {
     if (gradeType === 'courses') {
       // Stats for final course grades
+      console.log('Calculating stats for courses, finalGrades:', finalGrades);
       if (finalGrades.length === 0) {
         return { averageGrade: 0, totalCourses: 0, highestGrade: 0, lowestGrade: 0 };
       }

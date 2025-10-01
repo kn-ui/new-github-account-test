@@ -25,7 +25,9 @@ import {
   Award,
   Info,
   UserPlus,
-  BookMarked
+  BookMarked,
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 

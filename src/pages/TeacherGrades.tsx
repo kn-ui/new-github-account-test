@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 import { submissionService, assignmentService, courseService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -377,7 +378,7 @@ export default function TeacherGrades() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-medium text-gray-900 truncate">{a.title}</h3>
+                    <h3 className="font-medium text-gray-900">{truncateTitle(a.title)}</h3>
                     <Badge className={`${getStatusColor(a.pending ? 'submitted' : 'graded')} flex-shrink-0`}>
                       <div className="flex items-center gap-1">
                         {getStatusIcon(a.pending ? 'submitted' : 'graded')}
@@ -386,7 +387,7 @@ export default function TeacherGrades() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1 truncate max-w-[120px]"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
+                    <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{truncateText(a.courseTitle)}</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t('assignments.dueDate')}: {a.dueDate.toLocaleDateString()}</span>
                     <span className="flex items-center gap-1">{t('teacher.grades.averageGradeShort')}: {typeof a.avg === 'number' ? a.avg : '-'}</span>
                   </div>

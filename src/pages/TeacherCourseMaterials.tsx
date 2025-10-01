@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
@@ -407,17 +408,17 @@ export default function TeacherCourseMaterials() {
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{material.title}</h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-3">{material.description}</p>
+                    <h3 className="font-medium text-gray-900 mb-2">{truncateTitle(material.title)}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{truncateText(material.description)}</p>
                     
                     <div className="space-y-2 text-xs text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {material.createdAt.toDate().toLocaleDateString()}
                       </div>
-                      <div className="flex items-center gap-1 truncate max-w-[120px]">
+                      <div className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
-                        {getCourseName(material.courseId)}
+                        {truncateText(getCourseName(material.courseId))}
                       </div>
                     </div>
                     
@@ -490,12 +491,12 @@ export default function TeacherCourseMaterials() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-gray-900 truncate">{material.title}</h3>
+                        <h3 className="font-medium text-gray-900">{truncateTitle(material.title)}</h3>
                         <Badge className={`${getTypeColor(material.type)} flex-shrink-0`}>
                           {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{material.description}</p>
+                      <p className="text-sm text-gray-600 mb-2">{truncateText(material.description)}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />

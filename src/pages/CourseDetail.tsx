@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -217,8 +218,8 @@ const CourseDetail = () => {
               <ChevronLeft size={20} className="text-gray-600" />
             </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 truncate">{course.title}</h1>
-              <p className="text-gray-600 truncate">Instructor: {course.instructorName}</p>
+              <h1 className="text-2xl font-bold text-gray-900">{truncateTitle(course.title)}</h1>
+              <p className="text-gray-600">{truncateText(`Instructor: ${course.instructorName}`)}</p>
             </div>
           </div>
 
@@ -311,7 +312,7 @@ const CourseDetail = () => {
                   {/* Course Info */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Course Information</h3>
-                    <p className="text-gray-700 leading-relaxed mb-6 line-clamp-4">{course.description}</p>
+                    <p className="text-gray-700 leading-relaxed mb-6">{truncateText(course.description, 100)}</p>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
@@ -343,8 +344,8 @@ const CourseDetail = () => {
                       {courseAssignments.map((assignment) => (
                         <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-medium text-gray-800 truncate">{assignment.title}</h4>
-                            <p className="text-sm text-gray-600 line-clamp-2">{assignment.description}</p>
+                            <h4 className="font-medium text-gray-800">{truncateTitle(assignment.title)}</h4>
+                            <p className="text-sm text-gray-600">{truncateText(assignment.description)}</p>
                             <p className="text-xs text-gray-500">Due: {assignment.dueDate.toDate().toLocaleDateString()}</p>
                           </div>
                           <div className="text-right">
@@ -371,8 +372,8 @@ const CourseDetail = () => {
                         <div key={material.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                           <FileText size={16} className="text-blue-600" />
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-800 truncate">{material.title}</p>
-                            <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
+                            <p className="font-medium text-gray-800">{truncateTitle(material.title)}</p>
+                            <p className="text-sm text-gray-600">{truncateText(material.description)}</p>
                           </div>
                           {material.fileUrl && (
                             <Button variant="outline" size="sm" asChild>

@@ -28,6 +28,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 
 interface AssignmentWithStatus extends FirestoreAssignment {
   courseTitle: string;
@@ -616,8 +617,8 @@ export default function StudentAssignments() {
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">{assignment.title}</h3>
-                        <p className="text-sm text-gray-600 truncate">{assignment.courseTitle}</p>
+                        <h3 className="font-medium text-gray-900">{truncateTitle(assignment.title)}</h3>
+                        <p className="text-sm text-gray-600">{truncateText(assignment.courseTitle)}</p>
                       </div>
                     </div>
                     
@@ -657,7 +658,7 @@ export default function StudentAssignments() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-medium text-gray-900 truncate">{assignment.title}</h3>
+                          <h3 className="font-medium text-gray-900">{truncateTitle(assignment.title)}</h3>
                           <Badge className={`${getStatusColor(assignment.status)} flex-shrink-0`}>
                             <div className="flex items-center gap-1">
                               {getStatusIcon(assignment.status)}
@@ -665,11 +666,11 @@ export default function StudentAssignments() {
                             </div>
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{assignment.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">{truncateText(assignment.description)}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-                          <span className="flex items-center gap-1 truncate max-w-[120px]">
+                          <span className="flex items-center gap-1">
                             <TrendingUp className="h-3 w-3" />
-                            {assignment.courseTitle}
+                            {truncateText(assignment.courseTitle)}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />

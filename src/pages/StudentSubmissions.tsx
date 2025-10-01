@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 
 interface SubmissionWithDetails {
   id: string;
@@ -518,8 +519,8 @@ export default function StudentSubmissions() {
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">{submission.assignmentTitle}</h3>
-                        <p className="text-sm text-gray-600 truncate">{submission.courseTitle}</p>
+                        <h3 className="font-medium text-gray-900">{truncateTitle(submission.assignmentTitle)}</h3>
+                        <p className="text-sm text-gray-600">{truncateText(submission.courseTitle)}</p>
                       </div>
                     </div>
                     
@@ -557,7 +558,7 @@ export default function StudentSubmissions() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">{submission.assignmentTitle}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{truncateTitle(submission.assignmentTitle)}</h3>
                           <Badge className={`${getStatusColor(submission.status)} flex-shrink-0`}>
                             <div className="flex items-center gap-1">
                               {getStatusIcon(submission.status)}
@@ -565,7 +566,7 @@ export default function StudentSubmissions() {
                             </div>
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 truncate">{submission.courseTitle}</p>
+                        <p className="text-sm text-gray-600 mb-2">{truncateText(submission.courseTitle)}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                           <span className="flex items-center gap-1">
                             <BookOpen className="h-3 w-3" />

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { truncateTitle, truncateText } from '@/lib/utils';
 import { announcementService, courseService, FirestoreAnnouncement } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -410,7 +411,7 @@ export default function TeacherAnnouncements() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-gray-900 truncate">{announcement.title}</h3>
+                        <h3 className="font-medium text-gray-900">{truncateTitle(announcement.title)}</h3>
                         {announcement.recipientStudentId ? (
                           <Badge variant="outline" className="flex-shrink-0">
                             {t('teacher.announcements.messageTo')} {recipientNames[announcement.recipientStudentId] || announcement.recipientStudentId}
@@ -421,15 +422,15 @@ export default function TeacherAnnouncements() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{announcement.body}</p>
+                      <p className="text-sm text-gray-600 mb-2">{truncateText(announcement.body)}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {announcement.createdAt.toDate().toLocaleDateString()}
                         </span>
-                        <span className="flex items-center gap-1 truncate max-w-[120px]">
+                        <span className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
-                          {getCourseName(announcement.courseId)}
+                          {truncateText(getCourseName(announcement.courseId))}
                         </span>
                       </div>
                     </div>
@@ -477,7 +478,7 @@ export default function TeacherAnnouncements() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Bell className="h-4 w-4 text-blue-600" />
-                    <h3 className="font-medium text-gray-900 truncate">{announcement.title}</h3>
+                    <h3 className="font-medium text-gray-900">{truncateTitle(announcement.title)}</h3>
                   </div>
                   {announcement.recipientStudentId ? (
                     <Badge variant="outline" className="flex-shrink-0">
@@ -489,7 +490,7 @@ export default function TeacherAnnouncements() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-3">{announcement.body}</p>
+                <p className="text-sm text-gray-600 mb-3">{truncateText(announcement.body)}</p>
                 <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.createdAt.toDate().toLocaleDateString()}</span>
                   <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {getCourseName(announcement.courseId)}</span>

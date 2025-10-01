@@ -40,6 +40,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { truncateTitle, truncateText } from '@/lib/utils';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -336,8 +337,8 @@ export default function TeacherAssignments() {
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{assignment.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{assignment.description}</p>
+                  <h3 className="font-medium text-gray-900">{truncateTitle(assignment.title)}</h3>
+                  <p className="text-sm text-gray-600">{truncateText(assignment.description)}</p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
@@ -347,7 +348,7 @@ export default function TeacherAssignments() {
                       <Clock className="h-3 w-3" />
                       {t('teacher.grades.maxScore')}: {assignment.maxScore}
                     </span>
-                    <span className="truncate max-w-[120px]">{getCourseName(assignment.courseId)}</span>
+                    <span>{truncateText(getCourseName(assignment.courseId))}</span>
                   </div>
                 </div>
                 <Badge className={getStatusColor(assignment.dueDate.toDate())}>

@@ -427,7 +427,7 @@ export default function TeacherAnnouncements() {
                           <Calendar className="h-3 w-3" />
                           {announcement.createdAt.toDate().toLocaleDateString()}
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 truncate max-w-[120px]">
                           <MessageSquare className="h-3 w-3" />
                           {getCourseName(announcement.courseId)}
                         </span>

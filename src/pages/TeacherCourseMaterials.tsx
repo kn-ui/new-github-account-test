@@ -415,7 +415,7 @@ export default function TeacherCourseMaterials() {
                         <Calendar className="h-3 w-3" />
                         {material.createdAt.toDate().toLocaleDateString()}
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 truncate max-w-[120px]">
                         <FolderOpen className="h-3 w-3" />
                         {getCourseName(material.courseId)}
                       </div>
@@ -488,14 +488,14 @@ export default function TeacherCourseMaterials() {
                     <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                       {getTypeIcon(material.type)}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-gray-900">{material.title}</h3>
-                        <Badge className={getTypeColor(material.type)}>
+                        <h3 className="font-medium text-gray-900 truncate">{material.title}</h3>
+                        <Badge className={`${getTypeColor(material.type)} flex-shrink-0`}>
                           {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{material.description}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />

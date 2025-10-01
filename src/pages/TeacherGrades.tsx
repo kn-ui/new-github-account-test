@@ -386,7 +386,7 @@ export default function TeacherGrades() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
+                    <span className="flex items-center gap-1 truncate max-w-[120px]"><BookOpen className="h-3 w-3" />{a.courseTitle}</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t('assignments.dueDate')}: {a.dueDate.toLocaleDateString()}</span>
                     <span className="flex items-center gap-1">{t('teacher.grades.averageGradeShort')}: {typeof a.avg === 'number' ? a.avg : '-'}</span>
                   </div>

@@ -347,7 +347,7 @@ export default function TeacherAssignments() {
                       <Clock className="h-3 w-3" />
                       {t('teacher.grades.maxScore')}: {assignment.maxScore}
                     </span>
-                    <span>{getCourseName(assignment.courseId)}</span>
+                    <span className="truncate max-w-[120px]">{getCourseName(assignment.courseId)}</span>
                   </div>
                 </div>
                 <Badge className={getStatusColor(assignment.dueDate.toDate())}>

@@ -216,9 +216,9 @@ const CourseDetail = () => {
             <Link to="/dashboard/student-courses" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ChevronLeft size={20} className="text-gray-600" />
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
-              <p className="text-gray-600">Instructor: {course.instructorName}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 truncate">{course.title}</h1>
+              <p className="text-gray-600 truncate">Instructor: {course.instructorName}</p>
             </div>
           </div>
 
@@ -311,7 +311,7 @@ const CourseDetail = () => {
                   {/* Course Info */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Course Information</h3>
-                    <p className="text-gray-700 leading-relaxed mb-6">{course.description}</p>
+                    <p className="text-gray-700 leading-relaxed mb-6 line-clamp-4">{course.description}</p>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
@@ -342,9 +342,9 @@ const CourseDetail = () => {
                     <div className="space-y-3">
                       {courseAssignments.map((assignment) => (
                         <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div>
-                            <h4 className="font-medium text-gray-800">{assignment.title}</h4>
-                            <p className="text-sm text-gray-600">{assignment.description}</p>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-gray-800 truncate">{assignment.title}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-2">{assignment.description}</p>
                             <p className="text-xs text-gray-500">Due: {assignment.dueDate.toDate().toLocaleDateString()}</p>
                           </div>
                           <div className="text-right">
@@ -370,9 +370,9 @@ const CourseDetail = () => {
                       {courseMaterials.map((material) => (
                         <div key={material.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                           <FileText size={16} className="text-blue-600" />
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800">{material.title}</p>
-                            <p className="text-sm text-gray-600">{material.description}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-800 truncate">{material.title}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
                           </div>
                           {material.fileUrl && (
                             <Button variant="outline" size="sm" asChild>

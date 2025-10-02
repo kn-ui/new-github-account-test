@@ -137,11 +137,37 @@ export default function TeacherCourseDetail() {
   const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<FirestoreEnrollment | null>(null);
   const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
   const [manualGrade, setManualGrade] = useState<number>(0);
+  const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
+  const [gradeRanges, setGradeRanges] = useState({
+    'A+': { min: 97, max: 100, points: 4.0 },
+    'A': { min: 93, max: 96, points: 4.0 },
+    'A-': { min: 90, max: 92, points: 3.7 },
+    'B+': { min: 87, max: 89, points: 3.3 },
+    'B': { min: 83, max: 86, points: 3.0 },
+    'B-': { min: 80, max: 82, points: 2.7 },
+    'C+': { min: 77, max: 79, points: 2.3 },
+    'C': { min: 73, max: 76, points: 2.0 },
+    'C-': { min: 70, max: 72, points: 1.7 },
+    'D+': { min: 67, max: 69, points: 1.3 },
+    'D': { min: 63, max: 66, points: 1.0 },
+    'D-': { min: 60, max: 62, points: 0.7 },
+    'F': { min: 0, max: 59, points: 0.0 }
+  });
   const averageGrade = useMemo(() => {
     if (finalGrades.length === 0) return 0;
     const sum = finalGrades.reduce((acc, g) => acc + g.finalGrade, 0);
     return Math.round((sum / finalGrades.length) * 10) / 10;
   }, [finalGrades]);
+
+  // Function to calculate letter grade using custom ranges
+  const calculateLetterGradeWithRanges = (finalGrade: number): { letterGrade: string; gradePoints: number } => {
+    for (const [letter, range] of Object.entries(gradeRanges)) {
+      if (finalGrade >= range.min && finalGrade <= range.max) {
+        return { letterGrade: letter, gradePoints: range.points };
+      }
+    }
+    return { letterGrade: 'F', gradePoints: 0.0 };
+  };
 
   const openGradeCalculation = (student?: FirestoreEnrollment) => {
     setSelectedStudentForGrade(student || null);
@@ -166,7 +192,7 @@ export default function TeacherCourseDetail() {
           toast.error('Grade must be between 0 and 100');
           return;
         }
-        const result = gradeService.calculateLetterGradeAndPoints(manualGrade);
+        const result = calculateLetterGradeWithRanges(manualGrade);
         finalGrade = manualGrade;
         letterGrade = result.letterGrade;
         gradePoints = result.gradePoints;
@@ -553,16 +579,25 @@ export default function TeacherCourseDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     {gradeViewMode === 'final' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          setSelectedStudentForGrade(null);
-                          setGradeCalculationDialogOpen(true);
-                        }}
-                      >
-                        Calculate Grades
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            setSelectedStudentForGrade(null);
+                            setGradeCalculationDialogOpen(true);
+                          }}
+                        >
+                          Calculate Grades
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setGradeRangesDialogOpen(true)}
+                        >
+                          Grade Ranges
+                        </Button>
+                      </>
                     )}
                     <Button variant="outline" size="sm" onClick={() => {
                       if (gradeViewMode === 'final') {
@@ -1218,6 +1253,106 @@ export default function TeacherCourseDetail() {
             </Button>
             <Button onClick={calculateFinalGrade} className="bg-blue-600 hover:bg-blue-700">
               {gradeCalculationMethod === 'manual' ? 'Save Grade' : 'Calculate Grade'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grade Ranges Dialog */}
+      <Dialog open={gradeRangesDialogOpen} onOpenChange={setGradeRangesDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configure Letter Grade Ranges</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 mb-4">
+              Set the percentage ranges and grade points for each letter grade. These ranges will be used when calculating final grades.
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
+              {Object.entries(gradeRanges).map(([letter, range]) => (
+                <div key={letter} className="flex items-center gap-4 p-3 border rounded-lg">
+                  <div className="w-12 text-center font-semibold">{letter}</div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`${letter}-min`} className="text-sm">Min:</Label>
+                    <Input
+                      id={`${letter}-min`}
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={range.min}
+                      onChange={(e) => setGradeRanges(prev => ({
+                        ...prev,
+                        [letter]: { ...prev[letter], min: parseInt(e.target.value) || 0 }
+                      }))}
+                      className="w-20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`${letter}-max`} className="text-sm">Max:</Label>
+                    <Input
+                      id={`${letter}-max`}
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={range.max}
+                      onChange={(e) => setGradeRanges(prev => ({
+                        ...prev,
+                        [letter]: { ...prev[letter], max: parseInt(e.target.value) || 0 }
+                      }))}
+                      className="w-20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`${letter}-points`} className="text-sm">Points:</Label>
+                    <Input
+                      id={`${letter}-points`}
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="4"
+                      value={range.points}
+                      onChange={(e) => setGradeRanges(prev => ({
+                        ...prev,
+                        [letter]: { ...prev[letter], points: parseFloat(e.target.value) || 0 }
+                      }))}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <strong>Note:</strong> Make sure the ranges don't overlap and cover the full 0-100 range. The system will use these ranges for all future grade calculations.
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGradeRangesDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              // Validate ranges
+              const ranges = Object.values(gradeRanges);
+              const hasOverlaps = ranges.some((range, index) => 
+                ranges.some((otherRange, otherIndex) => 
+                  index !== otherIndex && 
+                  range.min <= otherRange.max && 
+                  range.max >= otherRange.min
+                )
+              );
+              
+              if (hasOverlaps) {
+                toast.error('Grade ranges cannot overlap. Please adjust the ranges.');
+                return;
+              }
+              
+              toast.success('Grade ranges updated successfully');
+              setGradeRangesDialogOpen(false);
+            }} className="bg-blue-600 hover:bg-blue-700">
+              Save Ranges
             </Button>
           </DialogFooter>
         </DialogContent>

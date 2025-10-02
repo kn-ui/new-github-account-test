@@ -507,15 +507,7 @@ const CourseDetail = () => {
                       </div>
 
                   {/* Grade Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Award size={20} className="text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">Course Progress</span>
-                      </div>
-                      <p className="text-3xl font-bold text-blue-900">{enrollmentPercentage}%</p>
-                    </div>
-                    
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-green-50 rounded-xl p-6 border border-green-100">
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-green-600" />
@@ -548,84 +540,42 @@ const CourseDetail = () => {
                         }
                       </p>
                     </div>
-
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Award size={20} className="text-orange-600" />
-                        <span className="text-sm font-medium text-orange-800">
-                          {gradeViewMode === 'final' ? 'Grade Points' : 'Final Grade'}
-                        </span>
-                      </div>
-                      <p className="text-3xl font-bold text-orange-900">
-                        {gradeViewMode === 'final' 
-                          ? (finalGrade ? finalGrade.gradePoints : 'N/A')
-                          : (finalGrade ? `${finalGrade.finalGrade}%` : 'N/A')
-                        }
-                      </p>
-                    </div>
                   </div>
 
-                  {/* Grade Distribution Chart - Only show for assignment grades */}
-                  {gradeViewMode === 'assignments' && courseGrades.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Grade Distribution</h3>
-                      <div className="grid grid-cols-5 gap-4">
-                        {(() => {
-                          const grades = courseGrades.map((g: any) => g.grade || 0);
-                          const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
-                          grades.forEach(g => {
-                            if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
-                          });
-                          const items = Object.entries(dist);
-                          return items.map(([k,v]) => (
-                            <div key={k} className="text-center">
-                              <div className="text-xs text-gray-500 mb-1">{k}</div>
-                              <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
-                                <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
-                              </div>
-                              <div className="text-xs mt-1">{v} assignments</div>
-                            </div>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Final Grade Details - Only show for final grade view */}
+                  {/* Final Grade Table - Only show for final grade view */}
                   {gradeViewMode === 'final' && finalGrade && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Final Grade Details</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Final Grade</span>
-                            <span className="text-lg font-semibold text-gray-900">{finalGrade.finalGrade}%</span>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Letter Grade</span>
-                            <Badge variant={finalGrade.letterGrade === 'A' ? 'default' : finalGrade.letterGrade === 'B' ? 'secondary' : finalGrade.letterGrade === 'C' ? 'outline' : 'destructive'}>
-                              {finalGrade.letterGrade}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Grade Points</span>
-                            <span className="text-lg font-semibold text-gray-900">{finalGrade.gradePoints}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Calculation Method</span>
-                            <span className="text-sm text-gray-900 capitalize">{finalGrade.calculationMethod.replace('_', ' ')}</span>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Calculated At</span>
-                            <span className="text-sm text-gray-900">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Calculated By</span>
-                            <span className="text-sm text-gray-900">{course?.instructorName || 'Instructor'}</span>
-                          </div>
-                        </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="text-left px-4 py-2">Course</th>
+                              <th className="text-left px-4 py-2">Instructor</th>
+                              <th className="text-center px-4 py-2">Final Grade</th>
+                              <th className="text-center px-4 py-2">Letter Grade</th>
+                              <th className="text-center px-4 py-2">Grade Points</th>
+                              <th className="text-center px-4 py-2">Method</th>
+                              <th className="text-center px-4 py-2">Calculated</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            <tr>
+                              <td className="px-4 py-2 font-medium">{course?.title || 'Course'}</td>
+                              <td className="px-4 py-2">{course?.instructorName || 'Instructor'}</td>
+                              <td className="px-4 py-2 text-center font-semibold">{finalGrade.finalGrade}%</td>
+                              <td className="px-4 py-2 text-center">
+                                <Badge variant={finalGrade.letterGrade === 'A' ? 'default' : finalGrade.letterGrade === 'B' ? 'secondary' : finalGrade.letterGrade === 'C' ? 'outline' : 'destructive'}>
+                                  {finalGrade.letterGrade}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-2 text-center">{finalGrade.gradePoints}</td>
+                              <td className="px-4 py-2 text-center capitalize">{finalGrade.calculationMethod.replace('_', ' ')}</td>
+                              <td className="px-4 py-2 text-center">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
@@ -648,10 +598,10 @@ const CourseDetail = () => {
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="text-left px-4 py-2">Assignment</th>
-                              <th className="text-left px-4 py-2">Grade</th>
-                              <th className="text-left px-4 py-2">Letter Grade</th>
-                              <th className="text-left px-4 py-2">Submitted</th>
-                              <th className="text-left px-4 py-2">Feedback</th>
+                              <th className="text-left px-4 py-2">Course</th>
+                              <th className="text-center px-4 py-2">Grade</th>
+                              <th className="text-center px-4 py-2">Max Score</th>
+                              <th className="text-center px-4 py-2">Date</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
@@ -660,26 +610,13 @@ const CourseDetail = () => {
                               .sort((a: any, b: any) => new Date(b.submittedAt.toDate()).getTime() - new Date(a.submittedAt.toDate()).getTime())
                               .map((grade: any, index: number) => {
                                 const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
-                                const letterGrade = (grade.grade || 0) >= 90 ? 'A' : (grade.grade || 0) >= 80 ? 'B' : (grade.grade || 0) >= 70 ? 'C' : (grade.grade || 0) >= 60 ? 'D' : 'F';
                                 return (
                                   <tr key={index}>
                                     <td className="px-4 py-2 font-medium">{assignment?.title || 'Assignment'}</td>
-                                    <td className="px-4 py-2 font-semibold">{grade.grade || 0}%</td>
-                                    <td className="px-4 py-2">
-                                      <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
-                                        {letterGrade}
-                                      </Badge>
-                                    </td>
-                                    <td className="px-4 py-2">{grade.submittedAt.toDate().toLocaleDateString()}</td>
-                                    <td className="px-4 py-2">
-                                      {grade.feedback ? (
-                                        <span className="text-xs text-gray-600 max-w-xs truncate block">
-                                          {grade.feedback}
-                                        </span>
-                                      ) : (
-                                        <span className="text-gray-400">No feedback</span>
-                                      )}
-                                    </td>
+                                    <td className="px-4 py-2">{course?.title || 'Course'}</td>
+                                    <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
+                                    <td className="px-4 py-2 text-center">{assignment?.maxScore || 100}</td>
+                                    <td className="px-4 py-2 text-center">{grade.submittedAt.toDate().toLocaleDateString()}</td>
                                   </tr>
                                 );
                               })}

@@ -4,9 +4,7 @@ import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X }
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, enrollmentService, submissionService, announcementService, certificateService, activityLogService, FirestoreCertificate, assignmentService, courseService } from '@/lib/firestore';
-import CertificateCard from '@/components/CertificateCard';
-import { evaluateAndAwardCertificates } from '@/lib/certificates';
+import { analyticsService, enrollmentService, submissionService, announcementService, activityLogService, assignmentService, courseService } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -25,7 +23,6 @@ export default function StudentDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<FirestoreCertificate[]>([]);
   const [showAnnouncementsDialog, setShowAnnouncementsDialog] = useState(false);
   const [announcementsSearch, setAnnouncementsSearch] = useState('');
   const [selectedAssignment, setSelectedAssignment] = useState<any | null>(null);
@@ -103,8 +100,6 @@ export default function StudentDashboard() {
           }));
           setAnnouncements(withCourseTitles);
 
-          const certs = await certificateService.getCertificatesForUser(currentUser.uid);
-          setCertificates(certs);
         } else {
           // If no currentUser, show empty state instead of demo data
           setEnrolledCourses([]);
@@ -119,7 +114,6 @@ export default function StudentDashboard() {
         setStats(null);
         setUpcomingAssignments([]);
         setAnnouncements([]);
-        setCertificates([]);
       } finally {
         setLoading(false);
       }
@@ -261,54 +255,11 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <Award className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats?.certificates || 2}</p>
-                <p className="text-sm text-gray-600">Certificates</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Certificates */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">My Certificates</h2>
-                  <p className="text-gray-600">Your earned achievements</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    if (!currentUser) return;
-                    await evaluateAndAwardCertificates(currentUser.uid);
-                    const list = await certificateService.getCertificatesForUser(currentUser.uid);
-                    setCertificates(list);
-                  }}
-                  className="text-sm border px-3 py-2 rounded"
-                >Check for new</button>
-              </div>
-              <div className="p-6 grid md:grid-cols-2 gap-4">
-                {certificates.map((c) => (
-                  <CertificateCard
-                    key={c.id}
-                    type={c.type}
-                    studentName={currentUser?.email || 'Student'}
-                    awardedAt={c.awardedAt.toDate()}
-                    details={c.details}
-                  />
-                ))}
-                {certificates.length === 0 && (
-                  <div className="text-gray-500">No certificates yet</div>
-                )}
-              </div>
-            </div>
             {/* Enrolled Courses */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b">

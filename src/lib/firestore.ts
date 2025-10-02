@@ -1844,27 +1844,34 @@ export const studentDataService = {
         assignmentMap.set(assignment.id, assignment);
       });
 
-      // Merge submission data with assignment details
-      const result = submissions.map(submission => {
-        const assignment = assignmentMap.get(submission.assignmentId);
-        const course = enrollments.find(e => e.courseId === assignment?.courseId)?.course;
-        
-        return {
-          id: submission.id,
-          assignmentId: submission.assignmentId,
-          assignmentTitle: assignment?.title || 'Unknown Assignment',
-          courseId: assignment?.courseId || '',
-          courseTitle: course?.title || 'Unknown Course',
-          instructorName: course?.instructorName || 'Unknown Instructor',
-          submittedAt: submission.submittedAt.toDate(),
-          status: submission.status,
-          grade: submission.grade,
-          maxScore: assignment?.maxScore || 100,
-          feedback: submission.feedback,
-          content: (submission as any).content || '',
-          attachments: (submission as any).attachments || []
-        };
-      });
+      // Merge submission data with assignment details, filtering out submissions for deleted assignments
+      const result = submissions
+        .map(submission => {
+          const assignment = assignmentMap.get(submission.assignmentId);
+          const course = enrollments.find(e => e.courseId === assignment?.courseId)?.course;
+          
+          // Only include submissions for assignments that still exist
+          if (!assignment || !course) {
+            return null;
+          }
+          
+          return {
+            id: submission.id,
+            assignmentId: submission.assignmentId,
+            assignmentTitle: assignment.title,
+            courseId: assignment.courseId,
+            courseTitle: course.title,
+            instructorName: course.instructorName,
+            submittedAt: submission.submittedAt.toDate(),
+            status: submission.status,
+            grade: submission.grade,
+            maxScore: assignment.maxScore || 100,
+            feedback: submission.feedback,
+            content: (submission as any).content || '',
+            attachments: (submission as any).attachments || []
+          };
+        })
+        .filter(submission => submission !== null);
 
       setCachedData(cacheKey, result);
       return result;

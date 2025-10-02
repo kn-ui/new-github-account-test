@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { studentDataService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import { studentDataService, activityLogService } from '@/lib/firestore';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,6 @@ import {
   Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import CertificateCard from '@/components/CertificateCard';
-import { evaluateAndAwardCertificates } from '@/lib/certificates';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -31,7 +29,6 @@ export default function StudentOverview() {
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<FirestoreCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
@@ -45,7 +42,6 @@ export default function StudentOverview() {
           const data = await studentDataService.getStudentDashboardData(currentUser.uid);
           
           setStats(data.stats);
-          setCertificates(data.certificates);
 
           // Normalize enrollments for display
           const normalized = data.enrollments
@@ -157,7 +153,7 @@ export default function StudentOverview() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -194,17 +190,6 @@ export default function StudentOverview() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Award size={24} className="text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('student.stats.certificates')}</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.certificates || certificates.length}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -590,46 +590,50 @@ const CourseDetail = () => {
                   )}
 
                   {/* Assignment Grades Table - Only show for assignment grades view */}
-                  {gradeViewMode === 'assignments' && courseGrades.length > 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Grades</h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="text-left px-4 py-2">Assignment</th>
-                              <th className="text-left px-4 py-2">Course</th>
-                              <th className="text-center px-4 py-2">Grade</th>
-                              <th className="text-center px-4 py-2">Max Score</th>
-                              <th className="text-center px-4 py-2">Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y">
-                            {courseGrades
-                              .slice()
-                              .sort((a: any, b: any) => new Date(b.submittedAt.toDate()).getTime() - new Date(a.submittedAt.toDate()).getTime())
-                              .map((grade: any, index: number) => {
-                                const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
-                                return (
-                                  <tr key={index}>
-                                    <td className="px-4 py-2 font-medium">{assignment?.title || 'Assignment'}</td>
-                                    <td className="px-4 py-2">{course?.title || 'Course'}</td>
-                                    <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
-                                    <td className="px-4 py-2 text-center">{assignment?.maxScore || 100}</td>
-                                    <td className="px-4 py-2 text-center">{grade.submittedAt.toDate().toLocaleDateString()}</td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-gray-500">
-                      <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">No Grades Yet</h3>
-                      <p className="text-gray-400">Your assignment grades will appear here once they're graded by your instructor.</p>
-                    </div>
+                  {gradeViewMode === 'assignments' && (
+                    <>
+                      {courseGrades.length > 0 ? (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Grades</h3>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="text-left px-4 py-2">Assignment</th>
+                                  <th className="text-left px-4 py-2">Course</th>
+                                  <th className="text-center px-4 py-2">Grade</th>
+                                  <th className="text-center px-4 py-2">Max Score</th>
+                                  <th className="text-center px-4 py-2">Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y">
+                                {courseGrades
+                                  .slice()
+                                  .sort((a: any, b: any) => new Date(b.submittedAt.toDate()).getTime() - new Date(a.submittedAt.toDate()).getTime())
+                                  .map((grade: any, index: number) => {
+                                    const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
+                                    return (
+                                      <tr key={index}>
+                                        <td className="px-4 py-2 font-medium">{assignment?.title || 'Assignment'}</td>
+                                        <td className="px-4 py-2">{course?.title || 'Course'}</td>
+                                        <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
+                                        <td className="px-4 py-2 text-center">{assignment?.maxScore || 100}</td>
+                                        <td className="px-4 py-2 text-center">{grade.submittedAt.toDate().toLocaleDateString()}</td>
+                                      </tr>
+                                    );
+                                  })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No Grades Yet</h3>
+                          <p className="text-gray-400">Your assignment grades will appear here once they're graded by your instructor.</p>
+                        </div>
+                      )}
+                    </>
                   )}
                     </>
                   )}

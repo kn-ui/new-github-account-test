@@ -106,7 +106,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.submissions'), href: '/dashboard/student-submissions', icon: ClipboardList },
           { label: t('nav.exams'), href: '/dashboard/student-exams', icon: ClipboardList },
           { label: t('nav.myGrades'), href: '/dashboard/student-grades', icon: Award },
-          { label: t('nav.certificates'), href: '/dashboard/certificates', icon: Award },
           { label: t('nav.announcements'), href: '/dashboard/student-announcements', icon: Bell },
         ];
       

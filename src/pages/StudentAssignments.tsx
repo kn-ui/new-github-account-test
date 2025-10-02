@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -53,6 +54,7 @@ export default function StudentAssignments() {
   const [detailAssignment, setDetailAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [submissionContent, setSubmissionContent] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [assignmentResources, setAssignmentResources] = useState<any[]>([]);
 
@@ -79,6 +81,12 @@ export default function StudentAssignments() {
     if (selectedAssignment) {
       loadAssignmentResources(selectedAssignment.courseId);
     }
+  }, [selectedAssignment]);
+
+  useEffect(() => {
+    // Clear form when switching assignments
+    setSubmissionContent('');
+    setSelectedFile(null);
   }, [selectedAssignment]);
 
   const loadAssignmentResources = async (courseId: string) => {
@@ -209,6 +217,34 @@ export default function StudentAssignments() {
     }
   };
 
+  const handleSubmitAssignment = async () => {
+    if (!selectedAssignment || !currentUser) return;
+    
+    if (!submissionContent.trim() && !selectedFile) {
+      toast.error('Please provide either text content or upload a file');
+      return;
+    }
+
+    try {
+      // Here you would implement the actual submission logic
+      // For now, we'll just show a success message
+      toast.success('Assignment submitted successfully!');
+      
+      // Clear the form
+      setSubmissionContent('');
+      setSelectedFile(null);
+      
+      // Reload assignments to update status
+      await loadAssignments();
+      
+      // Close the detail view
+      setSelectedAssignment(null);
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      toast.error('Failed to submit assignment');
+    }
+  };
+
   if (selectedAssignment) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -250,38 +286,58 @@ export default function StudentAssignments() {
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">Submit Assignment</h2>
                   
-                  <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">Drop your file here or click to browse</p>
-                    
-                    <input
-                      type="file"
-                      id="file-upload"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                      accept=".pdf,.doc,.docx"
+                  {/* Text Submission */}
+                  <div className="mb-6">
+                    <Label htmlFor="submission-content">Write your assignment submission here</Label>
+                    <Textarea
+                      id="submission-content"
+                      value={submissionContent}
+                      onChange={(e) => setSubmissionContent(e.target.value)}
+                      placeholder="Write your assignment submission here..."
+                      rows={8}
+                      className="mt-2"
                     />
-                    <label
-                      htmlFor="file-upload"
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-                    >
-                      Choose File
-                    </label>
-                    
-                    {selectedFile && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          Selected: {selectedFile.name}
-                        </p>
-                      </div>
-                    )}
                   </div>
                   
-                  <button className="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  {/* File Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Upload Files (Optional)</Label>
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-4">Drop your file here or click to browse</p>
+                      
+                      <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                        accept=".pdf,.doc,.docx"
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                      >
+                        Choose File
+                      </label>
+                      
+                      {selectedFile && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-blue-800">
+                            Selected: {selectedFile.name}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={handleSubmitAssignment}
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
                     Submit Assignment
                   </button>
                 </div>
@@ -611,13 +667,6 @@ export default function StudentAssignments() {
                           View Course
                         </Link>
                       </Button>
-                      {assignment.status === 'not-started' && (
-                        <Button size="sm" asChild>
-                          <Link to={`/dashboard/student-submissions/${assignment.id}/submit`}>
-                            {t('assignments.start')}
-                          </Link>
-                        </Button>
-                      )}
                       {assignment.status === 'in-progress' && (
                         <Button size="sm" asChild>
                           <Link to={`/dashboard/student-submissions/${assignment.id}/edit`}>

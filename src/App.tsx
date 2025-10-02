@@ -111,7 +111,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="/dashboard/assignments/:assignmentId/submissions" element={<ProtectedRoute><DashboardWrapper><AssignmentSubmissions /></DashboardWrapper></ProtectedRoute>} />
+            <Route path="/dashboard/submissions/:assignmentId/submissions" element={<ProtectedRoute><DashboardWrapper><AssignmentSubmissions /></DashboardWrapper></ProtectedRoute>} />
             <Route 
               path="/dashboard" 
               element={

@@ -174,7 +174,7 @@ export default function SubmissionsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">{a.pendingCount + a.gradedCount} / {a.gradedCount} {t('teacher.submissions.gradedLower')}</td>
                     <td className="px-6 py-4 text-right">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/dashboard/assignments/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
+                        <Link to={`/dashboard/submissions/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
                       </Button>
                     </td>
                   </tr>
@@ -197,7 +197,7 @@ export default function SubmissionsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs capitalize px-2 py-1 border rounded">{a.pendingCount + a.gradedCount} {t('teacher.submissions.submissions')}</span>
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/dashboard/assignments/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
+                    <Link to={`/dashboard/submissions/${a.id}/submissions`}>{t('teacher.submissions.viewSubmissions')}</Link>
                   </Button>
                 </div>
               </div>

@@ -397,7 +397,7 @@ export default function TeacherGrades() {
               </div>
               <div className="mt-auto pt-4 flex items-center justify-between">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to={`/dashboard/assignments/${a.id}/submissions`}>
+                  <Link to={`/dashboard/submissions/${a.id}/submissions`}>
                     <Eye className="h-4 w-4 mr-2" />
                     {t('teacher.grades.view')}
                   </Link>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { studentDataService, assignmentEditRequestService, assignmentService, courseService } from '@/lib/firestore';
+import { studentDataService, assignmentEditRequestService, assignmentService, courseService, submissionService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,8 +158,13 @@ export default function StudentSubmissions() {
     try {
       const submissionData = {
         assignmentId: selectedAssignment.id,
+        assignmentTitle: selectedAssignment.title,
         courseId: selectedAssignment.courseId,
+        courseTitle: selectedAssignment.courseTitle,
+        instructorName: selectedAssignment.instructorName,
         studentId: currentUser!.uid,
+        studentName: userProfile?.displayName || 'Unknown Student',
+        studentEmail: userProfile?.email || currentUser?.email || '',
         content: submissionContent,
         attachments: submissionAttachments,
         status: 'submitted' as const,
@@ -169,12 +174,15 @@ export default function StudentSubmissions() {
         updatedAt: new Date()
       };
 
+      console.log('Submitting submission data:', submissionData);
+
       await submissionService.createSubmission(submissionData);
       toast.success(t('student.submissions.submitted'));
       setShowSubmissionDialog(false);
       setSelectedAssignment(null);
       setSubmissionContent('');
       setSubmissionAttachments([]);
+      studentDataService.clearStudentCache(currentUser!.uid);
       loadSubmissions();
     } catch (error) {
       console.error('Error submitting assignment:', error);

@@ -72,6 +72,8 @@ export interface FirestoreSubmission {
   status: 'submitted' | 'graded';
   grade?: number;
   feedback?: string;
+  content: string;
+  attachments?: string[];
   maxScore?: number;
   instructions?: string;
   isActive: boolean;
@@ -692,6 +694,7 @@ export const submissionService = {
   },
 
   async createSubmission(submissionData: Omit<FirestoreSubmission, 'id' | 'submittedAt'>): Promise<string> {
+    console.log('Received submission data in createSubmission:', submissionData);
     const now = Timestamp.now();
     const docRef = await addDoc(collections.submissions(), {
       ...submissionData,

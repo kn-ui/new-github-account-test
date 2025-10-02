@@ -239,7 +239,13 @@ export default function AssignmentSubmissions() {
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>
                         <Label>Grade (0 - {assignment?.maxScore ?? 100})</Label>
-                        <Input type="number" value={grading.grade} onChange={(e) => setGrading({ ...grading, grade: parseInt(e.target.value) || 0 })} />
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          max={assignment?.maxScore ?? 100} 
+                          value={grading.grade} 
+                          onChange={(e) => setGrading({ ...grading, grade: parseInt(e.target.value) || 0 })} 
+                        />
                       </div>
                       <div>
                         <Label>Feedback</Label>
@@ -248,6 +254,18 @@ export default function AssignmentSubmissions() {
                       <div className="col-span-2 flex items-center justify-end gap-2">
                         <Button variant="outline" onClick={() => setGrading(null)}>Cancel</Button>
                         <Button onClick={async () => {
+                          const maxScore = assignment?.maxScore || 100;
+                          
+                          if (grading.grade > maxScore) {
+                            toast.error(`Grade cannot exceed the maximum score of ${maxScore}`);
+                            return;
+                          }
+                          
+                          if (grading.grade < 0) {
+                            toast.error('Grade cannot be negative');
+                            return;
+                          }
+                          
                           try {
                             await submissionService.updateSubmission(s.id, { grade: grading.grade, feedback: grading.feedback, status: 'graded' });
                             studentDataService.clearStudentCache(s.studentId);

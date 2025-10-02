@@ -178,22 +178,6 @@ const EventsPage = () => {
       toast.error('Title is required');
       return;
     }
-    if (!editForm.description || editForm.description.trim().length === 0) {
-      toast.error('Description is required');
-      return;
-    }
-    if (!editForm.type || editForm.type.trim().length === 0) {
-      toast.error('Event type is required');
-      return;
-    }
-    if (!editForm.location || editForm.location.trim().length === 0) {
-      toast.error('Location is required');
-      return;
-    }
-    if (!editForm.time || editForm.time.trim().length === 0) {
-      toast.error('Time is required');
-      return;
-    }
     
     try {
       const date = editForm.date || new Date();
@@ -221,22 +205,6 @@ const EventsPage = () => {
       // Validation for required fields
       if (!createForm.title || createForm.title.trim().length === 0) {
         toast.error('Title is required');
-        return;
-      }
-      if (!createForm.description || createForm.description.trim().length === 0) {
-        toast.error('Description is required');
-        return;
-      }
-      if (!createForm.type || createForm.type.trim().length === 0) {
-        toast.error('Event type is required');
-        return;
-      }
-      if (!createForm.location || createForm.location.trim().length === 0) {
-        toast.error('Location is required');
-        return;
-      }
-      if (!createForm.time || createForm.time.trim().length === 0) {
-        toast.error('Time is required');
         return;
       }
       

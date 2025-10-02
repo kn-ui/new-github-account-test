@@ -120,8 +120,8 @@ const CourseDetail = () => {
       const assignments = await assignmentService.getAssignmentsByCourse(courseId);
       setCourseAssignments(assignments);
       
-      // Load grades for this course if enrolled
-      if (isEnrolled && currentUser?.uid) {
+      // Load grades for this course if student
+      if (currentUser?.uid && userProfile?.role === 'student') {
         try {
           const submissions = await submissionService.getSubmissionsByStudent(currentUser.uid);
           const courseSubmissions = submissions.filter((sub: any) => 

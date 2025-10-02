@@ -53,6 +53,7 @@ export default function StudentGrades() {
     '2025': true,
   });
   const [gradeType, setGradeType] = useState<'assignments' | 'courses'>('courses');
+  const [courses, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
@@ -70,8 +71,19 @@ export default function StudentGrades() {
       
       if (courseIds.length === 0) {
         setGrades([]);
+        setFinalGrades([]);
+        setCourses([]);
+        setLoading(false);
         return;
       }
+
+      // Fetch all course details at once
+      const coursesData = await Promise.all(
+        courseIds.map(id => courseService.getCourseById(id))
+      );
+      const validCourses = coursesData.filter(c => c !== null);
+      setCourses(validCourses);
+
 
       // Get all assignments for enrolled courses
       const assignmentsPromises = courseIds.map(async (courseId) => {
@@ -186,10 +198,10 @@ export default function StudentGrades() {
   const filteredAndSortedFinalGrades = useMemo(() => {
     // Get course names for final grades
     const finalGradesWithCourseNames = finalGrades.map(grade => {
-      const course = grades.find(g => g.courseId === grade.courseId);
+      const course = courses.find(c => c.id === grade.courseId);
       return {
         ...grade,
-        courseTitle: course?.courseTitle || 'Unknown Course',
+        courseTitle: course?.title || 'Unknown Course',
         instructorName: course?.instructorName || 'Unknown Instructor'
       };
     });
@@ -223,7 +235,7 @@ export default function StudentGrades() {
     }
 
     return filtered;
-  }, [finalGrades, grades, searchTerm, courseFilter, sortBy]);
+  }, [finalGrades, courses, searchTerm, courseFilter, sortBy]);
 
   const getGradeColor = (grade: number, maxScore: number) => {
     const percentage = (grade / maxScore) * 100;

@@ -996,6 +996,16 @@ export const assignmentService = {
     return results;
   },
 
+  async getAssignmentById(assignmentId: string): Promise<FirestoreAssignment | null> {
+    const docRef = doc(db, 'assignments', assignmentId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const assignment = { id: docSnap.id, ...docSnap.data() } as FirestoreAssignment;
+      return assignment.isActive ? assignment : null;
+    }
+    return null;
+  },
+
   async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
     const q = query(
       collections.assignments(),

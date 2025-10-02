@@ -54,7 +54,8 @@ export default function TeacherDashboard() {
           setStats(teacherStats);
 
           // Load my courses
-          const courses = await courseService.getCoursesByInstructor(currentUser.uid);
+          const allCourses = await courseService.getCoursesByInstructor(currentUser.uid);
+          const courses = allCourses.filter(c => c.isActive);
           setMyCourses(courses);
 
           // Fetch enrollments per course in parallel

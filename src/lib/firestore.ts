@@ -1492,8 +1492,9 @@ export const analyticsService = {
     const myCourses = coursesSnapshot.size;
     const courseIds = coursesSnapshot.docs.map(doc => doc.id);
     const activeCourses = coursesSnapshot.docs.filter(doc => !!doc.data().isActive).length;
-    const totalStudents = enrollmentsSnapshot.docs.filter(doc => courseIds.includes(doc.data().courseId)).length;
-    const pendingReviews = submissionsSnapshot.docs.filter(doc => courseIds.includes(doc.data().courseId) && doc.data().status === 'submitted').length;
+    const activeCourseIds = coursesSnapshot.docs.filter(doc => !!doc.data().isActive).map(doc => doc.id);
+    const totalStudents = enrollmentsSnapshot.docs.filter(doc => activeCourseIds.includes(doc.data().courseId)).length;
+    const pendingReviews = submissionsSnapshot.docs.filter(doc => activeCourseIds.includes(doc.data().courseId) && doc.data().status === 'submitted').length;
     const avgRating = 0; // Not tracked yet
 
     return {

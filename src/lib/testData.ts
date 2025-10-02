@@ -450,15 +450,16 @@ export const getTestData = {
   
   getTeacherStats: (teacherId: string) => {
     const myCourses = testData.courses.filter(c => c.instructor === teacherId);
+    const activeCourses = myCourses.filter(c => c.isActive);
     const myEnrollments = testData.enrollments.filter(e => 
-      myCourses.some(c => c.id === e.courseId)
+      activeCourses.some(c => c.id === e.courseId)
     );
     const pendingReviews = testData.submissions.filter(s => 
-      s.status === 'submitted' && myCourses.some(c => c.id === s.courseId)
+      s.status === 'submitted' && activeCourses.some(c => c.id === s.courseId)
     );
     
     return {
-      activeCourses: myCourses.length,
+      activeCourses: activeCourses.length,
       totalStudents: myEnrollments.length,
       pendingReviews: pendingReviews.length,
       avgRating: 4.8

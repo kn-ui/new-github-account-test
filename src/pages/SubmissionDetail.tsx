@@ -52,7 +52,19 @@ export default function SubmissionDetail() {
   const title = useMemo(() => `Submission${assignment ? `: ${assignment.title}` : ''}`, [assignment]);
 
   const onSaveGrade = async () => {
-    if (!submission) return;
+    if (!submission || !assignment) return;
+    
+    const maxScore = (assignment as any)?.maxScore || 100;
+    if (grade > maxScore) {
+      toast.error(`Grade cannot exceed the maximum score of ${maxScore}`);
+      return;
+    }
+    
+    if (grade < 0) {
+      toast.error('Grade cannot be negative');
+      return;
+    }
+    
     try {
       await submissionService.updateSubmission(submission.id, { grade, feedback, status: 'graded' });
       toast.success('Grade updated');
@@ -124,8 +136,15 @@ export default function SubmissionDetail() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="grade">Grade</Label>
-              <Input id="grade" type="number" value={grade} onChange={(e) => setGrade(parseInt(e.target.value) || 0)} />
+              <Label htmlFor="grade">Grade (Max: {(assignment as any)?.maxScore || 100})</Label>
+              <Input 
+                id="grade" 
+                type="number" 
+                min="0" 
+                max={(assignment as any)?.maxScore || 100} 
+                value={grade} 
+                onChange={(e) => setGrade(parseInt(e.target.value) || 0)} 
+              />
             </div>
             <div>
               <Label htmlFor="feedback">Feedback</Label>

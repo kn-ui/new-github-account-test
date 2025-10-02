@@ -1093,8 +1093,23 @@ export default function TeacherCourseDetail() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="g-grade">Grade</Label>
-              <Input id="g-grade" type="number" value={gradeValue} onChange={(e) => setGradeValue(parseInt(e.target.value) || 0)} />
+              <Label htmlFor="g-grade">
+                Grade (Max: {(() => {
+                  const assignment = assignments.find(a => a.id === selectedSubmission?.assignmentId);
+                  return (assignment as any)?.maxScore || 100;
+                })()})
+              </Label>
+              <Input 
+                id="g-grade" 
+                type="number" 
+                min="0" 
+                max={(() => {
+                  const assignment = assignments.find(a => a.id === selectedSubmission?.assignmentId);
+                  return (assignment as any)?.maxScore || 100;
+                })()} 
+                value={gradeValue} 
+                onChange={(e) => setGradeValue(parseInt(e.target.value) || 0)} 
+              />
             </div>
             <div>
               <Label htmlFor="g-feedback">Feedback</Label>
@@ -1105,6 +1120,21 @@ export default function TeacherCourseDetail() {
             <Button variant="outline" onClick={() => setGradeDialogOpen(false)}>Cancel</Button>
             <Button onClick={async () => {
               if (!selectedSubmission) return;
+              
+              // Find the assignment for this submission to get max score
+              const assignment = assignments.find(a => a.id === selectedSubmission.assignmentId);
+              const maxScore = (assignment as any)?.maxScore || 100;
+              
+              if (gradeValue > maxScore) {
+                toast.error(`Grade cannot exceed the maximum score of ${maxScore}`);
+                return;
+              }
+              
+              if (gradeValue < 0) {
+                toast.error('Grade cannot be negative');
+                return;
+              }
+              
               try {
                 await (await import('@/lib/firestore')).submissionService.updateSubmission(selectedSubmission.id, { grade: gradeValue, feedback: gradeFeedback, status: 'graded' });
                 studentDataService.clearStudentCache(selectedSubmission.studentId);

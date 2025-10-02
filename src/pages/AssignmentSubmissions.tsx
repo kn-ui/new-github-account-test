@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { assignmentService, courseService, submissionService, assignmentEditRequestService, FirestoreEditRequest } from '@/lib/firestore';
+import { assignmentService, courseService, submissionService, assignmentEditRequestService, FirestoreEditRequest, studentDataService } from '@/lib/firestore';
 import { FileText, BookOpen, Clock, Edit, ArrowLeft } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -250,6 +250,7 @@ export default function AssignmentSubmissions() {
                         <Button onClick={async () => {
                           try {
                             await submissionService.updateSubmission(s.id, { grade: grading.grade, feedback: grading.feedback, status: 'graded' });
+                            studentDataService.clearStudentCache(s.studentId);
                             toast.success('Grade saved');
                             const fresh = await submissionService.getSubmissionsByAssignment(assignmentId!);
                             setSubmissions(fresh);

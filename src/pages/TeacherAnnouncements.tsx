@@ -84,7 +84,7 @@ export default function TeacherAnnouncements() {
     try {
       setLoading(true);
       const [teacherCourses, teacherAnnouncements] = await Promise.all([
-        courseService.getCoursesByInstructor(currentUser!.uid),
+        courseService.getAllCoursesByInstructor(currentUser!.uid),
         announcementService.getAnnouncementsByTeacher(currentUser!.uid)
       ]);
       

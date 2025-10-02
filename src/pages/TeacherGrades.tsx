@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { submissionService, assignmentService, courseService } from '@/lib/firestore';
+import { submissionService, assignmentService, courseService, studentDataService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,7 @@ interface AssignmentRow { id: string; title: string; courseId: string; courseTit
 // Define a local type for the grading dialog data
 interface SubmissionWithDetails {
   id: string;
+  studentId: string;
   assignmentTitle: string;
   studentName: string;
   courseTitle: string;

@@ -78,12 +78,15 @@ export default function TeacherAssignments() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [teacherCourses, teacherAssignments] = await Promise.all([
-        courseService.getCoursesByInstructor(currentUser!.uid),
-        assignmentService.getAssignmentsByTeacher(currentUser!.uid)
-      ]);
-      setCourses(teacherCourses);
-      setAssignments(teacherAssignments);
+      const teacherCourses = await courseService.getCoursesByInstructor(currentUser!.uid);
+      const activeCourses = teacherCourses.filter(course => course.isActive);
+      const activeCourseIds = activeCourses.map(course => course.id);
+
+      const teacherAssignments = await assignmentService.getAssignmentsByTeacher(currentUser!.uid);
+      const activeAssignments = teacherAssignments.filter(assignment => activeCourseIds.includes(assignment.courseId));
+
+      setCourses(activeCourses);
+      setAssignments(activeAssignments);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load data');

@@ -841,6 +841,21 @@ export default function CourseManager() {
               </Select>
             </div>
             <div>
+              <Label htmlFor="isActive">Status</Label>
+              <Select 
+                value={String(editForm.isActive || false)} 
+                onValueChange={(value) => setEditForm({ ...editForm, isActive: value === 'true' })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="desc">Description</Label>
               <Textarea 
                 id="desc" 

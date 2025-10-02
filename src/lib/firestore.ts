@@ -483,6 +483,16 @@ export const courseService = {
       .filter(course => course.isActive !== false); // Client-side filter for isActive
   },
 
+  async getAllCoursesByInstructor(instructorId: string): Promise<FirestoreCourse[]> {
+    const q = query(
+      collections.courses(),
+      where('instructor', '==', instructorId),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourse));
+  },
+
   async getCoursesByTitle(title: string): Promise<FirestoreCourse | null> {
     const q = query(
       collections.courses(),
@@ -922,7 +932,7 @@ export const announcementService = {
 
   async getAnnouncementsByTeacher(teacherId: string): Promise<FirestoreAnnouncement[]> {
     // Get all courses by the teacher first
-    const teacherCourses = await courseService.getCoursesByInstructor(teacherId);
+    const teacherCourses = await courseService.getAllCoursesByInstructor(teacherId);
     const courseIds = teacherCourses.map(course => course.id);
     
     if (courseIds.length === 0) return [];

@@ -17,6 +17,7 @@ import {
   FirestoreSubmission,
   FirestoreExam,
   FirestoreGrade,
+  studentDataService,
 } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1106,6 +1107,7 @@ export default function TeacherCourseDetail() {
               if (!selectedSubmission) return;
               try {
                 await (await import('@/lib/firestore')).submissionService.updateSubmission(selectedSubmission.id, { grade: gradeValue, feedback: gradeFeedback, status: 'graded' });
+                studentDataService.clearStudentCache(selectedSubmission.studentId);
                 toast.success('Grade updated');
                 const latest = await (await import('@/lib/firestore')).submissionService.getSubmissionsByCourse(course.id);
                 setSubmissions(latest);

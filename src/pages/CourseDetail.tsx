@@ -110,6 +110,7 @@ const CourseDetail = () => {
 
   const loadCourseMaterials = async () => {
     if (!courseId) return;
+    setCourseGrades([]);
     
     try {
       setMaterialsLoading(true);

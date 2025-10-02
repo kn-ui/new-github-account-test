@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { studentDataService, assignmentEditRequestService } from '@/lib/firestore';
+import { studentDataService, assignmentEditRequestService, assignmentService, courseService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -112,25 +112,25 @@ export default function StudentSubmissions() {
 
   const handleSubmissionAction = async (assignmentId: string, action: string) => {
     try {
-      // Find the assignment from the loaded submissions
-      const submission = submissions.find(s => s.assignmentId === assignmentId);
-      if (!submission) {
+      // Fetch the assignment directly
+      const assignments = await assignmentService.getAssignmentsByIds([assignmentId]);
+      const assignment = assignments[assignmentId];
+
+      if (!assignment) {
         toast.error(t('student.submissions.assignmentNotFound'));
         return;
       }
 
-      // Create assignment object from submission data
-      const assignment = {
-        id: submission.assignmentId,
-        title: submission.assignmentTitle,
-        courseId: submission.courseId,
-        maxScore: submission.maxScore,
-        dueDate: new Date(), // This would need to be loaded separately if needed
-        description: '', // This would need to be loaded separately if needed
-        instructions: '' // This would need to be loaded separately if needed
+      // Fetch course details to get course title and instructor name
+      const course = await courseService.getCourseById(assignment.courseId);
+
+      const assignmentWithCourseInfo = {
+        ...assignment,
+        courseTitle: course?.title || 'Unknown Course',
+        instructorName: course?.instructorName || 'Unknown Instructor',
       };
 
-      setSelectedAssignment(assignment);
+      setSelectedAssignment(assignmentWithCourseInfo);
       setShowSubmissionDialog(true);
     } catch (error) {
       console.error('Error handling submission action:', error);

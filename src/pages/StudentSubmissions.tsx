@@ -108,6 +108,28 @@ export default function StudentSubmissions() {
   const [selectedSubmissionForEdit, setSelectedSubmissionForEdit] = useState<SubmissionWithDetails | null>(null);
   const [editRequests, setEditRequests] = useState<any[]>([]);
 
+  const loadSubmissions = useCallback(async () => {
+    if (!currentUser?.uid) return;
+    
+    try {
+      setLoading(true);
+      
+      // Load submissions and edit requests in parallel
+      const [submissions, requests] = await Promise.all([
+        studentDataService.getStudentSubmissionsData(currentUser.uid),
+        assignmentEditRequestService.getEditRequestsByStudent(currentUser.uid)
+      ]);
+
+      setSubmissions(submissions);
+      setEditRequests(requests);
+    } catch (error) {
+      console.error('Error loading submissions:', error);
+      toast.error(t('student.submissions.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser?.uid, t]);
+
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
       loadSubmissions();
@@ -144,28 +166,6 @@ export default function StudentSubmissions() {
       handleSubmissionAction(assignmentId, action);
     }
   }, [assignmentId, action]);
-
-  const loadSubmissions = useCallback(async () => {
-    if (!currentUser?.uid) return;
-    
-    try {
-      setLoading(true);
-      
-      // Load submissions and edit requests in parallel
-      const [submissions, requests] = await Promise.all([
-        studentDataService.getStudentSubmissionsData(currentUser.uid),
-        assignmentEditRequestService.getEditRequestsByStudent(currentUser.uid)
-      ]);
-
-      setSubmissions(submissions);
-      setEditRequests(requests);
-    } catch (error) {
-      console.error('Error loading submissions:', error);
-      toast.error(t('student.submissions.loadError'));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser?.uid, t]);
 
   const handleSubmissionAction = async (assignmentId: string, action: string) => {
     try {

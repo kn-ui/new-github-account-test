@@ -233,7 +233,7 @@ export default function StudentSubmissions() {
         // Update edit request status to completed
         const editRequest = getEditRequestForSubmission(selectedSubmissionForEdit.id);
         if (editRequest) {
-          await assignmentEditRequestService.updateEditRequestStatus(editRequest.id, 'completed');
+          await assignmentEditRequestService.updateEditRequest(editRequest.id, { status: 'completed' });
         }
         
         // Reload edit requests to reflect updated status

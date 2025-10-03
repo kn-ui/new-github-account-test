@@ -10,11 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { assignmentService, courseService, submissionService, assignmentEditRequestService, FirestoreEditRequest, studentDataService } from '@/lib/firestore';
-import { FileText, BookOpen, Clock, Edit, ArrowLeft } from 'lucide-react';
+import { FileText, BookOpen, Clock, Edit, ArrowLeft, ChevronDown, User, Calendar, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ChevronDown, User, Calendar, MessageSquare, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export default function AssignmentSubmissions() {
   const { assignmentId } = useParams<{ assignmentId: string }>();

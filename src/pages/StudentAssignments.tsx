@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { studentDataService, courseMaterialService, FirestoreAssignment } from '@/lib/firestore';
+import { studentDataService, courseMaterialService, submissionService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -218,23 +218,57 @@ export default function StudentAssignments() {
   };
 
   const handleSubmitAssignment = async () => {
-    if (!selectedAssignment || !currentUser) return;
+    if (!selectedAssignment || !currentUser || !userProfile) return;
     
     if (!submissionContent.trim() && !selectedFile) {
       toast.error('Please provide either text content or upload a file');
       return;
     }
 
+    // Check if assignment is still within due date
+    const now = new Date();
+    const dueDate = selectedAssignment.dueDate instanceof Date 
+      ? selectedAssignment.dueDate 
+      : selectedAssignment.dueDate.toDate();
+    
+    if (now > dueDate) {
+      toast.error('Cannot submit assignment after the due date');
+      return;
+    }
+
     try {
-      // Here you would implement the actual submission logic
-      // For now, we'll just show a success message
+      // Prepare submission data
+      const submissionData = {
+        assignmentId: selectedAssignment.id,
+        assignmentTitle: selectedAssignment.title,
+        courseId: selectedAssignment.courseId,
+        courseTitle: selectedAssignment.courseTitle,
+        instructorName: selectedAssignment.instructorName,
+        studentId: currentUser.uid,
+        studentName: userProfile.displayName || 'Unknown Student',
+        studentEmail: userProfile.email || currentUser.email || '',
+        content: submissionContent,
+        attachments: selectedFile ? [selectedFile.name] : [], // For now, just store filename
+        status: 'submitted' as const,
+        submittedAt: new Date(),
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log('Submitting submission data:', submissionData);
+
+      // Save to database
+      await submissionService.createSubmission(submissionData);
+      
       toast.success('Assignment submitted successfully!');
       
       // Clear the form
       setSubmissionContent('');
       setSelectedFile(null);
       
-      // Reload assignments to update status
+      // Clear cache and reload assignments to update status
+      studentDataService.clearStudentCache(currentUser.uid);
       await loadAssignments();
       
       // Close the detail view

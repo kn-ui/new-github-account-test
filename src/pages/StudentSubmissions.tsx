@@ -727,6 +727,47 @@ export default function StudentSubmissions() {
               </Card>
             </div>
           </div>
+
+          {/* Edit Request Dialog - Inside submission details view */}
+          <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
+            <DialogContent className="max-w-md z-50">
+              <DialogHeader>
+                <DialogTitle>Request Assignment Edit</DialogTitle>
+              </DialogHeader>
+              
+              {selectedSubmissionForEdit && (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                    <p><strong>Assignment:</strong> {selectedSubmissionForEdit.assignmentTitle}</p>
+                    <p><strong>Course:</strong> {selectedSubmissionForEdit.courseTitle}</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="editReason">Reason for edit request</Label>
+                    <Textarea
+                      id="editReason"
+                      value={editReason}
+                      onChange={(e) => setEditReason(e.target.value)}
+                      placeholder="Please explain why you need to edit this submission..."
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditRequestOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={submitEditRequest}
+                  disabled={!editReason.trim()}
+                >
+                  Submit Request
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );
@@ -1142,52 +1183,6 @@ export default function StudentSubmissions() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Request Dialog */}
-      <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
-        <DialogContent className="max-w-md z-50">
-          <DialogHeader>
-            <DialogTitle>Request Assignment Edit</DialogTitle>
-          </DialogHeader>
-          
-          {selectedSubmissionForEdit && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                <p><strong>Assignment:</strong> {selectedSubmissionForEdit.assignmentTitle}</p>
-                <p><strong>Course:</strong> {selectedSubmissionForEdit.courseTitle}</p>
-                <p><strong>Submitted:</strong> {selectedSubmissionForEdit.submittedAt.toLocaleDateString()}</p>
-              </div>
-              
-              <div>
-                <Label htmlFor="editReason">Reason for Edit Request *</Label>
-                <Textarea
-                  id="editReason"
-                  value={editReason}
-                  onChange={(e) => setEditReason(e.target.value)}
-                  placeholder="Please explain why you need to edit this assignment (e.g., technical issues, need clarification, etc.)"
-                  rows={4}
-                  required
-                />
-              </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                <p><strong>Note:</strong> Your teacher will review this request and may approve or reject it. You will be notified of their decision.</p>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditRequestOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={submitEditRequest}
-              disabled={!editReason.trim()}
-            >
-              Submit Request
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

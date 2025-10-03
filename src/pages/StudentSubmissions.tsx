@@ -107,6 +107,8 @@ export default function StudentSubmissions() {
   const [editReason, setEditReason] = useState('');
   const [selectedSubmissionForEdit, setSelectedSubmissionForEdit] = useState<SubmissionWithDetails | null>(null);
   const [editRequests, setEditRequests] = useState<any[]>([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState<SubmissionWithDetails | null>(null);
 
   const loadSubmissions = useCallback(async () => {
     if (!currentUser?.uid) return;
@@ -212,17 +214,6 @@ export default function StudentSubmissions() {
       return;
     }
 
-    // Check if we're editing an existing submission (approved edit request)
-    if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
-      // Show confirmation prompt for approved edit submissions
-      const confirmed = window.confirm(
-        'You are about to submit your approved edit. Once submitted, you will not be able to make further changes to this submission. Are you sure you want to continue?'
-      );
-      
-      if (!confirmed) {
-        return;
-      }
-    }
 
     try {
       // Check if we're editing an existing submission (approved edit request)
@@ -413,16 +404,33 @@ export default function StudentSubmissions() {
       setSubmissionContent((submission as any).content || '');
       setSubmissionAttachments((submission as any).attachments || []);
       
-      // Set the assignment and open the submission dialog for editing
+      // Set the assignment and store pending submission
       setSelectedAssignment(assignmentWithCourseInfo);
-      setShowSubmissionDialog(true);
+      setPendingSubmission(submission);
       
-      // Store the submission ID for updating instead of creating new
-      setSelectedSubmissionForEdit(submission);
+      // Show confirmation dialog instead of directly opening submission dialog
+      setShowConfirmDialog(true);
     } catch (error) {
       console.error('Error preparing submission for edit:', error);
       toast.error('Failed to prepare submission for editing');
     }
+  };
+
+  const handleConfirmEdit = () => {
+    if (pendingSubmission) {
+      setSelectedSubmissionForEdit(pendingSubmission);
+      setShowSubmissionDialog(true);
+    }
+    setShowConfirmDialog(false);
+    setPendingSubmission(null);
+  };
+
+  const handleCancelEdit = () => {
+    setShowConfirmDialog(false);
+    setPendingSubmission(null);
+    setSelectedAssignment(null);
+    setSubmissionContent('');
+    setSubmissionAttachments([]);
   };
 
   const submitEditRequest = async () => {
@@ -1247,6 +1255,63 @@ export default function StudentSubmissions() {
         </div>
       </div>
 
+      {/* Custom Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-orange-600" />
+              Confirm Edit Submission
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Edit className="h-4 w-4 text-orange-600" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium text-orange-900 mb-1">Important Notice</h4>
+                  <p className="text-sm text-orange-800">
+                    You are about to submit your approved edit. Once submitted, you will not be able to make further changes to this submission.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <p><strong>Assignment:</strong> {selectedAssignment?.title}</p>
+              <p><strong>Course:</strong> {selectedAssignment?.courseTitle}</p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> This is your final opportunity to make changes. After submission, the assignment will be locked for further editing.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelEdit}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmEdit}
+              className="flex-1 bg-orange-600 hover:bg-orange-700"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Continue Editing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

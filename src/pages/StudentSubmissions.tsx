@@ -156,30 +156,49 @@ export default function StudentSubmissions() {
     }
 
     try {
-      const submissionData = {
-        assignmentId: selectedAssignment.id,
-        assignmentTitle: selectedAssignment.title,
-        courseId: selectedAssignment.courseId,
-        courseTitle: selectedAssignment.courseTitle,
-        instructorName: selectedAssignment.instructorName,
-        studentId: currentUser!.uid,
-        studentName: userProfile?.displayName || 'Unknown Student',
-        studentEmail: userProfile?.email || currentUser?.email || '',
-        content: submissionContent,
-        attachments: submissionAttachments,
-        status: 'submitted' as const,
-        submittedAt: new Date(),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Check if we're editing an existing submission (approved edit request)
+      if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
+        // Update existing submission
+        const updateData = {
+          content: submissionContent,
+          attachments: submissionAttachments,
+          status: 'submitted' as const,
+          updatedAt: new Date()
+        };
 
-      console.log('Submitting submission data:', submissionData);
+        console.log('Updating submission:', selectedSubmissionForEdit.id, updateData);
 
-      await submissionService.createSubmission(submissionData);
-      toast.success(t('student.submissions.submitted'));
+        await submissionService.updateSubmission(selectedSubmissionForEdit.id, updateData);
+        toast.success('Submission updated successfully');
+      } else {
+        // Create new submission
+        const submissionData = {
+          assignmentId: selectedAssignment.id,
+          assignmentTitle: selectedAssignment.title,
+          courseId: selectedAssignment.courseId,
+          courseTitle: selectedAssignment.courseTitle,
+          instructorName: selectedAssignment.instructorName,
+          studentId: currentUser!.uid,
+          studentName: userProfile?.displayName || 'Unknown Student',
+          studentEmail: userProfile?.email || currentUser?.email || '',
+          content: submissionContent,
+          attachments: submissionAttachments,
+          status: 'submitted' as const,
+          submittedAt: new Date(),
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        console.log('Creating new submission:', submissionData);
+
+        await submissionService.createSubmission(submissionData);
+        toast.success(t('student.submissions.submitted'));
+      }
+
       setShowSubmissionDialog(false);
       setSelectedAssignment(null);
+      setSelectedSubmissionForEdit(null);
       setSubmissionContent('');
       setSubmissionAttachments([]);
       studentDataService.clearStudentCache(currentUser!.uid);
@@ -288,6 +307,42 @@ export default function StudentSubmissions() {
     } catch (error) {
       console.error('Error checking assignment due date:', error);
       toast.error('Failed to check assignment details');
+    }
+  };
+
+  const handleEditApprovedSubmission = async (submission: SubmissionWithDetails) => {
+    try {
+      // Get the assignment details
+      const assignment = await assignmentService.getAssignmentsByIds([submission.assignmentId]);
+      const assignmentData = assignment[submission.assignmentId];
+      
+      if (!assignmentData) {
+        toast.error('Assignment not found');
+        return;
+      }
+
+      // Get course details
+      const course = await courseService.getCourseById(assignmentData.courseId);
+
+      const assignmentWithCourseInfo = {
+        ...assignmentData,
+        courseTitle: course?.title || 'Unknown Course',
+        instructorName: course?.instructorName || 'Unknown Instructor',
+      };
+
+      // Set the existing submission content for editing
+      setSubmissionContent((submission as any).content || '');
+      setSubmissionAttachments((submission as any).attachments || []);
+      
+      // Set the assignment and open the submission dialog for editing
+      setSelectedAssignment(assignmentWithCourseInfo);
+      setShowSubmissionDialog(true);
+      
+      // Store the submission ID for updating instead of creating new
+      setSelectedSubmissionForEdit(submission);
+    } catch (error) {
+      console.error('Error preparing submission for edit:', error);
+      toast.error('Failed to prepare submission for editing');
     }
   };
 
@@ -439,7 +494,7 @@ export default function StudentSubmissions() {
                     if (editRequest.status === 'approved') {
                       return (
                         <Button 
-                          onClick={() => handleSubmissionAction(selectedSubmissionDetail.assignmentId, 'edit')}
+                          onClick={() => handleEditApprovedSubmission(selectedSubmissionDetail)}
                           className="flex items-center gap-2"
                         >
                           <Edit className="h-4 w-4" />
@@ -842,7 +897,12 @@ export default function StudentSubmissions() {
       <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t('student.submissions.dialog.title')}</DialogTitle>
+            <DialogTitle>
+              {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                ? 'Edit Submission' 
+                : t('student.submissions.dialog.title')
+              }
+            </DialogTitle>
           </DialogHeader>
           
           {selectedAssignment && (
@@ -894,7 +954,10 @@ export default function StudentSubmissions() {
               onClick={handleSubmitSubmission} 
               disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
             >
-              {t('student.submissions.dialog.submit')}
+              {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                ? 'Update Submission' 
+                : t('student.submissions.dialog.submit')
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -902,7 +965,7 @@ export default function StudentSubmissions() {
 
       {/* Edit Request Dialog */}
       <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md z-50">
           <DialogHeader>
             <DialogTitle>Request Assignment Edit</DialogTitle>
           </DialogHeader>

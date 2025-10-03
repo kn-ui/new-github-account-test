@@ -54,6 +54,33 @@ interface SubmissionWithDetails {
   attachments?: string[];
 }
 
+// Helper functions for status styling
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'submitted':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'graded':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'draft':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'submitted':
+      return <CheckCircle className="h-4 w-4" />;
+    case 'graded':
+      return <Award className="h-4 w-4" />;
+    case 'draft':
+      return <Clock className="h-4 w-4" />;
+    default:
+      return <AlertCircle className="h-4 w-4" />;
+  }
+};
+
 export default function StudentSubmissions() {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
@@ -390,162 +417,311 @@ export default function StudentSubmissions() {
 
   if (selectedSubmissionDetail) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => setSelectedSubmissionDetail(null)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-3 hover:bg-white rounded-xl transition-all duration-200 shadow-sm border border-gray-200 hover:shadow-md"
             >
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Submission Details</h1>
-              <p className="text-gray-600">{selectedSubmissionDetail.assignmentTitle}</p>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Submission Details</h1>
+              <p className="text-lg text-gray-600">{selectedSubmissionDetail.assignmentTitle}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={`${getStatusColor(selectedSubmissionDetail.status)} px-4 py-2 text-sm font-medium`}>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(selectedSubmissionDetail.status)}
+                  {selectedSubmissionDetail.status.charAt(0).toUpperCase() + selectedSubmissionDetail.status.slice(1)}
+                </div>
+              </Badge>
             </div>
           </div>
 
-          {/* Submission Detail */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="space-y-6">
-              {/* Assignment Info */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Assignment Information</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">Course:</span>
-                    <p>{selectedSubmissionDetail.courseTitle}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Instructor:</span>
-                    <p>{selectedSubmissionDetail.instructorName}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Submitted:</span>
-                    <p>{selectedSubmissionDetail.submittedAt.toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Status:</span>
-                    <p className="capitalize">{selectedSubmissionDetail.status}</p>
-                  </div>
-                </div>
-              </div>
-
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
               {/* Submitted Content */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Submitted Content</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedSubmissionDetail.content}</p>
-                </div>
-              </div>
+              <Card className="bg-white border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Submitted Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedSubmissionDetail.content ? (
+                    <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
+                        {selectedSubmissionDetail.content}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No content submitted</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Attachments */}
               {selectedSubmissionDetail.attachments && selectedSubmissionDetail.attachments.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h3>
-                  <div className="space-y-2">
-                    {selectedSubmissionDetail.attachments.map((attachment, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <FileText size={16} className="text-blue-600" />
-                        <span className="text-sm text-gray-700">{attachment}</span>
-                        <Download size={14} className="text-gray-400 ml-auto" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Download className="h-5 w-5 text-green-600" />
+                      Attachments ({selectedSubmissionDetail.attachments.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedSubmissionDetail.attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {attachment}
+                            </p>
+                            <p className="text-xs text-gray-500">Attachment {index + 1}</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Grade & Feedback */}
               {selectedSubmissionDetail.status === 'graded' && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Grade & Feedback</h3>
-                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-green-800">Grade:</span>
-                      <span className="text-2xl font-bold text-green-900">
-                        {selectedSubmissionDetail.grade}/{selectedSubmissionDetail.maxScore}
-                      </span>
-                    </div>
-                    {selectedSubmissionDetail.feedback && (
-                      <div>
-                        <span className="font-medium text-green-800">Feedback:</span>
-                        <p className="text-green-700 mt-2">{selectedSubmissionDetail.feedback}</p>
+                <Card className="bg-white border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-green-600" />
+                      Grade & Feedback
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm font-medium text-green-700 mb-1">Final Grade</p>
+                          <p className="text-3xl font-bold text-green-900">
+                            {selectedSubmissionDetail.grade}/{selectedSubmissionDetail.maxScore}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-green-600">
+                            {Math.round((selectedSubmissionDetail.grade! / selectedSubmissionDetail.maxScore) * 100)}%
+                          </p>
+                          <p className="text-xs text-green-500">Score</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
+                      {selectedSubmissionDetail.feedback && (
+                        <div className="pt-4 border-t border-green-200">
+                          <p className="text-sm font-medium text-green-700 mb-2">Instructor Feedback</p>
+                          <div className="bg-white rounded-lg p-4 border border-green-100">
+                            <p className="text-gray-700">{selectedSubmissionDetail.feedback}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
-                {selectedSubmissionDetail.status === 'draft' && (
-                  <Button 
-                    onClick={() => handleSubmissionAction(selectedSubmissionDetail.assignmentId, 'edit')}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Continue Working
-                  </Button>
-                )}
-                {selectedSubmissionDetail.status === 'submitted' && (() => {
-                  const editRequest = getEditRequestForSubmission(selectedSubmissionDetail.id);
-                  if (editRequest) {
-                    if (editRequest.status === 'approved') {
-                      return (
-                        <Button 
-                          onClick={() => handleEditApprovedSubmission(selectedSubmissionDetail)}
-                          className="flex items-center gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Assignment (Approved)
-                        </Button>
-                      );
-                    } else if (editRequest.status === 'denied') {
-                      return (
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" disabled className="flex items-center gap-2">
-                            <Edit className="h-4 w-4" />
-                            Edit Request Denied
-                          </Button>
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Submission Info */}
+              <Card className="bg-white border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-gray-600" />
+                    Submission Info
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{selectedSubmissionDetail.courseTitle}</p>
+                      <p className="text-xs text-gray-500">Course</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{selectedSubmissionDetail.instructorName}</p>
+                      <p className="text-xs text-gray-500">Instructor</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedSubmissionDetail.submittedAt.toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-gray-500">Submitted</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Award className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedSubmissionDetail.maxScore} points
+                      </p>
+                      <p className="text-xs text-gray-500">Max Score</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Edit Request Status */}
+              {selectedSubmissionDetail.status === 'submitted' && (() => {
+                const editRequest = getEditRequestForSubmission(selectedSubmissionDetail.id);
+                if (editRequest) {
+                  return (
+                    <Card className={`border-0 shadow-sm ${
+                      editRequest.status === 'approved' ? 'bg-green-50 border-green-200' :
+                      editRequest.status === 'denied' ? 'bg-red-50 border-red-200' :
+                      'bg-yellow-50 border-yellow-200'
+                    }`}>
+                      <CardHeader>
+                        <CardTitle className={`flex items-center gap-2 ${
+                          editRequest.status === 'approved' ? 'text-green-800' :
+                          editRequest.status === 'denied' ? 'text-red-800' :
+                          'text-yellow-800'
+                        }`}>
+                          {editRequest.status === 'approved' && <CheckCircle className="h-5 w-5" />}
+                          {editRequest.status === 'denied' && <XCircle className="h-5 w-5" />}
+                          {editRequest.status === 'pending' && <Clock className="h-5 w-5" />}
+                          Edit Request
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-1">Your Reason</p>
+                            <p className="text-sm text-gray-600 bg-white rounded-lg p-3 border">
+                              {editRequest.reason}
+                            </p>
+                          </div>
                           {editRequest.response && (
-                            <div className="text-sm text-gray-600">
-                              <strong>Teacher Response:</strong> {editRequest.response}
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-1">Teacher Response</p>
+                              <p className="text-sm text-gray-600 bg-white rounded-lg p-3 border">
+                                {editRequest.response}
+                              </p>
                             </div>
                           )}
+                          <Badge className={`${
+                            editRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            editRequest.status === 'denied' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {editRequest.status.charAt(0).toUpperCase() + editRequest.status.slice(1)}
+                          </Badge>
                         </div>
-                      );
-                    } else {
-                      return (
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" disabled className="flex items-center gap-2">
-                            <Edit className="h-4 w-4" />
-                            Edit Request Pending
-                          </Button>
-                          <span className="text-sm text-gray-600">Waiting for teacher response</span>
-                        </div>
-                      );
-                    }
-                  } else {
-                    return (
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Action Buttons */}
+              <Card className="bg-white border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Edit className="h-5 w-5 text-gray-600" />
+                    Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {selectedSubmissionDetail.status === 'draft' && (
                       <Button 
-                        variant="outline"
-                        onClick={() => handleRequestEdit(selectedSubmissionDetail)}
-                        className="flex items-center gap-2"
+                        onClick={() => handleSubmissionAction(selectedSubmissionDetail.assignmentId, 'edit')}
+                        className="flex items-center gap-2 flex-1"
                       >
                         <Edit className="h-4 w-4" />
-                        Request Edit
+                        Continue Working
                       </Button>
-                    );
-                  }
-                })()}
-                <Button variant="outline" asChild>
-                  <Link to={`/dashboard/course/${selectedSubmissionDetail.courseId}`}>
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    View Course
-                  </Link>
-                </Button>
-              </div>
+                    )}
+                    {selectedSubmissionDetail.status === 'submitted' && (() => {
+                      const editRequest = getEditRequestForSubmission(selectedSubmissionDetail.id);
+                      if (editRequest) {
+                        if (editRequest.status === 'approved') {
+                          return (
+                            <Button 
+                              onClick={() => handleEditApprovedSubmission(selectedSubmissionDetail)}
+                              className="flex items-center gap-2 flex-1 bg-green-600 hover:bg-green-700"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Edit Assignment (Approved)
+                            </Button>
+                          );
+                        } else if (editRequest.status === 'denied') {
+                          return (
+                            <div className="flex flex-col gap-3 w-full">
+                              <Button variant="outline" disabled className="flex items-center gap-2">
+                                <Edit className="h-4 w-4" />
+                                Edit Request Denied
+                              </Button>
+                              {editRequest.response && (
+                                <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                                  <strong>Teacher Response:</strong> {editRequest.response}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="flex flex-col gap-3 w-full">
+                              <Button variant="outline" disabled className="flex items-center gap-2">
+                                <Edit className="h-4 w-4" />
+                                Edit Request Pending
+                              </Button>
+                              <span className="text-sm text-gray-600 bg-yellow-50 rounded-lg p-3">
+                                Waiting for teacher response
+                              </span>
+                            </div>
+                          );
+                        }
+                      } else {
+                        return (
+                          <Button 
+                            variant="outline"
+                            onClick={() => handleRequestEdit(selectedSubmissionDetail)}
+                            className="flex items-center gap-2 flex-1"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Request Edit
+                          </Button>
+                        );
+                      }
+                    })()}
+                    <Button variant="outline" asChild className="flex items-center gap-2">
+                      <Link to={`/dashboard/course/${selectedSubmissionDetail.courseId}`}>
+                        <BookOpen className="h-4 w-4" />
+                        View Course
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

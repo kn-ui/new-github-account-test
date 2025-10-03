@@ -273,6 +273,9 @@ export default function StudentAssignments() {
       
       // Close the detail view
       setSelectedAssignment(null);
+      
+      // Redirect to submissions page
+      navigate('/dashboard/student-submissions');
     } catch (error) {
       console.error('Error submitting assignment:', error);
       toast.error('Failed to submit assignment');

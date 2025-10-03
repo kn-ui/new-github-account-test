@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { studentDataService, assignmentEditRequestService, assignmentService, courseService, submissionService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,7 +112,32 @@ export default function StudentSubmissions() {
     if (currentUser?.uid && userProfile?.role === 'student') {
       loadSubmissions();
     }
-  }, [currentUser?.uid, userProfile?.role]);
+  }, [currentUser?.uid, userProfile?.role, loadSubmissions]);
+
+  // Refresh submissions periodically to catch grade updates
+  useEffect(() => {
+    if (!currentUser?.uid || userProfile?.role !== 'student') return;
+
+    const interval = setInterval(() => {
+      loadSubmissions();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [currentUser?.uid, userProfile?.role, loadSubmissions]);
+
+  // Refresh submissions when page becomes visible
+  useEffect(() => {
+    if (!currentUser?.uid || userProfile?.role !== 'student') return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadSubmissions();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [currentUser?.uid, userProfile?.role, loadSubmissions]);
 
   useEffect(() => {
     if (assignmentId && action) {
@@ -120,14 +145,16 @@ export default function StudentSubmissions() {
     }
   }, [assignmentId, action]);
 
-  const loadSubmissions = async () => {
+  const loadSubmissions = useCallback(async () => {
+    if (!currentUser?.uid) return;
+    
     try {
       setLoading(true);
       
       // Load submissions and edit requests in parallel
       const [submissions, requests] = await Promise.all([
-        studentDataService.getStudentSubmissionsData(currentUser!.uid),
-        assignmentEditRequestService.getEditRequestsByStudent(currentUser!.uid)
+        studentDataService.getStudentSubmissionsData(currentUser.uid),
+        assignmentEditRequestService.getEditRequestsByStudent(currentUser.uid)
       ]);
 
       setSubmissions(submissions);
@@ -138,7 +165,7 @@ export default function StudentSubmissions() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.uid, t]);
 
   const handleSubmissionAction = async (assignmentId: string, action: string) => {
     try {
@@ -185,6 +212,18 @@ export default function StudentSubmissions() {
       return;
     }
 
+    // Check if we're editing an existing submission (approved edit request)
+    if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
+      // Show confirmation prompt for approved edit submissions
+      const confirmed = window.confirm(
+        'You are about to submit your approved edit. Once submitted, you will not be able to make further changes to this submission. Are you sure you want to continue?'
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       // Check if we're editing an existing submission (approved edit request)
       if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
@@ -199,6 +238,16 @@ export default function StudentSubmissions() {
         console.log('Updating submission:', selectedSubmissionForEdit.id, updateData);
 
         await submissionService.updateSubmission(selectedSubmissionForEdit.id, updateData);
+        
+        // Update edit request status to completed
+        const editRequest = getEditRequestForSubmission(selectedSubmissionForEdit.id);
+        if (editRequest) {
+          await assignmentEditRequestService.updateEditRequestStatus(editRequest.id, 'completed');
+        }
+        
+        // Reload edit requests to reflect updated status
+        await loadSubmissions();
+        
         toast.success('Submission updated successfully');
       } else {
         // Create new submission
@@ -599,16 +648,19 @@ export default function StudentSubmissions() {
                     <Card className={`border-0 shadow-sm ${
                       editRequest.status === 'approved' ? 'bg-green-50 border-green-200' :
                       editRequest.status === 'denied' ? 'bg-red-50 border-red-200' :
+                      editRequest.status === 'completed' ? 'bg-blue-50 border-blue-200' :
                       'bg-yellow-50 border-yellow-200'
                     }`}>
                       <CardHeader>
                         <CardTitle className={`flex items-center gap-2 ${
                           editRequest.status === 'approved' ? 'text-green-800' :
                           editRequest.status === 'denied' ? 'text-red-800' :
+                          editRequest.status === 'completed' ? 'text-blue-800' :
                           'text-yellow-800'
                         }`}>
                           {editRequest.status === 'approved' && <CheckCircle className="h-5 w-5" />}
                           {editRequest.status === 'denied' && <XCircle className="h-5 w-5" />}
+                          {editRequest.status === 'completed' && <CheckCircle className="h-5 w-5" />}
                           {editRequest.status === 'pending' && <Clock className="h-5 w-5" />}
                           Edit Request
                         </CardTitle>
@@ -632,6 +684,7 @@ export default function StudentSubmissions() {
                           <Badge className={`${
                             editRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
                             editRequest.status === 'denied' ? 'bg-red-100 text-red-800' :
+                            editRequest.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                             'bg-yellow-100 text-yellow-800'
                           }`}>
                             {editRequest.status.charAt(0).toUpperCase() + editRequest.status.slice(1)}
@@ -675,6 +728,18 @@ export default function StudentSubmissions() {
                               <Edit className="h-4 w-4" />
                               Edit Assignment (Approved)
                             </Button>
+                          );
+                        } else if (editRequest.status === 'completed') {
+                          return (
+                            <div className="flex flex-col gap-3 w-full">
+                              <Button variant="outline" disabled className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                Edit Completed
+                              </Button>
+                              <span className="text-sm text-gray-600 bg-green-50 rounded-lg p-3">
+                                Your approved edit has been submitted and cannot be changed further.
+                              </span>
+                            </div>
                           );
                         } else if (editRequest.status === 'denied') {
                           return (

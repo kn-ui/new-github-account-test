@@ -23,7 +23,10 @@ import {
   Grid3X3,
   List,
   ArrowLeft,
-  Download
+  Download,
+  Award,
+  User,
+  XCircle
 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';

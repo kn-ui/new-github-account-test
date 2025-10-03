@@ -728,6 +728,75 @@ export default function StudentSubmissions() {
             </div>
           </div>
 
+          {/* Submission Dialog - Inside submission details view */}
+          <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                    ? 'Edit Submission' 
+                    : t('student.submissions.dialog.title')
+                  }
+                </DialogTitle>
+              </DialogHeader>
+              
+              {selectedAssignment && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>{t('student.submissions.dialog.assignment')}: {selectedAssignment.title}</Label>
+                    <p className="text-sm text-gray-600">{selectedAssignment.description}</p>
+                    <p className="text-sm text-gray-600">{t('student.submissions.maxScore')}: {selectedAssignment.maxScore}</p>
+                    {isAssignmentOverdue(selectedAssignment) && (
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-600"><strong>⚠️ Assignment Overdue:</strong> This assignment is past its due date and cannot be submitted.</p>
+                      </div>
+                    )}
+                    {selectedAssignment.instructions && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm"><strong>{t('assignments.instructions')}:</strong> {selectedAssignment.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="content">{t('student.submissions.dialog.content')}</Label>
+                    <Textarea
+                      id="content"
+                      value={submissionContent}
+                      onChange={(e) => setSubmissionContent(e.target.value)}
+                      placeholder={t('student.submissions.dialog.contentPlaceholder')}
+                      rows={6}
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>{t('student.submissions.dialog.attachments')}</Label>
+                    <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <p className="mt-2 text-sm text-gray-600">{t('student.submissions.dialog.attachmentNote')}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button 
+                  onClick={handleSubmitSubmission} 
+                  disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
+                >
+                  {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                    ? 'Update Submission' 
+                    : t('student.submissions.dialog.submit')
+                  }
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           {/* Edit Request Dialog - Inside submission details view */}
           <Dialog open={editRequestOpen} onOpenChange={setEditRequestOpen}>
             <DialogContent className="max-w-md z-50">
@@ -1113,75 +1182,6 @@ export default function StudentSubmissions() {
         </div>
       </div>
 
-      {/* Submission Dialog */}
-      <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
-                ? 'Edit Submission' 
-                : t('student.submissions.dialog.title')
-              }
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedAssignment && (
-            <div className="space-y-4">
-              <div>
-                <Label>{t('student.submissions.dialog.assignment')}: {selectedAssignment.title}</Label>
-                <p className="text-sm text-gray-600">{selectedAssignment.description}</p>
-                <p className="text-sm text-gray-600">{t('student.submissions.maxScore')}: {selectedAssignment.maxScore}</p>
-                {isAssignmentOverdue(selectedAssignment) && (
-                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600"><strong>⚠️ Assignment Overdue:</strong> This assignment is past its due date and cannot be submitted.</p>
-                  </div>
-                )}
-                {selectedAssignment.instructions && (
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm"><strong>{t('assignments.instructions')}:</strong> {selectedAssignment.instructions}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <Label htmlFor="content">{t('student.submissions.dialog.content')}</Label>
-                <Textarea
-                  id="content"
-                  value={submissionContent}
-                  onChange={(e) => setSubmissionContent(e.target.value)}
-                  placeholder={t('student.submissions.dialog.contentPlaceholder')}
-                  rows={8}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label>{t('student.submissions.dialog.attachments')}</Label>
-                <div className="mt-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-600">{t('student.submissions.dialog.uploadHint')}</p>
-                  <p className="text-xs text-gray-500">{t('student.submissions.dialog.uploadTypes')}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button 
-              onClick={handleSubmitSubmission} 
-              disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
-            >
-              {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
-                ? 'Update Submission' 
-                : t('student.submissions.dialog.submit')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
     </div>
   );

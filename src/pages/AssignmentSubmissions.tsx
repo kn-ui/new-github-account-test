@@ -13,6 +13,8 @@ import { assignmentService, courseService, submissionService, assignmentEditRequ
 import { FileText, BookOpen, Clock, Edit, ArrowLeft } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ChevronDown, User, Calendar, MessageSquare, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export default function AssignmentSubmissions() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -156,46 +158,99 @@ export default function AssignmentSubmissions() {
         {/* Edit Requests Section */}
         {editRequests.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Requests ({editRequests.length})</h3>
-            <div className="space-y-3">
+            <div className="flex items-center gap-3 mb-4">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Edit Requests</h3>
+              <Badge variant="secondary" className="ml-auto">
+                {editRequests.length} {editRequests.length === 1 ? 'request' : 'requests'}
+              </Badge>
+            </div>
+            
+            <Accordion type="multiple" className="w-full">
               {editRequests.map((request) => (
-                <div key={request.id} className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-medium text-gray-900">{request.studentName}</h4>
-                        <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'secondary' : 'destructive'}>
+                <AccordionItem key={request.id} value={request.id} className="border-b border-gray-200 last:border-b-0">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex items-center gap-2">
+                        {request.status === 'approved' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                        {request.status === 'denied' && <XCircle className="h-4 w-4 text-red-600" />}
+                        {request.status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium text-gray-900">{request.studentName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 ml-auto mr-4">
+                        <Badge 
+                          variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'secondary' : 'destructive'}
+                          className="text-xs"
+                        >
                           {request.status}
                         </Badge>
+                        {request.status === 'pending' && (
+                          <Button 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditRequestResponse(request);
+                            }}
+                            className="h-6 px-2 text-xs"
+                          >
+                            Respond
+                          </Button>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        <strong>Assignment:</strong> {request.assignmentTitle}
-                      </p>
-                      <p className="text-sm text-gray-600 mb-2">
-                        <strong>Reason:</strong> {request.reason}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Requested: {request.requestedAt.toDate().toLocaleString()}
-                      </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4 pb-6">
+                    <div className="space-y-4">
+                      {/* Student Reason */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquare className="h-4 w-4 text-gray-600" />
+                          <span className="font-medium text-gray-700">Student's Reason</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{request.reason}</p>
+                      </div>
+                      
+                      {/* Request Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="h-4 w-4" />
+                          <span>Requested: {request.requestedAt.toDate().toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <FileText className="h-4 w-4" />
+                          <span>Assignment: {request.assignmentTitle}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Teacher Response */}
                       {request.response && (
-                        <div className="mt-2 p-2 bg-gray-100 rounded text-sm">
-                          <strong>Your Response:</strong> {request.response}
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <User className="h-4 w-4 text-blue-600" />
+                            <span className="font-medium text-blue-800">Your Response</span>
+                          </div>
+                          <p className="text-sm text-blue-700">{request.response}</p>
+                        </div>
+                      )}
+                      
+                      {/* Action Button for Pending Requests */}
+                      {request.status === 'pending' && (
+                        <div className="flex justify-end pt-2">
+                          <Button 
+                            onClick={() => handleEditRequestResponse(request)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Respond to Request
+                          </Button>
                         </div>
                       )}
                     </div>
-                    {request.status === 'pending' && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleEditRequestResponse(request)}
-                        className="ml-4"
-                      >
-                        Respond
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         )}
 

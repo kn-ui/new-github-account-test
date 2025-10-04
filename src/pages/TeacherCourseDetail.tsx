@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   courseService,
@@ -48,6 +48,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<FirestoreCourse | null>(null);
@@ -1004,99 +1005,46 @@ export default function TeacherCourseDetail() {
                 <Input id="e-dur" type="number" value={examForm.durationMinutes} onChange={(e) => setExamForm({ ...examForm, durationMinutes: parseInt(e.target.value) || 0 })} />
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Questions</Label>
-                <Button size="sm" variant="outline" onClick={() => setExamForm({ ...examForm, questions: [...examForm.questions, { id: crypto.randomUUID(), type: 'mcq', prompt: '', options: ['', ''], correct: 0, points: 1 }] })}>Add Question</Button>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-900">Next Step</span>
               </div>
-              <div className="space-y-3 max-h-72 overflow-auto pr-1">
-                {examForm.questions.map((q: any, idx: number) => (
-                  <div key={q.id} className="border rounded p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Select value={q.type} onValueChange={(v) => {
-                        const next = [...examForm.questions];
-                        next[idx] = { ...q, type: v };
-                        setExamForm({ ...examForm, questions: next });
-                      }}>
-                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mcq">Multiple Choice</SelectItem>
-                          <SelectItem value="truefalse">True / False</SelectItem>
-                          <SelectItem value="short">Short Answer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" variant="destructive" onClick={() => {
-                        const next = examForm.questions.filter((x: any) => x.id !== q.id);
-                        setExamForm({ ...examForm, questions: next });
-                      }}>Remove</Button>
-                    </div>
-                    <div>
-                      <Label>Prompt</Label>
-                      <Input value={q.prompt} onChange={(e) => { const next = [...examForm.questions]; next[idx] = { ...q, prompt: e.target.value }; setExamForm({ ...examForm, questions: next }); }} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label>Points</Label>
-                        <Input type="number" value={q.points ?? 1} onChange={(e) => { const next = [...examForm.questions]; next[idx] = { ...q, points: parseInt(e.target.value) || 0 }; setExamForm({ ...examForm, questions: next }); }} />
-                      </div>
-                      {q.type === 'mcq' && (
-                        <div>
-                          <Label>Correct Option Index</Label>
-                          <Input type="number" value={q.correct ?? 0} onChange={(e) => { const next = [...examForm.questions]; next[idx] = { ...q, correct: parseInt(e.target.value) || 0 }; setExamForm({ ...examForm, questions: next }); }} />
-                        </div>
-                      )}
-                    </div>
-                    {q.type === 'mcq' && (
-                      <div className="space-y-2">
-                        <Label>Options</Label>
-                        {q.options?.map((opt: string, oi: number) => (
-                          <div key={oi} className="flex items-center gap-2">
-                            <Input value={opt} onChange={(e) => { const next = [...examForm.questions]; const opts = [...(q.options || [])]; opts[oi] = e.target.value; next[idx] = { ...q, options: opts }; setExamForm({ ...examForm, questions: next }); }} />
-                            <Button size="sm" variant="destructive" onClick={() => { const next = [...examForm.questions]; const opts = [...(q.options || [])].filter((_: any, pi: number) => pi !== oi); next[idx] = { ...q, options: opts }; setExamForm({ ...examForm, questions: next }); }}>X</Button>
-                          </div>
-                        ))}
-                        <Button size="sm" variant="outline" onClick={() => { const next = [...examForm.questions]; next[idx] = { ...q, options: [...(q.options || []), ''] }; setExamForm({ ...examForm, questions: next }); }}>Add Option</Button>
-                      </div>
-                    )}
-                    {q.type === 'truefalse' && (
-                      <div>
-                        <Label>Correct Answer</Label>
-                        <Select value={String(q.correct ?? 'true')} onValueChange={(v) => { const next = [...examForm.questions]; next[idx] = { ...q, correct: v === 'true' }; setExamForm({ ...examForm, questions: next }); }}>
-                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">True</SelectItem>
-                            <SelectItem value="false">False</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    {q.type === 'short' && (
-                      <div className="text-xs text-gray-600">Short answers are graded manually by the teacher in the submissions view.</div>
-                    )}
-                  </div>
-                ))}
-                {examForm.questions.length === 0 && <div className="text-sm text-gray-500">No questions yet</div>}
-              </div>
+              <p className="text-sm text-blue-800">
+                After creating the exam, you'll be redirected to a dedicated page to add and manage questions.
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
             <Button onClick={async () => {
               try {
-                const payload: any = { courseId: course!.id, title: examForm.title, description: examForm.description, date: new Date(examForm.date), startTime: new Date(examForm.startTime), durationMinutes: examForm.durationMinutes, questions: examForm.questions };
+                const payload: any = { 
+                  courseId: course!.id, 
+                  title: examForm.title, 
+                  description: examForm.description, 
+                  date: new Date(examForm.date), 
+                  startTime: new Date(examForm.startTime), 
+                  durationMinutes: examForm.durationMinutes, 
+                  questions: editingExam ? examForm.questions : [] // Only include questions when editing
+                };
+                
                 if (editingExam) {
                   await examService.updateExam(editingExam.id, payload);
                   toast.success('Exam updated');
+                  const latest = await examService.getExamsByCourse(course!.id);
+                  setExams(latest);
+                  setExamDialogOpen(false);
+                  setEditingExam(null);
                 } else {
-                  await examService.createExam(payload);
-                  toast.success('Exam created');
+                  const examId = await examService.createExam(payload);
+                  toast.success('Exam created successfully');
+                  setExamDialogOpen(false);
+                  // Redirect to exam questions management page
+                  navigate(`/dashboard/exam-questions/${examId}`);
                 }
-                const latest = await examService.getExamsByCourse(course!.id);
-                setExams(latest);
-                setExamDialogOpen(false);
-                setEditingExam(null);
               } catch { toast.error('Failed to save exam'); }
-            }}>Save</Button>
+            }}>{editingExam ? 'Update Exam' : 'Create Exam & Add Questions'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

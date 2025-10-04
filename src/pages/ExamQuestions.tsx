@@ -86,9 +86,9 @@ export default function ExamQuestions() {
     const question: Question = {
       id: crypto.randomUUID(),
       type: newQuestion.type as 'mcq' | 'truefalse' | 'short',
-      prompt: newQuestion.prompt,
-      options: newQuestion.type === 'mcq' ? newQuestion.options : undefined,
-      correct: newQuestion.correct || 0,
+      prompt: newQuestion.prompt.trim(),
+      options: newQuestion.type === 'mcq' ? (newQuestion.options || ['', '']) : undefined,
+      correct: newQuestion.correct !== undefined ? newQuestion.correct : 0,
       points: newQuestion.points || 1
     };
 
@@ -118,7 +118,18 @@ export default function ExamQuestions() {
   const saveQuestions = async () => {
     try {
       setSaving(true);
-      await examService.updateExam(examId!, { questions });
+      
+      // Clean the questions data to remove undefined values
+      const cleanedQuestions = questions.map(q => ({
+        id: q.id,
+        type: q.type,
+        prompt: q.prompt || '',
+        options: q.options || [],
+        correct: q.correct !== undefined ? q.correct : 0,
+        points: q.points || 1
+      }));
+      
+      await examService.updateExam(examId!, { questions: cleanedQuestions });
       toast.success('Questions saved successfully');
     } catch (error) {
       console.error('Error saving questions:', error);

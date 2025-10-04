@@ -502,6 +502,9 @@ export default function TeacherCourseDetail() {
                           <div className="text-xs text-gray-500 mt-1">{exam.date.toDate().toLocaleString()}</div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/exam-questions/${exam.id}`)}>
+                            View Questions
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => { setEditingExam(exam); setExamForm({ title: exam.title, description: exam.description || '', date: exam.date.toDate().toISOString().slice(0,16), startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), durationMinutes: (exam as any).durationMinutes || 60, questions: (exam as any).questions || [] }); setExamDialogOpen(true); }}>Edit</Button>
                           <Button variant="destructive" size="sm" onClick={() => { setExamToDelete(exam); setShowExamDeleteConfirm(true); }}>Delete</Button>
                         </div>

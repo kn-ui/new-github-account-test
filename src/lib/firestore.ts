@@ -1732,11 +1732,13 @@ export const studentDataService = {
     const courseIds = enrollments.map(e => e.courseId);
     const courses = await this.getCoursesByIds(courseIds);
     
-    // Merge course data with enrollments
-    return enrollments.map(enrollment => ({
-      ...enrollment,
-      course: courses[enrollment.courseId] || null
-    }));
+    // Merge course data with enrollments and filter out inactive courses
+    return enrollments
+      .map(enrollment => ({
+        ...enrollment,
+        course: courses[enrollment.courseId] || null
+      }))
+      .filter(enrollment => enrollment.course !== null);
   },
 
   async getCoursesByIds(courseIds: string[]) {
@@ -1797,10 +1799,15 @@ export const studentDataService = {
   async getStudentAssignmentsData(studentId: string) {
     const cacheKey = `assignments_${studentId}`;
     const cached = getCachedData(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log('Using cached assignments data for student:', studentId);
+      return cached;
+    }
 
     try {
       const enrollments = await this.getEnrollmentsWithCourses(studentId);
+      console.log('Enrollments for student:', studentId, enrollments.map(e => ({ courseId: e.courseId, courseTitle: e.course?.title, isActive: e.course?.isActive })));
+      
       const courseIds = enrollments.map(e => e.courseId);
       
       if (courseIds.length === 0) return [];
@@ -1810,6 +1817,8 @@ export const studentDataService = {
         this.getAssignmentsForCourses(courseIds),
         submissionService.getSubmissionsByStudent(studentId)
       ]);
+      
+      console.log('Assignments loaded for student:', studentId, assignments.map(a => ({ id: a.id, title: a.title, courseId: a.courseId })));
 
       // Create a map of submissions by assignment ID
       const submissionMap = new Map();
@@ -1920,7 +1929,11 @@ export const studentDataService = {
   // Clear cache for a specific student (useful when data changes)
   clearStudentCache(studentId: string) {
     const keys = [`dashboard_${studentId}`, `courses_${studentId}`, `assignments_${studentId}`, `submissions_${studentId}`];
-    keys.forEach(key => studentDataCache.delete(key));
+    console.log('Clearing cache for student:', studentId, 'keys:', keys);
+    keys.forEach(key => {
+      const deleted = studentDataCache.delete(key);
+      console.log(`Cache key ${key} deleted:`, deleted);
+    });
   }
 };
 

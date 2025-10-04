@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   courseService,
@@ -49,6 +49,8 @@ export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<FirestoreCourse | null>(null);
@@ -362,7 +364,7 @@ export default function TeacherCourseDetail() {
             <CardDescription>Overview and resources for this course</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="overview">
+            <Tabs value={activeTab} onValueChange={(value) => navigate(`/dashboard/course/${courseId}?tab=${value}`)}>
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="resources">Resources</TabsTrigger>
@@ -994,28 +996,21 @@ export default function TeacherCourseDetail() {
               <Label htmlFor="e-desc">Description</Label>
               <Input id="e-desc" value={examForm.description} onChange={(e) => setExamForm({ ...examForm, description: e.target.value })} />
             </div>
+              <div className="grid grid-cols-2 gap-3">
               <div>
-              <Label htmlFor="e-date">Date & Time</Label>
-              <Input id="e-date" type="datetime-local" value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} />
+                <Label htmlFor="e-date">Date</Label>
+                <Input id="e-date" type="date" value={examForm.date.split('T')[0]} onChange={(e) => setExamForm({ ...examForm, date: e.target.value + 'T' + examForm.date.split('T')[1] })} />
+              </div>
+              <div>
+                <Label htmlFor="e-time">Time</Label>
+                <Input id="e-time" type="time" value={examForm.date.split('T')[1]} onChange={(e) => setExamForm({ ...examForm, date: examForm.date.split('T')[0] + 'T' + e.target.value })} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="e-start">Start Time</Label>
-                <Input id="e-start" type="datetime-local" value={examForm.startTime} onChange={(e) => setExamForm({ ...examForm, startTime: e.target.value })} />
-              </div>
               <div>
                 <Label htmlFor="e-dur">Duration (minutes)</Label>
                 <Input id="e-dur" type="number" value={examForm.durationMinutes} onChange={(e) => setExamForm({ ...examForm, durationMinutes: parseInt(e.target.value) || 0 })} />
               </div>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-900">Next Step</span>
-              </div>
-              <p className="text-sm text-blue-800">
-                After creating the exam, you'll be redirected to a dedicated page to add and manage questions.
-              </p>
             </div>
           </div>
           <DialogFooter>

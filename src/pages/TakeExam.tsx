@@ -20,6 +20,7 @@ export default function TakeExam() {
   const [loading, setLoading] = useState(true);
   const [exam, setExam] = useState<any>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState<any>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -38,6 +39,7 @@ export default function TakeExam() {
           attempt = await examAttemptService.getAttemptById(id);
         }
         setAttemptId(attempt!.id);
+        setAttempt(attempt);
         const initial: Record<string, any> = {};
         (found as any)?.questions?.forEach((q: any) => {
           const saved = attempt?.answers?.find((a: any) => a.questionId === q.id)?.response;
@@ -148,6 +150,8 @@ export default function TakeExam() {
   const start = (exam as any).startTime?.toDate ? (exam as any).startTime.toDate() : null;
   const end = start && (exam as any).durationMinutes ? new Date(start.getTime() + (exam as any).durationMinutes * 60000) : null;
   const beforeStart = start ? now < start : false;
+  const afterEnd = end ? now > end : false;
+  const isSubmitted = attempt && (attempt.status === 'submitted' || attempt.status === 'graded');
 
   // Format time remaining
   const formatTime = (ms: number) => {
@@ -211,14 +215,54 @@ export default function TakeExam() {
           <div className={`${!beforeStart ? 'lg:col-span-3' : 'max-w-3xl mx-auto'} space-y-4`}>
         {beforeStart && (
           <Card>
-            <CardContent className="p-6 text-sm text-gray-700">
-              <div><strong>Start Time:</strong> {start?.toLocaleString() || '-'}</div>
-              <div><strong>Duration:</strong> {(exam as any).durationMinutes || 0} minutes</div>
-              <div className="mt-2">Questions will appear when the exam starts.</div>
+            <CardContent className="p-6 text-center">
+              <div className="mb-4">
+                <Clock className="h-12 w-12 text-blue-600 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Exam Not Started Yet</h3>
+                <p className="text-gray-600 mb-4">The exam will begin at the scheduled time.</p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700">
+                <div><strong>Start Time:</strong> {start?.toLocaleString() || '-'}</div>
+                <div><strong>Duration:</strong> {(exam as any).durationMinutes || 0} minutes</div>
+                <div className="mt-2 text-blue-800">
+                  Questions will appear when the exam starts.
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
-        {!beforeStart && questions.length > 0 && (
+
+        {afterEnd && !isSubmitted && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="mb-4">
+                <XCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Exam Time Expired</h3>
+                <p className="text-gray-600">The exam time has ended and no submission was made.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isSubmitted && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="mb-4">
+                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Exam Submitted</h3>
+                <p className="text-gray-600 mb-4">Your exam has been successfully submitted.</p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-gray-700">
+                  <div><strong>Submitted At:</strong> {attempt?.submittedAt?.toDate?.()?.toLocaleString() || 'Unknown'}</div>
+                  <div><strong>Score:</strong> {attempt?.score || 0} points</div>
+                </div>
+              </div>
+              <Button onClick={() => navigate('/dashboard/student-exams')} className="mt-4">
+                Back to Exams
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        {!beforeStart && !afterEnd && !isSubmitted && questions.length > 0 && (
           <>
             {/* Current Question */}
             <Card>
@@ -306,7 +350,7 @@ export default function TakeExam() {
             </div>
           </>
         )}
-        {!beforeStart && (
+        {!beforeStart && !afterEnd && !isSubmitted && (
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={saveProgress}>Save progress</Button>
             <div className="space-x-2">

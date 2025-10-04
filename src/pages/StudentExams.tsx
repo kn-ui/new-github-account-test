@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, FileText, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, FileText, Clock, CheckCircle, AlertCircle, Play, Eye, Award } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function StudentExams() {
@@ -18,9 +18,24 @@ export default function StudentExams() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
-  const [exams, setExams] = useState<(FirestoreExam & { courseTitle?: string; status: 'not_started' | 'in_progress' | 'completed'; score?: number })[]>([]);
-  const [filter, setFilter] = useState<'all'|'not_started'|'in_progress'|'completed'>('all');
+  const [exams, setExams] = useState<(FirestoreExam & { 
+    courseTitle?: string; 
+    status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown'; 
+    score?: number;
+    timeUntilStart?: number;
+    timeUntilEnd?: number;
+  })[]>([]);
+  const [filter, setFilter] = useState<'all'|'not_started'|'in_progress'|'completed'|'upcoming'>('all');
   const [search, setSearch] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Timer effect for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -34,19 +49,56 @@ export default function StudentExams() {
         const attempts = await examAttemptService.getAttemptsByStudent(currentUser.uid);
         const attemptMap = new Map<string, FirestoreExamAttempt>(attempts.map(a => [a.examId, a]));
         const courseTitleMap = new Map<string, string>(courses.filter(Boolean).map((c: any) => [c.id, c.title]));
-        const now = new Date();
+        
         const normalized = examsList.map((e: any) => {
           const at = attemptMap.get(e.id);
           const start = e.startTime?.toDate ? e.startTime.toDate() : null;
           const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
-          let status: 'not_started' | 'in_progress' | 'completed' = !at ? 'not_started' : (at.status === 'in_progress' ? 'in_progress' : 'completed');
-          if (!at && start) {
-            if (now < start) status = 'not_started';
-            else if (end && now > end) status = 'completed';
-            else status = 'not_started';
+          
+          let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' = 'not_started';
+          let timeUntilStart = 0;
+          let timeUntilEnd = 0;
+          
+          if (at) {
+            // Student has attempted this exam
+            if (at.status === 'in_progress') {
+              status = 'in_progress';
+            } else if (at.status === 'submitted' || at.status === 'graded') {
+              status = 'completed';
+            }
+          } else if (start) {
+            // No attempt yet, check timing
+            const now = currentTime;
+            if (now < start) {
+              const timeDiff = start.getTime() - now.getTime();
+              timeUntilStart = timeDiff;
+              if (timeDiff <= 30 * 60 * 1000) { // 30 minutes
+                status = 'countdown';
+              } else {
+                status = 'upcoming';
+              }
+            } else if (end && now > end) {
+              status = 'completed';
+            } else {
+              status = 'not_started';
+            }
           }
-          const score = typeof at?.autoScore === 'number' || typeof at?.manualScore === 'number' ? (Number(at?.autoScore || 0) + Number(at?.manualScore || 0)) : undefined;
-          return { ...e, courseTitle: courseTitleMap.get(e.courseId), status, score };
+          
+          if (end) {
+            timeUntilEnd = end.getTime() - currentTime.getTime();
+          }
+          
+          const score = typeof at?.autoScore === 'number' || typeof at?.manualScore === 'number' ? 
+            (Number(at?.autoScore || 0) + Number(at?.manualScore || 0)) : undefined;
+          
+          return { 
+            ...e, 
+            courseTitle: courseTitleMap.get(e.courseId), 
+            status, 
+            score,
+            timeUntilStart,
+            timeUntilEnd
+          };
         });
         setExams(normalized);
       } catch (e) {
@@ -57,7 +109,84 @@ export default function StudentExams() {
       }
     };
     if (userProfile?.role === 'student') load();
-  }, [currentUser?.uid, userProfile?.role]);
+  }, [currentUser?.uid, userProfile?.role, currentTime]);
+
+  const formatTimeRemaining = (ms: number) => {
+    if (ms <= 0) return '0:00';
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'countdown': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'upcoming': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'not_started': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'countdown': return <AlertCircle className="h-4 w-4" />;
+      case 'upcoming': return <Calendar className="h-4 w-4" />;
+      case 'not_started': return <Play className="h-4 w-4" />;
+      case 'in_progress': return <Clock className="h-4 w-4" />;
+      case 'completed': return <CheckCircle className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const getActionButton = (exam: any) => {
+    switch (exam.status) {
+      case 'countdown':
+        return (
+          <Button size="sm" disabled className="bg-orange-100 text-orange-800 border-orange-200">
+            <Clock className="h-4 w-4 mr-1" />
+            Starts in {formatTimeRemaining(exam.timeUntilStart)}
+          </Button>
+        );
+      case 'upcoming':
+        return (
+          <Button size="sm" disabled className="bg-blue-100 text-blue-800 border-blue-200">
+            <Calendar className="h-4 w-4 mr-1" />
+            Upcoming
+          </Button>
+        );
+      case 'not_started':
+        return (
+          <Button size="sm" asChild>
+            <Link to={`/dashboard/student-exams/${exam.id}`}>
+              <Play className="h-4 w-4 mr-1" />
+              Start Exam
+            </Link>
+          </Button>
+        );
+      case 'in_progress':
+        return (
+          <Button size="sm" asChild>
+            <Link to={`/dashboard/student-exams/${exam.id}`}>
+              <Clock className="h-4 w-4 mr-1" />
+              Continue
+            </Link>
+          </Button>
+        );
+      case 'completed':
+        return (
+          <Button size="sm" asChild>
+            <Link to={`/dashboard/student-exams/${exam.id}`}>
+              <Eye className="h-4 w-4 mr-1" />
+              View Results
+            </Link>
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
 
   const list = useMemo(() => {
     return exams.filter(e => (filter === 'all' || e.status === filter) && ([e.title, e.courseTitle || ''].some(v => (v || '').toLowerCase().includes(search.toLowerCase()))))
@@ -88,6 +217,8 @@ export default function StudentExams() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('student.exams.all') || 'All'}</SelectItem>
+                  <SelectItem value="countdown">{t('student.exams.countdown') || 'Starting Soon'}</SelectItem>
+                  <SelectItem value="upcoming">{t('student.exams.upcoming') || 'Upcoming'}</SelectItem>
                   <SelectItem value="not_started">{t('student.exams.notStarted') || 'Not started'}</SelectItem>
                   <SelectItem value="in_progress">{t('student.exams.inProgress') || 'In progress'}</SelectItem>
                   <SelectItem value="completed">{t('student.exams.completed') || 'Completed'}</SelectItem>
@@ -97,29 +228,78 @@ export default function StudentExams() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {list.map(e => (
-            <div key={e.id} className="bg-white border rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center"><FileText className="h-5 w-5 text-blue-600" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{e.title}</div>
-                  <div className="text-sm text-gray-600 truncate">{e.courseTitle}</div>
-                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Calendar className="h-3 w-3" /> {e.date.toDate().toLocaleString()}</div>
+            <Card key={e.id} className="hover:shadow-lg transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                    {getStatusIcon(e.status)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-lg truncate">{e.title}</h3>
+                    <p className="text-sm text-gray-600 truncate">{e.courseTitle}</p>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                      <Calendar className="h-3 w-3" />
+                      <span>{e.date.toDate().toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status and Score */}
+                <div className="flex items-center justify-between mb-4">
+                  <Badge className={`${getStatusColor(e.status)} text-xs font-medium`}>
+                    {e.status === 'countdown' ? 'Starting Soon' : 
+                     e.status === 'upcoming' ? 'Upcoming' :
+                     e.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
                   {e.status === 'completed' && (
-                    <div className="text-xs text-green-700 flex items-center gap-1 mt-1"><CheckCircle className="h-3 w-3" /> Score: {typeof e.score === 'number' ? e.score : '-'} </div>
+                    <div className="flex items-center gap-1 text-sm font-medium text-green-700">
+                      <Award className="h-4 w-4" />
+                      <span>Score: {typeof e.score === 'number' ? e.score : '-'}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs px-2 py-1 border rounded capitalize">{e.status.replace('_',' ')}</span>
-                <Button size="sm" asChild>
-                  <Link to={`/dashboard/student-exams/${e.id}`}>{e.status === 'not_started' ? (t('student.exams.start') || 'Start') : (e.status === 'in_progress' ? (t('student.exams.continue') || 'Continue') : (t('common.view') || 'View'))}</Link>
-                </Button>
-              </div>
-            </div>
+
+                {/* Countdown Timer */}
+                {e.status === 'countdown' && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2 text-orange-800">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="font-medium text-sm">
+                        Exam starts in {formatTimeRemaining(e.timeUntilStart)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Duration Info */}
+                {e.durationMinutes && (
+                  <div className="text-xs text-gray-500 mb-4">
+                    Duration: {e.durationMinutes} minutes
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <div className="flex justify-end">
+                  {getActionButton(e)}
+                </div>
+              </CardContent>
+            </Card>
           ))}
-          {list.length === 0 && <div className="text-center text-gray-500 col-span-full py-12">{t('student.exams.none') || 'No exams'}</div>}
+          {list.length === 0 && (
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="text-center py-12">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-lg font-medium text-gray-900">No exams found</p>
+                  <p className="text-sm text-gray-500">
+                    {filter === 'all' ? 'No exams available' : `No ${filter.replace('_', ' ')} exams`}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

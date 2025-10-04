@@ -43,6 +43,7 @@ export default function ExamQuestions() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [editingQuestionData, setEditingQuestionData] = useState<Question | null>(null);
   const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
     type: 'mcq',
     prompt: '',
@@ -107,6 +108,33 @@ export default function ExamQuestions() {
       q.id === questionId ? { ...q, ...updates } : q
     ));
     setEditingQuestion(null);
+  };
+
+  const startEditingQuestion = (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (question) {
+      setEditingQuestion(questionId);
+      setEditingQuestionData({ ...question });
+    }
+  };
+
+  const saveEditingQuestion = () => {
+    if (editingQuestion && editingQuestionData) {
+      updateQuestion(editingQuestion, editingQuestionData);
+      setEditingQuestion(null);
+      setEditingQuestionData(null);
+    }
+  };
+
+  const cancelEditingQuestion = () => {
+    setEditingQuestion(null);
+    setEditingQuestionData(null);
+  };
+
+  const updateEditingQuestion = (updates: Partial<Question>) => {
+    if (editingQuestionData) {
+      setEditingQuestionData({ ...editingQuestionData, ...updates });
+    }
   };
 
   const deleteQuestion = (questionId: string) => {
@@ -262,7 +290,7 @@ export default function ExamQuestions() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setEditingQuestion(question.id)}
+                            onClick={() => startEditingQuestion(question.id)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -278,13 +306,13 @@ export default function ExamQuestions() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      {editingQuestion === question.id ? (
+                      {editingQuestion === question.id && editingQuestionData ? (
                         <div className="space-y-4">
                           <div>
                             <Label>Question Type</Label>
                             <Select 
-                              value={question.type} 
-                              onValueChange={(value) => updateQuestion(question.id, { type: value as any })}
+                              value={editingQuestionData.type} 
+                              onValueChange={(value) => updateEditingQuestion({ type: value as any })}
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -300,8 +328,8 @@ export default function ExamQuestions() {
                           <div>
                             <Label>Question Prompt</Label>
                             <Input
-                              value={question.prompt}
-                              onChange={(e) => updateQuestion(question.id, { prompt: e.target.value })}
+                              value={editingQuestionData.prompt}
+                              onChange={(e) => updateEditingQuestion({ prompt: e.target.value })}
                               placeholder="Enter your question..."
                             />
                           </div>
@@ -310,32 +338,32 @@ export default function ExamQuestions() {
                             <Label>Points</Label>
                             <Input
                               type="number"
-                              value={question.points}
-                              onChange={(e) => updateQuestion(question.id, { points: parseInt(e.target.value) || 1 })}
+                              value={editingQuestionData.points}
+                              onChange={(e) => updateEditingQuestion({ points: parseInt(e.target.value) || 1 })}
                               min="1"
                             />
                           </div>
 
-                          {question.type === 'mcq' && (
+                          {editingQuestionData.type === 'mcq' && (
                             <div className="space-y-3">
                               <Label>Options</Label>
-                              {question.options?.map((option, optionIndex) => (
+                              {editingQuestionData.options?.map((option, optionIndex) => (
                                 <div key={optionIndex} className="flex items-center gap-2">
                                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center cursor-pointer ${
-                                    optionIndex === question.correct 
+                                    optionIndex === editingQuestionData.correct 
                                       ? 'border-blue-500 bg-blue-50' 
                                       : 'border-gray-300'
-                                  }`} onClick={() => updateQuestion(question.id, { correct: optionIndex })}>
-                                    {optionIndex === question.correct && (
+                                  }`} onClick={() => updateEditingQuestion({ correct: optionIndex })}>
+                                    {optionIndex === editingQuestionData.correct && (
                                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                     )}
                                   </div>
                                   <Input
                                     value={option}
                                     onChange={(e) => {
-                                      const newOptions = [...(question.options || [])];
+                                      const newOptions = [...(editingQuestionData.options || [])];
                                       newOptions[optionIndex] = e.target.value;
-                                      updateQuestion(question.id, { options: newOptions });
+                                      updateEditingQuestion({ options: newOptions });
                                     }}
                                     placeholder={`Option ${optionIndex + 1}`}
                                   />
@@ -343,13 +371,13 @@ export default function ExamQuestions() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      const newOptions = question.options?.filter((_, i) => i !== optionIndex) || [];
-                                      updateQuestion(question.id, { 
+                                      const newOptions = editingQuestionData.options?.filter((_, i) => i !== optionIndex) || [];
+                                      updateEditingQuestion({ 
                                         options: newOptions,
-                                        correct: question.correct >= optionIndex ? Math.max(0, (question.correct as number) - 1) : question.correct
+                                        correct: editingQuestionData.correct >= optionIndex ? Math.max(0, (editingQuestionData.correct as number) - 1) : editingQuestionData.correct
                                       });
                                     }}
-                                    disabled={question.options?.length <= 2}
+                                    disabled={editingQuestionData.options?.length <= 2}
                                   >
                                     <X className="h-4 w-4" />
                                   </Button>
@@ -358,8 +386,8 @@ export default function ExamQuestions() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuestion(question.id, { 
-                                  options: [...(question.options || []), ''] 
+                                onClick={() => updateEditingQuestion({ 
+                                  options: [...(editingQuestionData.options || []), ''] 
                                 })}
                               >
                                 <Plus className="h-4 w-4 mr-2" />
@@ -368,12 +396,12 @@ export default function ExamQuestions() {
                             </div>
                           )}
 
-                          {question.type === 'truefalse' && (
+                          {editingQuestionData.type === 'truefalse' && (
                             <div>
                               <Label>Correct Answer</Label>
                               <Select 
-                                value={String(question.correct)} 
-                                onValueChange={(value) => updateQuestion(question.id, { correct: value === 'true' })}
+                                value={String(editingQuestionData.correct)} 
+                                onValueChange={(value) => updateEditingQuestion({ correct: value === 'true' })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -386,18 +414,18 @@ export default function ExamQuestions() {
                             </div>
                           )}
 
-                          {question.type === 'short' && (
+                          {editingQuestionData.type === 'short' && (
                             <div className="text-sm text-gray-500 italic">
                               Short answer - manually graded
                             </div>
                           )}
 
                           <div className="flex gap-2">
-                            <Button onClick={() => setEditingQuestion(null)}>
+                            <Button onClick={saveEditingQuestion}>
                               <Save className="h-4 w-4 mr-2" />
                               Save
                             </Button>
-                            <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                            <Button variant="outline" onClick={cancelEditingQuestion}>
                               Cancel
                             </Button>
                           </div>

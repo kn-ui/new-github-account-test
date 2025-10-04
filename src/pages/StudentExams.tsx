@@ -224,7 +224,7 @@ export default function StudentExams() {
       case 'completed':
         return (
           <Button size="sm" asChild>
-            <Link to={`/dashboard/student-exams/${exam.id}`}>
+            <Link to={`/dashboard/student-exams/${exam.id}/result`}>
               <Eye className="h-4 w-4 mr-1" />
               View Results
             </Link>

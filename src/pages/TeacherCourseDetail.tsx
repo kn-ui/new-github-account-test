@@ -364,7 +364,7 @@ export default function TeacherCourseDetail() {
             <CardDescription>Overview and resources for this course</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={(value) => navigate(`/dashboard/course/${courseId}?tab=${value}`)}>
+            <Tabs value={activeTab} onValueChange={(value) => navigate(`/dashboard/my-courses/${courseId}?tab=${value}`)}>
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="resources">Resources</TabsTrigger>

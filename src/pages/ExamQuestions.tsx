@@ -201,7 +201,7 @@ export default function ExamQuestions() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/dashboard/course/${exam.courseId}?tab=exams`)}
+              onClick={() => navigate(`/dashboard/my-courses/${exam.courseId}?tab=exams`)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />

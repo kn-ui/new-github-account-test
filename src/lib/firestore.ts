@@ -595,6 +595,10 @@ export const enrollmentService = {
       enrollments.map(async (enrollment) => {
         try {
           const course = await courseService.getCourseById(enrollment.courseId);
+          // Filter out inactive courses (isActive = false)
+          if (course && course.isActive === false) {
+            return null; // Return null for inactive courses
+          }
           return Object.assign({}, enrollment, { course });
         } catch (error) {
           console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
@@ -602,7 +606,9 @@ export const enrollmentService = {
         }
       })
     );
-    return enrollmentsWithCourses;
+    
+    // Filter out enrollments with inactive courses
+    return enrollmentsWithCourses.filter(enrollment => enrollment !== null);
   },
 
   async getEnrollmentsByCourse(courseId: string): Promise<FirestoreEnrollment[]> {
@@ -1713,7 +1719,13 @@ export const studentDataService = {
     if (courseIds.length === 0) return {};
     
     const courses = await courseService.getCoursesByIds(courseIds);
-    return courses;
+    
+    // Filter out inactive courses (isActive = false)
+    const activeCourses = Object.fromEntries(
+      Object.entries(courses).filter(([_, course]) => course.isActive !== false)
+    );
+    
+    return activeCourses;
   },
 
   async getAssignmentsForCourses(courseIds: string[]) {

@@ -117,6 +117,16 @@ export interface FirestoreExam {
   date: Timestamp; // legacy/scheduled date
   startTime?: Timestamp; // when exam becomes visible to students
   durationMinutes?: number; // how long the exam is available after start
+  firstAttemptTimestamp?: Timestamp; // when first student started the exam
+  totalPoints: number; // sum of all question points
+  questions?: Array<{
+    id: string;
+    type: 'mcq' | 'truefalse' | 'short';
+    prompt: string;
+    options?: string[];
+    correct: number | boolean;
+    points: number;
+  }>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -126,7 +136,7 @@ export interface FirestoreExamAttempt {
   examId: string;
   studentId: string;
   startedAt: Timestamp;
-  submittedAt?: Timestamp;
+  submittedAt?: Timestamp; // when student submitted the exam
   status: 'in_progress' | 'submitted' | 'graded';
   // Array of answers keyed by exam question id or index
   answers: Array<{ questionId: string; response: any }>;
@@ -136,6 +146,9 @@ export interface FirestoreExamAttempt {
   // Manual grading support
   manualScore?: number;
   feedback?: string;
+  // New fields
+  score: number; // total score (auto + manual)
+  isGraded: boolean; // whether the exam has been fully graded
 }
 
 export interface FirestoreSupportTicket {
@@ -1143,7 +1156,17 @@ export const courseMaterialService = {
 export const examService = {
   async createExam(exam: Omit<FirestoreExam, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = Timestamp.now();
-    const ref = await addDoc(collections.exams(), { ...exam, createdAt: now, updatedAt: now });
+    
+    // Calculate total points from questions
+    const totalPoints = exam.questions?.reduce((sum, question) => sum + question.points, 0) || 0;
+    
+    const ref = await addDoc(collections.exams(), { 
+      ...exam, 
+      totalPoints,
+      firstAttemptTimestamp: null,
+      createdAt: now, 
+      updatedAt: now 
+    });
     return ref.id;
   },
   async getExamById(examId: string): Promise<FirestoreExam | null> {
@@ -1158,11 +1181,41 @@ export const examService = {
   },
   async updateExam(examId: string, updates: Partial<FirestoreExam>): Promise<void> {
     const ref = doc(db, 'exams', examId);
+    
+    // If questions are being updated, recalculate totalPoints
+    if (updates.questions) {
+      const totalPoints = updates.questions.reduce((sum, question) => sum + question.points, 0);
+      updates.totalPoints = totalPoints;
+    }
+    
     await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);
   },
   async deleteExam(examId: string): Promise<void> {
     const ref = doc(db, 'exams', examId);
     await deleteDoc(ref);
+  },
+  
+  // Check if exam is locked (can't be edited/deleted)
+  async isExamLocked(examId: string): Promise<{ locked: boolean; reason?: string }> {
+    const exam = await this.getExamById(examId);
+    if (!exam) {
+      return { locked: true, reason: 'Exam not found' };
+    }
+    
+    const now = new Date();
+    const examDate = exam.date.toDate();
+    
+    // Check if exam has started (current time >= exam date)
+    if (now >= examDate) {
+      return { locked: true, reason: 'Exam has already started' };
+    }
+    
+    // Check if any student has started the exam
+    if (exam.firstAttemptTimestamp) {
+      return { locked: true, reason: 'Students have already started this exam' };
+    }
+    
+    return { locked: false };
   },
 };
 
@@ -1187,12 +1240,28 @@ export const examAttemptService = {
   },
   async createAttempt(examId: string, studentId: string): Promise<string> {
     const now = Timestamp.now();
+    
+    // Check if this is the first attempt for this exam
+    const existingAttempts = await getDocs(
+      query(collection(db, 'exam_attempts'), where('examId', '==', examId))
+    );
+    
+    const isFirstAttempt = existingAttempts.empty;
+    
+    // If this is the first attempt, update the exam's firstAttemptTimestamp
+    if (isFirstAttempt) {
+      await examService.updateExam(examId, { firstAttemptTimestamp: now });
+    }
+    
     const ref = await addDoc(collection(db, 'exam_attempts'), {
       examId,
       studentId,
       startedAt: now,
+      submittedAt: null,
       status: 'in_progress',
       answers: [],
+      score: 0,
+      isGraded: false,
     } as any);
     return ref.id;
   },
@@ -1201,12 +1270,86 @@ export const examAttemptService = {
     await updateDoc(ref, { answers, updatedAt: Timestamp.now() } as any);
   },
   async submitAttempt(attemptId: string, payload: Partial<FirestoreExamAttempt>): Promise<void> {
+    const now = Timestamp.now();
+    
+    // Get the attempt to access exam data
+    const attemptRef = doc(db, 'exam_attempts', attemptId);
+    const attemptSnap = await getDoc(attemptRef);
+    const attempt = attemptSnap.data() as FirestoreExamAttempt;
+    
+    if (!attempt) {
+      throw new Error('Exam attempt not found');
+    }
+    
+    // Get the exam to access questions for auto-grading
+    const exam = await examService.getExamById(attempt.examId);
+    if (!exam || !exam.questions) {
+      throw new Error('Exam not found or has no questions');
+    }
+    
+    // Perform auto-grading
+    let autoScore = 0;
+    let hasManualQuestions = false;
+    
+    for (const answer of payload.answers || attempt.answers) {
+      const question = exam.questions.find(q => q.id === answer.questionId);
+      if (!question) continue;
+      
+      if (question.type === 'mcq') {
+        // Multiple choice: check if selected option matches correct answer
+        if (answer.response === question.correct) {
+          autoScore += question.points;
+        }
+      } else if (question.type === 'truefalse') {
+        // True/False: check if answer matches correct boolean
+        if (answer.response === question.correct) {
+          autoScore += question.points;
+        }
+      } else if (question.type === 'short') {
+        // Short answer: requires manual grading
+        hasManualQuestions = true;
+      }
+    }
+    
+    // Calculate total possible points for auto-graded questions
+    const totalAutoPoints = exam.questions
+      .filter(q => q.type !== 'short')
+      .reduce((sum, q) => sum + q.points, 0);
+    
     const ref = doc(db, 'exam_attempts', attemptId);
-    await updateDoc(ref, { ...payload, submittedAt: Timestamp.now(), status: 'submitted', updatedAt: Timestamp.now() } as any);
+    await updateDoc(ref, { 
+      ...payload, 
+      submittedAt: now, 
+      status: 'submitted', 
+      autoScore,
+      totalAutoPoints,
+      score: autoScore, // Initial score is just auto score
+      isGraded: !hasManualQuestions, // Fully graded if no manual questions
+      updatedAt: now 
+    } as any);
   },
   async gradeAttempt(attemptId: string, manualScore: number, feedback?: string): Promise<void> {
+    // Get current attempt to calculate final score
+    const attemptRef = doc(db, 'exam_attempts', attemptId);
+    const attemptSnap = await getDoc(attemptRef);
+    const attempt = attemptSnap.data() as FirestoreExamAttempt;
+    
+    if (!attempt) {
+      throw new Error('Exam attempt not found');
+    }
+    
+    // Calculate final score (auto score + manual score)
+    const finalScore = (attempt.autoScore || 0) + manualScore;
+    
     const ref = doc(db, 'exam_attempts', attemptId);
-    await updateDoc(ref, { manualScore, feedback, status: 'graded', updatedAt: Timestamp.now() } as any);
+    await updateDoc(ref, { 
+      manualScore, 
+      feedback, 
+      score: finalScore,
+      isGraded: true,
+      status: 'graded', 
+      updatedAt: Timestamp.now() 
+    } as any);
   }
 };
 

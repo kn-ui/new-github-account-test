@@ -42,6 +42,7 @@ export default function ExamQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isExamLocked, setIsExamLocked] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   const [editingQuestionData, setEditingQuestionData] = useState<Question | null>(null);
   const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
@@ -65,6 +66,10 @@ export default function ExamQuestions() {
       if (examData) {
         setExam(examData);
         setQuestions(examData.questions || []);
+        
+        // Check if exam is locked
+        const lockStatus = await examService.isExamLocked(examId!);
+        setIsExamLocked(lockStatus.locked);
       } else {
         toast.error('Exam not found');
         navigate('/dashboard');
@@ -258,7 +263,12 @@ export default function ExamQuestions() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Questions</h2>
-              <Button onClick={saveQuestions} disabled={saving} className="flex items-center gap-2">
+              <Button 
+                onClick={saveQuestions} 
+                disabled={saving || isExamLocked} 
+                className="flex items-center gap-2"
+                title={isExamLocked ? 'Exam is locked - cannot save changes' : 'Save all questions'}
+              >
                 <Save className="h-4 w-4" />
                 {saving ? 'Saving...' : 'Save All'}
               </Button>
@@ -290,15 +300,19 @@ export default function ExamQuestions() {
                           <Button
                             variant="outline"
                             size="sm"
+                            disabled={isExamLocked}
                             onClick={() => startEditingQuestion(question.id)}
+                            title={isExamLocked ? 'Exam is locked - cannot edit questions' : 'Edit question'}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
+                            disabled={isExamLocked}
                             onClick={() => deleteQuestion(question.id)}
                             className="text-red-600 hover:text-red-700"
+                            title={isExamLocked ? 'Exam is locked - cannot delete questions' : 'Delete question'}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -489,6 +503,9 @@ export default function ExamQuestions() {
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Add Question
+                  {isExamLocked && (
+                    <span className="text-sm text-red-600 font-normal">(Exam is locked)</span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -596,7 +613,12 @@ export default function ExamQuestions() {
                   </div>
                 )}
 
-                <Button onClick={addQuestion} className="w-full">
+                <Button 
+                  onClick={addQuestion} 
+                  className="w-full" 
+                  disabled={isExamLocked}
+                  title={isExamLocked ? 'Exam is locked - cannot add questions' : 'Add new question'}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Question
                 </Button>

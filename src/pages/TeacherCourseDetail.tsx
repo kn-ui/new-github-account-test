@@ -86,6 +86,17 @@ export default function TeacherCourseDetail() {
   const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; startTime: string; durationMinutes: number; questions: any[] }>({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] });
   const [showExamDeleteConfirm, setShowExamDeleteConfirm] = useState(false);
   const [examToDelete, setExamToDelete] = useState<FirestoreExam | null>(null);
+  const [examLockStatus, setExamLockStatus] = useState<Record<string, { locked: boolean; reason?: string }>>({});
+
+  // Check exam lock status
+  const checkExamLockStatus = async (examId: string) => {
+    try {
+      const lockStatus = await examService.isExamLocked(examId);
+      setExamLockStatus(prev => ({ ...prev, [examId]: lockStatus }));
+    } catch (error) {
+      console.error('Error checking exam lock status:', error);
+    }
+  };
 
   useEffect(() => {
     if (!courseId) return;
@@ -108,6 +119,12 @@ export default function TeacherCourseDetail() {
         setMaterials(mats);
         setExams(exs);
         setFinalGrades(grades);
+        
+        // Check lock status for all exams
+        exs.forEach(exam => {
+          checkExamLockStatus(exam.id);
+        });
+        
         // resolve student names
         try {
           const ids = Array.from(new Set(ens.map(e => e.studentId)));
@@ -507,8 +524,46 @@ export default function TeacherCourseDetail() {
                           <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/exam-questions/${exam.id}`)}>
                             View Questions
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => { setEditingExam(exam); setExamForm({ title: exam.title, description: exam.description || '', date: exam.date.toDate().toISOString().slice(0,16), startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), durationMinutes: (exam as any).durationMinutes || 60, questions: (exam as any).questions || [] }); setExamDialogOpen(true); }}>Edit</Button>
-                          <Button variant="destructive" size="sm" onClick={() => { setExamToDelete(exam); setShowExamDeleteConfirm(true); }}>Delete</Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={examLockStatus[exam.id]?.locked}
+                            onClick={() => { 
+                              if (examLockStatus[exam.id]?.locked) {
+                                toast.error(examLockStatus[exam.id]?.reason || 'Exam is locked');
+                                return;
+                              }
+                              setEditingExam(exam); 
+                              setExamForm({ 
+                                title: exam.title, 
+                                description: exam.description || '', 
+                                date: exam.date.toDate().toISOString().slice(0,16), 
+                                startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), 
+                                durationMinutes: (exam as any).durationMinutes || 60, 
+                                questions: (exam as any).questions || [] 
+                              }); 
+                              setExamDialogOpen(true); 
+                            }}
+                            title={examLockStatus[exam.id]?.locked ? examLockStatus[exam.id]?.reason : 'Edit exam'}
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            disabled={examLockStatus[exam.id]?.locked}
+                            onClick={() => { 
+                              if (examLockStatus[exam.id]?.locked) {
+                                toast.error(examLockStatus[exam.id]?.reason || 'Exam is locked');
+                                return;
+                              }
+                              setExamToDelete(exam); 
+                              setShowExamDeleteConfirm(true); 
+                            }}
+                            title={examLockStatus[exam.id]?.locked ? examLockStatus[exam.id]?.reason : 'Delete exam'}
+                          >
+                            Delete
+                          </Button>
                         </div>
                       </div>
                     ))}

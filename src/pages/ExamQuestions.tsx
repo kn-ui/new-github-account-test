@@ -21,7 +21,6 @@ import {
   Circle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface Question {
@@ -192,8 +191,6 @@ export default function ExamQuestions() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHero />
-      
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -281,46 +278,174 @@ export default function ExamQuestions() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-900 mb-4">{question.prompt}</p>
-                      
-                      {question.type === 'mcq' && question.options && (
-                        <div className="space-y-2">
-                          {question.options.map((option, optionIndex) => (
-                            <div key={optionIndex} className="flex items-center gap-2">
+                      {editingQuestion === question.id ? (
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Question Type</Label>
+                            <Select 
+                              value={question.type} 
+                              onValueChange={(value) => updateQuestion(question.id, { type: value as any })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="mcq">Multiple Choice</SelectItem>
+                                <SelectItem value="truefalse">True/False</SelectItem>
+                                <SelectItem value="short">Short Answer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Question Prompt</Label>
+                            <Input
+                              value={question.prompt}
+                              onChange={(e) => updateQuestion(question.id, { prompt: e.target.value })}
+                              placeholder="Enter your question..."
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Points</Label>
+                            <Input
+                              type="number"
+                              value={question.points}
+                              onChange={(e) => updateQuestion(question.id, { points: parseInt(e.target.value) || 1 })}
+                              min="1"
+                            />
+                          </div>
+
+                          {question.type === 'mcq' && (
+                            <div className="space-y-3">
+                              <Label>Options</Label>
+                              {question.options?.map((option, optionIndex) => (
+                                <div key={optionIndex} className="flex items-center gap-2">
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+                                    optionIndex === question.correct 
+                                      ? 'border-blue-500 bg-blue-50' 
+                                      : 'border-gray-300'
+                                  }`} onClick={() => updateQuestion(question.id, { correct: optionIndex })}>
+                                    {optionIndex === question.correct && (
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    )}
+                                  </div>
+                                  <Input
+                                    value={option}
+                                    onChange={(e) => {
+                                      const newOptions = [...(question.options || [])];
+                                      newOptions[optionIndex] = e.target.value;
+                                      updateQuestion(question.id, { options: newOptions });
+                                    }}
+                                    placeholder={`Option ${optionIndex + 1}`}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newOptions = question.options?.filter((_, i) => i !== optionIndex) || [];
+                                      updateQuestion(question.id, { 
+                                        options: newOptions,
+                                        correct: question.correct >= optionIndex ? Math.max(0, (question.correct as number) - 1) : question.correct
+                                      });
+                                    }}
+                                    disabled={question.options?.length <= 2}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuestion(question.id, { 
+                                  options: [...(question.options || []), ''] 
+                                })}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Option
+                              </Button>
+                            </div>
+                          )}
+
+                          {question.type === 'truefalse' && (
+                            <div>
+                              <Label>Correct Answer</Label>
+                              <Select 
+                                value={String(question.correct)} 
+                                onValueChange={(value) => updateQuestion(question.id, { correct: value === 'true' })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="true">True</SelectItem>
+                                  <SelectItem value="false">False</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {question.type === 'short' && (
+                            <div className="text-sm text-gray-500 italic">
+                              Short answer - manually graded
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button onClick={() => setEditingQuestion(null)}>
+                              <Save className="h-4 w-4 mr-2" />
+                              Save
+                            </Button>
+                            <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-gray-900 mb-4">{question.prompt}</p>
+                          
+                          {question.type === 'mcq' && question.options && (
+                            <div className="space-y-2">
+                              {question.options.map((option, optionIndex) => (
+                                <div key={optionIndex} className="flex items-center gap-2">
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    optionIndex === question.correct 
+                                      ? 'border-green-500 bg-green-50' 
+                                      : 'border-gray-300'
+                                  }`}>
+                                    {optionIndex === question.correct && (
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-gray-700">{option}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {question.type === 'truefalse' && (
+                            <div className="flex items-center gap-2">
                               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                optionIndex === question.correct 
+                                question.correct === true 
                                   ? 'border-green-500 bg-green-50' 
                                   : 'border-gray-300'
                               }`}>
-                                {optionIndex === question.correct && (
+                                {question.correct === true && (
                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                 )}
                               </div>
-                              <span className="text-sm text-gray-700">{option}</span>
+                              <span className="text-sm text-gray-700">True</span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {question.type === 'truefalse' && (
-                        <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            question.correct === true 
-                              ? 'border-green-500 bg-green-50' 
-                              : 'border-gray-300'
-                          }`}>
-                            {question.correct === true && (
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700">True</span>
-                        </div>
-                      )}
-                      
-                      {question.type === 'short' && (
-                        <div className="text-sm text-gray-500 italic">
-                          Short answer - manually graded
-                        </div>
+                          )}
+                          
+                          {question.type === 'short' && (
+                            <div className="text-sm text-gray-500 italic">
+                              Short answer - manually graded
+                            </div>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

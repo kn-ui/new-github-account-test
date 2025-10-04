@@ -551,6 +551,13 @@ export const courseService = {
       isActive: false,
       updatedAt: Timestamp.now()
     });
+    
+    // Clear student data cache for all enrolled students
+    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+    const studentIds = enrollments.map(enrollment => enrollment.studentId);
+    studentIds.forEach(studentId => {
+      studentDataService.clearStudentCache(studentId);
+    });
   },
 
   async deleteCourseWithDependencies(courseId: string): Promise<void> {
@@ -574,6 +581,12 @@ export const courseService = {
     await Promise.all(
       enrollments.map(enrollment => enrollmentService.deleteEnrollment(enrollment.id))
     );
+    
+    // Clear student data cache for all enrolled students
+    const studentIds = enrollments.map(enrollment => enrollment.studentId);
+    studentIds.forEach(studentId => {
+      studentDataService.clearStudentCache(studentId);
+    });
   },
 };
 
@@ -1514,14 +1527,25 @@ export const analyticsService = {
 
   async getStudentStats(studentId: string) {
     const [enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([
-      getDocs(query(collections.enrollments(), where('studentId', '==', studentId))),
+      getDocs(query(collections.enrollments(), where('studentId', '==', studentId), where('isActive', '==', true))),
       getDocs(query(collections.submissions(), where('studentId', '==', studentId))),
     ]);
 
     const enrollments = enrollmentsSnapshot.docs.map(d => d.data());
-    const enrolledCourses = enrollments.length;
-    const averageProgress = enrollments.length
-      ? Math.round(enrollments.reduce((sum, e: any) => sum + (e.progress || 0), 0) / enrollments.length)
+    
+    // Get course IDs to filter for active courses only
+    const courseIds = enrollments.map(e => e.courseId);
+    const courses = await courseService.getCoursesByIds(courseIds);
+    
+    // Filter enrollments for active courses only
+    const activeEnrollments = enrollments.filter(e => {
+      const course = courses[e.courseId];
+      return course && course.isActive !== false;
+    });
+    
+    const enrolledCourses = activeEnrollments.length;
+    const averageProgress = activeEnrollments.length
+      ? Math.round(activeEnrollments.reduce((sum, e: any) => sum + (e.progress || 0), 0) / activeEnrollments.length)
       : 0;
     const pendingAssignments = submissionsSnapshot.docs.filter(d => d.data().status === 'submitted').length;
 

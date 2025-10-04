@@ -1238,6 +1238,11 @@ export const examAttemptService = {
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreExamAttempt));
   },
+  async getAttemptsByExam(examId: string): Promise<FirestoreExamAttempt[]> {
+    const q = query(collection(db, 'exam_attempts'), where('examId','==', examId), orderBy('submittedAt','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreExamAttempt));
+  },
   async createAttempt(examId: string, studentId: string): Promise<string> {
     const now = Timestamp.now();
     
@@ -1350,6 +1355,10 @@ export const examAttemptService = {
       status: 'graded', 
       updatedAt: Timestamp.now() 
     } as any);
+  },
+  async updateAttempt(attemptId: string, updates: Partial<FirestoreExamAttempt>): Promise<void> {
+    const ref = doc(db, 'exam_attempts', attemptId);
+    await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);
   }
 };
 

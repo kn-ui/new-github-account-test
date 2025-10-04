@@ -524,6 +524,9 @@ export default function TeacherCourseDetail() {
                           <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/exam-questions/${exam.id}`)}>
                             View Questions
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/exam-results/${exam.id}`)}>
+                            View Results
+                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 

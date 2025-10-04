@@ -53,6 +53,7 @@ import StudentExams from "./pages/StudentExams";
 import TakeExam from "./pages/TakeExam";
 import StudentExamResult from "./pages/StudentExamResult";
 import ExamQuestions from "./pages/ExamQuestions";
+import ExamResults from "./pages/ExamResults";
 import SearchResults from "./pages/SearchResults";
 import SeedDatabase from "./pages/SeedDatabase";
 import SubmissionDetail from "./pages/SubmissionDetail";
@@ -328,16 +329,26 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route 
-              path="/dashboard/exam-questions/:examId" 
-              element={
-                <ProtectedRoute>
-                  <DashboardWrapper>
-                    <ExamQuestions />
-                  </DashboardWrapper>
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/dashboard/exam-questions/:examId"
+          element={
+            <ProtectedRoute>
+              <DashboardWrapper>
+                <ExamQuestions />
+              </DashboardWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/exam-results/:examId"
+          element={
+            <ProtectedRoute>
+              <DashboardWrapper>
+                <ExamResults />
+              </DashboardWrapper>
+            </ProtectedRoute>
+          }
+        />
             <Route 
               path="/dashboard/progress" 
               element={

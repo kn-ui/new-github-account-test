@@ -30,14 +30,7 @@ export default function StudentExams() {
   const [search, setSearch] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Timer effect for countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
+  // Load exams data (only when user changes)
   useEffect(() => {
     const load = async () => {
       try {
@@ -110,7 +103,60 @@ export default function StudentExams() {
       }
     };
     if (userProfile?.role === 'student') load();
-  }, [currentUser?.uid, userProfile?.role, currentTime]);
+  }, [currentUser?.uid, userProfile?.role]);
+
+  // Timer effect for countdown (separate from data loading)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Update exam statuses based on current time (without reloading data)
+  useEffect(() => {
+    if (exams.length === 0) return;
+    
+    setExams(prevExams => prevExams.map(e => {
+      const start = e.startTime?.toDate ? e.startTime.toDate() : null;
+      const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
+      
+      let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' = e.status;
+      let timeUntilStart = e.timeUntilStart || 0;
+      let timeUntilEnd = e.timeUntilEnd || 0;
+      
+      // Only update status for exams that haven't been attempted
+      if (!e.status || e.status === 'upcoming' || e.status === 'countdown' || e.status === 'not_started') {
+        if (start) {
+          const now = currentTime;
+          if (now < start) {
+            const timeDiff = start.getTime() - now.getTime();
+            timeUntilStart = timeDiff;
+            if (timeDiff <= 30 * 60 * 1000) { // 30 minutes
+              status = 'countdown';
+            } else {
+              status = 'upcoming';
+            }
+          } else if (end && now > end) {
+            status = 'completed';
+          } else {
+            status = 'not_started';
+          }
+        }
+        
+        if (end) {
+          timeUntilEnd = end.getTime() - currentTime.getTime();
+        }
+      }
+      
+      return { 
+        ...e, 
+        status, 
+        timeUntilStart,
+        timeUntilEnd
+      };
+    }));
+  }, [currentTime, exams.length]);
 
   const formatTimeRemaining = (ms: number) => {
     if (ms <= 0) return '0:00';

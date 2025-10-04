@@ -203,7 +203,7 @@ export default function StudentExamResult() {
                       <div className="space-y-2">
                         <div className="p-3 bg-gray-50 border rounded">
                           <div className="text-sm text-gray-600 mb-1">Your Answer:</div>
-                          <div className="text-sm">{answer || 'No answer provided'}</div>
+                          <div className="text-sm">{answer !== undefined && answer !== null ? answer : 'No answer provided'}</div>
                         </div>
                         <div className="text-xs text-gray-500">This question was manually graded by your instructor.</div>
                       </div>

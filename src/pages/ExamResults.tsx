@@ -128,7 +128,8 @@ export default function ExamResults() {
   };
 
   const getMaxScore = () => {
-    return exam?.questions?.reduce((sum: number, q: any) => sum + (q.points || 1), 0) || 0;
+    if (attempts.length === 0) return 0;
+    return Math.max(...attempts.map(attempt => getTotalScore(attempt)));
   };
 
   const getShortAnswerQuestions = () => {
@@ -171,11 +172,22 @@ export default function ExamResults() {
       const totalManualScore = Object.values(newManualScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
       const newTotalScore = autoScore + totalManualScore;
 
+      // Check if all short answer questions are now graded
+      const shortAnswerQuestions = getShortAnswerQuestions();
+      const allShortAnswersGraded = shortAnswerQuestions.every(question => {
+        const score = newManualScores[question.id];
+        return score !== undefined && score !== null;
+      });
+
+      // Update status to 'graded' if all short answer questions are graded
+      const newStatus = allShortAnswersGraded ? 'graded' : selectedAttempt.status;
+
       await examAttemptService.updateAttempt(selectedAttempt.id, {
         manualScores: newManualScores,
         manualFeedback: newManualFeedback,
         score: newTotalScore,
-        isGraded: true
+        isGraded: allShortAnswersGraded,
+        status: newStatus
       });
 
       toast.success('Grading saved successfully');
@@ -391,7 +403,7 @@ export default function ExamResults() {
                                       <strong>Student Answer:</strong>
                                     </div>
                                     <div className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
-                                      {answer || 'No answer provided'}
+                                      {answer !== undefined && answer !== null ? answer : 'No answer provided'}
                                     </div>
                                   </div>
                                   {attempt.manualFeedback?.[question.id] && (
@@ -437,7 +449,7 @@ export default function ExamResults() {
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Student Answer</Label>
                   <div className="mt-1 p-3 bg-gray-50 rounded text-sm whitespace-pre-wrap">
-                    {gradingData.answer || 'No answer provided'}
+                    {gradingData.answer !== undefined && gradingData.answer !== null ? gradingData.answer : 'No answer provided'}
                   </div>
                 </div>
                 

@@ -66,6 +66,10 @@ export default function StudentExamResult() {
   const total = autoScore + manualScore;
   const totalPoints = exam.totalPoints || (exam.questions?.reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0);
   const percentage = totalPoints > 0 ? Math.round((total / totalPoints) * 100) : 0;
+  
+  // Check if exam is fully graded
+  const isFullyGraded = attempt.isGraded || (attempt.status === 'graded');
+  const hasManualQuestions = exam.questions?.some((q: any) => q.type === 'short') || false;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">

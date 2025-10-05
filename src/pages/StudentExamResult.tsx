@@ -70,6 +70,16 @@ export default function StudentExamResult() {
   // Check if exam is fully graded
   const isFullyGraded = attempt.isGraded || (attempt.status === 'graded');
   const hasManualQuestions = exam.questions?.some((q: any) => q.type === 'short') || false;
+  
+  // Debug logging
+  console.log('Exam attempt data:', {
+    attempt,
+    autoScore,
+    manualScore,
+    total,
+    isFullyGraded,
+    hasManualQuestions
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -104,7 +114,7 @@ export default function StudentExamResult() {
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Manual Score:</span>
                 <span className="font-medium">
-                  {isFullyGraded ? manualScore : (hasManualQuestions ? 'Pending' : 'N/A')}
+                  {isFullyGraded ? `${manualScore} / ${exam.questions?.filter((q: any) => q.type === 'short').reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0}` : (hasManualQuestions ? 'Pending' : 'N/A')}
                 </span>
               </div>
               <div className="flex justify-between py-2 font-semibold text-lg">
@@ -131,6 +141,16 @@ export default function StudentExamResult() {
                 </div>
               </div>
             )}
+
+            {/* Information about scoring */}
+            <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="text-sm font-medium text-gray-800 mb-2">Understanding Your Score</div>
+              <div className="text-sm text-gray-700 space-y-1">
+                <div><strong>Auto-graded Score:</strong> Points earned from multiple choice and true/false questions that are automatically graded by the system.</div>
+                <div><strong>Manual Score:</strong> Points earned from short answer questions that require manual grading by your instructor.</div>
+                <div><strong>Total Score:</strong> The sum of your auto-graded score and manual score.</div>
+              </div>
+            </div>
 
             <div className="text-xs text-gray-500 space-y-1">
               <div>Submitted: {attempt.submittedAt?.toDate?.()?.toLocaleString() || 'Unknown'}</div>

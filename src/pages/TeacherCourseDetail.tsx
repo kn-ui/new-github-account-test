@@ -807,21 +807,46 @@ export default function TeacherCourseDetail() {
                   </>
                 )}
                 {gradeViewMode === 'exams' ? (
-                  examGrades.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="text-left px-4 py-2">Student</th>
-                            <th className="text-left px-4 py-2">Exam</th>
-                            <th className="text-left px-4 py-2">Grade</th>
-                            <th className="text-left px-4 py-2">Max Score</th>
-                            <th className="text-left px-4 py-2">Auto Score</th>
-                            <th className="text-left px-4 py-2">Manual Score</th>
-                            <th className="text-left px-4 py-2">Submitted</th>
-                            <th className="text-left px-4 py-2"></th>
-                          </tr>
-                        </thead>
+                  <>
+                    {/* Exam Grades Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Total Exam Grades</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{examGrades.length}</div></CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Average Grade</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">
+                            {examGrades.length > 0 ? Math.round(examGrades.reduce((sum, g) => sum + (g.grade / g.maxScore) * 100, 0) / examGrades.length) : 0}%
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-xs text-gray-500">Highest Grade</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">
+                            {examGrades.length > 0 ? Math.round(Math.max(...examGrades.map(g => (g.grade / g.maxScore) * 100))) : 0}%
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    {examGrades.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="text-left px-4 py-2">Student</th>
+                              <th className="text-left px-4 py-2">Exam</th>
+                              <th className="text-left px-4 py-2">Grade</th>
+                              <th className="text-left px-4 py-2">Max Score</th>
+                              <th className="text-left px-4 py-2">Auto Score</th>
+                              <th className="text-left px-4 py-2">Manual Score</th>
+                              <th className="text-left px-4 py-2">Submitted</th>
+                              <th className="text-left px-4 py-2"></th>
+                            </tr>
+                          </thead>
                         <tbody className="divide-y">
                           {examGrades
                             .slice()
@@ -856,9 +881,14 @@ export default function TeacherCourseDetail() {
                         </tbody>
                       </table>
                     </div>
-                  ) : (
-                    <div className="text-gray-500 text-sm">No exam grades yet.</div>
-                  )
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">No Exam Grades Yet</h3>
+                        <p className="text-gray-400">Exam grades will appear here once students complete and submit their exams.</p>
+                      </div>
+                    )}
+                  </>
                 ) : gradeViewMode === 'final' ? (
                   finalGrades.length > 0 ? (
                     <div className="overflow-x-auto">

@@ -21,12 +21,12 @@ export default function StudentExams() {
   const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState<(FirestoreExam & { 
     courseTitle?: string; 
-    status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown'; 
+    status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed'; 
     score?: number;
     timeUntilStart?: number;
     timeUntilEnd?: number;
   })[]>([]);
-  const [filter, setFilter] = useState<'all'|'not_started'|'in_progress'|'completed'|'upcoming'>('all');
+  const [filter, setFilter] = useState<'all'|'not_started'|'in_progress'|'completed'|'upcoming'|'missed'>('all');
   const [search, setSearch] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -46,10 +46,10 @@ export default function StudentExams() {
         
         const normalized = examsList.map((e: any) => {
           const at = attemptMap.get(e.id);
-          const start = e.startTime?.toDate ? e.startTime.toDate() : null;
+          const start = e.date?.toDate ? e.date.toDate() : null;
           const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
           
-          let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' = 'not_started';
+          let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed' = 'not_started';
           let timeUntilStart = 0;
           let timeUntilEnd = 0;
           
@@ -72,7 +72,7 @@ export default function StudentExams() {
                 status = 'upcoming';
               }
             } else if (end && now > end) {
-              status = 'completed';
+              status = 'missed';
             } else {
               status = 'not_started';
             }
@@ -118,10 +118,10 @@ export default function StudentExams() {
     if (exams.length === 0) return;
     
     setExams(prevExams => prevExams.map(e => {
-      const start = e.startTime?.toDate ? e.startTime.toDate() : null;
+      const start = e.date?.toDate ? e.date.toDate() : null;
       const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
       
-      let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' = e.status;
+      let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed' = e.status;
       let timeUntilStart = e.timeUntilStart || 0;
       let timeUntilEnd = e.timeUntilEnd || 0;
       
@@ -138,7 +138,7 @@ export default function StudentExams() {
               status = 'upcoming';
             }
           } else if (end && now > end) {
-            status = 'completed';
+            status = 'missed';
           } else {
             status = 'not_started';
           }
@@ -172,6 +172,7 @@ export default function StudentExams() {
       case 'not_started': return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'missed': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -183,6 +184,7 @@ export default function StudentExams() {
       case 'not_started': return <Play className="h-4 w-4" />;
       case 'in_progress': return <Clock className="h-4 w-4" />;
       case 'completed': return <CheckCircle className="h-4 w-4" />;
+      case 'missed': return <AlertCircle className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
@@ -230,6 +232,13 @@ export default function StudentExams() {
             </Link>
           </Button>
         );
+      case 'missed':
+        return (
+          <Button size="sm" disabled className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="h-4 w-4 mr-1" />
+            Missed
+          </Button>
+        );
       default:
         return null;
     }
@@ -269,6 +278,7 @@ export default function StudentExams() {
                   <SelectItem value="not_started">{t('student.exams.notStarted') || 'Not started'}</SelectItem>
                   <SelectItem value="in_progress">{t('student.exams.inProgress') || 'In progress'}</SelectItem>
                   <SelectItem value="completed">{t('student.exams.completed') || 'Completed'}</SelectItem>
+                  <SelectItem value="missed">{t('student.exams.missed') || 'Missed'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

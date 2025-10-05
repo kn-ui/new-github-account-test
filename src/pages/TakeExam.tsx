@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function TakeExam() {
+  console.log('TakeExam component rendered');
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
@@ -47,7 +48,7 @@ export default function TakeExam() {
         });
         setAnswers(initial);
       } catch (e) {
-        console.error(e);
+        console.error('Error in load function:', e);
         toast.error('Failed to load exam');
       } finally {
         setLoading(false);
@@ -62,7 +63,7 @@ export default function TakeExam() {
   useEffect(() => {
     if (!exam || !attemptId) return;
 
-    const startTime = (exam as any).startTime?.toDate ? (exam as any).startTime.toDate() : null;
+    const startTime = (exam as any).date?.toDate ? (exam as any).date.toDate() : null;
     const durationMinutes = (exam as any).durationMinutes || 0;
     
     if (startTime && durationMinutes) {
@@ -109,6 +110,7 @@ export default function TakeExam() {
   };
 
   const handleSubmit = async () => {
+    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
     if (!attemptId) return;
     setShowSubmitModal(false);
     
@@ -147,8 +149,11 @@ export default function TakeExam() {
   if (!exam) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Exam not found</div>;
 
   const now = new Date();
-  const start = (exam as any).startTime?.toDate ? (exam as any).startTime.toDate() : null;
+  const start = (exam as any).date?.toDate ? (exam as any).date.toDate() : null;
   const end = start && (exam as any).durationMinutes ? new Date(start.getTime() + (exam as any).durationMinutes * 60000) : null;
+  console.log('now:', now);
+  console.log('start:', start);
+  console.log('end:', end);
   const beforeStart = start ? now < start : false;
   const afterEnd = end ? now > end : false;
   const isSubmitted = attempt && (attempt.status === 'submitted' || attempt.status === 'graded');

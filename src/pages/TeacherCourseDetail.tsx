@@ -1075,6 +1075,8 @@ export default function TeacherCourseDetail() {
             <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
             <Button onClick={async () => {
               try {
+                const questions = editingExam ? examForm.questions : [];
+                
                 const payload: any = { 
                   courseId: course!.id, 
                   title: examForm.title, 
@@ -1082,7 +1084,7 @@ export default function TeacherCourseDetail() {
                   date: new Date(examForm.date), 
                   startTime: new Date(examForm.startTime), 
                   durationMinutes: examForm.durationMinutes, 
-                  questions: editingExam ? examForm.questions : [] // Only include questions when editing
+                  questions: questions
                 };
                 
                 if (editingExam) {

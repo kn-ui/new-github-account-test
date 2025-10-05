@@ -126,7 +126,15 @@ export default function TakeExam() {
         if (Boolean(answers[q.id]) === Boolean(q.correct)) autoScore += q.points ?? 1;
       }
     });
-    await examAttemptService.submitAttempt(attemptId, { autoScore, totalAutoPoints });
+    
+    // Convert answers to the format expected by the backend
+    const answersArray = Object.entries(answers).map(([questionId, response]) => ({ questionId, response }));
+    
+    await examAttemptService.submitAttempt(attemptId, { 
+      answers: answersArray, 
+      autoScore, 
+      totalAutoPoints 
+    });
     toast.success('Exam submitted');
     navigate('/dashboard/student-exams');
   };

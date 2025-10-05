@@ -556,7 +556,7 @@ const UserManager = () => {
                             <User className="h-4 w-4 mr-2" />
                             {t('admin.recentUsers.edit')}
                           </DropdownMenuItem>
-                          {user.role !== 'super_admin' && (
+                          {user.role !== 'super_admin' && user.isActive && (
                             <DropdownMenuItem 
                               className="text-red-600 cursor-pointer"
                               onClick={() => handleDeleteUser(user.id, user.displayName, user.role)}

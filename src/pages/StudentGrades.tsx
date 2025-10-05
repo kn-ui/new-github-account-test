@@ -164,6 +164,10 @@ export default function StudentGrades() {
             try {
               const attempt = await examAttemptService.getAttemptForStudent(exam.id, currentUser!.uid);
               if (attempt && attempt.status === 'graded' && attempt.isGraded) {
+                // Calculate manual score from manualScores object
+                const manualScores = attempt.manualScores || {};
+                const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
+                
                 return {
                   id: attempt.id,
                   examId: exam.id,
@@ -175,10 +179,10 @@ export default function StudentGrades() {
                   gradedAt: attempt.submittedAt?.toDate() || new Date(),
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
-                  feedback: attempt.feedback || '',
+                  feedback: attempt.manualFeedback || {},
                   status: 'graded' as const,
                   autoScore: attempt.autoScore || 0,
-                  manualScore: attempt.manualScore || 0
+                  manualScore: manualScore
                 };
               }
               return null;

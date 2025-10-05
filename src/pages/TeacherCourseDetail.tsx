@@ -143,24 +143,30 @@ export default function TeacherCourseDetail() {
               const attempts = await examAttemptService.getAttemptsByExam(exam.id);
               const gradedAttempts = attempts.filter(attempt => attempt.status === 'graded' && attempt.isGraded);
               
-              return gradedAttempts.map(attempt => ({
-                id: attempt.id,
-                examId: exam.id,
-                examTitle: exam.title,
-                courseId: courseId,
-                courseTitle: c?.title || 'Unknown Course',
-                instructorName: c?.instructorName || 'Unknown Instructor',
-                studentId: attempt.studentId,
-                studentName: nameMap[attempt.studentId] || attempt.studentId,
-                submittedAt: attempt.submittedAt?.toDate() || new Date(),
-                gradedAt: attempt.submittedAt?.toDate() || new Date(),
-                grade: attempt.score || 0,
-                maxScore: exam.totalPoints,
-                feedback: attempt.feedback || '',
-                status: 'graded',
-                autoScore: attempt.autoScore || 0,
-                manualScore: attempt.manualScore || 0
-              }));
+              return gradedAttempts.map(attempt => {
+                // Calculate manual score from manualScores object
+                const manualScores = attempt.manualScores || {};
+                const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
+                
+                return {
+                  id: attempt.id,
+                  examId: exam.id,
+                  examTitle: exam.title,
+                  courseId: courseId,
+                  courseTitle: c?.title || 'Unknown Course',
+                  instructorName: c?.instructorName || 'Unknown Instructor',
+                  studentId: attempt.studentId,
+                  studentName: nameMap[attempt.studentId] || attempt.studentId,
+                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
+                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  grade: attempt.score || 0,
+                  maxScore: exam.totalPoints,
+                  feedback: attempt.manualFeedback || {},
+                  status: 'graded',
+                  autoScore: attempt.autoScore || 0,
+                  manualScore: manualScore
+                };
+              });
             } catch (error) {
               console.error(`Error loading exam grades for exam ${exam.id}:`, error);
               return [];

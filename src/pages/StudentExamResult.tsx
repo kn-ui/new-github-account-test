@@ -62,7 +62,11 @@ export default function StudentExamResult() {
 
   // Use stored autoScore from attempt if available, otherwise calculate it
   const autoScore = attempt.autoScore !== undefined ? attempt.autoScore : calculateAutoScore();
-  const manualScore = Number(attempt.manualScore || 0);
+  
+  // Calculate manual score from manualScores object
+  const manualScores = attempt.manualScores || {};
+  const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
+  
   const total = attempt.score !== undefined ? attempt.score : (autoScore + manualScore);
   const totalPoints = exam.totalPoints || (exam.questions?.reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0);
   const percentage = totalPoints > 0 ? Math.round((total / totalPoints) * 100) : 0;
@@ -76,6 +80,7 @@ export default function StudentExamResult() {
     attempt,
     autoScore,
     manualScore,
+    manualScores,
     total,
     isFullyGraded,
     hasManualQuestions
@@ -334,10 +339,15 @@ export default function StudentExamResult() {
                             <div className="text-xs text-gray-500">
                               This question was manually graded by your instructor.
                             </div>
-                            {attempt.feedback && (
+                            {attempt.manualScores && attempt.manualScores[question.id] !== undefined && (
+                              <div className="text-xs text-gray-600">
+                                Manual Score: {attempt.manualScores[question.id]} / {question.points}
+                              </div>
+                            )}
+                            {attempt.manualFeedback && attempt.manualFeedback[question.id] && (
                               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                                 <div className="text-sm font-medium text-yellow-800 mb-1">Instructor Feedback:</div>
-                                <div className="text-sm text-yellow-700">{attempt.feedback}</div>
+                                <div className="text-sm text-yellow-700">{attempt.manualFeedback[question.id]}</div>
                               </div>
                             )}
                           </div>

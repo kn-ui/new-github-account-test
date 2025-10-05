@@ -701,8 +701,6 @@ const CourseDetail = () => {
                                   <th className="text-left px-4 py-2">Course</th>
                                   <th className="text-center px-4 py-2">Grade</th>
                                   <th className="text-center px-4 py-2">Max Score</th>
-                                  <th className="text-center px-4 py-2">Auto Score</th>
-                                  <th className="text-center px-4 py-2">Manual Score</th>
                                   <th className="text-center px-4 py-2">Date</th>
                                 </tr>
                               </thead>
@@ -717,8 +715,6 @@ const CourseDetail = () => {
                                         <td className="px-4 py-2">{course?.title || 'Course'}</td>
                                         <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
                                         <td className="px-4 py-2 text-center">{grade.maxScore || 100}</td>
-                                        <td className="px-4 py-2 text-center">{grade.autoScore || 0}</td>
-                                        <td className="px-4 py-2 text-center">{grade.manualScore || 0}</td>
                                         <td className="px-4 py-2 text-center">{grade.gradedAt.toLocaleDateString()}</td>
                                       </tr>
                                     );

@@ -63,7 +63,7 @@ export default function StudentExamResult() {
   // Use stored autoScore from attempt if available, otherwise calculate it
   const autoScore = attempt.autoScore !== undefined ? attempt.autoScore : calculateAutoScore();
   const manualScore = Number(attempt.manualScore || 0);
-  const total = autoScore + manualScore;
+  const total = attempt.score !== undefined ? attempt.score : (autoScore + manualScore);
   const totalPoints = exam.totalPoints || (exam.questions?.reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0);
   const percentage = totalPoints > 0 ? Math.round((total / totalPoints) * 100) : 0;
   
@@ -314,10 +314,10 @@ export default function StudentExamResult() {
                             <div className="text-xs text-gray-500">
                               This question was manually graded by your instructor.
                             </div>
-                            {answerData?.feedback && (
+                            {attempt.feedback && (
                               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                                 <div className="text-sm font-medium text-yellow-800 mb-1">Instructor Feedback:</div>
-                                <div className="text-sm text-yellow-700">{answerData.feedback}</div>
+                                <div className="text-sm text-yellow-700">{attempt.feedback}</div>
                               </div>
                             )}
                           </div>

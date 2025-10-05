@@ -621,8 +621,6 @@ export default function StudentGrades() {
                                     <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Auto Score</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Manual Score</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
                                   </tr>
                                 </thead>
@@ -637,8 +635,6 @@ export default function StudentGrades() {
                                         </span>
                                       </td>
                                       <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.autoScore}</td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.manualScore}</td>
                                       <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
                                     </tr>
                                   ))}

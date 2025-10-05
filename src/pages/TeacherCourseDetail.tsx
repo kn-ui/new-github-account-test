@@ -120,40 +120,6 @@ export default function TeacherCourseDetail() {
         setExams(exs);
         setFinalGrades(grades);
         
-        // Load exam grades for all students
-        const examGradesPromises = exs.map(async (exam) => {
-          try {
-            const attempts = await examAttemptService.getAttemptsByExam(exam.id);
-            const gradedAttempts = attempts.filter(attempt => attempt.status === 'graded' && attempt.isGraded);
-            
-            return gradedAttempts.map(attempt => ({
-              id: attempt.id,
-              examId: exam.id,
-              examTitle: exam.title,
-              courseId: courseId,
-              courseTitle: c?.title || 'Unknown Course',
-              instructorName: c?.instructorName || 'Unknown Instructor',
-              studentId: attempt.studentId,
-              studentName: studentNames[attempt.studentId] || attempt.studentId,
-              submittedAt: attempt.submittedAt?.toDate() || new Date(),
-              gradedAt: attempt.submittedAt?.toDate() || new Date(),
-              grade: attempt.score || 0,
-              maxScore: exam.totalPoints,
-              feedback: attempt.feedback || '',
-              status: 'graded',
-              autoScore: attempt.autoScore || 0,
-              manualScore: attempt.manualScore || 0
-            }));
-          } catch (error) {
-            console.error(`Error loading exam grades for exam ${exam.id}:`, error);
-            return [];
-          }
-        });
-        
-        const examGradesArrays = await Promise.all(examGradesPromises);
-        const allExamGrades = examGradesArrays.flat();
-        setExamGrades(allExamGrades);
-        
         // Check lock status for all exams
         exs.forEach(exam => {
           checkExamLockStatus(exam.id);
@@ -170,6 +136,40 @@ export default function TeacherCourseDetail() {
             } catch {}
           }));
           setStudentNames(nameMap);
+          
+          // Load exam grades for all students after student names are resolved
+          const examGradesPromises = exs.map(async (exam) => {
+            try {
+              const attempts = await examAttemptService.getAttemptsByExam(exam.id);
+              const gradedAttempts = attempts.filter(attempt => attempt.status === 'graded' && attempt.isGraded);
+              
+              return gradedAttempts.map(attempt => ({
+                id: attempt.id,
+                examId: exam.id,
+                examTitle: exam.title,
+                courseId: courseId,
+                courseTitle: c?.title || 'Unknown Course',
+                instructorName: c?.instructorName || 'Unknown Instructor',
+                studentId: attempt.studentId,
+                studentName: nameMap[attempt.studentId] || attempt.studentId,
+                submittedAt: attempt.submittedAt?.toDate() || new Date(),
+                gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                grade: attempt.score || 0,
+                maxScore: exam.totalPoints,
+                feedback: attempt.feedback || '',
+                status: 'graded',
+                autoScore: attempt.autoScore || 0,
+                manualScore: attempt.manualScore || 0
+              }));
+            } catch (error) {
+              console.error(`Error loading exam grades for exam ${exam.id}:`, error);
+              return [];
+            }
+          });
+          
+          const examGradesArrays = await Promise.all(examGradesPromises);
+          const allExamGrades = examGradesArrays.flat();
+          setExamGrades(allExamGrades);
         } catch {}
       } catch (e) {
         console.error(e);

@@ -34,7 +34,30 @@ export default function StudentExamResult() {
   if (!attempt) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Result not found</div>;
   if (!exam) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Exam not found</div>;
 
-  const total = Number(attempt.autoScore || 0) + Number(attempt.manualScore || 0);
+  // Calculate auto-graded score correctly
+  const calculateAutoScore = () => {
+    if (!exam.questions || !attempt.answers) return 0;
+    
+    let autoScore = 0;
+    exam.questions.forEach((question: any) => {
+      if (question.type === 'mcq' || question.type === 'truefalse') {
+        const answer = attempt.answers.find((a: any) => a.questionId === question.id);
+        if (answer) {
+          const isCorrect = question.type === 'mcq' 
+            ? Number(answer.response) === Number(question.correct)
+            : Boolean(answer.response) === Boolean(question.correct);
+          if (isCorrect) {
+            autoScore += question.points || 0;
+          }
+        }
+      }
+    });
+    return autoScore;
+  };
+
+  const autoScore = calculateAutoScore();
+  const manualScore = Number(attempt.manualScore || 0);
+  const total = autoScore + manualScore;
   const totalPoints = exam.totalPoints || (exam.questions?.reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0);
   const percentage = totalPoints > 0 ? Math.round((total / totalPoints) * 100) : 0;
 
@@ -66,11 +89,11 @@ export default function StudentExamResult() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Auto-graded Score:</span>
-                <span className="font-medium">{attempt.autoScore ?? 0} / {attempt.totalAutoPoints ?? 0}</span>
+                <span className="font-medium">{autoScore} / {totalPoints - (exam.questions?.filter((q: any) => q.type === 'short').reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0)}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Manual Score:</span>
-                <span className="font-medium">{attempt.manualScore ?? 0}</span>
+                <span className="font-medium">{manualScore}</span>
               </div>
               <div className="flex justify-between py-2 font-semibold text-lg">
                 <span>Final Score:</span>
@@ -127,67 +150,116 @@ export default function StudentExamResult() {
                     
                     {question.type === 'mcq' && question.options && (
                       <div className="space-y-2">
-                        {question.options.map((option: string, optIndex: number) => (
-                          <div key={optIndex} className={`p-2 rounded border ${
-                            optIndex === Number(answer) 
-                              ? 'bg-blue-50 border-blue-200' 
-                              : optIndex === Number(question.correct)
-                              ? 'bg-green-50 border-green-200'
-                              : 'bg-gray-50 border-gray-200'
-                          }`}>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                optIndex === Number(answer) 
-                                  ? 'border-blue-500 bg-blue-50' 
-                                  : optIndex === Number(question.correct)
-                                  ? 'border-green-500 bg-green-50'
-                                  : 'border-gray-300'
-                              }`}>
-                                {optIndex === Number(answer) && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        {question.options.map((option: string, optIndex: number) => {
+                          const isSelected = optIndex === Number(answer);
+                          const isCorrect = optIndex === Number(question.correct);
+                          const isSelectedAndWrong = isSelected && !isCorrect;
+                          
+                          return (
+                            <div key={optIndex} className={`p-2 rounded border ${
+                              isSelectedAndWrong
+                                ? 'bg-red-50 border-red-200' 
+                                : isSelected
+                                ? 'bg-blue-50 border-blue-200' 
+                                : isCorrect
+                                ? 'bg-green-50 border-green-200'
+                                : 'bg-gray-50 border-gray-200'
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                  isSelectedAndWrong
+                                    ? 'border-red-500 bg-red-50'
+                                    : isSelected
+                                    ? 'border-blue-500 bg-blue-50' 
+                                    : isCorrect
+                                    ? 'border-green-500 bg-green-50'
+                                    : 'border-gray-300'
+                                }`}>
+                                  {isSelected && (
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      isSelectedAndWrong ? 'bg-red-500' : 'bg-blue-500'
+                                    }`}></div>
+                                  )}
+                                  {isCorrect && !isSelected && (
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  )}
+                                </div>
+                                <span className="text-sm">{option}</span>
+                                {isCorrect && !isSelected && (
+                                  <span className="text-xs text-green-600 font-medium">(Correct Answer)</span>
                                 )}
-                                {optIndex === Number(question.correct) && optIndex !== Number(answer) && (
-                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                {isSelectedAndWrong && (
+                                  <span className="text-xs text-red-600 font-medium">(Your Answer - Incorrect)</span>
                                 )}
                               </div>
-                              <span className="text-sm">{option}</span>
-                              {optIndex === Number(question.correct) && optIndex !== Number(answer) && (
-                                <span className="text-xs text-green-600 font-medium">(Correct Answer)</span>
-                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                     
                     {question.type === 'truefalse' && (
                       <div className="space-y-2">
                         <div className={`p-2 rounded border ${
-                          answer === true 
+                          answer === true && question.correct === true
+                            ? 'bg-green-50 border-green-200'
+                            : answer === true && question.correct === false
+                            ? 'bg-red-50 border-red-200'
+                            : answer === true
                             ? 'bg-blue-50 border-blue-200' 
                             : 'bg-gray-50 border-gray-200'
                         }`}>
                           <div className="flex items-center gap-2">
                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              answer === true ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                              answer === true && question.correct === true
+                                ? 'border-green-500 bg-green-50'
+                                : answer === true && question.correct === false
+                                ? 'border-red-500 bg-red-50'
+                                : answer === true
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-300'
                             }`}>
-                              {answer === true && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                              {answer === true && (
+                                <div className={`w-2 h-2 rounded-full ${
+                                  question.correct === true ? 'bg-green-500' : 'bg-red-500'
+                                }`}></div>
+                              )}
                             </div>
                             <span className="text-sm">True</span>
+                            {answer === true && question.correct === false && (
+                              <span className="text-xs text-red-600 font-medium">(Your Answer - Incorrect)</span>
+                            )}
                           </div>
                         </div>
                         <div className={`p-2 rounded border ${
-                          answer === false 
+                          answer === false && question.correct === false
+                            ? 'bg-green-50 border-green-200'
+                            : answer === false && question.correct === true
+                            ? 'bg-red-50 border-red-200'
+                            : answer === false
                             ? 'bg-blue-50 border-blue-200' 
                             : 'bg-gray-50 border-gray-200'
                         }`}>
                           <div className="flex items-center gap-2">
                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              answer === false ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                              answer === false && question.correct === false
+                                ? 'border-green-500 bg-green-50'
+                                : answer === false && question.correct === true
+                                ? 'border-red-500 bg-red-50'
+                                : answer === false
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-300'
                             }`}>
-                              {answer === false && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                              {answer === false && (
+                                <div className={`w-2 h-2 rounded-full ${
+                                  question.correct === false ? 'bg-green-500' : 'bg-red-500'
+                                }`}></div>
+                              )}
                             </div>
                             <span className="text-sm">False</span>
+                            {answer === false && question.correct === true && (
+                              <span className="text-xs text-red-600 font-medium">(Your Answer - Incorrect)</span>
+                            )}
                             {question.correct === false && answer !== false && (
                               <span className="text-xs text-green-600 font-medium">(Correct Answer)</span>
                             )}
@@ -203,7 +275,7 @@ export default function StudentExamResult() {
                       <div className="space-y-2">
                         <div className="p-3 bg-gray-50 border rounded">
                           <div className="text-sm text-gray-600 mb-1">Your Answer:</div>
-                          <div className="text-sm">{answer !== undefined && answer !== null ? answer : 'No answer provided'}</div>
+                          <div className="text-sm">{answer !== undefined && answer !== null && answer !== '' ? answer : 'No answer provided'}</div>
                         </div>
                         <div className="text-xs text-gray-500">This question was manually graded by your instructor.</div>
                       </div>

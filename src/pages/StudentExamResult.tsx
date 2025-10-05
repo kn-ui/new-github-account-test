@@ -288,12 +288,9 @@ export default function StudentExamResult() {
                               : 'No answer provided'
                             }
                           </div>
-                          {/* Debug info - remove in production */}
-                          <div className="text-xs text-gray-400 mt-1">
-                            Debug: answer={JSON.stringify(answer)}, answerData={JSON.stringify(answerData)}
-                          </div>
+
                         </div>
-                        <div className="text-xs text-gray-500">This question was manually graded by your instructor.</div>
+                        <div className="text-xs text-gray-500">This question will be manually graded by your instructor.</div>
                       </div>
                     )}
                   </div>

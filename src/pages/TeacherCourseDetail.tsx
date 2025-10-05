@@ -9,6 +9,7 @@ import {
   submissionService,
   courseMaterialService,
   examService,
+  examAttemptService,
   gradeService,
   FirestoreCourse,
   FirestoreEnrollment,

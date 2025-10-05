@@ -89,7 +89,7 @@ export default function StudentExamResult() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Auto-graded Score:</span>
-                <span className="font-medium">{autoScore} / {totalPoints - (exam.questions?.filter((q: any) => q.type === 'short').reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0)}</span>
+                <span className="font-medium">{autoScore} / {exam.questions?.filter((q: any) => q.type !== 'short').reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Manual Score:</span>
@@ -275,7 +275,7 @@ export default function StudentExamResult() {
                       <div className="space-y-2">
                         <div className="p-3 bg-gray-50 border rounded">
                           <div className="text-sm text-gray-600 mb-1">Your Answer:</div>
-                          <div className="text-sm">{answer !== undefined && answer !== null && answer !== '' ? answer : 'No answer provided'}</div>
+                          <div className="text-sm">{answer && String(answer).trim() !== '' ? answer : 'No answer provided'}</div>
                         </div>
                         <div className="text-xs text-gray-500">This question was manually graded by your instructor.</div>
                       </div>

@@ -103,11 +103,15 @@ export default function StudentExamResult() {
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Manual Score:</span>
-                <span className="font-medium">{manualScore}</span>
+                <span className="font-medium">
+                  {isFullyGraded ? manualScore : (hasManualQuestions ? 'Pending' : 'N/A')}
+                </span>
               </div>
               <div className="flex justify-between py-2 font-semibold text-lg">
                 <span>Final Score:</span>
-                <span>{total} / {totalPoints}</span>
+                <span>
+                  {isFullyGraded ? `${total} / ${totalPoints}` : (hasManualQuestions ? 'Pending' : `${autoScore} / ${totalPoints}`)}
+                </span>
               </div>
             </div>
 
@@ -115,6 +119,16 @@ export default function StudentExamResult() {
               <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="text-sm font-medium text-yellow-800 mb-2">Instructor Feedback:</div>
                 <div className="text-sm text-yellow-700">{attempt.feedback}</div>
+              </div>
+            )}
+
+            {hasManualQuestions && !isFullyGraded && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="text-sm font-medium text-blue-800 mb-2">Manual Grading in Progress</div>
+                <div className="text-sm text-blue-700">
+                  Your exam contains short answer questions that require manual grading by your instructor. 
+                  Your final score will be updated once the manual grading is complete.
+                </div>
               </div>
             )}
 
@@ -292,9 +306,26 @@ export default function StudentExamResult() {
                               : 'No answer provided'
                             }
                           </div>
-
                         </div>
-                        <div className="text-xs text-gray-500">This question will be manually graded by your instructor.</div>
+                        
+                        {/* Show manual grading status and feedback */}
+                        {isFullyGraded ? (
+                          <div className="space-y-2">
+                            <div className="text-xs text-gray-500">
+                              This question was manually graded by your instructor.
+                            </div>
+                            {answerData?.feedback && (
+                              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                <div className="text-sm font-medium text-yellow-800 mb-1">Instructor Feedback:</div>
+                                <div className="text-sm text-yellow-700">{answerData.feedback}</div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            This question will be manually graded by your instructor.
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

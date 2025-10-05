@@ -120,6 +120,40 @@ export default function TeacherCourseDetail() {
         setExams(exs);
         setFinalGrades(grades);
         
+        // Load exam grades for all students
+        const examGradesPromises = exs.map(async (exam) => {
+          try {
+            const attempts = await examAttemptService.getAttemptsByExam(exam.id);
+            const gradedAttempts = attempts.filter(attempt => attempt.status === 'graded' && attempt.isGraded);
+            
+            return gradedAttempts.map(attempt => ({
+              id: attempt.id,
+              examId: exam.id,
+              examTitle: exam.title,
+              courseId: courseId,
+              courseTitle: c?.title || 'Unknown Course',
+              instructorName: c?.instructorName || 'Unknown Instructor',
+              studentId: attempt.studentId,
+              studentName: studentNames[attempt.studentId] || attempt.studentId,
+              submittedAt: attempt.submittedAt?.toDate() || new Date(),
+              gradedAt: attempt.submittedAt?.toDate() || new Date(),
+              grade: attempt.score || 0,
+              maxScore: exam.totalPoints,
+              feedback: attempt.feedback || '',
+              status: 'graded',
+              autoScore: attempt.autoScore || 0,
+              manualScore: attempt.manualScore || 0
+            }));
+          } catch (error) {
+            console.error(`Error loading exam grades for exam ${exam.id}:`, error);
+            return [];
+          }
+        });
+        
+        const examGradesArrays = await Promise.all(examGradesPromises);
+        const allExamGrades = examGradesArrays.flat();
+        setExamGrades(allExamGrades);
+        
         // Check lock status for all exams
         exs.forEach(exam => {
           checkExamLockStatus(exam.id);
@@ -152,7 +186,8 @@ export default function TeacherCourseDetail() {
   const [exams, setExams] = useState<FirestoreExam[]>([]);
   const examsCount = exams.length;
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
-  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final'>('assignments');
+  const [examGrades, setExamGrades] = useState<any[]>([]);
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
   const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
   const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<FirestoreEnrollment | null>(null);
   const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
@@ -627,6 +662,7 @@ export default function TeacherCourseDetail() {
                       <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="assignments">Assignment Grades</SelectItem>
+                        <SelectItem value="exams">Exam Grades</SelectItem>
                         <SelectItem value="final">Final Grades</SelectItem>
                       </SelectContent>
                     </Select>
@@ -682,6 +718,25 @@ export default function TeacherCourseDetail() {
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url; a.download = `${course.title}-final-grades.csv`; a.click(); URL.revokeObjectURL(url);
+                      } else if (gradeViewMode === 'exams') {
+                        // export CSV for exam grades
+                        const rows = [['Student','Exam','Grade','Max Score','Auto Score','Manual Score','Submitted At']];
+                        examGrades.forEach(g => {
+                          rows.push([
+                            g.studentName,
+                            g.examTitle,
+                            String(g.grade),
+                            String(g.maxScore),
+                            String(g.autoScore),
+                            String(g.manualScore),
+                            g.gradedAt.toISOString()
+                          ]);
+                        });
+                        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${course.title}-exam-grades.csv`; a.click(); URL.revokeObjectURL(url);
                       } else {
                         // export CSV for graded submissions
                         const rows = [['Student','Assignment','Grade','Submitted At']];
@@ -751,7 +806,60 @@ export default function TeacherCourseDetail() {
                     </div>
                   </>
                 )}
-                {gradeViewMode === 'final' ? (
+                {gradeViewMode === 'exams' ? (
+                  examGrades.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left px-4 py-2">Student</th>
+                            <th className="text-left px-4 py-2">Exam</th>
+                            <th className="text-left px-4 py-2">Grade</th>
+                            <th className="text-left px-4 py-2">Max Score</th>
+                            <th className="text-left px-4 py-2">Auto Score</th>
+                            <th className="text-left px-4 py-2">Manual Score</th>
+                            <th className="text-left px-4 py-2">Submitted</th>
+                            <th className="text-left px-4 py-2"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {examGrades
+                            .slice()
+                            .sort((a,b) => {
+                              switch (gradeSort) {
+                                case 'recent': return b.gradedAt.getTime() - a.gradedAt.getTime();
+                                case 'oldest': return a.gradedAt.getTime() - b.gradedAt.getTime();
+                                case 'grade-desc': return b.grade - a.grade;
+                                case 'grade-asc': return a.grade - b.grade;
+                              }
+                            })
+                            .map(grade => (
+                            <tr key={grade.id}>
+                              <td className="px-4 py-2">{grade.studentName}</td>
+                              <td className="px-4 py-2">{grade.examTitle}</td>
+                              <td className="px-4 py-2 font-semibold">{grade.grade}</td>
+                              <td className="px-4 py-2">{grade.maxScore}</td>
+                              <td className="px-4 py-2">{grade.autoScore}</td>
+                              <td className="px-4 py-2">{grade.manualScore}</td>
+                              <td className="px-4 py-2">{grade.gradedAt.toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => navigate(`/dashboard/exam-results/${grade.examId}`)}
+                                >
+                                  View Details
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 text-sm">No exam grades yet.</div>
+                  )
+                ) : gradeViewMode === 'final' ? (
                   finalGrades.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">

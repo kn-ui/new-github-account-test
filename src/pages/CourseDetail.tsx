@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, gradeService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial, FirestoreGrade } from '@/lib/firestore';
+import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, gradeService, examService, examAttemptService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,9 @@ const CourseDetail = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<FirestoreCourseMaterial | null>(null);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const [finalGrade, setFinalGrade] = useState<FirestoreGrade | null>(null);
-  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final'>('assignments');
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
+  const [courseExams, setCourseExams] = useState<FirestoreExam[]>([]);
+  const [examGrades, setExamGrades] = useState<any[]>([]);
 
   useEffect(() => {
     if (courseId) {
@@ -121,6 +123,10 @@ const CourseDetail = () => {
       const assignments = await assignmentService.getAssignmentsByCourse(courseId);
       setCourseAssignments(assignments);
       
+      // Load exams for this course
+      const exams = await examService.getExamsByCourse(courseId);
+      setCourseExams(exams);
+      
       // Load grades for this course if student
       if (currentUser?.uid && userProfile?.role === 'student') {
         try {
@@ -133,6 +139,45 @@ const CourseDetail = () => {
         } catch (error) {
           console.error('Error loading submissions:', error);
           setCourseGrades([]);
+        }
+        
+        // Load exam grades for this course
+        try {
+          const examAttemptsPromises = exams.map(async (exam) => {
+            try {
+              const attempt = await examAttemptService.getAttemptForStudent(exam.id, currentUser.uid);
+              if (attempt && attempt.status === 'graded' && attempt.isGraded) {
+                return {
+                  id: attempt.id,
+                  examId: exam.id,
+                  examTitle: exam.title,
+                  courseId: courseId,
+                  courseTitle: course?.title || 'Unknown Course',
+                  instructorName: course?.instructorName || 'Unknown Instructor',
+                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
+                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  grade: attempt.score || 0,
+                  maxScore: exam.totalPoints,
+                  feedback: attempt.feedback || '',
+                  status: 'graded',
+                  autoScore: attempt.autoScore || 0,
+                  manualScore: attempt.manualScore || 0
+                };
+              }
+              return null;
+            } catch (error) {
+              console.error(`Error loading exam attempt for exam ${exam.id}:`, error);
+              return null;
+            }
+          });
+          
+          const examAttempts = await Promise.all(examAttemptsPromises);
+          const validExamGrades = examAttempts.filter(attempt => attempt !== null);
+          setExamGrades(validExamGrades);
+          console.log('Loaded exam grades:', validExamGrades);
+        } catch (error) {
+          console.error('Error loading exam grades:', error);
+          setExamGrades([]);
         }
         
         // Load final grade for this course
@@ -494,12 +539,13 @@ const CourseDetail = () => {
                       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                         <div className="flex items-center gap-4">
                           <span className="text-sm font-medium text-gray-700">View Grades:</span>
-                          <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final') => setGradeViewMode(value)}>
+                          <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final' | 'exams') => setGradeViewMode(value)}>
                             <SelectTrigger className="w-48">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="assignments">Assignment Grades</SelectItem>
+                              <SelectItem value="exams">Exam Grades</SelectItem>
                               <SelectItem value="final">Final Grade</SelectItem>
                             </SelectContent>
                           </Select>
@@ -512,12 +558,14 @@ const CourseDetail = () => {
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-green-600" />
                         <span className="text-sm font-medium text-green-800">
-                          {gradeViewMode === 'final' ? 'Final Grade' : 'Assignments'}
+                          {gradeViewMode === 'final' ? 'Final Grade' : gradeViewMode === 'exams' ? 'Exams' : 'Assignments'}
                         </span>
                       </div>
                       <p className="text-3xl font-bold text-green-900">
                         {gradeViewMode === 'final' 
                           ? (finalGrade ? `${finalGrade.finalGrade}%` : 'N/A')
+                          : gradeViewMode === 'exams'
+                          ? examGrades.length
                           : courseGrades.length
                         }
                       </p>
@@ -527,16 +575,19 @@ const CourseDetail = () => {
                       <div className="flex items-center gap-3 mb-2">
                         <Award size={20} className="text-purple-600" />
                         <span className="text-sm font-medium text-purple-800">
-                          {gradeViewMode === 'final' ? 'Letter Grade' : 'Average Grade'}
+                          {gradeViewMode === 'final' ? 'Letter Grade' : gradeViewMode === 'exams' ? 'Average Grade' : 'Average Grade'}
                         </span>
                       </div>
                       <p className="text-3xl font-bold text-purple-900">
                         {gradeViewMode === 'final' 
                           ? (finalGrade ? finalGrade.letterGrade : 'N/A')
+                          : gradeViewMode === 'exams'
+                          ? (examGrades.length > 0 
+                              ? Math.round(examGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / examGrades.length)
+                              : 0) + '%'
                           : (courseGrades.length > 0 
                               ? Math.round(courseGrades.reduce((sum: number, grade: any) => sum + (grade.grade || 0), 0) / courseGrades.length)
                               : 0) + '%'
-                            
                         }
                       </p>
                     </div>
@@ -631,6 +682,56 @@ const CourseDetail = () => {
                           <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
                           <h3 className="text-lg font-medium mb-2">No Grades Yet</h3>
                           <p className="text-gray-400">Your assignment grades will appear here once they're graded by your instructor.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Exam Grades Table - Only show for exam grades view */}
+                  {gradeViewMode === 'exams' && (
+                    <>
+                      {examGrades.length > 0 ? (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Exam Grades</h3>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="text-left px-4 py-2">Exam</th>
+                                  <th className="text-left px-4 py-2">Course</th>
+                                  <th className="text-center px-4 py-2">Grade</th>
+                                  <th className="text-center px-4 py-2">Max Score</th>
+                                  <th className="text-center px-4 py-2">Auto Score</th>
+                                  <th className="text-center px-4 py-2">Manual Score</th>
+                                  <th className="text-center px-4 py-2">Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y">
+                                {examGrades
+                                  .slice()
+                                  .sort((a: any, b: any) => new Date(b.gradedAt).getTime() - new Date(a.gradedAt).getTime())
+                                  .map((grade: any, index: number) => {
+                                    return (
+                                      <tr key={index}>
+                                        <td className="px-4 py-2 font-medium">{grade.examTitle || 'Exam'}</td>
+                                        <td className="px-4 py-2">{course?.title || 'Course'}</td>
+                                        <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
+                                        <td className="px-4 py-2 text-center">{grade.maxScore || 100}</td>
+                                        <td className="px-4 py-2 text-center">{grade.autoScore || 0}</td>
+                                        <td className="px-4 py-2 text-center">{grade.manualScore || 0}</td>
+                                        <td className="px-4 py-2 text-center">{grade.gradedAt.toLocaleDateString()}</td>
+                                      </tr>
+                                    );
+                                  })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No Exam Grades Yet</h3>
+                          <p className="text-gray-400">Your exam grades will appear here once they're graded by your instructor.</p>
                         </div>
                       )}
                     </>

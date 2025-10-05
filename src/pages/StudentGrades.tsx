@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, gradeService, FirestoreGrade } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,10 +40,28 @@ interface GradeWithDetails {
   status: 'graded';
 }
 
+interface ExamGradeWithDetails {
+  id: string;
+  examId: string;
+  examTitle: string;
+  courseId: string;
+  courseTitle: string;
+  instructorName: string;
+  submittedAt: Date;
+  gradedAt: Date;
+  grade: number;
+  maxScore: number;
+  feedback: string;
+  status: 'graded';
+  autoScore: number;
+  manualScore: number;
+}
+
 export default function StudentGrades() {
   const { currentUser, userProfile } = useAuth();
   const { t } = useI18n();
   const [grades, setGrades] = useState<GradeWithDetails[]>([]);
+  const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +70,7 @@ export default function StudentGrades() {
   const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({
     '2025': true,
   });
-  const [gradeType, setGradeType] = useState<'assignments' | 'courses'>('courses');
+  const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams'>('courses');
   const [courses, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
@@ -136,6 +154,52 @@ export default function StudentGrades() {
       const allGrades = submissionsArrays.flat();
       setGrades(allGrades);
 
+      // Load exam grades for enrolled courses
+      const examGradesPromises = courseIds.map(async (courseId) => {
+        try {
+          const courseExams = await examService.getExamsByCourse(courseId);
+          const course = await courseService.getCourseById(courseId);
+          
+          const examAttemptsPromises = courseExams.map(async (exam) => {
+            try {
+              const attempt = await examAttemptService.getAttemptForStudent(exam.id, currentUser!.uid);
+              if (attempt && attempt.status === 'graded' && attempt.isGraded) {
+                return {
+                  id: attempt.id,
+                  examId: exam.id,
+                  examTitle: exam.title,
+                  courseId: courseId,
+                  courseTitle: course?.title || 'Unknown Course',
+                  instructorName: course?.instructorName || 'Unknown Instructor',
+                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
+                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  grade: attempt.score || 0,
+                  maxScore: exam.totalPoints,
+                  feedback: attempt.feedback || '',
+                  status: 'graded' as const,
+                  autoScore: attempt.autoScore || 0,
+                  manualScore: attempt.manualScore || 0
+                };
+              }
+              return null;
+            } catch (error) {
+              console.error(`Error loading exam attempt for exam ${exam.id}:`, error);
+              return null;
+            }
+          });
+          
+          const examAttempts = await Promise.all(examAttemptsPromises);
+          return examAttempts.filter(attempt => attempt !== null);
+        } catch (error) {
+          console.error(`Error loading exam grades for course ${courseId}:`, error);
+          return [];
+        }
+      });
+
+      const examGradesArrays = await Promise.all(examGradesPromises);
+      const allExamGrades = examGradesArrays.flat();
+      setExamGrades(allExamGrades);
+
       // Load final grades for courses
       const finalGradesPromises = courseIds.map(async (courseId) => {
         try {
@@ -194,6 +258,42 @@ export default function StudentGrades() {
 
     return filtered;
   }, [grades, searchTerm, courseFilter, sortBy]);
+
+  const filteredAndSortedExamGrades = useMemo(() => {
+    let filtered = examGrades.filter(grade => {
+      const matchesSearch = grade.examTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           grade.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           grade.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCourse = courseFilter === 'all' || grade.courseTitle === courseFilter;
+      
+      return matchesSearch && matchesCourse;
+    });
+
+    // Sort exam grades
+    switch (sortBy) {
+      case 'recent':
+        filtered.sort((a, b) => b.gradedAt.getTime() - a.gradedAt.getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => a.gradedAt.getTime() - b.gradedAt.getTime());
+        break;
+      case 'grade-high':
+        filtered.sort((a, b) => b.grade - a.grade);
+        break;
+      case 'grade-low':
+        filtered.sort((a, b) => a.grade - b.grade);
+        break;
+      case 'course':
+        filtered.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
+        break;
+      case 'assignment':
+        filtered.sort((a, b) => a.examTitle.localeCompare(b.examTitle));
+        break;
+    }
+
+    return filtered;
+  }, [examGrades, searchTerm, courseFilter, sortBy]);
 
   const filteredAndSortedFinalGrades = useMemo(() => {
     // Get course names for final grades
@@ -283,6 +383,24 @@ export default function StudentGrades() {
         highestGrade: Math.round(highestGrade),
         lowestGrade: Math.round(lowestGrade)
       };
+    } else if (gradeType === 'exams') {
+      // Stats for exam grades
+      if (examGrades.length === 0) {
+        return { averageGrade: 0, totalExams: 0, highestGrade: 0, lowestGrade: 0 };
+      }
+
+      const totalPoints = examGrades.reduce((sum, grade) => sum + grade.grade, 0);
+      const maxPoints = examGrades.reduce((sum, grade) => sum + grade.maxScore, 0);
+      const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+      const highestGrade = Math.max(...examGrades.map(grade => (grade.grade / grade.maxScore) * 100));
+      const lowestGrade = Math.min(...examGrades.map(grade => (grade.grade / grade.maxScore) * 100));
+
+      return {
+        averageGrade: Math.round(averageGrade),
+        totalExams: examGrades.length,
+        highestGrade: Math.round(highestGrade),
+        lowestGrade: Math.round(lowestGrade)
+      };
     } else {
       // Stats for assignment grades
       if (grades.length === 0) {
@@ -352,6 +470,13 @@ export default function StudentGrades() {
               >
                 Assignments
               </Button>
+              <Button
+                variant={gradeType === 'exams' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGradeType('exams')}
+              >
+                Exams
+              </Button>
             </div>
           </div>
         </div>
@@ -361,7 +486,7 @@ export default function StudentGrades() {
             <div className="flex items-center gap-3 mb-2">
               <Award size={20} className="text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
-                {gradeType === 'courses' ? 'Average Final Grade' : t('student.grades.averageGrade')}
+                {gradeType === 'courses' ? 'Average Final Grade' : gradeType === 'exams' ? 'Average Exam Grade' : t('student.grades.averageGrade')}
               </span>
             </div>
             <p className="text-3xl font-bold text-blue-900">{stats.averageGrade}%</p>
@@ -371,11 +496,11 @@ export default function StudentGrades() {
             <div className="flex items-center gap-3 mb-2">
               <Award size={20} className="text-green-600" />
               <span className="text-sm font-medium text-green-800">
-                {gradeType === 'courses' ? 'Total Courses' : t('student.grades.totalAssignments')}
+                {gradeType === 'courses' ? 'Total Courses' : gradeType === 'exams' ? 'Total Exams' : t('student.grades.totalAssignments')}
               </span>
             </div>
             <p className="text-3xl font-bold text-green-900">
-              {gradeType === 'courses' ? stats.totalCourses : stats.totalAssignments}
+              {gradeType === 'courses' ? stats.totalCourses : gradeType === 'exams' ? stats.totalExams : stats.totalAssignments}
             </p>
           </div>
           
@@ -459,6 +584,86 @@ export default function StudentGrades() {
                   </div>
                 );
               })
+            ) : gradeType === 'exams' ? (
+              // Exam Grades View - Grouped by Year
+              filteredAndSortedExamGrades.length > 0 ? (
+                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
+                  const yearGrades = filteredAndSortedExamGrades.filter(grade => 
+                    grade.gradedAt.getFullYear().toString() === year
+                  );
+                  
+                  return (
+                    <div key={year} className="border-b border-gray-200 last:border-b-0">
+                      <button
+                        onClick={() => toggleYear(year)}
+                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expandedYears[year] ? (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronRight size={20} className="text-gray-400" />
+                          )}
+                          <span className="font-semibold text-gray-900">{year}</span>
+                        </div>
+                      </button>
+
+                      {expandedYears[year] && yearGrades.length > 0 && (
+                        <div className="pl-8 pb-4 space-y-6">
+                          <div className="border-l-4 border-blue-500 pl-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                            
+                            <div className="overflow-x-auto">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="border-b border-gray-200">
+                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
+                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Auto Score</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Manual Score</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {yearGrades.map((grade) => (
+                                    <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
+                                      <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
+                                      <td className="py-3 px-4 text-center">
+                                        <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                          {grade.grade}/{grade.maxScore}
+                                        </span>
+                                      </td>
+                                      <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                      <td className="py-3 px-4 text-center text-gray-600">{grade.autoScore}</td>
+                                      <td className="py-3 px-4 text-center text-gray-600">{grade.manualScore}</td>
+                                      <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {expandedYears[year] && yearGrades.length === 0 && (
+                        <div className="pl-8 pb-4">
+                          <p className="text-gray-500 italic">No exam grades available for this year</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Exam Grades Yet</h3>
+                  <p className="text-gray-400">Your exam grades will appear here once they're graded by your instructors.</p>
+                </div>
+              )
             ) : (
               // Final Course Grades View - Grouped by Year
               filteredAndSortedFinalGrades.length > 0 ? (

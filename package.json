@@ -16,7 +16,9 @@
     "install:backend": "cd server && npm install",
     "install:all": "npm install && npm run install:backend",
     "seed": "tsx src/scripts/runSeedNode.ts",
-    "seed:clear": "tsx src/scripts/clearSeedNode.ts"
+    "seed:clear": "tsx src/scripts/clearSeedNode.ts",
+    "migrate:hygraph": "tsx scripts/migrate-firebase-to-hygraph.ts",
+    "test:hygraph": "tsx scripts/test-hygraph-connection.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

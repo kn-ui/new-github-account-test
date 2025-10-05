@@ -128,8 +128,7 @@ export default function ExamResults() {
   };
 
   const getMaxScore = () => {
-    if (attempts.length === 0) return 0;
-    return Math.max(...attempts.map(attempt => getTotalScore(attempt)));
+    return exam?.totalPoints || 0;
   };
 
   const getShortAnswerQuestions = () => {

@@ -23,6 +23,11 @@ export default function StudentExamResult() {
         setExam(examData);
         const at = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
         setAttempt(at);
+        
+        // Debug logging
+        console.log('Exam data:', examData);
+        console.log('Attempt data:', at);
+        console.log('Attempt answers:', at?.answers);
       } finally {
         setLoading(false);
       }
@@ -55,7 +60,8 @@ export default function StudentExamResult() {
     return autoScore;
   };
 
-  const autoScore = calculateAutoScore();
+  // Use stored autoScore from attempt if available, otherwise calculate it
+  const autoScore = attempt.autoScore !== undefined ? attempt.autoScore : calculateAutoScore();
   const manualScore = Number(attempt.manualScore || 0);
   const total = autoScore + manualScore;
   const totalPoints = exam.totalPoints || (exam.questions?.reduce((sum: number, q: any) => sum + (q.points || 0), 0) || 0);
@@ -123,7 +129,8 @@ export default function StudentExamResult() {
             </CardHeader>
             <CardContent className="space-y-4">
               {exam.questions.map((question: any, index: number) => {
-                const answer = attempt.answers?.find((a: any) => a.questionId === question.id)?.response;
+                const answerData = attempt.answers?.find((a: any) => a.questionId === question.id);
+                const answer = answerData?.response;
                 const isCorrect = question.type === 'mcq' 
                   ? Number(answer) === Number(question.correct)
                   : question.type === 'truefalse'
@@ -275,7 +282,16 @@ export default function StudentExamResult() {
                       <div className="space-y-2">
                         <div className="p-3 bg-gray-50 border rounded">
                           <div className="text-sm text-gray-600 mb-1">Your Answer:</div>
-                          <div className="text-sm">{answer && String(answer).trim() !== '' ? answer : 'No answer provided'}</div>
+                          <div className="text-sm">
+                            {answer !== undefined && answer !== null && String(answer).trim() !== '' 
+                              ? String(answer).trim() 
+                              : 'No answer provided'
+                            }
+                          </div>
+                          {/* Debug info - remove in production */}
+                          <div className="text-xs text-gray-400 mt-1">
+                            Debug: answer={JSON.stringify(answer)}, answerData={JSON.stringify(answerData)}
+                          </div>
                         </div>
                         <div className="text-xs text-gray-500">This question was manually graded by your instructor.</div>
                       </div>

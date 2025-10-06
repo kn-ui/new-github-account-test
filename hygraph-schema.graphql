@@ -1,0 +1,389 @@
+# Hygraph Schema for St. Raguel School Management System
+# This schema represents the complete data model for the application
+
+# Enums
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum ExamQuestionType {
+  MCQ
+  TRUEFALSE
+  SHORT
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum AnnouncementTarget {
+  ALL_STUDENTS
+  COURSE_STUDENTS
+  SPECIFIC_STUDENT
+}
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum GradeCalculationMethod {
+  WEIGHTED_AVERAGE
+  SIMPLE_AVERAGE
+  MANUAL
+}
+
+enum CertificateType {
+  TOP_PERFORMER
+  PERFECT_ATTENDANCE
+  HOMEWORK_HERO
+  COURSE_COMPLETION
+}
+
+# Main Models
+
+type User @model {
+  id: ID! @unique
+  uid: String! @unique
+  email: String! @unique
+  displayName: String!
+  role: UserRole!
+  isActive: Boolean! @default(value: true)
+  passwordChanged: Boolean! @default(value: false)
+  
+  # Relations
+  coursesAsInstructor: [Course!]! @relation(name: "CourseInstructor")
+  enrollments: [Enrollment!]! @relation(name: "StudentEnrollments")
+  submissions: [Submission!]! @relation(name: "StudentSubmissions")
+  assignments: [Assignment!]! @relation(name: "TeacherAssignments")
+  grades: [Grade!]! @relation(name: "StudentGrades")
+  announcements: [Announcement!]! @relation(name: "AuthorAnnouncements")
+  supportTickets: [SupportTicket!]! @relation(name: "UserTickets")
+  blogPosts: [BlogPost!]! @relation(name: "AuthorBlogs")
+  forumThreads: [ForumThread!]! @relation(name: "AuthorThreads")
+  forumPosts: [ForumPost!]! @relation(name: "AuthorPosts")
+  examAttempts: [ExamAttempt!]! @relation(name: "StudentAttempts")
+  certificates: [Certificate!]! @relation(name: "UserCertificates")
+  activityLogs: [ActivityLog!]! @relation(name: "UserActivity")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Course @model {
+  id: ID! @unique
+  title: String!
+  description: String!
+  category: String!
+  duration: Int!
+  maxStudents: Int!
+  syllabus: String!
+  isActive: Boolean! @default(value: true)
+  
+  # Relations
+  instructor: User! @relation(name: "CourseInstructor")
+  instructorName: String!
+  enrollments: [Enrollment!]! @relation(name: "CourseEnrollments")
+  assignments: [Assignment!]! @relation(name: "CourseAssignments")
+  materials: [CourseMaterial!]! @relation(name: "CourseMaterials")
+  exams: [Exam!]! @relation(name: "CourseExams")
+  announcements: [Announcement!]! @relation(name: "CourseAnnouncements")
+  grades: [Grade!]! @relation(name: "CourseGrades")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Enrollment @model {
+  id: ID! @unique
+  
+  # Relations
+  student: User! @relation(name: "StudentEnrollments")
+  course: Course! @relation(name: "CourseEnrollments")
+  
+  status: EnrollmentStatus!
+  progress: Int! @default(value: 0)
+  completedLessons: [String!]
+  isActive: Boolean! @default(value: true)
+  
+  enrolledAt: DateTime!
+  lastAccessedAt: DateTime!
+}
+
+type Assignment @model {
+  id: ID! @unique
+  title: String!
+  description: String!
+  instructions: String
+  dueDate: DateTime!
+  maxScore: Int!
+  isActive: Boolean! @default(value: true)
+  
+  # Relations
+  course: Course! @relation(name: "CourseAssignments")
+  teacher: User! @relation(name: "TeacherAssignments")
+  submissions: [Submission!]! @relation(name: "AssignmentSubmissions")
+  attachments: [Asset!]
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Submission @model {
+  id: ID! @unique
+  content: String!
+  status: SubmissionStatus!
+  grade: Int
+  feedback: String
+  maxScore: Int
+  isActive: Boolean! @default(value: true)
+  
+  # Relations
+  assignment: Assignment! @relation(name: "AssignmentSubmissions")
+  student: User! @relation(name: "StudentSubmissions")
+  course: Course!
+  attachments: [Asset!]
+  
+  submittedAt: DateTime!
+  updatedAt: DateTime
+}
+
+type CourseMaterial @model {
+  id: ID! @unique
+  title: String!
+  description: String!
+  type: String! # document, video, link, other
+  externalLink: String
+  isActive: Boolean! @default(value: true)
+  
+  # Relations
+  course: Course! @relation(name: "CourseMaterials")
+  file: Asset
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Exam @model {
+  id: ID! @unique
+  title: String!
+  description: String
+  date: DateTime!
+  startTime: DateTime
+  durationMinutes: Int
+  totalPoints: Int!
+  questions: Json # Store questions as JSON
+  firstAttemptTimestamp: DateTime
+  
+  # Relations
+  course: Course! @relation(name: "CourseExams")
+  attempts: [ExamAttempt!]! @relation(name: "ExamAttempts")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ExamAttempt @model {
+  id: ID! @unique
+  status: ExamAttemptStatus!
+  answers: Json # Store answers as JSON
+  autoScore: Int
+  totalAutoPoints: Int
+  manualScore: Int
+  score: Int!
+  feedback: String
+  isGraded: Boolean! @default(value: false)
+  
+  # Relations
+  exam: Exam! @relation(name: "ExamAttempts")
+  student: User! @relation(name: "StudentAttempts")
+  
+  startedAt: DateTime!
+  submittedAt: DateTime
+  updatedAt: DateTime
+}
+
+type Grade @model {
+  id: ID! @unique
+  finalGrade: Float!
+  letterGrade: String!
+  gradePoints: Float!
+  calculationMethod: GradeCalculationMethod!
+  assignmentGrades: Json # Store assignment grades as JSON
+  notes: String
+  
+  # Relations
+  course: Course! @relation(name: "CourseGrades")
+  student: User! @relation(name: "StudentGrades")
+  calculatedBy: String!
+  
+  calculatedAt: DateTime!
+}
+
+type Announcement @model {
+  id: ID! @unique
+  title: String!
+  body: String!
+  targetAudience: AnnouncementTarget
+  externalLink: String
+  
+  # Relations
+  course: Course @relation(name: "CourseAnnouncements")
+  author: User! @relation(name: "AuthorAnnouncements")
+  recipientStudentId: String # For specific student targeting
+  
+  createdAt: DateTime!
+}
+
+type Event @model {
+  id: ID! @unique
+  title: String!
+  description: String!
+  date: DateTime!
+  time: String!
+  location: String!
+  type: String!
+  maxAttendees: Int!
+  currentAttendees: Int! @default(value: 0)
+  status: EventStatus!
+  isActive: Boolean! @default(value: true)
+  
+  createdBy: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ForumThread @model {
+  id: ID! @unique
+  title: String!
+  body: String!
+  category: String
+  likes: Int! @default(value: 0)
+  views: Int! @default(value: 0)
+  
+  # Relations
+  author: User! @relation(name: "AuthorThreads")
+  posts: [ForumPost!]! @relation(name: "ThreadPosts")
+  
+  createdAt: DateTime!
+  lastActivityAt: DateTime!
+  updatedAt: DateTime
+}
+
+type ForumPost @model {
+  id: ID! @unique
+  body: String!
+  likes: Int! @default(value: 0)
+  
+  # Relations
+  thread: ForumThread! @relation(name: "ThreadPosts")
+  author: User! @relation(name: "AuthorPosts")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+type BlogPost @model {
+  id: ID! @unique
+  title: String!
+  content: String!
+  likes: Int! @default(value: 0)
+  
+  # Relations
+  author: User! @relation(name: "AuthorBlogs")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+type SupportTicket @model {
+  id: ID! @unique
+  name: String!
+  email: String!
+  subject: String!
+  message: String!
+  status: SupportTicketStatus!
+  
+  # Relations
+  user: User @relation(name: "UserTickets")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+type EditRequest @model {
+  id: ID! @unique
+  submissionId: String!
+  assignmentId: String!
+  assignmentTitle: String!
+  courseId: String!
+  courseTitle: String!
+  studentId: String!
+  studentName: String!
+  studentEmail: String!
+  teacherId: String!
+  reason: String!
+  status: EditRequestStatus!
+  response: String
+  respondedBy: String
+  isActive: Boolean! @default(value: true)
+  
+  requestedAt: DateTime!
+  respondedAt: DateTime
+}
+
+type Certificate @model {
+  id: ID! @unique
+  type: CertificateType!
+  period: Json # Store period as JSON {start, end}
+  details: Json # Store additional details as JSON
+  
+  # Relations
+  user: User! @relation(name: "UserCertificates")
+  
+  awardedAt: DateTime!
+}
+
+type ActivityLog @model {
+  id: ID! @unique
+  dateKey: String!
+  source: String!
+  
+  # Relations
+  user: User! @relation(name: "UserActivity")
+  
+  createdAt: DateTime!
+}

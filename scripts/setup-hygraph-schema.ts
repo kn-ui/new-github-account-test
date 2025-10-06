@@ -180,6 +180,7 @@ async function setupSchema() {
       { apiId: 'dueDate', displayName: 'Due Date', type: 'DATETIME', isRequired: true },
       { apiId: 'maxScore', displayName: 'Max Score', type: 'INT', isRequired: true },
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
+      { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
     ]);
@@ -192,6 +193,7 @@ async function setupSchema() {
       { apiId: 'feedback', displayName: 'Feedback', type: 'STRING', isTextarea: true },
       { apiId: 'maxScore', displayName: 'Max Score', type: 'INT' },
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
+      { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
     ]);
@@ -203,6 +205,7 @@ async function setupSchema() {
       { apiId: 'type', displayName: 'Type', type: 'STRING', isRequired: true },
       { apiId: 'externalLink', displayName: 'External Link', type: 'STRING' },
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
+      { apiId: 'file', displayName: 'File', type: 'ASSET' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
     ]);
@@ -388,11 +391,13 @@ async function setupSchema() {
       { from: 'Assignment', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseAssignments' },
       { from: 'Assignment', to: 'User', type: 'manyToOne', field: 'teacher', relationName: 'TeacherAssignments' },
       { from: 'Assignment', to: 'Submission', type: 'oneToMany', field: 'submissions', relationName: 'AssignmentSubmissions' },
+      { from: 'Assignment', to: 'Asset', type: 'manyToMany', field: 'attachments', relationName: 'AssignmentAttachments' },
 
       // Submission relations
       { from: 'Submission', to: 'Assignment', type: 'manyToOne', field: 'assignment', relationName: 'AssignmentSubmissions' },
       { from: 'Submission', to: 'User', type: 'manyToOne', field: 'student', relationName: 'StudentSubmissions' },
       { from: 'Submission', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseSubmissions' },
+      { from: 'Submission', to: 'Asset', type: 'manyToMany', field: 'attachments', relationName: 'SubmissionAttachments' },
 
       // Enrollment relations
       { from: 'Enrollment', to: 'User', type: 'manyToOne', field: 'student', relationName: 'StudentEnrollments' },
@@ -400,6 +405,7 @@ async function setupSchema() {
 
       // CourseMaterial relations
       { from: 'CourseMaterial', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseMaterials' },
+      { from: 'CourseMaterial', to: 'Asset', type: 'manyToOne', field: 'file', relationName: 'CourseMaterialFile' },
 
       // Exam relations
       { from: 'Exam', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseExams' },
@@ -438,12 +444,16 @@ async function setupSchema() {
       { from: 'ActivityLog', to: 'User', type: 'manyToOne', field: 'user', relationName: 'UserActivity' }
     ];
 
-    console.log('📋 Relations to create manually in Hygraph dashboard:');
+    console.log(`📋 Relations to create manually in Hygraph dashboard (${relations.length} total):`);
     relations.forEach(relation => {
       console.log(`  ${relation.from}.${relation.field} -> ${relation.to} (${relation.type})`);
     });
 
     console.log('\n✅ Schema setup completed!');
+    console.log(`\n📊 Summary:`);
+    console.log(`  • ${11} Enumerations created`);
+    console.log(`  • ${17} Models created`);
+    console.log(`  • ${relations.length} Relations to create manually`);
     console.log('\n📋 Next Steps:');
     console.log('1. Go to your Hygraph dashboard');
     console.log('2. Create the relations manually using the list above');

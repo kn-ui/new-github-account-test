@@ -106,13 +106,13 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   }));
 
   const mutation = `
-    mutation CreateEnumeration($environmentId: ID!, $apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
+    mutation CreateEnumeration($apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!, $environmentId: ID!) {
       createEnumeration(
-        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
           values: $values
+          environmentId: $environmentId
         }
       ) {
         __typename # Requesting __typename ensures a valid, minimal payload is returned
@@ -121,10 +121,10 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId, 
     apiId, 
     displayName, 
-    values: formattedValues 
+    values: formattedValues,
+    environmentId 
   });
   
   // Add a small delay for Hygraph to process the async operation
@@ -137,13 +137,13 @@ async function createModel(apiId: string, displayName: string, fields: any[], en
   
   // NOTE: The management API for model creation requires environmentId
   const mutation = `
-    mutation CreateModel($environmentId: ID!, $apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
+    mutation CreateModel($apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!, $environmentId: ID!) {
       createModel(
-        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
           fields: $fields
+          environmentId: $environmentId
         }
       ) {
         __typename # Requesting __typename ensures a valid, minimal payload is returned
@@ -152,10 +152,10 @@ async function createModel(apiId: string, displayName: string, fields: any[], en
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId,
     apiId, 
     displayName, 
-    fields 
+    fields,
+    environmentId 
   });
 
   // Add a small delay for Hygraph to process the async operation

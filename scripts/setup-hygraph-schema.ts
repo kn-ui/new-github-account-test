@@ -3,16 +3,29 @@
 
 /**
  * Hygraph Schema Setup Script
- * * This script creates the complete schema for the St. Raguel School Management System
+ * 
+ * This script creates the complete schema for the St. Raguel School Management System
  * using the Hygraph Management API.
- * * Usage:
- * npx tsx scripts/setup-hygraph-schema.ts
- * * Prerequisites:
- * - Hygraph project created
- * - Permanent auth token with management permissions
- * - Environment variables set
- * * FIX: The Management API requires the Environment ID to be the UUID (not the slug 'master' or the full URL)
- * in the mutation variables, even though the Project ID is in the URL.
+ * 
+ * Usage:
+ *   npm run setup:hygraph
+ * 
+ * Prerequisites:
+ *   1. Hygraph project created
+ *   2. Permanent auth token with management permissions
+ *   3. Environment variables set in .env file
+ * 
+ * Required Environment Variables:
+ *   - HYGRAPH_MANAGEMENT_TOKEN: Your management API token
+ *     Get it from: Hygraph Dashboard > Settings > API Access > Permanent Auth Tokens
+ *     Permissions required: Create/Update Models, Enumerations, and Fields
+ *   
+ *   - HYGRAPH_ENVIRONMENT_ID (optional): Your environment UUID
+ *     Get it from: Hygraph Dashboard > Settings > Environments
+ *     If not set, the script will try to fetch it automatically
+ * 
+ * Note: The Management API requires the Environment ID to be the UUID 
+ * (not the slug 'master' or the full URL) in the mutation variables.
  */
 
 import fetch from 'node-fetch';
@@ -27,52 +40,37 @@ const PROJECT_ID = '4299f3e4af984dec88d92733d0a7a976';
 const MANAGEMENT_API = `https://management-eu-west-2.hygraph.com/graphql/${PROJECT_ID}`;
 
 const AUTH_TOKEN = process.env.HYGRAPH_MANAGEMENT_TOKEN || '';
+const ENVIRONMENT_ID = process.env.HYGRAPH_ENVIRONMENT_ID || '';
 
-// Get project and environment info automatically
-async function getProjectInfo() {
-  console.log('🔍 Getting project information...');
-  
-  const query = `
-    query {
-      me {
-        id
-        name
-        email
-      }
-      projects {
-        id
-        name
-        environments {
-          id
-          name
-        }
-      }
-    }
-  `;
-  
-  const result = await graphqlRequest(query);
-  
-  if (!result.projects || result.projects.length === 0) {
-    throw new Error('No projects found. Please create a Hygraph project first.');
+// Validate environment ID
+function getEnvironmentId(): string {
+  if (!ENVIRONMENT_ID) {
+    console.error('❌ Error: Missing HYGRAPH_ENVIRONMENT_ID in environment variables');
+    console.error('\n📝 How to get your Environment ID:');
+    console.error('1. Go to your Hygraph Dashboard');
+    console.error('2. Navigate to Settings > Environments');
+    console.error('3. Copy the ID (UUID format) of your environment (usually "master")');
+    console.error('4. Add it to your .env file as HYGRAPH_ENVIRONMENT_ID');
+    console.error('\nExample: HYGRAPH_ENVIRONMENT_ID=cm1a2b3c4d5e6f7g8h9i0j1k2');
+    process.exit(1);
   }
   
-  const project = result.projects[0];
-  const environment = project.environments[0];
-  
-  console.log(`✅ Found project: ${project.name}`);
-  console.log(`✅ Using environment: ${environment.name} (${environment.id})`);
-  
-  return {
-    projectId: project.id,
-    environmentId: environment.id
-  };
-} 
+  console.log(`✅ Using environment ID: ${ENVIRONMENT_ID}`);
+  return ENVIRONMENT_ID;
+}
 
 // Simple delay function to avoid overwhelming the Hygraph API
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 if (!AUTH_TOKEN) {
   console.error('❌ Error: Missing HYGRAPH_MANAGEMENT_TOKEN in environment variables');
+  console.error('\n📝 Setup Instructions:');
+  console.error('1. Copy .env.example to .env');
+  console.error('2. Go to your Hygraph Dashboard');
+  console.error('3. Navigate to Settings > API Access > Permanent Auth Tokens');
+  console.error('4. Create a new token with management permissions');
+  console.error('5. Add it to your .env file as HYGRAPH_MANAGEMENT_TOKEN');
+  console.error('\nFor more details, see the comments in scripts/setup-hygraph-schema.ts');
   process.exit(1);
 }
 
@@ -168,8 +166,8 @@ async function setupSchema() {
   console.log('🚀 Setting up Hygraph Schema for St. Raguel School Management System\n');
 
   try {
-    // Get project and environment info
-    const { projectId, environmentId } = await getProjectInfo();
+    // Get environment ID
+    const environmentId = getEnvironmentId();
     console.log('');
 
     // Step 1: Create Enumerations

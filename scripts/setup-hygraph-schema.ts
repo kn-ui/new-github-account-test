@@ -49,16 +49,14 @@ function getEnvironmentId(): string {
     console.error('\n📝 How to get your Environment ID:');
     console.error('1. Go to your Hygraph Dashboard');
     console.error('2. Navigate to Settings > Environments');
-    console.error('3. Copy the slug of your environment (usually "master")');
+    console.error('3. Copy the ID (UUID format) of your environment (usually "master")');
     console.error('4. Add it to your .env file as HYGRAPH_ENVIRONMENT_ID');
-    console.error('\nExample: HYGRAPH_ENVIRONMENT_ID=master');
+    console.error('\nExample: HYGRAPH_ENVIRONMENT_ID=cm1a2b3c4d5e6f7g8h9i0j1k2');
     process.exit(1);
   }
   
-  // Try to use the environment ID as provided, or fallback to "master"
-  const envId = ENVIRONMENT_ID || 'master';
-  console.log(`✅ Using environment ID: ${envId}`);
-  return envId;
+  console.log(`✅ Using environment ID: ${ENVIRONMENT_ID}`);
+  return ENVIRONMENT_ID;
 }
 
 // Simple delay function to avoid overwhelming the Hygraph API
@@ -108,8 +106,9 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   }));
 
   const mutation = `
-    mutation CreateEnumeration($apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
+    mutation CreateEnumeration($environmentId: ID!, $apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
       createEnumeration(
+        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
@@ -122,6 +121,7 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   `;
   
   await graphqlRequest(mutation, { 
+    environmentId, 
     apiId, 
     displayName, 
     values: formattedValues 
@@ -135,10 +135,11 @@ async function createEnumeration(apiId: string, displayName: string, values: str
 async function createModel(apiId: string, displayName: string, fields: any[], environmentId: string) {
   console.log(`  Creating model: ${displayName}`);
   
-  // NOTE: The management API for model creation may not require environmentId
+  // NOTE: The management API for model creation requires environmentId
   const mutation = `
-    mutation CreateModel($apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
+    mutation CreateModel($environmentId: ID!, $apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
       createModel(
+        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
@@ -151,6 +152,7 @@ async function createModel(apiId: string, displayName: string, fields: any[], en
   `;
   
   await graphqlRequest(mutation, { 
+    environmentId,
     apiId, 
     displayName, 
     fields 

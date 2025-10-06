@@ -20,7 +20,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const MANAGEMENT_API = 'https://management.hygraph.com/graphql';
+const MANAGEMENT_API = 'https://management-eu-west-2.hygraph.com/graphql';
 const AUTH_TOKEN = process.env.HYGRAPH_MANAGEMENT_TOKEN || '';
 
 if (!AUTH_TOKEN) {

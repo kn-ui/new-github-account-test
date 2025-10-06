@@ -28,10 +28,45 @@ const MANAGEMENT_API = `https://management-eu-west-2.hygraph.com/graphql/${PROJE
 
 const AUTH_TOKEN = process.env.HYGRAPH_MANAGEMENT_TOKEN || '';
 
-// >>> CRITICAL: This was previously an invalid URL. You MUST replace this value with the actual 26-character Environment UUID. <<<
-// This must be the 26-character Environment UUID (e.g., 'clp7a8m1g000001qj9x71000b'), NOT the Project ID or the URL.
-// Find this ID in Hygraph Dashboard -> Settings -> Environments.
-const ENVIRONMENT_ID = 'cmfa67lik01gq07wcjfncgxv0'; 
+// Get project and environment info automatically
+async function getProjectInfo() {
+  console.log('🔍 Getting project information...');
+  
+  const query = `
+    query {
+      me {
+        id
+        name
+        email
+      }
+      projects {
+        id
+        name
+        environments {
+          id
+          name
+        }
+      }
+    }
+  `;
+  
+  const result = await graphqlRequest(query);
+  
+  if (!result.projects || result.projects.length === 0) {
+    throw new Error('No projects found. Please create a Hygraph project first.');
+  }
+  
+  const project = result.projects[0];
+  const environment = project.environments[0];
+  
+  console.log(`✅ Found project: ${project.name}`);
+  console.log(`✅ Using environment: ${environment.name} (${environment.id})`);
+  
+  return {
+    projectId: project.id,
+    environmentId: environment.id
+  };
+} 
 
 // Simple delay function to avoid overwhelming the Hygraph API
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -63,7 +98,7 @@ async function graphqlRequest(query: string, variables: any = {}) {
 }
 
 // Create enumeration
-async function createEnumeration(apiId: string, displayName: string, values: string[]) {
+async function createEnumeration(apiId: string, displayName: string, values: string[], environmentId: string) {
   console.log(`  Creating enumeration: ${displayName}`);
   
   // Convert simple string array to the required EnumerationValueCreateInput format
@@ -75,8 +110,8 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   const mutation = `
     mutation CreateEnumeration($environmentId: ID!, $apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
       createEnumeration(
+        environmentId: $environmentId
         data: {
-          environmentId: $environmentId
           apiId: $apiId
           displayName: $displayName
           values: $values
@@ -88,7 +123,7 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId: ENVIRONMENT_ID, 
+    environmentId, 
     apiId, 
     displayName, 
     values: formattedValues 
@@ -99,15 +134,15 @@ async function createEnumeration(apiId: string, displayName: string, values: str
 }
 
 // Create model
-async function createModel(apiId: string, displayName: string, fields: any[]) {
+async function createModel(apiId: string, displayName: string, fields: any[], environmentId: string) {
   console.log(`  Creating model: ${displayName}`);
   
   // NOTE: The management API for model creation requires environmentId
   const mutation = `
     mutation CreateModel($environmentId: ID!, $apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
       createModel(
+        environmentId: $environmentId
         data: {
-          environmentId: $environmentId
           apiId: $apiId
           displayName: $displayName
           fields: $fields
@@ -119,7 +154,7 @@ async function createModel(apiId: string, displayName: string, fields: any[]) {
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId: ENVIRONMENT_ID,
+    environmentId,
     apiId, 
     displayName, 
     fields 
@@ -130,36 +165,27 @@ async function createModel(apiId: string, displayName: string, fields: any[]) {
 }
 
 async function setupSchema() {
-  // CRITICAL VALIDATION CHECK
-  if (ENVIRONMENT_ID === 'PASTE_YOUR_26_CHARACTER_ENVIRONMENT_UUID_HERE' || ENVIRONMENT_ID.includes('http') || ENVIRONMENT_ID.length < 20) {
-    console.error('\n🛑 CRITICAL ERROR: Invalid ENVIRONMENT_ID provided.');
-    console.error('   The ID you provided is either the default placeholder, the full URL, or too short.');
-    console.error('   You must use the 26-character UUID of your master environment.');
-    console.error('   1. Go to Hygraph Dashboard -> Settings -> Environments.');
-    console.error('   2. Copy the long ID next to the "master" environment.');
-    console.error('   3. Replace the placeholder in the script (line ~25) with *only* that ID.');
-    process.exit(1);
-  }
-
   console.log('🚀 Setting up Hygraph Schema for St. Raguel School Management System\n');
-  console.log(`📡 Using Management API Endpoint: ${MANAGEMENT_API}`);
-  console.log(`🌎 Target Environment UUID: ${ENVIRONMENT_ID}\n`);
 
   try {
+    // Get project and environment info
+    const { projectId, environmentId } = await getProjectInfo();
+    console.log('');
+
     // Step 1: Create Enumerations
     console.log('📋 Creating Enumerations...');
     
-    await createEnumeration('UserRole', 'User Role', ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN']);
-    await createEnumeration('EnrollmentStatus', 'Enrollment Status', ['ACTIVE', 'COMPLETED', 'DROPPED']);
-    await createEnumeration('SubmissionStatus', 'Submission Status', ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED']);
-    await createEnumeration('ExamQuestionType', 'Exam Question Type', ['MCQ', 'TRUEFALSE', 'SHORT']);
-    await createEnumeration('ExamAttemptStatus', 'Exam Attempt Status', ['IN_PROGRESS', 'SUBMITTED', 'GRADED']);
-    await createEnumeration('SupportTicketStatus', 'Support Ticket Status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']);
-    await createEnumeration('AnnouncementTarget', 'Announcement Target', ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT']);
-    await createEnumeration('EditRequestStatus', 'Edit Request Status', ['PENDING', 'APPROVED', 'DENIED']);
-    await createEnumeration('EventStatus', 'Event Status', ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED']);
-    await createEnumeration('GradeCalculationMethod', 'Grade Calculation Method', ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL']);
-    await createEnumeration('CertificateType', 'Certificate Type', ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION']);
+    await createEnumeration('UserRole', 'User Role', ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'], environmentId);
+    await createEnumeration('EnrollmentStatus', 'Enrollment Status', ['ACTIVE', 'COMPLETED', 'DROPPED'], environmentId);
+    await createEnumeration('SubmissionStatus', 'Submission Status', ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED'], environmentId);
+    await createEnumeration('ExamQuestionType', 'Exam Question Type', ['MCQ', 'TRUEFALSE', 'SHORT'], environmentId);
+    await createEnumeration('ExamAttemptStatus', 'Exam Attempt Status', ['IN_PROGRESS', 'SUBMITTED', 'GRADED'], environmentId);
+    await createEnumeration('SupportTicketStatus', 'Support Ticket Status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], environmentId);
+    await createEnumeration('AnnouncementTarget', 'Announcement Target', ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT'], environmentId);
+    await createEnumeration('EditRequestStatus', 'Edit Request Status', ['PENDING', 'APPROVED', 'DENIED'], environmentId);
+    await createEnumeration('EventStatus', 'Event Status', ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'], environmentId);
+    await createEnumeration('GradeCalculationMethod', 'Grade Calculation Method', ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL'], environmentId);
+    await createEnumeration('CertificateType', 'Certificate Type', ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION'], environmentId);
 
     console.log('✅ Enumerations created successfully\n');
 
@@ -176,7 +202,7 @@ async function setupSchema() {
       { apiId: 'passwordChanged', displayName: 'Password Changed', type: 'BOOLEAN', defaultValue: false, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Course Model
     await createModel('Course', 'Course', [
@@ -190,7 +216,7 @@ async function setupSchema() {
       { apiId: 'instructorName', displayName: 'Instructor Name', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Enrollment Model
     await createModel('Enrollment', 'Enrollment', [
@@ -200,7 +226,7 @@ async function setupSchema() {
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
       { apiId: 'enrolledAt', displayName: 'Enrolled At', type: 'DATETIME', isRequired: true },
       { apiId: 'lastAccessedAt', displayName: 'Last Accessed At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Assignment Model
     await createModel('Assignment', 'Assignment', [
@@ -213,7 +239,7 @@ async function setupSchema() {
       { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Submission Model
     await createModel('Submission', 'Submission', [
@@ -226,7 +252,7 @@ async function setupSchema() {
       { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
+    ], environmentId);
 
     // CourseMaterial Model
     await createModel('CourseMaterial', 'Course Material', [
@@ -238,7 +264,7 @@ async function setupSchema() {
       { apiId: 'file', displayName: 'File', type: 'ASSET' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Exam Model
     await createModel('Exam', 'Exam', [
@@ -252,7 +278,7 @@ async function setupSchema() {
       { apiId: 'firstAttemptTimestamp', displayName: 'First Attempt Timestamp', type: 'DATETIME' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // ExamAttempt Model
     await createModel('ExamAttempt', 'Exam Attempt', [
@@ -267,7 +293,7 @@ async function setupSchema() {
       { apiId: 'startedAt', displayName: 'Started At', type: 'DATETIME', isRequired: true },
       { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME' },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
+    ], environmentId);
 
     // Grade Model
     await createModel('Grade', 'Grade', [
@@ -279,7 +305,7 @@ async function setupSchema() {
       { apiId: 'notes', displayName: 'Notes', type: 'STRING', isTextarea: true },
       { apiId: 'calculatedBy', displayName: 'Calculated By', type: 'STRING', isRequired: true },
       { apiId: 'calculatedAt', displayName: 'Calculated At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Announcement Model
     await createModel('Announcement', 'Announcement', [
@@ -289,7 +315,7 @@ async function setupSchema() {
       { apiId: 'externalLink', displayName: 'External Link', type: 'STRING' },
       { apiId: 'recipientStudentId', displayName: 'Recipient Student ID', type: 'STRING' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // Event Model
     await createModel('Event', 'Event', [
@@ -306,7 +332,7 @@ async function setupSchema() {
       { apiId: 'createdBy', displayName: 'Created By', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // ForumThread Model
     await createModel('ForumThread', 'Forum Thread', [
@@ -318,7 +344,7 @@ async function setupSchema() {
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'lastActivityAt', displayName: 'Last Activity At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
+    ], environmentId);
 
     // ForumPost Model
     await createModel('ForumPost', 'Forum Post', [
@@ -326,7 +352,7 @@ async function setupSchema() {
       { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
+    ], environmentId);
 
     // BlogPost Model
     await createModel('BlogPost', 'Blog Post', [
@@ -335,7 +361,7 @@ async function setupSchema() {
       { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // SupportTicket Model
     await createModel('SupportTicket', 'Support Ticket', [
@@ -346,7 +372,7 @@ async function setupSchema() {
       { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'SupportTicketStatus', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // EditRequest Model
     await createModel('EditRequest', 'Edit Request', [
@@ -366,7 +392,7 @@ async function setupSchema() {
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
       { apiId: 'requestedAt', displayName: 'Requested At', type: 'DATETIME', isRequired: true },
       { apiId: 'respondedAt', displayName: 'Responded At', type: 'DATETIME' }
-    ]);
+    ], environmentId);
 
     // Certificate Model
     await createModel('Certificate', 'Certificate', [
@@ -374,14 +400,14 @@ async function setupSchema() {
       { apiId: 'period', displayName: 'Period', type: 'JSON' },
       { apiId: 'details', displayName: 'Details', type: 'JSON' },
       { apiId: 'awardedAt', displayName: 'Awarded At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     // ActivityLog Model
     await createModel('ActivityLog', 'Activity Log', [
       { apiId: 'dateKey', displayName: 'Date Key', type: 'STRING', isRequired: true },
       { apiId: 'source', displayName: 'Source', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ]);
+    ], environmentId);
 
     console.log('✅ Models created successfully\n');
 

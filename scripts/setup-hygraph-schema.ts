@@ -34,45 +34,51 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // CONFIGURATION 
-const PROJECT_ID = '4299f3e4af984dec88d92733d0a7a976'; 
-
-// Management API endpoint now includes the Project ID
-const MANAGEMENT_API = `https://management-eu-west-2.hygraph.com/graphql/${PROJECT_ID}`;
-
+const PROJECT_ID = process.env.HYGRAPH_PROJECT_ID || '';
+const MANAGEMENT_API = process.env.HYGRAPH_MANAGEMENT_API || '';
 const AUTH_TOKEN = process.env.HYGRAPH_MANAGEMENT_TOKEN || '';
 const ENVIRONMENT_ID = process.env.HYGRAPH_ENVIRONMENT_ID || '';
 
-// Validate environment ID
-function getEnvironmentId(): string {
+// Validate all required environment variables
+function validateEnvironment(): void {
+  const errors: string[] = [];
+
+  if (!PROJECT_ID) {
+    errors.push('❌ HYGRAPH_PROJECT_ID is missing');
+  }
+
+  if (!MANAGEMENT_API) {
+    errors.push('❌ HYGRAPH_MANAGEMENT_API is missing');
+  }
+
+  if (!AUTH_TOKEN) {
+    errors.push('❌ HYGRAPH_MANAGEMENT_TOKEN is missing');
+  }
+
   if (!ENVIRONMENT_ID) {
-    console.error('❌ Error: Missing HYGRAPH_ENVIRONMENT_ID in environment variables');
-    console.error('\n📝 How to get your Environment ID:');
-    console.error('1. Go to your Hygraph Dashboard');
-    console.error('2. Navigate to Settings > Environments');
-    console.error('3. Copy the ID (UUID format) of your environment (usually "master")');
-    console.error('4. Add it to your .env file as HYGRAPH_ENVIRONMENT_ID');
-    console.error('\nExample: HYGRAPH_ENVIRONMENT_ID=cm1a2b3c4d5e6f7g8h9i0j1k2');
+    errors.push('❌ HYGRAPH_ENVIRONMENT_ID is missing');
+  }
+
+  if (errors.length > 0) {
+    console.error('🚨 Missing required environment variables:\n');
+    errors.forEach(error => console.error(error));
+    console.error('\n📝 Setup Instructions:');
+    console.error('1. Make sure your .env file contains all required variables');
+    console.error('2. HYGRAPH_PROJECT_ID: Your project UUID');
+    console.error('3. HYGRAPH_ENVIRONMENT_ID: Your environment UUID (different from project ID)');
+    console.error('4. HYGRAPH_MANAGEMENT_API: The management API endpoint with project ID');
+    console.error('5. HYGRAPH_MANAGEMENT_TOKEN: Your permanent auth token with management permissions');
+    console.error('\nFor more details, see the .env.example file');
     process.exit(1);
   }
-  
+
+  console.log(`✅ Using project ID: ${PROJECT_ID}`);
   console.log(`✅ Using environment ID: ${ENVIRONMENT_ID}`);
-  return ENVIRONMENT_ID;
+  console.log(`✅ Using management API: ${MANAGEMENT_API}\n`);
 }
 
 // Simple delay function to avoid overwhelming the Hygraph API
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-if (!AUTH_TOKEN) {
-  console.error('❌ Error: Missing HYGRAPH_MANAGEMENT_TOKEN in environment variables');
-  console.error('\n📝 Setup Instructions:');
-  console.error('1. Copy .env.example to .env');
-  console.error('2. Go to your Hygraph Dashboard');
-  console.error('3. Navigate to Settings > API Access > Permanent Auth Tokens');
-  console.error('4. Create a new token with management permissions');
-  console.error('5. Add it to your .env file as HYGRAPH_MANAGEMENT_TOKEN');
-  console.error('\nFor more details, see the comments in scripts/setup-hygraph-schema.ts');
-  process.exit(1);
-}
 
 // Helper function to make GraphQL requests
 async function graphqlRequest(query: string, variables: any = {}) {
@@ -166,24 +172,23 @@ async function setupSchema() {
   console.log('🚀 Setting up Hygraph Schema for St. Raguel School Management System\n');
 
   try {
-    // Get environment ID
-    const environmentId = getEnvironmentId();
-    console.log('');
+    // Validate environment variables
+    validateEnvironment();
 
     // Step 1: Create Enumerations
     console.log('📋 Creating Enumerations...');
     
-    await createEnumeration('UserRole', 'User Role', ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'], environmentId);
-    await createEnumeration('EnrollmentStatus', 'Enrollment Status', ['ACTIVE', 'COMPLETED', 'DROPPED'], environmentId);
-    await createEnumeration('SubmissionStatus', 'Submission Status', ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED'], environmentId);
-    await createEnumeration('ExamQuestionType', 'Exam Question Type', ['MCQ', 'TRUEFALSE', 'SHORT'], environmentId);
-    await createEnumeration('ExamAttemptStatus', 'Exam Attempt Status', ['IN_PROGRESS', 'SUBMITTED', 'GRADED'], environmentId);
-    await createEnumeration('SupportTicketStatus', 'Support Ticket Status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], environmentId);
-    await createEnumeration('AnnouncementTarget', 'Announcement Target', ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT'], environmentId);
-    await createEnumeration('EditRequestStatus', 'Edit Request Status', ['PENDING', 'APPROVED', 'DENIED'], environmentId);
-    await createEnumeration('EventStatus', 'Event Status', ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'], environmentId);
-    await createEnumeration('GradeCalculationMethod', 'Grade Calculation Method', ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL'], environmentId);
-    await createEnumeration('CertificateType', 'Certificate Type', ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION'], environmentId);
+    await createEnumeration('UserRole', 'User Role', ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'], ENVIRONMENT_ID);
+    await createEnumeration('EnrollmentStatus', 'Enrollment Status', ['ACTIVE', 'COMPLETED', 'DROPPED'], ENVIRONMENT_ID);
+    await createEnumeration('SubmissionStatus', 'Submission Status', ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED'], ENVIRONMENT_ID);
+    await createEnumeration('ExamQuestionType', 'Exam Question Type', ['MCQ', 'TRUEFALSE', 'SHORT'], ENVIRONMENT_ID);
+    await createEnumeration('ExamAttemptStatus', 'Exam Attempt Status', ['IN_PROGRESS', 'SUBMITTED', 'GRADED'], ENVIRONMENT_ID);
+    await createEnumeration('SupportTicketStatus', 'Support Ticket Status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], ENVIRONMENT_ID);
+    await createEnumeration('AnnouncementTarget', 'Announcement Target', ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT'], ENVIRONMENT_ID);
+    await createEnumeration('EditRequestStatus', 'Edit Request Status', ['PENDING', 'APPROVED', 'DENIED'], ENVIRONMENT_ID);
+    await createEnumeration('EventStatus', 'Event Status', ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'], ENVIRONMENT_ID);
+    await createEnumeration('GradeCalculationMethod', 'Grade Calculation Method', ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL'], ENVIRONMENT_ID);
+    await createEnumeration('CertificateType', 'Certificate Type', ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION'], ENVIRONMENT_ID);
 
     console.log('✅ Enumerations created successfully\n');
 
@@ -200,7 +205,7 @@ async function setupSchema() {
       { apiId: 'passwordChanged', displayName: 'Password Changed', type: 'BOOLEAN', defaultValue: false, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Course Model
     await createModel('Course', 'Course', [
@@ -214,7 +219,7 @@ async function setupSchema() {
       { apiId: 'instructorName', displayName: 'Instructor Name', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Enrollment Model
     await createModel('Enrollment', 'Enrollment', [
@@ -224,7 +229,7 @@ async function setupSchema() {
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
       { apiId: 'enrolledAt', displayName: 'Enrolled At', type: 'DATETIME', isRequired: true },
       { apiId: 'lastAccessedAt', displayName: 'Last Accessed At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Assignment Model
     await createModel('Assignment', 'Assignment', [
@@ -237,7 +242,7 @@ async function setupSchema() {
       { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Submission Model
     await createModel('Submission', 'Submission', [
@@ -250,7 +255,7 @@ async function setupSchema() {
       { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
       { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // CourseMaterial Model
     await createModel('CourseMaterial', 'Course Material', [
@@ -262,7 +267,7 @@ async function setupSchema() {
       { apiId: 'file', displayName: 'File', type: 'ASSET' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Exam Model
     await createModel('Exam', 'Exam', [
@@ -276,7 +281,7 @@ async function setupSchema() {
       { apiId: 'firstAttemptTimestamp', displayName: 'First Attempt Timestamp', type: 'DATETIME' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // ExamAttempt Model
     await createModel('ExamAttempt', 'Exam Attempt', [
@@ -291,7 +296,7 @@ async function setupSchema() {
       { apiId: 'startedAt', displayName: 'Started At', type: 'DATETIME', isRequired: true },
       { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME' },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Grade Model
     await createModel('Grade', 'Grade', [
@@ -303,7 +308,7 @@ async function setupSchema() {
       { apiId: 'notes', displayName: 'Notes', type: 'STRING', isTextarea: true },
       { apiId: 'calculatedBy', displayName: 'Calculated By', type: 'STRING', isRequired: true },
       { apiId: 'calculatedAt', displayName: 'Calculated At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Announcement Model
     await createModel('Announcement', 'Announcement', [
@@ -313,7 +318,7 @@ async function setupSchema() {
       { apiId: 'externalLink', displayName: 'External Link', type: 'STRING' },
       { apiId: 'recipientStudentId', displayName: 'Recipient Student ID', type: 'STRING' },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Event Model
     await createModel('Event', 'Event', [
@@ -330,7 +335,7 @@ async function setupSchema() {
       { apiId: 'createdBy', displayName: 'Created By', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // ForumThread Model
     await createModel('ForumThread', 'Forum Thread', [
@@ -342,7 +347,7 @@ async function setupSchema() {
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'lastActivityAt', displayName: 'Last Activity At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // ForumPost Model
     await createModel('ForumPost', 'Forum Post', [
@@ -350,7 +355,7 @@ async function setupSchema() {
       { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // BlogPost Model
     await createModel('BlogPost', 'Blog Post', [
@@ -359,7 +364,7 @@ async function setupSchema() {
       { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // SupportTicket Model
     await createModel('SupportTicket', 'Support Ticket', [
@@ -370,7 +375,7 @@ async function setupSchema() {
       { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'SupportTicketStatus', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
       { apiId: 'updatedAt', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // EditRequest Model
     await createModel('EditRequest', 'Edit Request', [
@@ -390,7 +395,7 @@ async function setupSchema() {
       { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
       { apiId: 'requestedAt', displayName: 'Requested At', type: 'DATETIME', isRequired: true },
       { apiId: 'respondedAt', displayName: 'Responded At', type: 'DATETIME' }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // Certificate Model
     await createModel('Certificate', 'Certificate', [
@@ -398,14 +403,14 @@ async function setupSchema() {
       { apiId: 'period', displayName: 'Period', type: 'JSON' },
       { apiId: 'details', displayName: 'Details', type: 'JSON' },
       { apiId: 'awardedAt', displayName: 'Awarded At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     // ActivityLog Model
     await createModel('ActivityLog', 'Activity Log', [
       { apiId: 'dateKey', displayName: 'Date Key', type: 'STRING', isRequired: true },
       { apiId: 'source', displayName: 'Source', type: 'STRING', isRequired: true },
       { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ], environmentId);
+    ], ENVIRONMENT_ID);
 
     console.log('✅ Models created successfully\n');
 

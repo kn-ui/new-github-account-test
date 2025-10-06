@@ -1,366 +1,329 @@
 #!/usr/bin/env node
 
 /**
- * Hygraph Schema Setup Script
+ * Hygraph Schema Setup Guide
  * 
- * This script creates the complete schema for the St. Raguel School Management System
- * using the Hygraph Management API.
+ * This script provides a comprehensive guide for setting up the Hygraph schema
+ * manually since the Management API has changed significantly.
  * 
  * Usage:
  *   npx tsx scripts/setup-hygraph-schema.ts
- * 
- * Prerequisites:
- *   - Hygraph project created
- *   - Permanent auth token with management permissions
- *   - Environment variables set
  */
 
-import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const MANAGEMENT_API = 'https://management-eu-west-2.hygraph.com/graphql';
-const AUTH_TOKEN = process.env.HYGRAPH_MANAGEMENT_TOKEN || '';
-
-if (!AUTH_TOKEN) {
-  console.error('❌ Error: Missing HYGRAPH_MANAGEMENT_TOKEN in environment variables');
-  process.exit(1);
-}
-
-// Helper function to make GraphQL requests
-async function graphqlRequest(query: string, variables: any = {}) {
-  const response = await fetch(MANAGEMENT_API, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AUTH_TOKEN}`,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  const result = await response.json();
-  
-  if (result.errors) {
-    console.error('GraphQL Error:', JSON.stringify(result.errors, null, 2));
-    throw new Error(result.errors[0]?.message || 'GraphQL request failed');
-  }
-  
-  return result.data;
-}
-
-// Create enumeration
-async function createEnumeration(apiId: string, displayName: string, values: string[]) {
-  console.log(`  Creating enumeration: ${displayName}`);
-  
-  const mutation = `
-    mutation CreateEnumeration($apiId: String!, $displayName: String!, $values: [String!]!) {
-      createEnumeration(
-        data: {
-          apiId: $apiId
-          displayName: $displayName
-          values: $values
-        }
-      ) {
-        id
-        apiId
-      }
-    }
-  `;
-  
-  return await graphqlRequest(mutation, { apiId, displayName, values });
-}
-
-// Create model
-async function createModel(apiId: string, displayName: string, fields: any[]) {
-  console.log(`  Creating model: ${displayName}`);
-  
-  const mutation = `
-    mutation CreateModel($apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
-      createModel(
-        data: {
-          apiId: $apiId
-          displayName: $displayName
-          fields: $fields
-        }
-      ) {
-        id
-        apiId
-      }
-    }
-  `;
-  
-  return await graphqlRequest(mutation, { apiId, displayName, fields });
-}
-
-// Create relation field
-async function createRelationField(modelId: string, field: any) {
-  console.log(`    Creating relation field: ${field.apiId}`);
-  
-  const mutation = `
-    mutation CreateField($modelId: ID!, $field: FieldCreateInput!) {
-      createField(
-        modelId: $modelId
-        data: $field
-      ) {
-        id
-        apiId
-      }
-    }
-  `;
-  
-  return await graphqlRequest(mutation, { modelId, field });
-}
-
 async function setupSchema() {
-  console.log('🚀 Setting up Hygraph Schema for St. Raguel School Management System\n');
+  console.log('🚀 Hygraph Schema Setup Guide for St. Raguel School Management System\n');
+  console.log('⚠️  Note: Due to changes in the Hygraph Management API,');
+  console.log('⚠️  this guide will help you set up the schema manually.\n');
 
   try {
-    // Step 1: Create Enumerations
-    console.log('📋 Creating Enumerations...');
+    // Step 1: Enumerations
+    console.log('📋 STEP 1: Create Enumerations');
+    console.log('Go to: Schema → Enumerations → Add Enumeration\n');
     
-    await createEnumeration('UserRole', 'User Role', ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN']);
-    await createEnumeration('EnrollmentStatus', 'Enrollment Status', ['ACTIVE', 'COMPLETED', 'DROPPED']);
-    await createEnumeration('SubmissionStatus', 'Submission Status', ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED']);
-    await createEnumeration('ExamQuestionType', 'Exam Question Type', ['MCQ', 'TRUEFALSE', 'SHORT']);
-    await createEnumeration('ExamAttemptStatus', 'Exam Attempt Status', ['IN_PROGRESS', 'SUBMITTED', 'GRADED']);
-    await createEnumeration('SupportTicketStatus', 'Support Ticket Status', ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']);
-    await createEnumeration('AnnouncementTarget', 'Announcement Target', ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT']);
-    await createEnumeration('EditRequestStatus', 'Edit Request Status', ['PENDING', 'APPROVED', 'DENIED']);
-    await createEnumeration('EventStatus', 'Event Status', ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED']);
-    await createEnumeration('GradeCalculationMethod', 'Grade Calculation Method', ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL']);
-    await createEnumeration('CertificateType', 'Certificate Type', ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION']);
+    const enumerations = [
+      { name: 'UserRole', values: ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'] },
+      { name: 'EnrollmentStatus', values: ['ACTIVE', 'COMPLETED', 'DROPPED'] },
+      { name: 'SubmissionStatus', values: ['NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED', 'GRADED'] },
+      { name: 'ExamQuestionType', values: ['MCQ', 'TRUEFALSE', 'SHORT'] },
+      { name: 'ExamAttemptStatus', values: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'] },
+      { name: 'SupportTicketStatus', values: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] },
+      { name: 'AnnouncementTarget', values: ['ALL_STUDENTS', 'COURSE_STUDENTS', 'SPECIFIC_STUDENT'] },
+      { name: 'EditRequestStatus', values: ['PENDING', 'APPROVED', 'DENIED'] },
+      { name: 'EventStatus', values: ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'] },
+      { name: 'GradeCalculationMethod', values: ['WEIGHTED_AVERAGE', 'SIMPLE_AVERAGE', 'MANUAL'] },
+      { name: 'CertificateType', values: ['TOP_PERFORMER', 'PERFECT_ATTENDANCE', 'HOMEWORK_HERO', 'COURSE_COMPLETION'] }
+    ];
 
-    console.log('✅ Enumerations created successfully\n');
+    enumerations.forEach((enumeration, index) => {
+      console.log(`${index + 1}. ${enumeration.name}`);
+      console.log(`   Values: ${enumeration.values.join(', ')}\n`);
+    });
 
-    // Step 2: Create Models
-    console.log('🏗️ Creating Models...');
+    // Step 2: Models
+    console.log('🏗️ STEP 2: Create Models');
+    console.log('Go to: Schema → Models → Add Model\n');
 
-    // User Model
-    const userModel = await createModel('User', 'User', [
-      { apiId: 'uid', displayName: 'UID', type: 'STRING', isUnique: true, isRequired: true },
-      { apiId: 'email', displayName: 'Email', type: 'STRING', isUnique: true, isRequired: true },
-      { apiId: 'displayName', displayName: 'Display Name', type: 'STRING', isRequired: true },
-      { apiId: 'role', displayName: 'Role', type: 'ENUMERATION', enumeration: 'UserRole', isRequired: true },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'passwordChanged', displayName: 'Password Changed', type: 'BOOLEAN', defaultValue: false, isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
+    const models = [
+      {
+        name: 'User',
+        description: 'System users (students, teachers, admins)',
+        fields: [
+          { name: 'uid', type: 'Single line text', unique: true, required: true, description: 'Unique user identifier' },
+          { name: 'email', type: 'Single line text', unique: true, required: true, description: 'User email address' },
+          { name: 'displayName', type: 'Single line text', required: true, description: 'User display name' },
+          { name: 'role', type: 'Enumeration', enum: 'UserRole', required: true, description: 'User role in the system' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether user is active' },
+          { name: 'passwordChanged', type: 'Boolean', default: false, required: true, description: 'Password change status' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Account creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'Course',
+        description: 'Academic courses',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Course title' },
+          { name: 'description', type: 'Multi-line text', required: true, description: 'Course description' },
+          { name: 'category', type: 'Single line text', required: true, description: 'Course category' },
+          { name: 'duration', type: 'Integer', required: true, description: 'Course duration in hours' },
+          { name: 'maxStudents', type: 'Integer', required: true, description: 'Maximum number of students' },
+          { name: 'syllabus', type: 'Multi-line text', required: true, description: 'Course syllabus' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether course is active' },
+          { name: 'instructorName', type: 'Single line text', required: true, description: 'Instructor name' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Course creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'Enrollment',
+        description: 'Student course enrollments',
+        fields: [
+          { name: 'status', type: 'Enumeration', enum: 'EnrollmentStatus', required: true, description: 'Enrollment status' },
+          { name: 'progress', type: 'Integer', default: 0, required: true, description: 'Course progress percentage' },
+          { name: 'completedLessons', type: 'Multi-line text', description: 'List of completed lessons' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether enrollment is active' },
+          { name: 'enrolledAt', type: 'Date and time', required: true, description: 'Enrollment date' },
+          { name: 'lastAccessedAt', type: 'Date and time', required: true, description: 'Last access date' }
+        ]
+      },
+      {
+        name: 'Assignment',
+        description: 'Course assignments',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Assignment title' },
+          { name: 'description', type: 'Multi-line text', required: true, description: 'Assignment description' },
+          { name: 'instructions', type: 'Multi-line text', description: 'Assignment instructions' },
+          { name: 'dueDate', type: 'Date and time', required: true, description: 'Assignment due date' },
+          { name: 'maxScore', type: 'Integer', required: true, description: 'Maximum possible score' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether assignment is active' },
+          { name: 'attachments', type: 'Asset', multiple: true, description: 'Assignment attachments' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Assignment creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'Submission',
+        description: 'Student assignment submissions',
+        fields: [
+          { name: 'content', type: 'Multi-line text', required: true, description: 'Submission content' },
+          { name: 'status', type: 'Enumeration', enum: 'SubmissionStatus', required: true, description: 'Submission status' },
+          { name: 'grade', type: 'Integer', description: 'Assigned grade' },
+          { name: 'feedback', type: 'Multi-line text', description: 'Teacher feedback' },
+          { name: 'maxScore', type: 'Integer', description: 'Maximum possible score' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether submission is active' },
+          { name: 'attachments', type: 'Asset', multiple: true, description: 'Submission attachments' },
+          { name: 'submittedAt', type: 'Date and time', required: true, description: 'Submission date' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'CourseMaterial',
+        description: 'Course materials and resources',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Material title' },
+          { name: 'description', type: 'Multi-line text', required: true, description: 'Material description' },
+          { name: 'type', type: 'Single line text', required: true, description: 'Material type (document, video, etc.)' },
+          { name: 'externalLink', type: 'Single line text', description: 'External link if applicable' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether material is active' },
+          { name: 'file', type: 'Asset', description: 'Material file' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Material creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'Exam',
+        description: 'Online examinations',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Exam title' },
+          { name: 'description', type: 'Multi-line text', description: 'Exam description' },
+          { name: 'date', type: 'Date and time', required: true, description: 'Exam date' },
+          { name: 'startTime', type: 'Date and time', description: 'Exam start time' },
+          { name: 'durationMinutes', type: 'Integer', description: 'Exam duration in minutes' },
+          { name: 'totalPoints', type: 'Integer', required: true, description: 'Total exam points' },
+          { name: 'questions', type: 'JSON', description: 'Exam questions (JSON format)' },
+          { name: 'firstAttemptTimestamp', type: 'Date and time', description: 'First attempt timestamp' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Exam creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'ExamAttempt',
+        description: 'Student exam attempts',
+        fields: [
+          { name: 'status', type: 'Enumeration', enum: 'ExamAttemptStatus', required: true, description: 'Attempt status' },
+          { name: 'answers', type: 'JSON', description: 'Student answers (JSON format)' },
+          { name: 'autoScore', type: 'Integer', description: 'Automatically calculated score' },
+          { name: 'totalAutoPoints', type: 'Integer', description: 'Total auto-calculated points' },
+          { name: 'manualScore', type: 'Integer', description: 'Manually assigned score' },
+          { name: 'score', type: 'Integer', required: true, description: 'Final score' },
+          { name: 'feedback', type: 'Multi-line text', description: 'Exam feedback' },
+          { name: 'isGraded', type: 'Boolean', default: false, required: true, description: 'Whether exam is graded' },
+          { name: 'startedAt', type: 'Date and time', required: true, description: 'Attempt start time' },
+          { name: 'submittedAt', type: 'Date and time', description: 'Submission time' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update time' }
+        ]
+      },
+      {
+        name: 'Grade',
+        description: 'Student grades and calculations',
+        fields: [
+          { name: 'finalGrade', type: 'Float', required: true, description: 'Final calculated grade' },
+          { name: 'letterGrade', type: 'Single line text', required: true, description: 'Letter grade (A, B, C, etc.)' },
+          { name: 'gradePoints', type: 'Float', required: true, description: 'Grade points' },
+          { name: 'calculationMethod', type: 'Enumeration', enum: 'GradeCalculationMethod', required: true, description: 'Grade calculation method' },
+          { name: 'assignmentGrades', type: 'JSON', description: 'Individual assignment grades (JSON format)' },
+          { name: 'notes', type: 'Multi-line text', description: 'Grade notes' },
+          { name: 'calculatedBy', type: 'Single line text', required: true, description: 'Who calculated the grade' },
+          { name: 'calculatedAt', type: 'Date and time', required: true, description: 'Grade calculation date' }
+        ]
+      },
+      {
+        name: 'Announcement',
+        description: 'System announcements',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Announcement title' },
+          { name: 'body', type: 'Multi-line text', required: true, description: 'Announcement content' },
+          { name: 'targetAudience', type: 'Enumeration', enum: 'AnnouncementTarget', description: 'Target audience' },
+          { name: 'externalLink', type: 'Single line text', description: 'External link if applicable' },
+          { name: 'recipientStudentId', type: 'Single line text', description: 'Specific student ID for targeted announcements' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Announcement creation date' }
+        ]
+      },
+      {
+        name: 'Event',
+        description: 'School events and activities',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Event title' },
+          { name: 'description', type: 'Multi-line text', required: true, description: 'Event description' },
+          { name: 'date', type: 'Date and time', required: true, description: 'Event date' },
+          { name: 'time', type: 'Single line text', required: true, description: 'Event time' },
+          { name: 'location', type: 'Single line text', required: true, description: 'Event location' },
+          { name: 'type', type: 'Single line text', required: true, description: 'Event type' },
+          { name: 'maxAttendees', type: 'Integer', required: true, description: 'Maximum attendees' },
+          { name: 'currentAttendees', type: 'Integer', default: 0, required: true, description: 'Current attendees count' },
+          { name: 'status', type: 'Enumeration', enum: 'EventStatus', required: true, description: 'Event status' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether event is active' },
+          { name: 'createdBy', type: 'Single line text', required: true, description: 'Event creator' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Event creation date' },
+          { name: 'updatedAt', type: 'Date and time', required: true, description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'ForumThread',
+        description: 'Discussion forum threads',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Thread title' },
+          { name: 'body', type: 'Multi-line text', required: true, description: 'Thread content' },
+          { name: 'category', type: 'Single line text', description: 'Thread category' },
+          { name: 'likes', type: 'Integer', default: 0, required: true, description: 'Number of likes' },
+          { name: 'views', type: 'Integer', default: 0, required: true, description: 'Number of views' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Thread creation date' },
+          { name: 'lastActivityAt', type: 'Date and time', required: true, description: 'Last activity date' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'ForumPost',
+        description: 'Forum thread replies',
+        fields: [
+          { name: 'body', type: 'Multi-line text', required: true, description: 'Post content' },
+          { name: 'likes', type: 'Integer', default: 0, required: true, description: 'Number of likes' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Post creation date' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'BlogPost',
+        description: 'Blog posts and articles',
+        fields: [
+          { name: 'title', type: 'Single line text', required: true, description: 'Post title' },
+          { name: 'content', type: 'Multi-line text', required: true, description: 'Post content' },
+          { name: 'likes', type: 'Integer', default: 0, required: true, description: 'Number of likes' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Post creation date' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'SupportTicket',
+        description: 'Support and help tickets',
+        fields: [
+          { name: 'name', type: 'Single line text', required: true, description: 'Ticket creator name' },
+          { name: 'email', type: 'Single line text', required: true, description: 'Contact email' },
+          { name: 'subject', type: 'Single line text', required: true, description: 'Ticket subject' },
+          { name: 'message', type: 'Multi-line text', required: true, description: 'Ticket message' },
+          { name: 'status', type: 'Enumeration', enum: 'SupportTicketStatus', required: true, description: 'Ticket status' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Ticket creation date' },
+          { name: 'updatedAt', type: 'Date and time', description: 'Last update date' }
+        ]
+      },
+      {
+        name: 'EditRequest',
+        description: 'Grade edit requests',
+        fields: [
+          { name: 'submissionId', type: 'Single line text', required: true, description: 'Submission ID' },
+          { name: 'assignmentId', type: 'Single line text', required: true, description: 'Assignment ID' },
+          { name: 'assignmentTitle', type: 'Single line text', required: true, description: 'Assignment title' },
+          { name: 'courseId', type: 'Single line text', required: true, description: 'Course ID' },
+          { name: 'courseTitle', type: 'Single line text', required: true, description: 'Course title' },
+          { name: 'studentId', type: 'Single line text', required: true, description: 'Student ID' },
+          { name: 'studentName', type: 'Single line text', required: true, description: 'Student name' },
+          { name: 'studentEmail', type: 'Single line text', required: true, description: 'Student email' },
+          { name: 'teacherId', type: 'Single line text', required: true, description: 'Teacher ID' },
+          { name: 'reason', type: 'Multi-line text', required: true, description: 'Request reason' },
+          { name: 'status', type: 'Enumeration', enum: 'EditRequestStatus', required: true, description: 'Request status' },
+          { name: 'response', type: 'Multi-line text', description: 'Response to request' },
+          { name: 'respondedBy', type: 'Single line text', description: 'Who responded' },
+          { name: 'isActive', type: 'Boolean', default: true, required: true, description: 'Whether request is active' },
+          { name: 'requestedAt', type: 'Date and time', required: true, description: 'Request date' },
+          { name: 'respondedAt', type: 'Date and time', description: 'Response date' }
+        ]
+      },
+      {
+        name: 'Certificate',
+        description: 'Student certificates',
+        fields: [
+          { name: 'type', type: 'Enumeration', enum: 'CertificateType', required: true, description: 'Certificate type' },
+          { name: 'period', type: 'JSON', description: 'Certificate period (JSON format)' },
+          { name: 'details', type: 'JSON', description: 'Additional certificate details (JSON format)' },
+          { name: 'awardedAt', type: 'Date and time', required: true, description: 'Award date' }
+        ]
+      },
+      {
+        name: 'ActivityLog',
+        description: 'User activity tracking',
+        fields: [
+          { name: 'dateKey', type: 'Single line text', required: true, description: 'Date key for tracking' },
+          { name: 'source', type: 'Single line text', required: true, description: 'Activity source' },
+          { name: 'createdAt', type: 'Date and time', required: true, description: 'Activity date' }
+        ]
+      }
+    ];
 
-    // Course Model
-    const courseModel = await createModel('Course', 'Course', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'category', displayName: 'Category', type: 'STRING', isRequired: true },
-      { apiId: 'duration', displayName: 'Duration', type: 'INT', isRequired: true },
-      { apiId: 'maxStudents', displayName: 'Max Students', type: 'INT', isRequired: true },
-      { apiId: 'syllabus', displayName: 'Syllabus', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'instructorName', displayName: 'Instructor Name', type: 'STRING', isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
+    models.forEach((model, index) => {
+      console.log(`${index + 1}. ${model.name}`);
+      console.log(`   Description: ${model.description}`);
+      console.log(`   Fields:`);
+      model.fields.forEach(field => {
+        const unique = field.unique ? ' (unique)' : '';
+        const required = field.required ? ' (required)' : '';
+        const defaultVal = field.default ? ` (default: ${field.default})` : '';
+        const multiple = field.multiple ? ' (multiple)' : '';
+        const enumRef = field.enum ? ` (enum: ${field.enum})` : '';
+        console.log(`     • ${field.name}: ${field.type}${unique}${required}${defaultVal}${multiple}${enumRef}`);
+        if (field.description) {
+          console.log(`       ${field.description}`);
+        }
+      });
+      console.log('');
+    });
 
-    // Enrollment Model
-    const enrollmentModel = await createModel('Enrollment', 'Enrollment', [
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'EnrollmentStatus', isRequired: true },
-      { apiId: 'progress', displayName: 'Progress', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'completedLessons', displayName: 'Completed Lessons', type: 'STRING', isList: true },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'enrolledAt', displayName: 'Enrolled At', type: 'DATETIME', isRequired: true },
-      { apiId: 'lastAccessedAt', displayName: 'Last Accessed At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // Assignment Model
-    const assignmentModel = await createModel('Assignment', 'Assignment', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'instructions', displayName: 'Instructions', type: 'STRING', isTextarea: true },
-      { apiId: 'dueDate', displayName: 'Due Date', type: 'DATETIME', isRequired: true },
-      { apiId: 'maxScore', displayName: 'Max Score', type: 'INT', isRequired: true },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // Submission Model
-    const submissionModel = await createModel('Submission', 'Submission', [
-      { apiId: 'content', displayName: 'Content', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'SubmissionStatus', isRequired: true },
-      { apiId: 'grade', displayName: 'Grade', type: 'INT' },
-      { apiId: 'feedback', displayName: 'Feedback', type: 'STRING', isTextarea: true },
-      { apiId: 'maxScore', displayName: 'Max Score', type: 'INT' },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'attachments', displayName: 'Attachments', type: 'ASSET', isList: true },
-      { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
-
-    // CourseMaterial Model
-    const courseMaterialModel = await createModel('CourseMaterial', 'Course Material', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'type', displayName: 'Type', type: 'STRING', isRequired: true },
-      { apiId: 'externalLink', displayName: 'External Link', type: 'STRING' },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'file', displayName: 'File', type: 'ASSET' },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // Exam Model
-    const examModel = await createModel('Exam', 'Exam', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true },
-      { apiId: 'date', displayName: 'Date', type: 'DATETIME', isRequired: true },
-      { apiId: 'startTime', displayName: 'Start Time', type: 'DATETIME' },
-      { apiId: 'durationMinutes', displayName: 'Duration Minutes', type: 'INT' },
-      { apiId: 'totalPoints', displayName: 'Total Points', type: 'INT', isRequired: true },
-      { apiId: 'questions', displayName: 'Questions', type: 'JSON' },
-      { apiId: 'firstAttemptTimestamp', displayName: 'First Attempt Timestamp', type: 'DATETIME' },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // ExamAttempt Model
-    const examAttemptModel = await createModel('ExamAttempt', 'Exam Attempt', [
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'ExamAttemptStatus', isRequired: true },
-      { apiId: 'answers', displayName: 'Answers', type: 'JSON' },
-      { apiId: 'autoScore', displayName: 'Auto Score', type: 'INT' },
-      { apiId: 'totalAutoPoints', displayName: 'Total Auto Points', type: 'INT' },
-      { apiId: 'manualScore', displayName: 'Manual Score', type: 'INT' },
-      { apiId: 'score', displayName: 'Score', type: 'INT', isRequired: true },
-      { apiId: 'feedback', displayName: 'Feedback', type: 'STRING', isTextarea: true },
-      { apiId: 'isGraded', displayName: 'Is Graded', type: 'BOOLEAN', defaultValue: false, isRequired: true },
-      { apiId: 'startedAt', displayName: 'Started At', type: 'DATETIME', isRequired: true },
-      { apiId: 'submittedAt', displayName: 'Submitted At', type: 'DATETIME' },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
-
-    // Grade Model
-    const gradeModel = await createModel('Grade', 'Grade', [
-      { apiId: 'finalGrade', displayName: 'Final Grade', type: 'FLOAT', isRequired: true },
-      { apiId: 'letterGrade', displayName: 'Letter Grade', type: 'STRING', isRequired: true },
-      { apiId: 'gradePoints', displayName: 'Grade Points', type: 'FLOAT', isRequired: true },
-      { apiId: 'calculationMethod', displayName: 'Calculation Method', type: 'ENUMERATION', enumeration: 'GradeCalculationMethod', isRequired: true },
-      { apiId: 'assignmentGrades', displayName: 'Assignment Grades', type: 'JSON' },
-      { apiId: 'notes', displayName: 'Notes', type: 'STRING', isTextarea: true },
-      { apiId: 'calculatedBy', displayName: 'Calculated By', type: 'STRING', isRequired: true },
-      { apiId: 'calculatedAt', displayName: 'Calculated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // Announcement Model
-    const announcementModel = await createModel('Announcement', 'Announcement', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'body', displayName: 'Body', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'targetAudience', displayName: 'Target Audience', type: 'ENUMERATION', enumeration: 'AnnouncementTarget' },
-      { apiId: 'externalLink', displayName: 'External Link', type: 'STRING' },
-      { apiId: 'recipientStudentId', displayName: 'Recipient Student ID', type: 'STRING' },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // Event Model
-    const eventModel = await createModel('Event', 'Event', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'date', displayName: 'Date', type: 'DATETIME', isRequired: true },
-      { apiId: 'time', displayName: 'Time', type: 'STRING', isRequired: true },
-      { apiId: 'location', displayName: 'Location', type: 'STRING', isRequired: true },
-      { apiId: 'type', displayName: 'Type', type: 'STRING', isRequired: true },
-      { apiId: 'maxAttendees', displayName: 'Max Attendees', type: 'INT', isRequired: true },
-      { apiId: 'currentAttendees', displayName: 'Current Attendees', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'EventStatus', isRequired: true },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'createdBy', displayName: 'Created By', type: 'STRING', isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // ForumThread Model
-    const forumThreadModel = await createModel('ForumThread', 'Forum Thread', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'body', displayName: 'Body', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'category', displayName: 'Category', type: 'STRING' },
-      { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'views', displayName: 'Views', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'lastActivityAt', displayName: 'Last Activity At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
-
-    // ForumPost Model
-    const forumPostModel = await createModel('ForumPost', 'Forum Post', [
-      { apiId: 'body', displayName: 'Body', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME' }
-    ]);
-
-    // BlogPost Model
-    const blogPostModel = await createModel('BlogPost', 'Blog Post', [
-      { apiId: 'title', displayName: 'Title', type: 'STRING', isRequired: true },
-      { apiId: 'content', displayName: 'Content', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'likes', displayName: 'Likes', type: 'INT', defaultValue: 0, isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // SupportTicket Model
-    const supportTicketModel = await createModel('SupportTicket', 'Support Ticket', [
-      { apiId: 'name', displayName: 'Name', type: 'STRING', isRequired: true },
-      { apiId: 'email', displayName: 'Email', type: 'STRING', isRequired: true },
-      { apiId: 'subject', displayName: 'Subject', type: 'STRING', isRequired: true },
-      { apiId: 'message', displayName: 'Message', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'SupportTicketStatus', isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true },
-      { apiId: 'updatedAt', displayName: 'Updated At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // EditRequest Model
-    const editRequestModel = await createModel('EditRequest', 'Edit Request', [
-      { apiId: 'submissionId', displayName: 'Submission ID', type: 'STRING', isRequired: true },
-      { apiId: 'assignmentId', displayName: 'Assignment ID', type: 'STRING', isRequired: true },
-      { apiId: 'assignmentTitle', displayName: 'Assignment Title', type: 'STRING', isRequired: true },
-      { apiId: 'courseId', displayName: 'Course ID', type: 'STRING', isRequired: true },
-      { apiId: 'courseTitle', displayName: 'Course Title', type: 'STRING', isRequired: true },
-      { apiId: 'studentId', displayName: 'Student ID', type: 'STRING', isRequired: true },
-      { apiId: 'studentName', displayName: 'Student Name', type: 'STRING', isRequired: true },
-      { apiId: 'studentEmail', displayName: 'Student Email', type: 'STRING', isRequired: true },
-      { apiId: 'teacherId', displayName: 'Teacher ID', type: 'STRING', isRequired: true },
-      { apiId: 'reason', displayName: 'Reason', type: 'STRING', isTextarea: true, isRequired: true },
-      { apiId: 'status', displayName: 'Status', type: 'ENUMERATION', enumeration: 'EditRequestStatus', isRequired: true },
-      { apiId: 'response', displayName: 'Response', type: 'STRING', isTextarea: true },
-      { apiId: 'respondedBy', displayName: 'Responded By', type: 'STRING' },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true, isRequired: true },
-      { apiId: 'requestedAt', displayName: 'Requested At', type: 'DATETIME', isRequired: true },
-      { apiId: 'respondedAt', displayName: 'Responded At', type: 'DATETIME' }
-    ]);
-
-    // Certificate Model
-    const certificateModel = await createModel('Certificate', 'Certificate', [
-      { apiId: 'type', displayName: 'Type', type: 'ENUMERATION', enumeration: 'CertificateType', isRequired: true },
-      { apiId: 'period', displayName: 'Period', type: 'JSON' },
-      { apiId: 'details', displayName: 'Details', type: 'JSON' },
-      { apiId: 'awardedAt', displayName: 'Awarded At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    // ActivityLog Model
-    const activityLogModel = await createModel('ActivityLog', 'Activity Log', [
-      { apiId: 'dateKey', displayName: 'Date Key', type: 'STRING', isRequired: true },
-      { apiId: 'source', displayName: 'Source', type: 'STRING', isRequired: true },
-      { apiId: 'createdAt', displayName: 'Created At', type: 'DATETIME', isRequired: true }
-    ]);
-
-    console.log('✅ Models created successfully\n');
-
-    // Step 3: Create Relations
-    console.log('🔗 Creating Relations...');
-
-    // Note: Creating relations via Management API is complex and may require
-    // multiple API calls or manual setup in the Hygraph dashboard.
-    // For now, we'll log the relations that need to be created manually.
+    // Step 3: Relations
+    console.log('🔗 STEP 3: Create Relations');
+    console.log('Go to: Schema → Relations → Add Relation\n');
 
     const relations = [
       // User relations
@@ -391,13 +354,11 @@ async function setupSchema() {
       { from: 'Assignment', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseAssignments' },
       { from: 'Assignment', to: 'User', type: 'manyToOne', field: 'teacher', relationName: 'TeacherAssignments' },
       { from: 'Assignment', to: 'Submission', type: 'oneToMany', field: 'submissions', relationName: 'AssignmentSubmissions' },
-      { from: 'Assignment', to: 'Asset', type: 'manyToMany', field: 'attachments', relationName: 'AssignmentAttachments' },
 
       // Submission relations
       { from: 'Submission', to: 'Assignment', type: 'manyToOne', field: 'assignment', relationName: 'AssignmentSubmissions' },
       { from: 'Submission', to: 'User', type: 'manyToOne', field: 'student', relationName: 'StudentSubmissions' },
       { from: 'Submission', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseSubmissions' },
-      { from: 'Submission', to: 'Asset', type: 'manyToMany', field: 'attachments', relationName: 'SubmissionAttachments' },
 
       // Enrollment relations
       { from: 'Enrollment', to: 'User', type: 'manyToOne', field: 'student', relationName: 'StudentEnrollments' },
@@ -405,7 +366,6 @@ async function setupSchema() {
 
       // CourseMaterial relations
       { from: 'CourseMaterial', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseMaterials' },
-      { from: 'CourseMaterial', to: 'Asset', type: 'manyToOne', field: 'file', relationName: 'CourseMaterialFile' },
 
       // Exam relations
       { from: 'Exam', to: 'Course', type: 'manyToOne', field: 'course', relationName: 'CourseExams' },
@@ -444,28 +404,26 @@ async function setupSchema() {
       { from: 'ActivityLog', to: 'User', type: 'manyToOne', field: 'user', relationName: 'UserActivity' }
     ];
 
-    console.log(`📋 Relations to create manually in Hygraph dashboard (${relations.length} total):`);
-    relations.forEach(relation => {
-      console.log(`  ${relation.from}.${relation.field} -> ${relation.to} (${relation.type})`);
+    console.log(`Total Relations to Create: ${relations.length}\n`);
+    relations.forEach((relation, index) => {
+      console.log(`${index + 1}. ${relation.from}.${relation.field} → ${relation.to} (${relation.type})`);
     });
 
-    console.log('\n✅ Schema setup completed!');
-    console.log(`\n📊 Summary:`);
-    console.log(`  • ${11} Enumerations created`);
-    console.log(`  • ${17} Models created`);
-    console.log(`  • ${relations.length} Relations to create manually`);
+    console.log('\n✅ Schema setup guide completed!');
     console.log('\n📋 Next Steps:');
     console.log('1. Go to your Hygraph dashboard');
-    console.log('2. Create the relations manually using the list above');
-    console.log('3. Set up content permissions');
-    console.log('4. Generate API tokens');
-    console.log('5. Test the schema with sample data');
+    console.log('2. Create the enumerations listed above');
+    console.log('3. Create the models with their fields');
+    console.log('4. Create the relations between models');
+    console.log('5. Set up content permissions');
+    console.log('6. Generate API tokens');
+    console.log('7. Test the connection with: npm run test:hygraph');
 
   } catch (error) {
-    console.error('\n❌ Schema setup failed:', error);
+    console.error('\n❌ Setup guide failed:', error);
     process.exit(1);
   }
 }
 
-// Run the setup
+// Run the setup guide
 setupSchema();

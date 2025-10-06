@@ -43,10 +43,10 @@ npx tsx scripts/setup-hygraph-schema.ts
 
 **What the script does:**
 1. ✅ Creates all 11 enumerations (UserRole, EnrollmentStatus, etc.)
-2. ✅ Creates all 15 models (User, Course, Assignment, etc.)
-3. ✅ Sets up all field types and constraints
+2. ✅ Creates all 17 models (User, Course, Assignment, etc.)
+3. ✅ Sets up all field types and constraints including Asset fields
 4. ✅ Configures default values and required fields
-5. 📋 Lists all relations that need to be created manually
+5. 📋 Lists all 47 relations that need to be created manually
 
 **After running the script:**
 1. Go to your Hygraph dashboard

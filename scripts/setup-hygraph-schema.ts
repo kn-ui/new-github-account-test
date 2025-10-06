@@ -126,7 +126,8 @@ async function createEnumeration(apiId: string, displayName: string, values: str
     }
   `;
   
-  await graphqlRequest(mutation, { 
+  await graphqlRequest(mutation, {  
+
     apiId, 
     displayName, 
     values: formattedValues,

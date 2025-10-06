@@ -26,44 +26,35 @@ This guide walks you through setting up Hygraph CMS for the St. Raguel School Ma
 
 ### Option B: Using the GraphQL API (Faster)
 
-You can use the Hygraph Management API to create the schema programmatically. Here's a script:
+You can use the Hygraph Management API to create the schema programmatically. A complete script is available at `scripts/setup-hygraph-schema.ts`.
 
-```typescript
-// scripts/setup-hygraph-schema.ts
-import fetch from 'node-fetch';
+**Prerequisites:**
+1. Get your Management API token from Hygraph dashboard
+2. Set `HYGRAPH_MANAGEMENT_TOKEN` in your environment variables
 
-const MANAGEMENT_API = 'https://management.hygraph.com/graphql';
-const AUTH_TOKEN = 'your-permanent-auth-token';
+**Usage:**
+```bash
+# Set your management token
+export HYGRAPH_MANAGEMENT_TOKEN="your-management-token"
 
-async function createSchema() {
-  // Create User model
-  await createModel({
-    apiId: 'User',
-    displayName: 'User',
-    fields: [
-      { apiId: 'uid', displayName: 'UID', type: 'STRING', isUnique: true },
-      { apiId: 'email', displayName: 'Email', type: 'STRING', isUnique: true },
-      { apiId: 'displayName', displayName: 'Display Name', type: 'STRING' },
-      { apiId: 'role', displayName: 'Role', type: 'ENUMERATION', enumeration: ['STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'] },
-      { apiId: 'isActive', displayName: 'Is Active', type: 'BOOLEAN', defaultValue: true },
-      // ... add more fields
-    ]
-  });
-  
-  // Create Course model
-  await createModel({
-    apiId: 'Course',
-    displayName: 'Course',
-    fields: [
-      { apiId: 'title', displayName: 'Title', type: 'STRING' },
-      { apiId: 'description', displayName: 'Description', type: 'STRING', isTextarea: true },
-      // ... add more fields
-    ]
-  });
-  
-  // Continue for all models...
-}
+# Run the setup script
+npx tsx scripts/setup-hygraph-schema.ts
 ```
+
+**What the script does:**
+1. ✅ Creates all 11 enumerations (UserRole, EnrollmentStatus, etc.)
+2. ✅ Creates all 15 models (User, Course, Assignment, etc.)
+3. ✅ Sets up all field types and constraints
+4. ✅ Configures default values and required fields
+5. 📋 Lists all relations that need to be created manually
+
+**After running the script:**
+1. Go to your Hygraph dashboard
+2. Create the relations manually using the provided list
+3. Set up content permissions
+4. Generate API tokens
+
+**Note:** The Management API has limitations for creating relations, so you'll need to set up the relationships manually in the Hygraph dashboard. The script will provide a complete list of all relations to create.
 
 ### Important Schema Notes
 

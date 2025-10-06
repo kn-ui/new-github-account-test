@@ -18,7 +18,8 @@
     "seed": "tsx src/scripts/runSeedNode.ts",
     "seed:clear": "tsx src/scripts/clearSeedNode.ts",
     "migrate:hygraph": "tsx scripts/migrate-firebase-to-hygraph.ts",
-    "test:hygraph": "tsx scripts/test-hygraph-connection.ts"
+    "test:hygraph": "tsx scripts/test-hygraph-connection.ts",
+    "setup:hygraph": "tsx scripts/setup-hygraph-schema.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

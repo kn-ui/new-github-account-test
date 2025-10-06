@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Test Hygraph Connection
+ * Hygraph Connection Test Script
  * 
- * This script tests the connection to Hygraph and verifies
- * that the API is accessible and properly configured.
+ * This script tests the connection to Hygraph and verifies the schema setup.
+ * 
+ * Usage:
+ *   npx tsx scripts/test-hygraph-connection.ts
+ * 
+ * Prerequisites:
+ *   - Hygraph project created with schema
+ *   - API tokens configured
+ *   - Environment variables set
  */
 
+import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,167 +22,241 @@ dotenv.config();
 const HYGRAPH_ENDPOINT = process.env.VITE_HYGRAPH_ENDPOINT || '';
 const HYGRAPH_TOKEN = process.env.VITE_HYGRAPH_TOKEN || '';
 
-async function testConnection() {
-  console.log('🧪 Testing Hygraph Connection\n');
-
-  // Check configuration
-  if (!HYGRAPH_ENDPOINT) {
-    console.error('❌ Error: VITE_HYGRAPH_ENDPOINT not set');
-    console.log('Please add it to your .env file:');
-    console.log('VITE_HYGRAPH_ENDPOINT=https://your-region.cdn.hygraph.com/content/[project-id]/master');
-    process.exit(1);
-  }
-
-  if (!HYGRAPH_TOKEN) {
-    console.error('❌ Error: VITE_HYGRAPH_TOKEN not set');
-    console.log('Please add it to your .env file:');
-    console.log('VITE_HYGRAPH_TOKEN=your-permanent-auth-token');
-    process.exit(1);
-  }
-
-  console.log('Configuration:');
-  console.log(`  Endpoint: ${HYGRAPH_ENDPOINT}`);
-  console.log(`  Token: ${HYGRAPH_TOKEN.substring(0, 20)}...\n`);
-
-  // Test 1: Basic connectivity
-  console.log('Test 1: Basic Connectivity');
-  try {
-    const response = await fetch(HYGRAPH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HYGRAPH_TOKEN}`,
-      },
-      body: JSON.stringify({
-        query: '{ __typename }',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    if (result.errors) {
-      console.error('❌ GraphQL Errors:', result.errors);
-      process.exit(1);
-    }
-
-    console.log('✅ Connected successfully!\n');
-  } catch (error: any) {
-    console.error('❌ Connection failed:', error.message);
-    process.exit(1);
-  }
-
-  // Test 2: Schema introspection
-  console.log('Test 2: Schema Introspection');
-  try {
-    const response = await fetch(HYGRAPH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HYGRAPH_TOKEN}`,
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            __schema {
-              types {
-                name
-                kind
-              }
-            }
-          }
-        `,
-      }),
-    });
-
-    const result = await response.json();
-    
-    if (result.errors) {
-      console.warn('⚠️  Introspection not available (may be disabled)');
-    } else {
-      const types = result.data?.__schema?.types || [];
-      const modelTypes = types.filter((t: any) => 
-        t.kind === 'OBJECT' && 
-        !t.name.startsWith('__') &&
-        !['Query', 'Mutation', 'Subscription'].includes(t.name)
-      );
-      
-      console.log(`✅ Schema loaded: ${modelTypes.length} models found`);
-      console.log('   Models:', modelTypes.map((t: any) => t.name).join(', '));
-      console.log('');
-    }
-  } catch (error: any) {
-    console.warn('⚠️  Schema introspection failed:', error.message, '\n');
-  }
-
-  // Test 3: Query data
-  console.log('Test 3: Query Data');
-  try {
-    const response = await fetch(HYGRAPH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HYGRAPH_TOKEN}`,
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            users(first: 1) {
-              id
-              email
-              displayName
-              role
-            }
-          }
-        `,
-      }),
-    });
-
-    const result = await response.json();
-    
-    if (result.errors) {
-      console.warn('⚠️  User query failed (schema may not be set up yet)');
-      console.warn('   Error:', result.errors[0]?.message);
-    } else {
-      const users = result.data?.users || [];
-      console.log(`✅ Query successful: ${users.length} user(s) found`);
-      if (users.length > 0) {
-        console.log('   Sample user:', users[0]);
-      }
-    }
-    console.log('');
-  } catch (error: any) {
-    console.warn('⚠️  Query failed:', error.message, '\n');
-  }
-
-  // Test 4: Check mutation token
-  const MUTATION_TOKEN = process.env.HYGRAPH_MUTATION_TOKEN || '';
-  console.log('Test 4: Mutation Token');
-  if (!MUTATION_TOKEN) {
-    console.warn('⚠️  HYGRAPH_MUTATION_TOKEN not set');
-    console.log('   You will need this for creating/updating data');
-    console.log('   Add it to your .env file:');
-    console.log('   HYGRAPH_MUTATION_TOKEN=your-mutation-token\n');
-  } else {
-    console.log(`✅ Mutation token configured: ${MUTATION_TOKEN.substring(0, 20)}...\n`);
-  }
-
-  // Summary
-  console.log('━'.repeat(60));
-  console.log('✅ Connection Test Complete!');
-  console.log('━'.repeat(60));
-  console.log('\nNext Steps:');
-  console.log('1. If schema is not set up, import hygraph-schema.graphql');
-  console.log('2. Configure mutation token for data migration');
-  console.log('3. Run: npm run migrate:hygraph');
-  console.log('4. Start development: npm run dev:all\n');
+if (!HYGRAPH_ENDPOINT || !HYGRAPH_TOKEN) {
+  console.error('❌ Error: Missing Hygraph configuration');
+  console.error('Please set VITE_HYGRAPH_ENDPOINT and VITE_HYGRAPH_TOKEN in your .env file');
+  process.exit(1);
 }
 
-// Run test
-testConnection().catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
+// Helper function to make GraphQL requests
+async function hygraphQuery(query: string, variables: any = {}) {
+  const response = await fetch(HYGRAPH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${HYGRAPH_TOKEN}`,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    console.error('GraphQL Error:', JSON.stringify(result.errors, null, 2));
+    throw new Error(result.errors[0]?.message || 'GraphQL query failed');
+  }
+  
+  return result.data;
+}
+
+async function testConnection() {
+  console.log('🧪 Testing Hygraph Connection\n');
+  console.log(`Endpoint: ${HYGRAPH_ENDPOINT}`);
+  console.log(`Token: ${HYGRAPH_TOKEN.substring(0, 20)}...\n`);
+
+  try {
+    // Test 1: Basic connection
+    console.log('1️⃣ Testing basic connection...');
+    const introspectionQuery = `
+      query {
+        __schema {
+          types {
+            name
+          }
+        }
+      }
+    `;
+    
+    const schemaResult = await hygraphQuery(introspectionQuery);
+    console.log('✅ Connection successful!');
+    console.log(`   Found ${schemaResult.__schema.types.length} types in schema\n`);
+
+    // Test 2: Check if User model exists
+    console.log('2️⃣ Testing User model...');
+    const userQuery = `
+      query {
+        users(first: 1) {
+          id
+          uid
+          email
+          displayName
+          role
+          isActive
+        }
+      }
+    `;
+    
+    const userResult = await hygraphQuery(userQuery);
+    console.log('✅ User model accessible!');
+    console.log(`   Found ${userResult.users.length} users\n`);
+
+    // Test 3: Check if Course model exists
+    console.log('3️⃣ Testing Course model...');
+    const courseQuery = `
+      query {
+        courses(first: 1) {
+          id
+          title
+          description
+          category
+          duration
+          maxStudents
+          isActive
+        }
+      }
+    `;
+    
+    const courseResult = await hygraphQuery(courseQuery);
+    console.log('✅ Course model accessible!');
+    console.log(`   Found ${courseResult.courses.length} courses\n`);
+
+    // Test 4: Check if Assignment model exists
+    console.log('4️⃣ Testing Assignment model...');
+    const assignmentQuery = `
+      query {
+        assignments(first: 1) {
+          id
+          title
+          description
+          dueDate
+          maxScore
+          isActive
+        }
+      }
+    `;
+    
+    const assignmentResult = await hygraphQuery(assignmentQuery);
+    console.log('✅ Assignment model accessible!');
+    console.log(`   Found ${assignmentResult.assignments.length} assignments\n`);
+
+    // Test 5: Check if Announcement model exists
+    console.log('5️⃣ Testing Announcement model...');
+    const announcementQuery = `
+      query {
+        announcements(first: 1) {
+          id
+          title
+          body
+          targetAudience
+          createdAt
+        }
+      }
+    `;
+    
+    const announcementResult = await hygraphQuery(announcementQuery);
+    console.log('✅ Announcement model accessible!');
+    console.log(`   Found ${announcementResult.announcements.length} announcements\n`);
+
+    // Test 6: Check if Event model exists
+    console.log('6️⃣ Testing Event model...');
+    const eventQuery = `
+      query {
+        events(first: 1) {
+          id
+          title
+          description
+          date
+          time
+          location
+          status
+        }
+      }
+    `;
+    
+    const eventResult = await hygraphQuery(eventQuery);
+    console.log('✅ Event model accessible!');
+    console.log(`   Found ${eventResult.events.length} events\n`);
+
+    // Test 7: Check if ForumThread model exists
+    console.log('7️⃣ Testing ForumThread model...');
+    const forumQuery = `
+      query {
+        forumThreads(first: 1) {
+          id
+          title
+          body
+          category
+          likes
+          views
+        }
+      }
+    `;
+    
+    const forumResult = await hygraphQuery(forumQuery);
+    console.log('✅ ForumThread model accessible!');
+    console.log(`   Found ${forumResult.forumThreads.length} forum threads\n`);
+
+    // Test 8: Check if BlogPost model exists
+    console.log('8️⃣ Testing BlogPost model...');
+    const blogQuery = `
+      query {
+        blogPosts(first: 1) {
+          id
+          title
+          content
+          likes
+        }
+      }
+    `;
+    
+    const blogResult = await hygraphQuery(blogQuery);
+    console.log('✅ BlogPost model accessible!');
+    console.log(`   Found ${blogResult.blogPosts.length} blog posts\n`);
+
+    // Test 9: Check if SupportTicket model exists
+    console.log('9️⃣ Testing SupportTicket model...');
+    const supportQuery = `
+      query {
+        supportTickets(first: 1) {
+          id
+          name
+          email
+          subject
+          message
+          status
+        }
+      }
+    `;
+    
+    const supportResult = await hygraphQuery(supportQuery);
+    console.log('✅ SupportTicket model accessible!');
+    console.log(`   Found ${supportResult.supportTickets.length} support tickets\n`);
+
+    // Test 10: Check if Exam model exists
+    console.log('🔟 Testing Exam model...');
+    const examQuery = `
+      query {
+        exams(first: 1) {
+          id
+          title
+          description
+          date
+          totalPoints
+        }
+      }
+    `;
+    
+    const examResult = await hygraphQuery(examQuery);
+    console.log('✅ Exam model accessible!');
+    console.log(`   Found ${examResult.exams.length} exams\n`);
+
+    console.log('\n🎉 All tests passed! Your Hygraph setup is working correctly.');
+    console.log('\n📋 Next Steps:');
+    console.log('1. Set up Clerk authentication');
+    console.log('2. Update your application code to use Hygraph');
+    console.log('3. Test CRUD operations');
+    console.log('4. Deploy to production');
+
+  } catch (error) {
+    console.error('\n❌ Connection test failed:', error);
+    console.log('\n🔧 Troubleshooting:');
+    console.log('1. Check that your Hygraph project is created');
+    console.log('2. Verify your API tokens are correct');
+    console.log('3. Ensure the schema is properly set up');
+    console.log('4. Check that your tokens have the right permissions');
+    process.exit(1);
+  }
+}
+
+// Run the test
+testConnection();

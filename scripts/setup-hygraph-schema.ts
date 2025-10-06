@@ -106,9 +106,8 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   }));
 
   const mutation = `
-    mutation CreateEnumeration($environmentId: ID!, $apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
+    mutation CreateEnumeration($apiId: String!, $displayName: String!, $values: [EnumerationValueCreateInput!]!) {
       createEnumeration(
-        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
@@ -121,7 +120,6 @@ async function createEnumeration(apiId: string, displayName: string, values: str
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId, 
     apiId, 
     displayName, 
     values: formattedValues 
@@ -135,11 +133,10 @@ async function createEnumeration(apiId: string, displayName: string, values: str
 async function createModel(apiId: string, displayName: string, fields: any[], environmentId: string) {
   console.log(`  Creating model: ${displayName}`);
   
-  // NOTE: The management API for model creation requires environmentId
+  // NOTE: The management API for model creation no longer requires environmentId
   const mutation = `
-    mutation CreateModel($environmentId: ID!, $apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
+    mutation CreateModel($apiId: String!, $displayName: String!, $fields: [FieldCreateInput!]!) {
       createModel(
-        environmentId: $environmentId
         data: {
           apiId: $apiId
           displayName: $displayName
@@ -152,7 +149,6 @@ async function createModel(apiId: string, displayName: string, fields: any[], en
   `;
   
   await graphqlRequest(mutation, { 
-    environmentId,
     apiId, 
     displayName, 
     fields 

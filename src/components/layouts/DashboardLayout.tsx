@@ -424,8 +424,8 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     return (
                       <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-100 focus:bg-gray-100 data-[highlighted]:bg-gray-100">
                         <div className="w-full">
-                          <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
-                          <div className="text-xs text-gray-600 break-words overflow-hidden">
+                          <div className="font-medium text-sm mb-1 truncate text-gray-900 hover:text-gray-900" title={a.title}>{a.title}</div>
+                          <div className="text-xs text-gray-600 hover:text-gray-600 break-words overflow-hidden">
                             {isExpanded ? a.body : (isLongText ? `${a.body.substring(0, 150)}...` : a.body)}
                           </div>
                           {isLongText && (
@@ -439,7 +439,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                               {isExpanded ? 'Show Less' : 'Expand'}
                             </button>
                           )}
-                          <div className="text-xs text-gray-400 mt-1 flex items-center justify-between">
+                          <div className="text-xs text-gray-400 hover:text-gray-400 mt-1 flex items-center justify-between">
                             <span>{a.createdAt.toDate().toLocaleDateString()}</span>
                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                               {a.targetAudience === 'SPECIFIC_STUDENT' ? 'Direct' : 

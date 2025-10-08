@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import contentController from '../controllers/contentController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateClerkToken as authenticateToken } from '../middleware/clerkAuth';
 import { validatePagination } from '../middleware/validation';
 
 const router = Router();

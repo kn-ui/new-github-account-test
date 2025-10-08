@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
+import { ClerkUserButton } from '@/components/auth/ClerkUserButton';
 import { Button } from '@/components/ui/button';
 import { PasswordChangeDialog } from '@/components/PasswordChangeDialog';
 import { Input } from '@/components/ui/input';
@@ -490,6 +491,9 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 <option value="en">English</option>
                 <option value="am">አማርኛ</option>
               </select>
+              
+              {/* Clerk User Button */}
+              <ClerkUserButton />
             </div>
           </div>
         </div>

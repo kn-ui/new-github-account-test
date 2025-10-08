@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ClerkAuthProvider } from "@/contexts/ClerkAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -75,7 +75,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
+        <ClerkAuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -496,7 +496,7 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
+        </ClerkAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

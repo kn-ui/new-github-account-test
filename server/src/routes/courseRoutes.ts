@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import courseController from '../controllers/courseController';
-import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAdminOrSuperAdmin, requireTeacherAdminOrSuperAdmin } from '../middleware/auth';
+import { authenticateClerkToken as authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAdminOrSuperAdmin, requireTeacherAdminOrSuperAdmin } from '../middleware/clerkAuth';
 import { validateCourseCreation, validatePagination } from '../middleware/validation';
 
 const router = Router();

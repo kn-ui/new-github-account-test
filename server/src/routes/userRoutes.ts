@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import userController from '../controllers/userController';
 
-import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAuth, requireAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/auth';
+import { authenticateClerkToken as authenticateToken, requireAdmin, requireTeacherOrAdmin, requireAuth, requireAdminOrSuperAdmin, requireSuperAdmin } from '../middleware/clerkAuth';
 import { validateUserRegistration, validatePagination } from '../middleware/validation';
 
 const router = Router();

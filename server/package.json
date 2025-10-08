@@ -19,6 +19,7 @@
   "author": "St. Raguel Church School",
   "license": "ISC",
   "dependencies": {
+    "@clerk/backend": "^2.17.2",
     "bcryptjs": "^3.0.2",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",

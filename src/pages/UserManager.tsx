@@ -30,7 +30,8 @@ import {
   UserPlus,
   FileSpreadsheet,
   User,
-  Eye
+  Eye,
+  Award
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -629,6 +630,15 @@ const UserManager = () => {
                             <User className="h-4 w-4 mr-2" />
                             {t('admin.recentUsers.edit')}
                           </DropdownMenuItem>
+                          {user.role === 'student' && (
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => window.open(`/dashboard/admin-student-grades/${user.id}`, '_blank')}
+                            >
+                              <Award className="h-4 w-4 mr-2" />
+                              View Grades
+                            </DropdownMenuItem>
+                          )}
                           {user.role !== 'super_admin' && user.isActive && (
                             <DropdownMenuItem 
                               className="text-red-600 cursor-pointer"

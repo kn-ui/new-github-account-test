@@ -44,6 +44,7 @@ import AdminReports from "./pages/AdminReports";
 import AssignmentEditRequests from "./pages/AssignmentEditRequests";
 import AdminSettings from "./pages/AdminSettings";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
+import AdminStudentGrades from "./pages/AdminStudentGrades";
 import TeacherCourses from "./pages/TeacherCourses";
 import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import StudentCourses from "./pages/StudentCourses";
@@ -202,6 +203,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminAnnouncements />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-student-grades/:studentId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminStudentGrades />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

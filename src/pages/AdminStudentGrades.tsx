@@ -520,7 +520,7 @@ export default function AdminStudentGrades() {
   // Access control - only admins and super_admins can access
   if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="text-red-600 text-xl mb-4">Access Denied</div>
           <div className="text-gray-600">Only administrators can access this page.</div>
@@ -531,35 +531,33 @@ export default function AdminStudentGrades() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard/users')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Users
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <GraduationCap className="h-8 w-8 text-blue-600" />
-                  Student Grades
-                </h1>
-                <p className="text-gray-600 mt-1">Loading student grade information...</p>
-              </div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/dashboard/users')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Users
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <GraduationCap className="h-8 w-8 text-blue-600" />
+                Student Grades
+              </h1>
+              <p className="text-gray-600 mt-1">Loading student grade information...</p>
             </div>
           </div>
+        </div>
 
-          {/* Loading Content */}
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="text-gray-600 text-lg">Loading...</div>
-              <div className="text-gray-500 text-sm mt-2">Please wait while we fetch the student's grades</div>
-            </div>
+        {/* Loading Content */}
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="text-gray-600 text-lg">Loading...</div>
+            <div className="text-gray-500 text-sm mt-2">Please wait while we fetch the student's grades</div>
           </div>
         </div>
       </div>
@@ -568,7 +566,7 @@ export default function AdminStudentGrades() {
 
   if (!student) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="text-red-600 text-xl mb-4">Student Not Found</div>
           <div className="text-gray-600">The requested student could not be found.</div>
@@ -578,8 +576,7 @@ export default function AdminStudentGrades() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1028,8 +1025,6 @@ export default function AdminStudentGrades() {
             )}
           </div>
         </div>
-
-      </div>
     </div>
   );
 }

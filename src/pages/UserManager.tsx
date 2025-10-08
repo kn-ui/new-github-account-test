@@ -633,7 +633,7 @@ const UserManager = () => {
                           {user.role === 'student' && (
                             <DropdownMenuItem 
                               className="cursor-pointer"
-                              onClick={() => window.open(`/dashboard/admin-student-grades/${user.id}`, '_blank')}
+                              onClick={() => window.location.href = `/dashboard/admin-student-grades/${user.id}`}
                             >
                               <Award className="h-4 w-4 mr-2" />
                               View Grades

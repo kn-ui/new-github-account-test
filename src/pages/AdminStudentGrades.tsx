@@ -85,6 +85,7 @@ export default function AdminStudentGrades() {
   });
   const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams'>('courses');
   const [courses, setCourses] = useState<any[]>([]);
+  const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
@@ -384,6 +385,37 @@ export default function AdminStudentGrades() {
     }));
   };
 
+  const toggleCourse = (courseId: string) => {
+    setExpandedCourses(prev => ({
+      ...prev,
+      [courseId]: !prev[courseId]
+    }));
+  };
+
+  const getCourseTotals = (courseId: string, year: string) => {
+    const courseGrades = grades.filter(grade => 
+      grade.courseId === courseId && 
+      grade.gradedAt.getFullYear().toString() === year
+    );
+    const courseExamGrades = examGrades.filter(grade => 
+      grade.courseId === courseId && 
+      grade.gradedAt.getFullYear().toString() === year
+    );
+
+    const totalPoints = [...courseGrades, ...courseExamGrades].reduce((sum, grade) => sum + grade.grade, 0);
+    const maxPoints = [...courseGrades, ...courseExamGrades].reduce((sum, grade) => sum + grade.maxScore, 0);
+    const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+
+    return {
+      totalAssignments: courseGrades.length,
+      totalExams: courseExamGrades.length,
+      totalItems: courseGrades.length + courseExamGrades.length,
+      averageGrade: Math.round(averageGrade),
+      totalPoints,
+      maxPoints
+    };
+  };
+
   const getStats = () => {
     if (gradeType === 'courses') {
       // Stats for final course grades
@@ -532,6 +564,28 @@ export default function AdminStudentGrades() {
           </div>
         </div>
 
+        {/* Course Filter for Assignments and Exams */}
+        {(gradeType === 'assignments' || gradeType === 'exams') && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <Label>Filter by Course:</Label>
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
+                <SelectTrigger className="w-[300px]">
+                  <SelectValue placeholder="Select a course" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {courses.map(course => (
+                    <SelectItem key={course.id} value={course.title}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
         {/* Grade Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
@@ -569,11 +623,23 @@ export default function AdminStudentGrades() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6">
             {gradeType === 'assignments' ? (
-              // Assignment Grades View
+              // Assignment Grades View - Grouped by Year and Course
               ['2025', '2024', '2023', '2022', '2021'].map((year) => {
                 const yearGrades = filteredAndSortedGrades.filter(grade => 
                   grade.gradedAt.getFullYear().toString() === year
                 );
+                
+                // Group by course
+                const courseGroups = yearGrades.reduce((acc, grade) => {
+                  if (!acc[grade.courseId]) {
+                    acc[grade.courseId] = {
+                      courseTitle: grade.courseTitle,
+                      grades: []
+                    };
+                  }
+                  acc[grade.courseId].grades.push(grade);
+                  return acc;
+                }, {} as { [key: string]: { courseTitle: string; grades: GradeWithDetails[] } });
                 
                 return (
                   <div key={year} className="border-b border-gray-200 last:border-b-0">
@@ -596,34 +662,73 @@ export default function AdminStudentGrades() {
                         <div className="border-l-4 border-blue-500 pl-6">
                           <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
                           
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
-                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {yearGrades.map((grade) => (
-                                  <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                    <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
-                                    <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
-                                    <td className="py-3 px-4 text-center">
-                                      <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                        {grade.grade}/{grade.maxScore}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                    <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                          {Object.entries(courseGroups).map(([courseId, courseData]) => {
+                            const courseTotals = getCourseTotals(courseId, year);
+                            return (
+                              <div key={courseId} className="mb-6">
+                                <button
+                                  onClick={() => toggleCourse(courseId)}
+                                  className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {expandedCourses[courseId] ? (
+                                      <ChevronDown size={16} className="text-gray-400" />
+                                    ) : (
+                                      <ChevronRight size={16} className="text-gray-400" />
+                                    )}
+                                    <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
+                                    <span className="text-sm text-gray-500">({courseTotals.totalAssignments} assignments)</span>
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    Average: {courseTotals.averageGrade}%
+                                  </div>
+                                </button>
+
+                                {expandedCourses[courseId] && (
+                                  <div className="ml-6 mt-3">
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full">
+                                        <thead>
+                                          <tr className="border-b border-gray-200">
+                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {courseData.grades.map((grade) => (
+                                            <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                              <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
+                                              <td className="py-3 px-4 text-center">
+                                                <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                                  {grade.grade}/{grade.maxScore}
+                                                </span>
+                                              </td>
+                                              <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                              <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                        <tfoot>
+                                          <tr className="bg-gray-50 font-semibold">
+                                            <td className="py-3 px-4 text-gray-800">Course Total</td>
+                                            <td className="py-3 px-4 text-center">
+                                              <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
+                                                {courseTotals.totalPoints}/{courseTotals.maxPoints}
+                                              </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-center text-gray-600">{courseTotals.maxPoints}</td>
+                                            <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
+                                          </tr>
+                                        </tfoot>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -637,12 +742,24 @@ export default function AdminStudentGrades() {
                 );
               })
             ) : gradeType === 'exams' ? (
-              // Exam Grades View - Grouped by Year
+              // Exam Grades View - Grouped by Year and Course
               filteredAndSortedExamGrades.length > 0 ? (
                 ['2025', '2024', '2023', '2022', '2021'].map((year) => {
                   const yearGrades = filteredAndSortedExamGrades.filter(grade => 
                     grade.gradedAt.getFullYear().toString() === year
                   );
+                  
+                  // Group by course
+                  const courseGroups = yearGrades.reduce((acc, grade) => {
+                    if (!acc[grade.courseId]) {
+                      acc[grade.courseId] = {
+                        courseTitle: grade.courseTitle,
+                        grades: []
+                      };
+                    }
+                    acc[grade.courseId].grades.push(grade);
+                    return acc;
+                  }, {} as { [key: string]: { courseTitle: string; grades: ExamGradeWithDetails[] } });
                   
                   return (
                     <div key={year} className="border-b border-gray-200 last:border-b-0">
@@ -665,34 +782,73 @@ export default function AdminStudentGrades() {
                           <div className="border-l-4 border-blue-500 pl-6">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
                             
-                            <div className="overflow-x-auto">
-                              <table className="w-full">
-                                <thead>
-                                  <tr className="border-b border-gray-200">
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {yearGrades.map((grade) => (
-                                    <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
-                                      <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
-                                      <td className="py-3 px-4 text-center">
-                                        <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                          {grade.grade}/{grade.maxScore}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
+                            {Object.entries(courseGroups).map(([courseId, courseData]) => {
+                              const courseTotals = getCourseTotals(courseId, year);
+                              return (
+                                <div key={courseId} className="mb-6">
+                                  <button
+                                    onClick={() => toggleCourse(courseId)}
+                                    className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {expandedCourses[courseId] ? (
+                                        <ChevronDown size={16} className="text-gray-400" />
+                                      ) : (
+                                        <ChevronRight size={16} className="text-gray-400" />
+                                      )}
+                                      <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
+                                      <span className="text-sm text-gray-500">({courseTotals.totalExams} exams)</span>
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      Average: {courseTotals.averageGrade}%
+                                    </div>
+                                  </button>
+
+                                  {expandedCourses[courseId] && (
+                                    <div className="ml-6 mt-3">
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                          <thead>
+                                            <tr className="border-b border-gray-200">
+                                              <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
+                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {courseData.grades.map((grade) => (
+                                              <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                  <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                                    {grade.grade}/{grade.maxScore}
+                                                  </span>
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                                <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                          <tfoot>
+                                            <tr className="bg-gray-50 font-semibold">
+                                              <td className="py-3 px-4 text-gray-800">Course Total</td>
+                                              <td className="py-3 px-4 text-center">
+                                                <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
+                                                  {courseTotals.totalPoints}/{courseTotals.maxPoints}
+                                                </span>
+                                              </td>
+                                              <td className="py-3 px-4 text-center text-gray-600">{courseTotals.maxPoints}</td>
+                                              <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
+                                            </tr>
+                                          </tfoot>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

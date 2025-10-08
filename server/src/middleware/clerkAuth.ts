@@ -27,7 +27,7 @@ export const authenticateClerkToken = async (
     });
     
     // Get user data from Firestore using Clerk user ID
-    const userDoc = await firestore.collection('users').doc(payload.sub).get();
+    const userDoc = await firestore.collection('users').doc(payload.sub as string).get();
 
     let userData = null;
     let userRole = UserRole.STUDENT; // Default role for new users
@@ -38,13 +38,13 @@ export const authenticateClerkToken = async (
     } else {
       // User exists in Clerk but not in Firestore yet
       // This is expected during initial profile creation
-      console.log(`User ${payload.sub} not found in Firestore, allowing for profile creation`);
+      console.log(`User ${payload.sub as string} not found in Firestore, allowing for profile creation`);
     }
 
     // Attach user info to request
     req.user = {
-      uid: payload.sub,
-      email: payload.email || '',
+      uid: payload.sub as string,
+      email: (payload.email as string) || '',
       role: userRole
     };
 

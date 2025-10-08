@@ -114,9 +114,11 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
 
   const handleUpload = async () => {
     if (!uploadedFile || preview.length === 0 || errors.length > 0) {
+      console.log('Upload blocked:', { uploadedFile: !!uploadedFile, previewLength: preview.length, errorsLength: errors.length });
       return;
     }
 
+    console.log('Starting bulk user creation for', preview.length, 'users');
     setIsProcessing(true);
     try {
       // SOLUTION: Use secondary Firebase auth for bulk user creation
@@ -130,7 +132,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       
       let successCount = 0;
       let errorCount = 0;
-      const errors: string[] = [];
+      const uploadErrors: string[] = []; // Renamed to avoid conflict with state
       const totalUsers = preview.length;
       
       for (let i = 0; i < preview.length; i++) {
@@ -138,6 +140,9 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         
         // Update progress
         setCurrentProgress(Math.round(((i + 1) / totalUsers) * 100));
+        
+        console.log(`Creating user ${i + 1}/${totalUsers}: ${user.email}`);
+        
         try {
           // Set default password based on role
           const defaultPasswords = {
@@ -169,17 +174,23 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
           await signOut(secondaryAuth);
           
           successCount++;
+          console.log(`Successfully created user: ${user.email}`);
+          
+          // Small delay to prevent overwhelming Firebase API and show progress
+          if (i < preview.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         } catch (error: any) {
           errorCount++;
           // Log specific error for debugging
           if (error.code === 'auth/email-already-in-use') {
-            errors.push(`${user.email}: Email already exists`);
+            uploadErrors.push(`${user.email}: Email already exists`);
             console.error(`User ${user.email} already exists - skipping`);
           } else if (error.code === 'auth/invalid-email') {
-            errors.push(`${user.email}: Invalid email format`);
+            uploadErrors.push(`${user.email}: Invalid email format`);
             console.error(`Invalid email ${user.email}:`, error);
           } else {
-            errors.push(`${user.email}: ${error.message || 'Unknown error'}`);
+            uploadErrors.push(`${user.email}: ${error.message || 'Unknown error'}`);
             console.error(`Failed to create user ${user.email}:`, error);
           }
         }
@@ -193,7 +204,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       
       // Show summary of results
       if (errorCount > 0) {
-        const errorSummary = `Successfully created ${successCount} users. ${errorCount} users failed:\n\n${errors.join('\n')}`;
+        const errorSummary = `Successfully created ${successCount} users. ${errorCount} users failed:\n\n${uploadErrors.join('\n')}`;
         onError(errorSummary);
       } else {
         onUsersCreated(successCount);
@@ -204,9 +215,11 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       // Clear the suppress flag on error
       sessionStorage.removeItem('suppressAuthRedirect');
       setCurrentProgress(0);
-      onError('Failed to create users. Please try again.');
+      console.error('Bulk user creation failed:', error);
+      onError(`Failed to create users: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
+      console.log('Bulk user creation process completed');
     }
   };
 

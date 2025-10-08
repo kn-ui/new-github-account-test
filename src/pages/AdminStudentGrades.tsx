@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface GradeWithDetails {
   id: string;
@@ -557,10 +558,7 @@ export default function AdminStudentGrades() {
 
         {/* Loading Content */}
         <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="text-gray-600 text-lg">Loading...</div>
-            <div className="text-gray-500 text-sm mt-2">Please wait while we fetch the student's grades</div>
-          </div>
+          <LoadingSpinner size="lg" />
         </div>
       </div>
     );

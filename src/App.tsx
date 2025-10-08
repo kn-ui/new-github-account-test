@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -225,9 +226,7 @@ const App = () => (
                           </div>
                         </div>
                         <div className="flex items-center justify-center py-12">
-                          <div className="text-center">
-                            <div className="text-gray-600 text-lg">Loading...</div>
-                          </div>
+                          <LoadingSpinner size="lg" />
                         </div>
                       </div>
                     }>

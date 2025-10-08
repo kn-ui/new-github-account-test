@@ -19,6 +19,7 @@
     "seed:clear": "tsx src/scripts/clearSeedNode.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.33.3",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

@@ -188,9 +188,29 @@ const UserManager = () => {
       setIsAddUserOpen(false);
       setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       // Clear the suppress flag on error
       sessionStorage.removeItem('suppressAuthRedirect');
+      
+      // Handle specific Firebase auth errors with user-friendly messages
+      let errorMessage = 'An error occurred while creating the user.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = `The email "${newUser.email}" is already registered. Please use a different email address.`;
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. Please use a stronger password.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show user-friendly error message
+      alert(errorMessage);
       console.error('Error creating user:', error);
     }
   };

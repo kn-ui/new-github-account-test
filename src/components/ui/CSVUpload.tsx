@@ -128,6 +128,8 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       sessionStorage.setItem('suppressAuthRedirect', 'true');
       
       let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
       
       for (const user of preview) {
         try {
@@ -161,15 +163,33 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
           await signOut(secondaryAuth);
           
           successCount++;
-        } catch (error) {
-          console.error(`Failed to create user ${user.email}:`, error);
+        } catch (error: any) {
+          errorCount++;
+          // Log specific error for debugging
+          if (error.code === 'auth/email-already-in-use') {
+            errors.push(`${user.email}: Email already exists`);
+            console.error(`User ${user.email} already exists - skipping`);
+          } else if (error.code === 'auth/invalid-email') {
+            errors.push(`${user.email}: Invalid email format`);
+            console.error(`Invalid email ${user.email}:`, error);
+          } else {
+            errors.push(`${user.email}: ${error.message || 'Unknown error'}`);
+            console.error(`Failed to create user ${user.email}:`, error);
+          }
         }
       }
 
       // Clear the suppress flag
       sessionStorage.removeItem('suppressAuthRedirect');
       
-      onUsersCreated(successCount);
+      // Show summary of results
+      if (errorCount > 0) {
+        const errorSummary = `Successfully created ${successCount} users. ${errorCount} users failed:\n\n${errors.join('\n')}`;
+        onError(errorSummary);
+      } else {
+        onUsersCreated(successCount);
+      }
+      
       resetUpload();
     } catch (error) {
       // Clear the suppress flag on error

@@ -392,24 +392,32 @@ export default function AdminStudentGrades() {
     }));
   };
 
-  const getCourseTotals = (courseId: string, year: string) => {
-    const courseGrades = grades.filter(grade => 
-      grade.courseId === courseId && 
-      grade.gradedAt.getFullYear().toString() === year
-    );
-    const courseExamGrades = examGrades.filter(grade => 
-      grade.courseId === courseId && 
-      grade.gradedAt.getFullYear().toString() === year
-    );
+  const getCourseTotals = (courseId: string, year: string, type: 'assignments' | 'exams') => {
+    let courseGrades: any[] = [];
+    let totalItems = 0;
+    
+    if (type === 'assignments') {
+      courseGrades = grades.filter(grade => 
+        grade.courseId === courseId && 
+        grade.gradedAt.getFullYear().toString() === year
+      );
+      totalItems = courseGrades.length;
+    } else if (type === 'exams') {
+      courseGrades = examGrades.filter(grade => 
+        grade.courseId === courseId && 
+        grade.gradedAt.getFullYear().toString() === year
+      );
+      totalItems = courseGrades.length;
+    }
 
-    const totalPoints = [...courseGrades, ...courseExamGrades].reduce((sum, grade) => sum + grade.grade, 0);
-    const maxPoints = [...courseGrades, ...courseExamGrades].reduce((sum, grade) => sum + grade.maxScore, 0);
+    const totalPoints = courseGrades.reduce((sum, grade) => sum + grade.grade, 0);
+    const maxPoints = courseGrades.reduce((sum, grade) => sum + grade.maxScore, 0);
     const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
 
     return {
-      totalAssignments: courseGrades.length,
-      totalExams: courseExamGrades.length,
-      totalItems: courseGrades.length + courseExamGrades.length,
+      totalAssignments: type === 'assignments' ? courseGrades.length : 0,
+      totalExams: type === 'exams' ? courseGrades.length : 0,
+      totalItems,
       averageGrade: Math.round(averageGrade),
       totalPoints,
       maxPoints
@@ -663,7 +671,7 @@ export default function AdminStudentGrades() {
                           <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
                           
                           {Object.entries(courseGroups).map(([courseId, courseData]) => {
-                            const courseTotals = getCourseTotals(courseId, year);
+                            const courseTotals = getCourseTotals(courseId, year, 'assignments');
                             return (
                               <div key={courseId} className="mb-6">
                                 <button
@@ -692,7 +700,6 @@ export default function AdminStudentGrades() {
                                           <tr className="border-b border-gray-200">
                                             <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
                                             <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
                                             <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
                                           </tr>
                                         </thead>
@@ -705,20 +712,18 @@ export default function AdminStudentGrades() {
                                                   {grade.grade}/{grade.maxScore}
                                                 </span>
                                               </td>
-                                              <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
                                               <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
                                             </tr>
                                           ))}
                                         </tbody>
                                         <tfoot>
                                           <tr className="bg-gray-50 font-semibold">
-                                            <td className="py-3 px-4 text-gray-800">Course Total</td>
+                                            <td className="py-3 px-4 text-gray-800">Total</td>
                                             <td className="py-3 px-4 text-center">
                                               <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
                                                 {courseTotals.totalPoints}/{courseTotals.maxPoints}
                                               </span>
                                             </td>
-                                            <td className="py-3 px-4 text-center text-gray-600">{courseTotals.maxPoints}</td>
                                             <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
                                           </tr>
                                         </tfoot>
@@ -783,7 +788,7 @@ export default function AdminStudentGrades() {
                             <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
                             
                             {Object.entries(courseGroups).map(([courseId, courseData]) => {
-                              const courseTotals = getCourseTotals(courseId, year);
+                              const courseTotals = getCourseTotals(courseId, year, 'exams');
                               return (
                                 <div key={courseId} className="mb-6">
                                   <button
@@ -812,7 +817,6 @@ export default function AdminStudentGrades() {
                                             <tr className="border-b border-gray-200">
                                               <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
                                               <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
                                               <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
                                             </tr>
                                           </thead>
@@ -825,20 +829,18 @@ export default function AdminStudentGrades() {
                                                     {grade.grade}/{grade.maxScore}
                                                   </span>
                                                 </td>
-                                                <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
                                                 <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
                                               </tr>
                                             ))}
                                           </tbody>
                                           <tfoot>
                                             <tr className="bg-gray-50 font-semibold">
-                                              <td className="py-3 px-4 text-gray-800">Course Total</td>
+                                              <td className="py-3 px-4 text-gray-800">Total</td>
                                               <td className="py-3 px-4 text-center">
                                                 <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
                                                   {courseTotals.totalPoints}/{courseTotals.maxPoints}
                                                 </span>
                                               </td>
-                                              <td className="py-3 px-4 text-center text-gray-600">{courseTotals.maxPoints}</td>
                                               <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
                                             </tr>
                                           </tfoot>

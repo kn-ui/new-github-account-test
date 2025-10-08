@@ -77,6 +77,13 @@ export default function AdminStudentGrades() {
   const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStates, setLoadingStates] = useState({
+    student: false,
+    courses: false,
+    assignments: false,
+    exams: false,
+    finalGrades: false
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
@@ -96,17 +103,21 @@ export default function AdminStudentGrades() {
   const loadStudentData = async () => {
     try {
       setLoading(true);
+      setLoadingStates(prev => ({ ...prev, student: true }));
       
-      // Load student information
-      const studentData = await userService.getUserById(studentId!);
+      // Load student information and enrollments in parallel
+      const [studentData, enrollments] = await Promise.all([
+        userService.getUserById(studentId!),
+        enrollmentService.getEnrollmentsByStudent(studentId!)
+      ]);
+
       if (!studentData) {
         console.error('Student not found');
         return;
       }
       setStudent(studentData);
+      setLoadingStates(prev => ({ ...prev, student: false, courses: true }));
 
-      // Get student's enrollments
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(studentId!);
       const courseIds = enrollments.map(enrollment => enrollment.courseId);
       
       if (courseIds.length === 0) {
@@ -114,21 +125,47 @@ export default function AdminStudentGrades() {
         setFinalGrades([]);
         setCourses([]);
         setLoading(false);
+        setLoadingStates(prev => ({ ...prev, courses: false }));
         return;
       }
 
-      // Fetch all course details at once
+      // Fetch all course details at once and cache them
       const coursesData = await Promise.all(
         courseIds.map(id => courseService.getCourseById(id))
       );
       const validCourses = coursesData.filter(c => c !== null);
       setCourses(validCourses);
+      setLoadingStates(prev => ({ ...prev, courses: false, assignments: true, exams: true, finalGrades: true }));
 
-      // Get all assignments for enrolled courses
+      // Create course lookup map for faster access
+      const courseMap = new Map(validCourses.map(course => [course.id, course]));
+
+      // Load all data in parallel: assignments, exams, and final grades
+      const [assignmentsData, examsData, finalGradesData] = await Promise.all([
+        loadAssignmentGrades(courseIds, courseMap),
+        loadExamGrades(courseIds, courseMap),
+        loadFinalGrades(courseIds)
+      ]);
+
+      setGrades(assignmentsData);
+      setExamGrades(examsData);
+      setFinalGrades(finalGradesData);
+      setLoadingStates(prev => ({ ...prev, assignments: false, exams: false, finalGrades: false }));
+
+    } catch (error) {
+      console.error('Error loading student data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAssignmentGrades = async (courseIds: string[], courseMap: Map<string, any>) => {
+    try {
+      // Get all assignments for enrolled courses in parallel
       const assignmentsPromises = courseIds.map(async (courseId) => {
         try {
           const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
-          const course = await courseService.getCourseById(courseId);
+          const course = courseMap.get(courseId);
           return courseAssignments.map(assignment => ({
             ...assignment,
             courseTitle: course?.title || 'Unknown Course',
@@ -143,7 +180,9 @@ export default function AdminStudentGrades() {
       const assignmentsArrays = await Promise.all(assignmentsPromises);
       const allAssignments = assignmentsArrays.flat();
 
-      // Get graded submissions for all assignments
+      if (allAssignments.length === 0) return [];
+
+      // Get graded submissions for all assignments in parallel
       const submissionsPromises = allAssignments.map(async (assignment) => {
         try {
           const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
@@ -172,20 +211,26 @@ export default function AdminStudentGrades() {
       });
 
       const submissionsArrays = await Promise.all(submissionsPromises);
-      const allGrades = submissionsArrays.flat();
-      setGrades(allGrades);
+      return submissionsArrays.flat();
+    } catch (error) {
+      console.error('Error loading assignment grades:', error);
+      return [];
+    }
+  };
 
-      // Load exam grades for enrolled courses
-      const examGradesPromises = courseIds.map(async (courseId) => {
+  const loadExamGrades = async (courseIds: string[], courseMap: Map<string, any>) => {
+    try {
+      // Get all exams for enrolled courses in parallel
+      const examsPromises = courseIds.map(async (courseId) => {
         try {
           const courseExams = await examService.getExamsByCourse(courseId);
-          const course = await courseService.getCourseById(courseId);
+          const course = courseMap.get(courseId);
           
+          // Get exam attempts for all exams in parallel
           const examAttemptsPromises = courseExams.map(async (exam) => {
             try {
               const attempt = await examAttemptService.getAttemptForStudent(exam.id, studentId!);
               if (attempt && attempt.status === 'graded' && attempt.isGraded) {
-                // Calculate manual score from manualScores object
                 const manualScores = attempt.manualScores || {};
                 const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
                 
@@ -221,11 +266,16 @@ export default function AdminStudentGrades() {
         }
       });
 
-      const examGradesArrays = await Promise.all(examGradesPromises);
-      const allExamGrades = examGradesArrays.flat();
-      setExamGrades(allExamGrades);
+      const examGradesArrays = await Promise.all(examsPromises);
+      return examGradesArrays.flat();
+    } catch (error) {
+      console.error('Error loading exam grades:', error);
+      return [];
+    }
+  };
 
-      // Load final grades for courses
+  const loadFinalGrades = async (courseIds: string[]) => {
+    try {
       const finalGradesPromises = courseIds.map(async (courseId) => {
         try {
           const finalGrade = await gradeService.getGradeByStudentAndCourse(courseId, studentId!);
@@ -237,13 +287,10 @@ export default function AdminStudentGrades() {
       });
 
       const finalGradesResults = await Promise.all(finalGradesPromises);
-      const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
-      setFinalGrades(validFinalGrades);
-
+      return finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
     } catch (error) {
-      console.error('Error loading student data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading final grades:', error);
+      return [];
     }
   };
 
@@ -497,7 +544,16 @@ export default function AdminStudentGrades() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading student grades...</div>
+        <div className="text-center">
+          <div className="text-gray-600 mb-4">Loading student grades...</div>
+          <div className="space-y-2 text-sm text-gray-500">
+            {loadingStates.student && <div>Loading student information...</div>}
+            {loadingStates.courses && <div>Loading course information...</div>}
+            {loadingStates.assignments && <div>Loading assignment grades...</div>}
+            {loadingStates.exams && <div>Loading exam grades...</div>}
+            {loadingStates.finalGrades && <div>Loading final grades...</div>}
+          </div>
+        </div>
       </div>
     );
   }

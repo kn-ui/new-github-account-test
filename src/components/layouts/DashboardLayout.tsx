@@ -132,8 +132,8 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       try {
         const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
         
-        // Get all announcements
-        const all = await announcementService.getAllAnnouncements(50);
+        // Get all announcements (increased limit to show more)
+        const all = await announcementService.getAllAnnouncements(100);
         
         if (userRole === 'teacher') {
           // Teachers see: SPECIFIC_USER (if recipientUserId === teacher's id and authorRole "admin"), 
@@ -160,7 +160,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             return false;
           });
-          setAnnouncements(filtered.slice(0, 5));
+          setAnnouncements(filtered);
         } else if (userRole === 'student') {
           // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS
           if (currentUser?.uid) {
@@ -191,7 +191,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               
               return false;
             });
-            setAnnouncements(filtered.slice(0, 5));
+            setAnnouncements(filtered);
           } else {
             setAnnouncements([]);
           }
@@ -215,7 +215,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             return false;
           });
-          setAnnouncements(filtered.slice(0, 5));
+          setAnnouncements(filtered);
         } else if (userRole === 'super_admin') {
           // Super Admins see: SPECIFIC_USER (if recipientUserId === superAdmin's id and authorRole "admin"), 
           // GENERAL_ALL (if authorRole "admin")
@@ -236,9 +236,9 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             return false;
           });
-          setAnnouncements(filtered.slice(0, 5));
+          setAnnouncements(filtered);
         } else {
-          setAnnouncements(await announcementService.getAllAnnouncements(5));
+          setAnnouncements(await announcementService.getAllAnnouncements(100));
         }
       } catch (error) {
         console.error('Error loading announcements:', error);
@@ -392,25 +392,55 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>{t('notifications.announcements')}</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-96 max-h-96 overflow-y-auto">
+                  <DropdownMenuLabel className="flex items-center justify-between">
+                    <span>{t('notifications.announcements')}</span>
+                    <span className="text-xs text-gray-500 font-normal">({announcements.length})</span>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {announcements.length === 0 && (
-                    <div className="p-3 text-sm text-gray-600">{t('notifications.none')}</div>
+                    <div className="p-3 text-sm text-gray-600 text-center">{t('notifications.none')}</div>
                   )}
                   {announcements.map((a) => (
-                    <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 max-w-sm">
+                    <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-50">
                       <div className="w-full">
                         <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
-                        <div className="text-xs text-gray-600 line-clamp-3 break-words overflow-hidden" title={a.body}>
-                          {a.body.length > 100 ? `${a.body.substring(0, 100)}...` : a.body}
+                        <div className="text-xs text-gray-600 line-clamp-2 break-words overflow-hidden" title={a.body}>
+                          {a.body.length > 150 ? `${a.body.substring(0, 150)}...` : a.body}
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {a.createdAt.toDate().toLocaleDateString()}
+                        <div className="text-xs text-gray-400 mt-1 flex items-center justify-between">
+                          <span>{a.createdAt.toDate().toLocaleDateString()}</span>
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            {a.targetAudience === 'SPECIFIC_STUDENT' ? 'Direct' : 
+                             a.targetAudience === 'COURSE_STUDENTS' ? 'Course' :
+                             a.targetAudience === 'ALL_STUDENTS' ? 'All Students' :
+                             a.targetAudience === 'ALL_TEACHERS' ? 'All Teachers' :
+                             a.targetAudience === 'GENERAL_ALL' ? 'General' :
+                             a.targetAudience === 'SPECIFIC_USER' ? 'Direct' : 'General'}
+                          </span>
                         </div>
                       </div>
                     </DropdownMenuItem>
                   ))}
+                  {announcements.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        onClick={() => {
+                          if (userRole === 'student') {
+                            navigate('/dashboard/student-announcements');
+                          } else if (userRole === 'teacher') {
+                            navigate('/dashboard/announcements');
+                          } else if (userRole === 'admin' || userRole === 'super_admin') {
+                            navigate('/dashboard/admin-announcements');
+                          }
+                        }}
+                      >
+                        View All Announcements
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               {/* Language Switcher */}

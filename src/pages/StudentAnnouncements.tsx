@@ -84,6 +84,11 @@ export default function StudentAnnouncements() {
           return true;
         }
         
+        // General announcements from admin
+        if (targetAudience === 'GENERAL_ALL' && a.authorRole === 'admin') {
+          return true;
+        }
+        
         return false;
       });
       

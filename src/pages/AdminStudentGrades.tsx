@@ -558,7 +558,7 @@ export default function AdminStudentGrades() {
 
         {/* Loading Content */}
         <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+          <LoadingSpinner size="lg" text="Loading student grades..." />
         </div>
       </div>
     );

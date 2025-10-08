@@ -428,6 +428,19 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                           <div className="text-xs text-gray-600 hover:text-gray-600 break-words overflow-hidden">
                             {isExpanded ? a.body : (isLongText ? `${a.body.substring(0, 150)}...` : a.body)}
                           </div>
+                          {(a as any).externalLink && (
+                            <div className="mt-2">
+                              <a 
+                                href={(a as any).externalLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                🔗 External Link
+                              </a>
+                            </div>
+                          )}
                           {isLongText && (
                             <button
                               onClick={(e) => {

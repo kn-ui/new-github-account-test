@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import userService from '../services/userService';
-import { auth as adminAuth } from '../config/firebase';
+import { createClerkClient } from '@clerk/backend';
 import {
   sendSuccess,
   sendError,
@@ -11,22 +11,32 @@ import {
   sendServerError
 } from '../utils/response';
 
+// Initialize Clerk client
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY!,
+});
+
 export class UserController {
   // Admin: Create a new user
   async createUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { email, password, displayName, role } = req.body;
+      const { email, displayName, role } = req.body;
 
-      // Step 1: Create user in Firebase Auth
-      const userRecord = await adminAuth.createUser({
-        email,
-        password,
-        displayName,
+      // Step 1: Create user in Clerk
+      const clerkUser = await clerkClient.users.createUser({
+        emailAddress: [email],
+        firstName: displayName.split(' ')[0],
+        lastName: displayName.split(' ').slice(1).join(' ') || '',
+        publicMetadata: {
+          role: role || UserRole.STUDENT
+        },
+        skipPasswordChecks: true,
+        skipPasswordRequirement: true,
       });
 
       // Step 2: Create user in Firestore
       const newUser = await userService.createUser({
-        uid: userRecord.uid,
+        uid: clerkUser.id,
         email,
         displayName,
         role: role || UserRole.STUDENT,
@@ -35,7 +45,7 @@ export class UserController {
       sendCreated(res, 'User created successfully', newUser);
     } catch (error: any) {
       console.error('Create user error:', error);
-      if (error.code === 'auth/email-already-exists') {
+      if (error.message?.includes('email_address_taken')) {
         sendError(res, 'Email already in use', undefined, 409);
       } else {
         sendServerError(res, 'Failed to create user');

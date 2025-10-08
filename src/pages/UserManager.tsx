@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { clerkAdminService } from '@/lib/clerkAdmin';
+import { api } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -153,43 +153,30 @@ const UserManager = () => {
 
     setIsCreatingUser(true); // Start loading
     try {
-      // Create user in Clerk using admin API
-      const clerkUser = await clerkAdminService.createUser({
-        emailAddress: [newUser.email],
-        firstName: newUser.displayName.split(' ')[0],
-        lastName: newUser.displayName.split(' ').slice(1).join(' ') || '',
-        publicMetadata: {
-          role: newUser.role
-        },
-        skipPasswordChecks: true,
-        skipPasswordRequirement: true,
-      });
-      
-      // Create Firestore user profile using the Clerk user ID
-      await userService.createUser({
-        displayName: newUser.displayName,
+      // Create user via backend API
+      const response = await api.post('/users', {
         email: newUser.email,
-        role: newUser.role,
-        isActive: true,
-        uid: clerkUser.id,
-        passwordChanged: true // Clerk handles password management
+        displayName: newUser.displayName,
+        role: newUser.role
       });
       
-      setIsAddUserOpen(false);
-      setNewUser({ displayName: '', email: '', role: 'student', password: '' });
-      fetchUsers();
+      if (response.data.success) {
+        setIsAddUserOpen(false);
+        setNewUser({ displayName: '', email: '', role: 'student', password: '' });
+        fetchUsers();
+      } else {
+        throw new Error(response.data.message || 'Failed to create user');
+      }
     } catch (error: any) {
-      // Handle Clerk-specific errors with user-friendly messages
+      // Handle API errors with user-friendly messages
       let errorMessage = 'An error occurred while creating the user.';
       
-      if (error.message?.includes('email_address_taken')) {
+      if (error.response?.data?.message?.includes('already in use')) {
         errorMessage = `The email "${newUser.email}" is already registered. Please use a different email address.`;
-      } else if (error.message?.includes('invalid_email')) {
+      } else if (error.response?.data?.message?.includes('invalid email')) {
         errorMessage = 'Please enter a valid email address.';
-      } else if (error.message?.includes('weak_password')) {
-        errorMessage = 'The password is too weak. Please use a stronger password.';
-      } else if (error.message?.includes('network')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }

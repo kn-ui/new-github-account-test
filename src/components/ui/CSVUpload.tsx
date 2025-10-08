@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { userService } from '@/lib/firestore';
-import { clerkAdminService } from '@/lib/clerkAdmin';
+import { api } from '@/lib/api';
 
 interface CSVUser {
   displayName: string;
@@ -140,46 +140,35 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         console.log(`Creating user ${i + 1}/${totalUsers}: ${user.email}`);
         
         try {
-          // Create user in Clerk using admin API
-          const clerkUser = await clerkAdminService.createUser({
-            emailAddress: [user.email],
-            firstName: user.displayName.split(' ')[0],
-            lastName: user.displayName.split(' ').slice(1).join(' ') || '',
-            publicMetadata: {
-              role: user.role
-            },
-            skipPasswordChecks: true,
-            skipPasswordRequirement: true,
-          });
-          
-          // Create Firestore user profile using the Clerk user ID
-          await userService.createUser({
-            displayName: user.displayName,
+          // Create user via backend API
+          const response = await api.post('/users', {
             email: user.email,
-            role: user.role,
-            isActive: true,
-            uid: clerkUser.id,
-            passwordChanged: true // Clerk handles password management
+            displayName: user.displayName,
+            role: user.role
           });
           
-          setSuccessCount(prev => prev + 1);
-          console.log(`Successfully created user: ${user.email}`);
+          if (response.data.success) {
+            setSuccessCount(prev => prev + 1);
+            console.log(`Successfully created user: ${user.email}`);
+          } else {
+            throw new Error(response.data.message || 'Failed to create user');
+          }
           
-          // Small delay to prevent overwhelming Clerk API and show progress
+          // Small delay to prevent overwhelming API and show progress
           if (i < preview.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         } catch (error: any) {
           setErrorCount(prev => prev + 1);
           // Log specific error for debugging
-          if (error.message?.includes('email_address_taken')) {
+          if (error.response?.data?.message?.includes('already in use')) {
             uploadErrors.push(`${user.email}: Email already exists`);
             console.error(`User ${user.email} already exists - skipping`);
-          } else if (error.message?.includes('invalid_email')) {
+          } else if (error.response?.data?.message?.includes('invalid email')) {
             uploadErrors.push(`${user.email}: Invalid email format`);
             console.error(`Invalid email ${user.email}:`, error);
           } else {
-            uploadErrors.push(`${user.email}: ${error.message || 'Unknown error'}`);
+            uploadErrors.push(`${user.email}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
             console.error(`Failed to create user ${user.email}:`, error);
           }
         }

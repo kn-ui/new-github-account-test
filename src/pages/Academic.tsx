@@ -1,122 +1,261 @@
-import Header from '@/components/Header';
-import { useEffect, useMemo, useState } from 'react';
-import { FirestoreCourse, courseService, Timestamp } from '@/lib/firestore';
-import { useI18n } from '@/contexts/I18nContext';
+import React, { useState } from 'react';
+import { BookOpen, Users, Clock, Heart, Scroll, Church, User, GraduationCap } from 'lucide-react';
 
-const Academic = () => {
-  const [courses, setCourses] = useState<FirestoreCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+const Academic: React.FC = () => {
+  const departments = [
+    {
+      id: 1,
+      name: 'Biblical Studies',
+      description: 'Comprehensive study of scripture, hermeneutics, and biblical interpretation',
+      icon: BookOpen,
+      duration: '4 Years',
+      credits: '120 Credits',
+      degree: 'Bachelor of Theology',
+      courses: [
+        'Old Testament Survey',
+        'New Testament Theology',
+        'Biblical Hermeneutics',
+        'Hebrew Language',
+        'Greek Language',
+        'Biblical Archaeology'
+      ]
+    },
+    {
+      id: 2,
+      name: 'Systematic Theology',
+      description: 'Systematic study of Christian doctrine and theological principles',
+      icon: Scroll,
+      duration: '4 Years',
+      credits: '120 Credits',
+      degree: 'Bachelor of Theology',
+      courses: [
+        'Introduction to Theology',
+        'Christology',
+        'Pneumatology',
+        'Ecclesiology',
+        'Eschatology',
+        'Theological Method'
+      ]
+    },
+    {
+      id: 3,
+      name: 'Church History',
+      description: 'Historical development of Christianity from apostolic times to present',
+      icon: Clock,
+      duration: '3 Years',
+      credits: '90 Credits',
+      degree: 'Bachelor of Arts',
+      courses: [
+        'Early Church History',
+        'Medieval Christianity',
+        'Reformation Era',
+        'Modern Church History',
+        'American Church History',
+        'Global Christianity'
+      ]
+    },
+    {
+      id: 4,
+      name: 'Pastoral Care & Counseling',
+      description: 'Training in spiritual guidance, counseling, and pastoral ministry',
+      icon: Heart,
+      duration: '3 Years',
+      credits: '90 Credits',
+      degree: 'Bachelor of Ministry',
+      courses: [
+        'Introduction to Pastoral Care',
+        'Crisis Counseling',
+        'Marriage & Family Counseling',
+        'Grief & Loss Counseling',
+        'Spiritual Direction',
+        'Pastoral Leadership'
+      ]
+    },
+    {
+      id: 5,
+      name: 'Christian Ethics',
+      description: 'Moral theology and ethical decision-making in Christian context',
+      icon: Users,
+      duration: '2 Years',
+      credits: '60 Credits',
+      degree: 'Certificate',
+      courses: [
+        'Foundations of Christian Ethics',
+        'Bioethics',
+        'Social Ethics',
+        'Environmental Ethics',
+        'Business Ethics',
+        'Medical Ethics'
+      ]
+    },
+    {
+      id: 6,
+      name: 'Liturgical Studies',
+      description: 'Study of worship, liturgy, and sacramental theology',
+      icon: Church,
+      duration: '3 Years',
+      credits: '90 Credits',
+      degree: 'Bachelor of Arts',
+      courses: [
+        'History of Christian Worship',
+        'Liturgical Theology',
+        'Sacramental Theology',
+        'Music in Worship',
+        'Seasonal Liturgies',
+        'Contemporary Worship'
+      ]
+    },
+    {
+      id: 7,
+      name: 'Mission & Evangelism',
+      description: 'Training for missionary work and evangelistic ministry',
+      icon: User,
+      duration: '3 Years',
+      credits: '90 Credits',
+      degree: 'Bachelor of Ministry',
+      courses: [
+        'Introduction to Missions',
+        'Cross-Cultural Ministry',
+        'Evangelism Strategies',
+        'Church Planting',
+        'Global Missions',
+        'Urban Ministry'
+      ]
+    },
+    {
+      id: 8,
+      name: 'Youth & Family Ministry',
+      description: 'Specialized training for youth and family-focused ministry',
+      icon: GraduationCap,
+      duration: '2 Years',
+      credits: '60 Credits',
+      degree: 'Certificate',
+      courses: [
+        'Youth Ministry Foundations',
+        'Adolescent Development',
+        'Family Systems',
+        'Youth Discipleship',
+        'Event Planning',
+        'Volunteer Management'
+      ]
+    }
+  ];
 
-  useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        setLoading(true);
-        const list = await courseService.getAllCourses(1000);
-        setCourses(list);
-      } catch (e) {
-        setCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadCourses();
-  }, []);
+  // instead of a single boolean
+  const [openDept, setOpenDept] = useState<number | null>(null);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    courses.forEach(c => c.category && set.add(c.category));
-    return ['All', ...Array.from(set)];
-  }, [courses]);
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return courses.filter(c => {
-      const matchesText = [c.title, c.description, c.instructorName, c.category].filter(Boolean).some(v => String(v).toLowerCase().includes(q));
-      const matchesCat = categoryFilter === 'All' || c.category === categoryFilter;
-      return matchesText && matchesCat;
-    });
-  }, [courses, query, categoryFilter]);
-
-  const { t } = useI18n();
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div>
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
-        <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('academicPage.title')}</h1>
-          <p className="text-xl mb-8">{t('academicPage.subtitle')}</p>
+        {/* Background Image */}
+        <img
+          src="../../asset/background-img.png"
+          alt="background"
+          className="absolute inset-0 w-full h-full object-cover opacity-20"
+        />
+
+        {/* Overlay for gradient and content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Academic Programs</h1>
+            <p className="text-xl mb-8">
+              Comprehensive theological education for spiritual leaders<br />
+              and servants
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          <div className="relative w-full md:w-80">
-            <input
-              type="text"
-              placeholder={t('courses.searchPlaceholder')}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+      {/* Departments Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Departments</h2>
+          <p className="text-lg text-gray-600">
+            Explore our comprehensive range of theological and spiritual studies<br />
+            programs
+          </p>
         </div>
 
-        {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 animate-pulse h-48" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map(course => (
-              <div key={course.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 hover:shadow-md transition-shadow flex flex-col">
+        <div className="space-y-6 cursor-pointer">
+          {departments.map((dept) => {
+            const Icon = dept.icon;
+            return (
+              <div key={dept.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow" 
+                onClick={() => setOpenDept(openDept === dept.id ? null : dept.id)}
+              >
                 <div className="flex items-start justify-between">
-                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">{course.category || (t('common.general') as any) || 'General'}</span>
-                  <span className="text-xs text-gray-500">{(course.createdAt as Timestamp).toDate().toLocaleDateString()}</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mt-3">{course.title}</h3>
-                <p className="text-gray-600 mt-2 line-clamp-3">{course.description}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-600">
-                  <div><span className="text-gray-500">{t('courses.instructor')}:</span> <span className="font-medium text-gray-800">{course.instructorName || '—'}</span></div>
-                  <div><span className="text-gray-500">{t('courses.hours')}:</span> <span className="font-medium text-gray-800">{course.duration ?? '—'}</span></div>
-                  <div><span className="text-gray-500">{t('academicPage.maxStudents') || 'Max Students:'}</span> <span className="font-medium text-gray-800">{course.maxStudents ?? '—'}</span></div>
-                  <div><span className="text-gray-500">{t('academicPage.status') || 'Status:'}</span> <span className={`font-medium ${course.isActive ? 'text-green-600' : 'text-gray-700'}`}>{course.isActive ? (t('academicPage.active') || 'Active') : (t('academicPage.planned') || 'Planned')}</span></div>
-                </div>
-                <div className="mt-5 flex gap-2">
-                  <a href="/admissions" className="inline-flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">{t('academicPage.apply')}</a>
-                  <a href="/contact" className="inline-flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium">{t('academicPage.contact')}</a>
+                  <div className="flex items-start space-x-4 flex-1">
+                    <div className="bg-blue-100 p-3 rounded-lg">
+                      <Icon className="w-6 h-6 text-blue-600" />
+                    </div>
+
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{dept.name}</h3>
+                      <p className="text-gray-600 mb-4">{dept.description}</p>
+                      
+                      {openDept === dept.id && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Core Courses</h4>
+                            <ul className="space-y-1 text-sm text-gray-600">
+                              {dept.courses?.map((course, index) => (
+                                <li key={index} className="flex items-center">
+                                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                                  {course}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Program Details</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Duration:</span>
+                                <span className="font-medium">{dept.duration}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Total Credits:</span>
+                                <span className="font-medium">{dept.credits}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Degree Type:</span>
+                                <span className="font-medium">{dept.degree}</span>
+                              </div>
+                            </div>
+                            <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                              Learn More & Apply
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right ml-4">
+                    <div className="text-sm text-gray-500 mb-1">{dept.duration}</div>
+                    <div className="text-sm font-medium text-gray-700">{dept.credits}</div>
+                  </div>
                 </div>
               </div>
-            ))}
-            {!filtered.length && (
-              <div className="col-span-full text-center text-gray-500 py-12">{t('common.noResults') || 'No results found'}</div>
-            )}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
+      {/* Call to Action */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-3xl font-bold mb-4">{t('academicPage.ctaTitle') || 'Ready to Start Your Academic Journey?'}</h2>
-          <p className="text-xl mb-8">{t('academicPage.ctaSubtitle') || 'Take the first step towards your calling in spiritual leadership and service.'}</p>
+          <h2 className="text-3xl font-bold mb-4">Ready to Start Your Academic Journey?</h2>
+          <p className="text-xl mb-8">
+            Take the first step towards your calling in spiritual leadership and service.
+          </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <a href="/admissions" className="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">{t('academicPage.apply')}</a>
-            <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors">{t('academicPage.contact')}</a>
+            <button className="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">
+              Apply for Admission
+            </button>
+            <button className="border-2 border-white text-white px-8 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors">
+              Download Brochure
+            </button>
           </div>
         </div>
       </div>

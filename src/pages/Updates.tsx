@@ -19,7 +19,6 @@ export default function Updates() {
   const [blogs, setBlogs] = useState<FirestoreBlog[]>([]);
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [annFilter, setAnnFilter] = useState<'all'|'general'|'course'>('all');
   const [blogQ, setBlogQ] = useState('');
   const [eventQ, setEventQ] = useState('');
   const [eventStatus, setEventStatus] = useState<'all'|'upcoming'|'past'>('all');
@@ -60,10 +59,9 @@ export default function Updates() {
   }, []);
 
   const filteredAnnouncements = useMemo(() => {
-    if (annFilter === 'general') return announcements.filter(a => !a.courseId && !a.recipientStudentId);
-    if (annFilter === 'course') return announcements.filter(a => !!a.courseId && !a.recipientStudentId);
-    return announcements;
-  }, [announcements, annFilter]);
+    // Only show announcements with targetAudience "GENERAL_ALL"
+    return announcements.filter(a => a.targetAudience === 'GENERAL_ALL');
+  }, [announcements]);
 
   const filteredBlogs = useMemo(() => {
     const q = blogQ.toLowerCase();
@@ -184,13 +182,8 @@ export default function Updates() {
           </TabsList>
 
           <TabsContent value="announcements" className="mt-6">
-            <div className="flex items-center gap-3 mb-4">
-              <label className="text-sm text-gray-700">Filter:</label>
-              <select value={annFilter} onChange={e => setAnnFilter(e.target.value as any)} className="border border-gray-300 rounded px-2 py-1 text-sm">
-                <option value="all">All</option>
-                <option value="general">General</option>
-                <option value="course">Course</option>
-              </select>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">Showing general announcements for all users</p>
             </div>
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
               <div className="space-y-4">

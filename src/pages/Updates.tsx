@@ -192,6 +192,18 @@ export default function Updates() {
                     <div className="text-sm text-gray-500 mb-1">{a.createdAt.toDate().toLocaleString()}</div>
                     <div className="font-semibold text-gray-900">{a.title}</div>
                     <div className="text-gray-700 mt-1">{a.body}</div>
+                    {(a as any).externalLink && (
+                      <div className="mt-3">
+                        <a 
+                          href={(a as any).externalLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 underline text-sm"
+                        >
+                          🔗 External Link
+                        </a>
+                      </div>
+                    )}
                     <div className="mt-2 text-xs text-gray-500">
                       {(a.courseId ? 'Course' : 'General')}{a.recipientStudentId ? ' · Direct' : ''}
                     </div>

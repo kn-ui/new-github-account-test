@@ -22,6 +22,9 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   const [preview, setPreview] = useState<CSVUser[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [currentProgress, setCurrentProgress] = useState(0); // Track current progress
+  const [successCount, setSuccessCount] = useState(0); // Track successful creations
+  const [errorCount, setErrorCount] = useState(0); // Track failed creations
+  const [totalUsers, setTotalUsers] = useState(0); // Track total users to create
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -120,6 +123,12 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
 
     console.log('Starting bulk user creation for', preview.length, 'users');
     setIsProcessing(true);
+    
+    // Initialize counters
+    setSuccessCount(0);
+    setErrorCount(0);
+    setTotalUsers(preview.length);
+    
     try {
       // SOLUTION: Use secondary Firebase auth for bulk user creation
       // 
@@ -130,10 +139,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       // Set a flag to suppress auth redirects during bulk user creation
       sessionStorage.setItem('suppressAuthRedirect', 'true');
       
-      let successCount = 0;
-      let errorCount = 0;
       const uploadErrors: string[] = []; // Renamed to avoid conflict with state
-      const totalUsers = preview.length;
       
       for (let i = 0; i < preview.length; i++) {
         const user = preview[i];
@@ -173,7 +179,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
           // Immediately sign out from secondary auth to clean up
           await signOut(secondaryAuth);
           
-          successCount++;
+          setSuccessCount(prev => prev + 1);
           console.log(`Successfully created user: ${user.email}`);
           
           // Small delay to prevent overwhelming Firebase API and show progress
@@ -181,7 +187,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         } catch (error: any) {
-          errorCount++;
+          setErrorCount(prev => prev + 1);
           // Log specific error for debugging
           if (error.code === 'auth/email-already-in-use') {
             uploadErrors.push(`${user.email}: Email already exists`);
@@ -227,6 +233,10 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     setUploadedFile(null);
     setPreview([]);
     setErrors([]);
+    setCurrentProgress(0);
+    setSuccessCount(0);
+    setErrorCount(0);
+    setTotalUsers(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

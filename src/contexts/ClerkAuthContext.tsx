@@ -99,9 +99,9 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
       await user.update({
         firstName: data.displayName?.split(' ')[0] || user.firstName,
         lastName: data.displayName?.split(' ').slice(1).join(' ') || user.lastName,
-        publicMetadata: {
-          ...user.publicMetadata,
-          role: data.role || user.publicMetadata?.role
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          role: data.role || user.unsafeMetadata?.role
         }
       });
 
@@ -131,11 +131,15 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (isSignedIn && user) {
       // Set auth token for backend requests
-      user.getToken().then(token => {
-        setAuthToken(token);
-      }).catch(error => {
-        console.warn('Failed to get auth token:', error);
-      });
+      if (typeof user.getToken === 'function') {
+        user.getToken().then(token => {
+          setAuthToken(token);
+        }).catch(error => {
+          console.warn('Failed to get auth token:', error);
+        });
+      } else {
+        console.warn('getToken method not available on user object');
+      }
 
       // Fetch or create user profile in Firestore
       const fetchUserProfile = async () => {
@@ -156,7 +160,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               uid: user.id,
               displayName: user.fullName || user.firstName || 'User',
               email: user.primaryEmailAddress?.emailAddress || '',
-              role: (user.publicMetadata?.role as string) || 'student',
+              role: (user.publicMetadata?.role as 'student' | 'teacher' | 'admin' | 'super_admin') || 'student',
               isActive: true,
               passwordChanged: true,
               createdAt: new Date(user.createdAt),
@@ -164,7 +168,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
             };
             
             await userService.createUser(newProfile);
-            setUserProfile(newProfile as FirestoreUser);
+            setUserProfile(newProfile as any);
           }
         } catch (error) {
           console.log('Error fetching/creating user profile:', error);
@@ -210,5 +214,5 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         {children}
       </ClerkAuthProviderInner>
     </ClerkProvider>
-  );
+  ) as React.ReactElement;
 };

@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { secondaryAuth } from '@/lib/firebaseSecondary';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { userService } from '@/lib/firestore';
+import { clerkAdminService } from '@/lib/clerkAdmin';
 
 interface CSVUser {
   displayName: string;
@@ -130,15 +129,6 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     setTotalUsers(preview.length);
     
     try {
-      // SOLUTION: Use secondary Firebase auth for bulk user creation
-      // 
-      // Same solution as single user creation - use secondaryAuth to prevent
-      // the main app's authentication state from being affected during bulk
-      // user creation, avoiding unwanted redirects.
-      
-      // Set a flag to suppress auth redirects during bulk user creation
-      sessionStorage.setItem('suppressAuthRedirect', 'true');
-      
       const uploadErrors: string[] = []; // Renamed to avoid conflict with state
       
       for (let i = 0; i < preview.length; i++) {
@@ -150,49 +140,42 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         console.log(`Creating user ${i + 1}/${totalUsers}: ${user.email}`);
         
         try {
-          // Set default password based on role
-          const defaultPasswords = {
-            student: 'student123',
-            teacher: 'teacher123',
-            admin: 'admin123',
-            super_admin: 'superadmin123'
-          };
-          const password = defaultPasswords[user.role] || 'password123';
+          // Create user in Clerk using admin API
+          const clerkUser = await clerkAdminService.createUser({
+            emailAddress: [user.email],
+            firstName: user.displayName.split(' ')[0],
+            lastName: user.displayName.split(' ').slice(1).join(' ') || '',
+            publicMetadata: {
+              role: user.role
+            },
+            skipPasswordChecks: true,
+            skipPasswordRequirement: true,
+          });
           
-          // Use secondary auth to create user - this prevents the main app from being affected
-          const userCredential = await createUserWithEmailAndPassword(
-            secondaryAuth, 
-            user.email, 
-            password
-          );
-          
-          // Create Firestore user profile using the UID from secondary auth
+          // Create Firestore user profile using the Clerk user ID
           await userService.createUser({
             displayName: user.displayName,
             email: user.email,
             role: user.role,
             isActive: true,
-            uid: userCredential.user.uid,
-            passwordChanged: false // New users must change their password
+            uid: clerkUser.id,
+            passwordChanged: true // Clerk handles password management
           });
-          
-          // Immediately sign out from secondary auth to clean up
-          await signOut(secondaryAuth);
           
           setSuccessCount(prev => prev + 1);
           console.log(`Successfully created user: ${user.email}`);
           
-          // Small delay to prevent overwhelming Firebase API and show progress
+          // Small delay to prevent overwhelming Clerk API and show progress
           if (i < preview.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         } catch (error: any) {
           setErrorCount(prev => prev + 1);
           // Log specific error for debugging
-          if (error.code === 'auth/email-already-in-use') {
+          if (error.message?.includes('email_address_taken')) {
             uploadErrors.push(`${user.email}: Email already exists`);
             console.error(`User ${user.email} already exists - skipping`);
-          } else if (error.code === 'auth/invalid-email') {
+          } else if (error.message?.includes('invalid_email')) {
             uploadErrors.push(`${user.email}: Invalid email format`);
             console.error(`Invalid email ${user.email}:`, error);
           } else {
@@ -201,9 +184,6 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
           }
         }
       }
-
-      // Clear the suppress flag
-      sessionStorage.removeItem('suppressAuthRedirect');
       
       // Reset progress
       setCurrentProgress(0);
@@ -218,8 +198,6 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       
       resetUpload();
     } catch (error) {
-      // Clear the suppress flag on error
-      sessionStorage.removeItem('suppressAuthRedirect');
       setCurrentProgress(0);
       console.error('Bulk user creation failed:', error);
       onError(`Failed to create users: ${error instanceof Error ? error.message : 'Unknown error'}`);

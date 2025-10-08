@@ -34,9 +34,8 @@ import {
   Award
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
-import { useAuth } from '@/contexts/AuthContext';
-import { secondaryAuth } from '@/lib/firebaseSecondary';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { useAuth } from '@/contexts/ClerkAuthContext';
+import { clerkAdminService } from '@/lib/clerkAdmin';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -147,70 +146,49 @@ const UserManager = () => {
   };
 
   const handleAddUser = async () => {
+    if (!newUser.displayName || !newUser.email || !newUser.role) {
+      alert('Please fill in all fields');
+      return;
+    }
+
     setIsCreatingUser(true); // Start loading
     try {
-      // SOLUTION: Use secondary Firebase auth to prevent admin redirects
-      // 
-      // Problem: When admin creates users with createUserWithEmailAndPassword,
-      // Firebase automatically signs in the new user, triggering onAuthStateChanged
-      // and causing unwanted redirects to the new user's dashboard.
-      //
-      // Solution: Use a separate Firebase app instance (secondaryAuth) for user creation.
-      // This keeps the main app's auth state unchanged, preventing redirects.
+      // Create user in Clerk using admin API
+      const clerkUser = await clerkAdminService.createUser({
+        emailAddress: [newUser.email],
+        firstName: newUser.displayName.split(' ')[0],
+        lastName: newUser.displayName.split(' ').slice(1).join(' ') || '',
+        publicMetadata: {
+          role: newUser.role
+        },
+        skipPasswordChecks: true,
+        skipPasswordRequirement: true,
+      });
       
-      // Set a flag to suppress auth redirects during user creation (extra safety)
-      sessionStorage.setItem('suppressAuthRedirect', 'true');
-      
-      const defaultPasswords = {
-        student: 'student123',
-        teacher: 'teacher123',
-        admin: 'admin123',
-        super_admin: 'superadmin123'
-      };
-      const password = defaultPasswords[newUser.role];
-
-      // Use secondary auth to create user - this prevents the main app from being affected
-      const userCredential = await createUserWithEmailAndPassword(
-        secondaryAuth, 
-        newUser.email, 
-        password
-      );
-      
-      // Create Firestore user profile using the UID from secondary auth
+      // Create Firestore user profile using the Clerk user ID
       await userService.createUser({
         displayName: newUser.displayName,
         email: newUser.email,
         role: newUser.role,
         isActive: true,
-        uid: userCredential.user.uid,
-        passwordChanged: false // New users must change their password
+        uid: clerkUser.id,
+        passwordChanged: true // Clerk handles password management
       });
-      
-      // Immediately sign out from secondary auth to clean up
-      await signOut(secondaryAuth);
-      
-      // Clear the suppress flag
-      sessionStorage.removeItem('suppressAuthRedirect');
       
       setIsAddUserOpen(false);
       setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();
     } catch (error: any) {
-      // Clear the suppress flag on error
-      sessionStorage.removeItem('suppressAuthRedirect');
-      
-      // Handle specific Firebase auth errors with user-friendly messages
+      // Handle Clerk-specific errors with user-friendly messages
       let errorMessage = 'An error occurred while creating the user.';
       
-      if (error.code === 'auth/email-already-in-use') {
+      if (error.message?.includes('email_address_taken')) {
         errorMessage = `The email "${newUser.email}" is already registered. Please use a different email address.`;
-      } else if (error.code === 'auth/invalid-email') {
+      } else if (error.message?.includes('invalid_email')) {
         errorMessage = 'Please enter a valid email address.';
-      } else if (error.code === 'auth/weak-password') {
+      } else if (error.message?.includes('weak_password')) {
         errorMessage = 'The password is too weak. Please use a stronger password.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
-      } else if (error.code === 'auth/network-request-failed') {
+      } else if (error.message?.includes('network')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;

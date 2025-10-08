@@ -52,7 +52,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface User {
   id: string;
@@ -65,6 +67,8 @@ interface User {
 
 const UserManager = () => {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const [isNavigating, setIsNavigating] = useState(false);
   const { createUser, userProfile } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -275,10 +279,10 @@ const UserManager = () => {
     );
   }
 
-  if (loading) {
+  if (loading || isNavigating) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" text={loading ? "Loading users..." : "Navigating..."} />
       </div>
     );
   }
@@ -633,7 +637,10 @@ const UserManager = () => {
                           {user.role === 'student' && (
                             <DropdownMenuItem 
                               className="cursor-pointer"
-                              onClick={() => window.location.href = `/dashboard/admin-student-grades/${user.id}`}
+                              onClick={() => {
+                                setIsNavigating(true);
+                                navigate(`/dashboard/admin-student-grades/${user.id}`);
+                              }}
                             >
                               <Award className="h-4 w-4 mr-2" />
                               View Grades

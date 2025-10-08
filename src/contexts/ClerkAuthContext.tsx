@@ -34,7 +34,7 @@ interface AuthProviderProps {
 }
 
 const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
-  const { isSignedIn, isLoaded, signOut } = useClerkAuthHook();
+  const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuthHook();
   const { user } = useUser();
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,14 +131,17 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (isSignedIn && user) {
       // Set auth token for backend requests
-      if (typeof user.getToken === 'function') {
-        user.getToken().then(token => {
-          setAuthToken(token);
+      if (getToken) {
+        getToken().then(token => {
+          if (token) {
+            setAuthToken(token);
+          } else {
+            removeAuthToken();
+          }
         }).catch(error => {
           console.warn('Failed to get auth token:', error);
+          removeAuthToken();
         });
-      } else {
-        console.warn('getToken method not available on user object');
       }
 
       // Fetch or create user profile in Firestore
@@ -214,5 +217,5 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         {children}
       </ClerkAuthProviderInner>
     </ClerkProvider>
-  ) as React.ReactElement;
+  );
 };

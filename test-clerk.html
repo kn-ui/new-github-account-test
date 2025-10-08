@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clerk Test</title>
+</head>
+<body>
+    <h1>Testing Clerk Integration</h1>
+    <div id="status">Loading...</div>
+    
+    <script>
+        // Test if we can access the app
+        fetch('http://localhost:5173')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('status').innerHTML = 'App is running';
+                console.log('App response received');
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = 'Error: ' + error.message;
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

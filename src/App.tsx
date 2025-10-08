@@ -43,6 +43,7 @@ import StudentProgress from "./pages/StudentProgress";
 import AdminReports from "./pages/AdminReports";
 import AssignmentEditRequests from "./pages/AssignmentEditRequests";
 import AdminSettings from "./pages/AdminSettings";
+import AdminAnnouncements from "./pages/AdminAnnouncements";
 import TeacherCourses from "./pages/TeacherCourses";
 import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import StudentCourses from "./pages/StudentCourses";
@@ -191,6 +192,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminSettings />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-announcements" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminAnnouncements />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

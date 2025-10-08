@@ -129,19 +129,55 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   useEffect(() => {
     const loadAnnouncements = async () => {
       try {
+        const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
+        
         if (userRole === 'teacher') {
-          const my = await announcementService.getAnnouncementsByTeacher((await import('@/contexts/AuthContext')).useAuth().currentUser?.uid || '');
-          setAnnouncements(my.slice(0, 5));
+          // Teachers see: general announcements (GENERAL_ALL) and teacher-specific announcements (ALL_TEACHERS)
+          const all = await announcementService.getAllAnnouncements(20);
+          const filtered = all.filter((a: any) => {
+            const targetAudience = a.targetAudience;
+            return targetAudience === 'GENERAL_ALL' || targetAudience === 'ALL_TEACHERS';
+          });
+          setAnnouncements(filtered.slice(0, 5));
         } else if (userRole === 'student') {
-          const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
+          // Students see: general announcements (GENERAL_ALL), student-specific announcements (ALL_STUDENTS), 
+          // and direct messages to them
           if (currentUser?.uid) {
             const all = await announcementService.getAllAnnouncements(20);
-            const direct = all.filter((a: any) => a.recipientStudentId === currentUser.uid);
-            const general = all.filter((a: any) => !a.recipientStudentId && !a.courseId);
-            setAnnouncements([...direct, ...general].slice(0, 5));
+            const filtered = all.filter((a: any) => {
+              const targetAudience = a.targetAudience;
+              const recipientUserId = a.recipientUserId;
+              const recipientStudentId = a.recipientStudentId;
+              
+              // Direct message to this student
+              if (recipientUserId === currentUser.uid || recipientStudentId === currentUser.uid) {
+                return true;
+              }
+              
+              // General announcements to all users
+              if (targetAudience === 'GENERAL_ALL') {
+                return true;
+              }
+              
+              // Student-specific announcements
+              if (targetAudience === 'ALL_STUDENTS') {
+                return true;
+              }
+              
+              return false;
+            });
+            setAnnouncements(filtered.slice(0, 5));
           } else {
             setAnnouncements([]);
           }
+        } else if (userRole === 'admin' || userRole === 'super_admin') {
+          // Admins and Super Admins see: general announcements (GENERAL_ALL) and teacher-specific announcements (ALL_TEACHERS)
+          const all = await announcementService.getAllAnnouncements(20);
+          const filtered = all.filter((a: any) => {
+            const targetAudience = a.targetAudience;
+            return targetAudience === 'GENERAL_ALL' || targetAudience === 'ALL_TEACHERS';
+          });
+          setAnnouncements(filtered.slice(0, 5));
         } else {
           setAnnouncements(await announcementService.getAllAnnouncements(5));
         }

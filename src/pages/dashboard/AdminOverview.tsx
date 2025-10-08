@@ -16,7 +16,9 @@ import {
   BookOpen as BookOpenIcon,
   Activity,
   Target,
-  Zap
+  Zap,
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useI18n } from '@/contexts/I18nContext';
@@ -176,6 +178,111 @@ const AdminOverview = () => {
               <div className="text-gray-600 text-sm flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 {t('admin.systemStats.totalEvents')}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions - Left Navigation Style */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          {/* Admin Announcements */}
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-purple-900">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Bell className="h-6 w-6 text-purple-600" />
+                </div>
+                Admin Announcements
+              </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/admin-announcements">Manage</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 mb-2">System Communications</p>
+                  <p className="text-sm text-gray-600 mb-4">Create and manage announcements for all users, students, and teachers</p>
+                  <div className="space-y-2">
+                    <Link to="/dashboard/admin-announcements">
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <Bell className="h-4 w-4 mr-2" />
+                        Manage Announcements
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* User Management */}
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-blue-900">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                User Management
+              </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/users">Manage</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 mb-2">Manage Users</p>
+                  <p className="text-sm text-gray-600 mb-4">Create, edit, and manage user accounts and permissions</p>
+                  <div className="space-y-2">
+                    <Link to="/dashboard/users">
+                      <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <Users className="h-4 w-4 mr-2" />
+                        Manage Users
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Course Management */}
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-green-900">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <BookOpen className="h-6 w-6 text-green-600" />
+                </div>
+                Course Management
+              </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard/courses">Manage</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 mb-2">Manage Courses</p>
+                  <p className="text-sm text-gray-600 mb-4">Create, edit, and manage courses and curriculum</p>
+                  <div className="space-y-2">
+                    <Link to="/dashboard/courses">
+                      <Button className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Manage Courses
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -981,6 +981,52 @@ export const announcementService = {
     return allAnnouncements;
   },
 
+  async getAdminAnnouncements(): Promise<FirestoreAnnouncement[]> {
+    const q = query(
+      collections.announcements(),
+      where('isAdminAnnouncement', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+  },
+
+  async getAnnouncementsForUser(userId: string, userRole: string): Promise<FirestoreAnnouncement[]> {
+    const q = query(
+      collections.announcements(),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const allAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreAnnouncement));
+    
+    // Filter announcements based on user role and targeting
+    return allAnnouncements.filter(announcement => {
+      const targetAudience = (announcement as any).targetAudience;
+      const recipientUserId = (announcement as any).recipientUserId;
+      
+      // Direct message to this user
+      if (recipientUserId === userId) {
+        return true;
+      }
+      
+      // General announcements to all users
+      if (targetAudience === 'GENERAL_ALL') {
+        return true;
+      }
+      
+      // Role-specific announcements
+      if (userRole === 'student' && targetAudience === 'ALL_STUDENTS') {
+        return true;
+      }
+      
+      if ((userRole === 'teacher' || userRole === 'admin' || userRole === 'super_admin') && targetAudience === 'ALL_TEACHERS') {
+        return true;
+      }
+      
+      return false;
+    });
+  },
+
 
   async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {
     const docRef = doc(db, 'announcements', announcementId);

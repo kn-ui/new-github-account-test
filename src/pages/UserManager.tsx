@@ -84,6 +84,7 @@ const UserManager = () => {
     password: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
+  const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
 
   // Calculate stats
   const totalUsers = users.length;
@@ -141,6 +142,7 @@ const UserManager = () => {
   };
 
   const handleAddUser = async () => {
+    setIsCreatingUser(true); // Start loading
     try {
       // SOLUTION: Use secondary Firebase auth to prevent admin redirects
       // 
@@ -212,6 +214,8 @@ const UserManager = () => {
       // Show user-friendly error message
       alert(errorMessage);
       console.error('Error creating user:', error);
+    } finally {
+      setIsCreatingUser(false); // Stop loading
     }
   };
 
@@ -289,7 +293,12 @@ const UserManager = () => {
             <FileSpreadsheet className="h-5 w-5 mr-2" />
             {t('users.export')}
           </Button>
-          <Dialog open={isAddUserOpen} onOpenChange={(o) => { setIsAddUserOpen(o); if (!o) setMode('single'); }}>
+          <Dialog open={isAddUserOpen} onOpenChange={(o) => { 
+            if (!isCreatingUser) {
+              setIsAddUserOpen(o); 
+              if (!o) setMode('single'); 
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
                 <UserPlus className="h-5 w-5 mr-2" />
@@ -352,8 +361,20 @@ const UserManager = () => {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-                      {t('users.create')}
+                    <Button 
+                      type="submit" 
+                      onClick={handleAddUser} 
+                      disabled={isCreatingUser}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCreatingUser ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Creating User...
+                        </>
+                      ) : (
+                        t('users.create')
+                      )}
                     </Button>
                   </DialogFooter>
                 </>

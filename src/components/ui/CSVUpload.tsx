@@ -21,6 +21,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<CSVUser[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [currentProgress, setCurrentProgress] = useState(0); // Track current progress
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -130,8 +131,13 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       let successCount = 0;
       let errorCount = 0;
       const errors: string[] = [];
+      const totalUsers = preview.length;
       
-      for (const user of preview) {
+      for (let i = 0; i < preview.length; i++) {
+        const user = preview[i];
+        
+        // Update progress
+        setCurrentProgress(Math.round(((i + 1) / totalUsers) * 100));
         try {
           // Set default password based on role
           const defaultPasswords = {
@@ -182,6 +188,9 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       // Clear the suppress flag
       sessionStorage.removeItem('suppressAuthRedirect');
       
+      // Reset progress
+      setCurrentProgress(0);
+      
       // Show summary of results
       if (errorCount > 0) {
         const errorSummary = `Successfully created ${successCount} users. ${errorCount} users failed:\n\n${errors.join('\n')}`;
@@ -194,6 +203,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     } catch (error) {
       // Clear the suppress flag on error
       sessionStorage.removeItem('suppressAuthRedirect');
+      setCurrentProgress(0);
       onError('Failed to create users. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -350,26 +360,43 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             </table>
           </div>
 
-          {/* Upload Button */}
-          <div className="mt-6 flex justify-end">
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={isProcessing || errors.length > 0}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating Users...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Create {preview.length} Users
-                </>
-              )}
-            </button>
+          {/* Upload Button and Progress */}
+          <div className="mt-6">
+            {isProcessing && (
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Creating users...</span>
+                  <span>{currentProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${currentProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={isProcessing || errors.length > 0}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating Users... ({successCount + errorCount}/{totalUsers})
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Create {preview.length} Users
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

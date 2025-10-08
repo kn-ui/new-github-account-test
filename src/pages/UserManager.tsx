@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { secondaryAuth } from '@/lib/firebaseSecondary';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -140,6 +142,18 @@ const UserManager = () => {
 
   const handleAddUser = async () => {
     try {
+      // SOLUTION: Use secondary Firebase auth to prevent admin redirects
+      // 
+      // Problem: When admin creates users with createUserWithEmailAndPassword,
+      // Firebase automatically signs in the new user, triggering onAuthStateChanged
+      // and causing unwanted redirects to the new user's dashboard.
+      //
+      // Solution: Use a separate Firebase app instance (secondaryAuth) for user creation.
+      // This keeps the main app's auth state unchanged, preventing redirects.
+      
+      // Set a flag to suppress auth redirects during user creation (extra safety)
+      sessionStorage.setItem('suppressAuthRedirect', 'true');
+      
       const defaultPasswords = {
         student: 'student123',
         teacher: 'teacher123',
@@ -148,17 +162,35 @@ const UserManager = () => {
       };
       const password = defaultPasswords[newUser.role];
 
-      await createUser({
+      // Use secondary auth to create user - this prevents the main app from being affected
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth, 
+        newUser.email, 
+        password
+      );
+      
+      // Create Firestore user profile using the UID from secondary auth
+      await userService.createUser({
         displayName: newUser.displayName,
         email: newUser.email,
         role: newUser.role,
-        isActive: true
-      }, password);
+        isActive: true,
+        uid: userCredential.user.uid,
+        passwordChanged: false // New users must change their password
+      });
+      
+      // Immediately sign out from secondary auth to clean up
+      await signOut(secondaryAuth);
+      
+      // Clear the suppress flag
+      sessionStorage.removeItem('suppressAuthRedirect');
       
       setIsAddUserOpen(false);
       setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();
     } catch (error) {
+      // Clear the suppress flag on error
+      sessionStorage.removeItem('suppressAuthRedirect');
       console.error('Error creating user:', error);
     }
   };

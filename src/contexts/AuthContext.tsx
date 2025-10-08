@@ -162,6 +162,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Check if we should suppress auth redirects (e.g., during admin user creation)
+      const suppressRedirect = sessionStorage.getItem('suppressAuthRedirect');
+      
+      if (suppressRedirect) {
+        console.log('Auth state change suppressed during user creation');
+        return;
+      }
+      
       setCurrentUser(user);
       
       if (user) {

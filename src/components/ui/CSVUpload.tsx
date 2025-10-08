@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { secondaryAuth } from '@/lib/firebaseSecondary';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { userService } from '@/lib/firestore';
 
 interface CSVUser {
   displayName: string;
@@ -14,7 +16,6 @@ interface CSVUploadProps {
 }
 
 export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
-  const { createUser } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -117,25 +118,62 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
 
     setIsProcessing(true);
     try {
+      // SOLUTION: Use secondary Firebase auth for bulk user creation
+      // 
+      // Same solution as single user creation - use secondaryAuth to prevent
+      // the main app's authentication state from being affected during bulk
+      // user creation, avoiding unwanted redirects.
+      
+      // Set a flag to suppress auth redirects during bulk user creation
+      sessionStorage.setItem('suppressAuthRedirect', 'true');
+      
       let successCount = 0;
       
       for (const user of preview) {
         try {
-          await createUser({
+          // Set default password based on role
+          const defaultPasswords = {
+            student: 'student123',
+            teacher: 'teacher123',
+            admin: 'admin123',
+            super_admin: 'superadmin123'
+          };
+          const password = defaultPasswords[user.role] || 'password123';
+          
+          // Use secondary auth to create user - this prevents the main app from being affected
+          const userCredential = await createUserWithEmailAndPassword(
+            secondaryAuth, 
+            user.email, 
+            password
+          );
+          
+          // Create Firestore user profile using the UID from secondary auth
+          await userService.createUser({
             displayName: user.displayName,
             email: user.email,
             role: user.role,
             isActive: true,
+            uid: userCredential.user.uid,
+            passwordChanged: false // New users must change their password
           });
+          
+          // Immediately sign out from secondary auth to clean up
+          await signOut(secondaryAuth);
+          
           successCount++;
         } catch (error) {
           console.error(`Failed to create user ${user.email}:`, error);
         }
       }
 
+      // Clear the suppress flag
+      sessionStorage.removeItem('suppressAuthRedirect');
+      
       onUsersCreated(successCount);
       resetUpload();
     } catch (error) {
+      // Clear the suppress flag on error
+      sessionStorage.removeItem('suppressAuthRedirect');
       onError('Failed to create users. Please try again.');
     } finally {
       setIsProcessing(false);

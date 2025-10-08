@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Users, Clock, Heart, Scroll, Church, User, GraduationCap } from 'lucide-react';
+import Header from '@/components/Header';
 
 const Academic: React.FC = () => {
   const departments = [
@@ -146,6 +147,7 @@ const Academic: React.FC = () => {
 
   return (
     <div>
+      <Header />
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
         {/* Background Image */}

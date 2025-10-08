@@ -59,7 +59,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const { lang, setLang, t } = useI18n();
 
   const navigationItems: NavigationItem[] = (() => {
@@ -130,8 +130,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   useEffect(() => {
     const loadAnnouncements = async () => {
       try {
-        const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
-        
         // Get all announcements (increased limit to show more)
         const all = await announcementService.getAllAnnouncements(100);
         
@@ -246,7 +244,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       }
     };
     loadAnnouncements();
-  }, [userRole]);
+  }, [userRole, currentUser]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();

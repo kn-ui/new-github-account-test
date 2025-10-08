@@ -161,8 +161,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           });
           setAnnouncements(filtered);
         } else if (userRole === 'student') {
-          // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS
-          // Students should NOT see GENERAL_ALL announcements
+          // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS, GENERAL_ALL (if authorRole is admin)
           if (currentUser?.uid) {
             // Get student's enrolled courses
             const { enrollmentService } = await import('@/lib/firestore');
@@ -173,6 +172,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               const targetAudience = a.targetAudience;
               const recipientStudentId = a.recipientStudentId;
               const courseId = a.courseId;
+              const authorRole = a.authorRole;
               
               // Direct message to this student
               if (targetAudience === 'SPECIFIC_STUDENT' && recipientStudentId === currentUser.uid) {
@@ -186,6 +186,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               
               // All students announcements
               if (targetAudience === 'ALL_STUDENTS') {
+                return true;
+              }
+              
+              // General announcements from admin
+              if (targetAudience === 'GENERAL_ALL' && authorRole === 'admin') {
                 return true;
               }
               
@@ -417,7 +422,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     const isExpanded = expandedAnnouncements.has(a.id);
                     const isLongText = a.body.length > 150;
                     return (
-                      <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-50">
+                      <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-100">
                         <div className="w-full">
                           <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
                           <div className="text-xs text-gray-600 break-words overflow-hidden">
@@ -453,7 +458,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
-                        className="text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        className="text-center text-blue-600 hover:text-blue-800 hover:bg-gray-100"
                         onClick={() => navigate('/dashboard/student-announcements')}
                       >
                         View All Announcements

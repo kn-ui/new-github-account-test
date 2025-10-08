@@ -55,6 +55,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
@@ -161,6 +162,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           setAnnouncements(filtered);
         } else if (userRole === 'student') {
           // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS
+          // Students should NOT see GENERAL_ALL announcements
           if (currentUser?.uid) {
             // Get student's enrolled courses
             const { enrollmentService } = await import('@/lib/firestore');
@@ -251,6 +253,18 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
     const q = searchTerm.trim();
     if (!q) return;
     navigate(`/dashboard/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const toggleAnnouncementExpansion = (announcementId: string) => {
+    setExpandedAnnouncements(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(announcementId)) {
+        newSet.delete(announcementId);
+      } else {
+        newSet.add(announcementId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -390,7 +404,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-96 max-h-96 overflow-y-auto">
+                <DropdownMenuContent align="end" className="w-96 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                   <DropdownMenuLabel className="flex items-center justify-between">
                     <span>{t('notifications.announcements')}</span>
                     <span className="text-xs text-gray-500 font-normal">({announcements.length})</span>
@@ -399,41 +413,48 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                   {announcements.length === 0 && (
                     <div className="p-3 text-sm text-gray-600 text-center">{t('notifications.none')}</div>
                   )}
-                  {announcements.map((a) => (
-                    <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-50">
-                      <div className="w-full">
-                        <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
-                        <div className="text-xs text-gray-600 line-clamp-2 break-words overflow-hidden" title={a.body}>
-                          {a.body.length > 150 ? `${a.body.substring(0, 150)}...` : a.body}
+                  {announcements.map((a) => {
+                    const isExpanded = expandedAnnouncements.has(a.id);
+                    const isLongText = a.body.length > 150;
+                    return (
+                      <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-50">
+                        <div className="w-full">
+                          <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
+                          <div className="text-xs text-gray-600 break-words overflow-hidden">
+                            {isExpanded ? a.body : (isLongText ? `${a.body.substring(0, 150)}...` : a.body)}
+                          </div>
+                          {isLongText && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAnnouncementExpansion(a.id);
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-800 mt-1 underline"
+                            >
+                              {isExpanded ? 'Show Less' : 'Expand'}
+                            </button>
+                          )}
+                          <div className="text-xs text-gray-400 mt-1 flex items-center justify-between">
+                            <span>{a.createdAt.toDate().toLocaleDateString()}</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {a.targetAudience === 'SPECIFIC_STUDENT' ? 'Direct' : 
+                               a.targetAudience === 'COURSE_STUDENTS' ? 'Course' :
+                               a.targetAudience === 'ALL_STUDENTS' ? 'All Students' :
+                               a.targetAudience === 'ALL_TEACHERS' ? 'All Teachers' :
+                               a.targetAudience === 'GENERAL_ALL' ? 'General' :
+                               a.targetAudience === 'SPECIFIC_USER' ? 'Direct' : 'General'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-400 mt-1 flex items-center justify-between">
-                          <span>{a.createdAt.toDate().toLocaleDateString()}</span>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {a.targetAudience === 'SPECIFIC_STUDENT' ? 'Direct' : 
-                             a.targetAudience === 'COURSE_STUDENTS' ? 'Course' :
-                             a.targetAudience === 'ALL_STUDENTS' ? 'All Students' :
-                             a.targetAudience === 'ALL_TEACHERS' ? 'All Teachers' :
-                             a.targetAudience === 'GENERAL_ALL' ? 'General' :
-                             a.targetAudience === 'SPECIFIC_USER' ? 'Direct' : 'General'}
-                          </span>
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                  {announcements.length > 0 && (
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  {announcements.length > 0 && userRole === 'student' && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                        onClick={() => {
-                          if (userRole === 'student') {
-                            navigate('/dashboard/student-announcements');
-                          } else if (userRole === 'teacher') {
-                            navigate('/dashboard/announcements');
-                          } else if (userRole === 'admin' || userRole === 'super_admin') {
-                            navigate('/dashboard/admin-announcements');
-                          }
-                        }}
+                        onClick={() => navigate('/dashboard/student-announcements')}
                       >
                         View All Announcements
                       </DropdownMenuItem>

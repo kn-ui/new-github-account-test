@@ -85,7 +85,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
-          { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },
         ];
       case 'teacher':
         return [
@@ -159,11 +158,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               return true;
             }
             
-            // Also show teacher's own announcements (for backward compatibility)
-            if (a.authorId === currentUser?.uid) {
-              return true;
-            }
-            
             return false;
           });
           setAnnouncements(filtered.slice(0, 5));
@@ -195,11 +189,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 return true;
               }
               
-              // Also show general announcements (for backward compatibility)
-              if (!targetAudience || targetAudience === 'GENERAL_ALL') {
-                return true;
-              }
-              
               return false;
             });
             setAnnouncements(filtered.slice(0, 5));
@@ -208,12 +197,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           }
         } else if (userRole === 'admin') {
           // Admins see: SPECIFIC_USER (if recipientUserId === admin's id and authorRole "admin"), 
-          // GENERAL_ALL (if authorRole "admin"), and all admin announcements
+          // GENERAL_ALL (if authorRole "admin")
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
             const recipientUserId = a.recipientUserId;
             const authorRole = a.authorRole;
-            const isAdminAnnouncement = a.isAdminAnnouncement;
             
             // Direct message from admin to this admin
             if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
@@ -225,22 +213,16 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               return true;
             }
             
-            // All admin announcements
-            if (isAdminAnnouncement) {
-              return true;
-            }
-            
             return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else if (userRole === 'super_admin') {
           // Super Admins see: SPECIFIC_USER (if recipientUserId === superAdmin's id and authorRole "admin"), 
-          // GENERAL_ALL (if authorRole "admin"), and all admin announcements
+          // GENERAL_ALL (if authorRole "admin")
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
             const recipientUserId = a.recipientUserId;
             const authorRole = a.authorRole;
-            const isAdminAnnouncement = a.isAdminAnnouncement;
             
             // Direct message from admin to this super admin
             if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
@@ -249,11 +231,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             // General announcements from admin
             if (targetAudience === 'GENERAL_ALL' && authorRole === 'admin') {
-              return true;
-            }
-            
-            // All admin announcements
-            if (isAdminAnnouncement) {
               return true;
             }
             
@@ -425,7 +402,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 max-w-sm">
                       <div className="w-full">
                         <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
-                        <div className="text-xs text-gray-600 line-clamp-3 break-words" title={a.body}>
+                        <div className="text-xs text-gray-600 line-clamp-3 break-words overflow-hidden" title={a.body}>
                           {a.body.length > 100 ? `${a.body.substring(0, 100)}...` : a.body}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">

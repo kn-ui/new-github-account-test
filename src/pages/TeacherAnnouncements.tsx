@@ -442,7 +442,7 @@ export default function TeacherAnnouncements() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{truncateText(announcement.body)}</p>
+                      <p className="text-sm text-gray-600 mb-2 break-words overflow-hidden" title={announcement.body}>{truncateText(announcement.body)}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
@@ -518,7 +518,7 @@ export default function TeacherAnnouncements() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{truncateText(announcement.body)}</p>
+                <p className="text-sm text-gray-600 mb-3 break-words overflow-hidden" title={announcement.body}>{truncateText(announcement.body)}</p>
                 <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.createdAt.toDate().toLocaleDateString()}</span>
                   <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {announcement.targetAudience === 'ALL_STUDENTS' ? 'All My Students' : getCourseName(announcement.courseId)}</span>

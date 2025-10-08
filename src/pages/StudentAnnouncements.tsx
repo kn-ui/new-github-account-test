@@ -227,7 +227,7 @@ export default function StudentAnnouncements() {
                     <div className="flex-1 min-w-0">
                       <p className={`font-medium truncate ${
                         announcement.isRead ? 'text-gray-700' : 'text-gray-900'
-                      }`}>
+                      }`} title={announcement.title}>
                         {announcement.title}
                       </p>
                       <p className="text-sm text-gray-500">{announcement.createdAt.toDate().toLocaleDateString()}</p>
@@ -260,7 +260,7 @@ export default function StudentAnnouncements() {
                   </div>
                   
                   <div className="prose max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
                       {selectedAnnouncement.body}
                     </p>
                   </div>

@@ -77,13 +77,6 @@ export default function AdminStudentGrades() {
   const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingStates, setLoadingStates] = useState({
-    student: false,
-    courses: false,
-    assignments: false,
-    exams: false,
-    finalGrades: false
-  });
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
@@ -103,7 +96,6 @@ export default function AdminStudentGrades() {
   const loadStudentData = async () => {
     try {
       setLoading(true);
-      setLoadingStates(prev => ({ ...prev, student: true }));
       
       // Load student information and enrollments in parallel
       const [studentData, enrollments] = await Promise.all([
@@ -116,7 +108,6 @@ export default function AdminStudentGrades() {
         return;
       }
       setStudent(studentData);
-      setLoadingStates(prev => ({ ...prev, student: false, courses: true }));
 
       const courseIds = enrollments.map(enrollment => enrollment.courseId);
       
@@ -125,7 +116,6 @@ export default function AdminStudentGrades() {
         setFinalGrades([]);
         setCourses([]);
         setLoading(false);
-        setLoadingStates(prev => ({ ...prev, courses: false }));
         return;
       }
 
@@ -135,7 +125,6 @@ export default function AdminStudentGrades() {
       );
       const validCourses = coursesData.filter(c => c !== null);
       setCourses(validCourses);
-      setLoadingStates(prev => ({ ...prev, courses: false, assignments: true, exams: true, finalGrades: true }));
 
       // Create course lookup map for faster access
       const courseMap = new Map(validCourses.map(course => [course.id, course]));
@@ -150,7 +139,6 @@ export default function AdminStudentGrades() {
       setGrades(assignmentsData);
       setExamGrades(examsData);
       setFinalGrades(finalGradesData);
-      setLoadingStates(prev => ({ ...prev, assignments: false, exams: false, finalGrades: false }));
 
     } catch (error) {
       console.error('Error loading student data:', error);
@@ -545,14 +533,7 @@ export default function AdminStudentGrades() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-gray-600 mb-4">Loading student grades...</div>
-          <div className="space-y-2 text-sm text-gray-500">
-            {loadingStates.student && <div>Loading student information...</div>}
-            {loadingStates.courses && <div>Loading course information...</div>}
-            {loadingStates.assignments && <div>Loading assignment grades...</div>}
-            {loadingStates.exams && <div>Loading exam grades...</div>}
-            {loadingStates.finalGrades && <div>Loading final grades...</div>}
-          </div>
+          <div className="text-gray-600">Loading...</div>
         </div>
       </div>
     );

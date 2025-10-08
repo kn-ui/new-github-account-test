@@ -22,7 +22,7 @@ export const usePerformanceMonitor = (componentName: string, data?: any[]) => {
     };
 
     // Log performance metrics in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log(`[Performance] ${componentName}:`, {
         ...metrics,
         loadTimeMs: `${loadTime}ms`,

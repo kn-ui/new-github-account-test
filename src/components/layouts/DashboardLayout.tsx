@@ -422,7 +422,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     const isExpanded = expandedAnnouncements.has(a.id);
                     const isLongText = a.body.length > 150;
                     return (
-                      <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-100">
+                      <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 hover:bg-gray-100 focus:bg-gray-100 data-[highlighted]:bg-gray-100">
                         <div className="w-full">
                           <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
                           <div className="text-xs text-gray-600 break-words overflow-hidden">
@@ -458,7 +458,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
-                        className="text-center text-blue-600 hover:text-blue-800 hover:bg-gray-100"
+                        className="text-center text-blue-600 hover:text-blue-800 hover:bg-gray-100 focus:bg-gray-100 data-[highlighted]:bg-gray-100"
                         onClick={() => navigate('/dashboard/student-announcements')}
                       >
                         View All Announcements

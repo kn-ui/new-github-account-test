@@ -75,6 +75,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
+          { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },
           { label: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
         ];
       case 'super_admin':
@@ -84,6 +85,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
+          { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },
         ];
       case 'teacher':
         return [
@@ -132,34 +134,58 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
         
         if (userRole === 'teacher') {
-          // Teachers see: general announcements (GENERAL_ALL) and teacher-specific announcements (ALL_TEACHERS)
+          // Teachers see: SPECIFIC_USER (if recipientUserId === teacher's id and authorRole "admin"), 
+          // ALL_TEACHERS, GENERAL_ALL (if authorRole "admin")
           const all = await announcementService.getAllAnnouncements(20);
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
-            return targetAudience === 'GENERAL_ALL' || targetAudience === 'ALL_TEACHERS';
+            const recipientUserId = a.recipientUserId;
+            const authorRole = a.authorRole;
+            
+            // Direct message from admin to this teacher
+            if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
+              return true;
+            }
+            
+            // All teachers announcements
+            if (targetAudience === 'ALL_TEACHERS') {
+              return true;
+            }
+            
+            // General announcements from admin
+            if (targetAudience === 'GENERAL_ALL' && authorRole === 'admin') {
+              return true;
+            }
+            
+            return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else if (userRole === 'student') {
-          // Students see: general announcements (GENERAL_ALL), student-specific announcements (ALL_STUDENTS), 
-          // and direct messages to them
+          // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS
           if (currentUser?.uid) {
             const all = await announcementService.getAllAnnouncements(20);
+            
+            // Get student's enrolled courses
+            const { enrollmentService } = await import('@/lib/firestore');
+            const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+            const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+            
             const filtered = all.filter((a: any) => {
               const targetAudience = a.targetAudience;
-              const recipientUserId = a.recipientUserId;
               const recipientStudentId = a.recipientStudentId;
+              const courseId = a.courseId;
               
               // Direct message to this student
-              if (recipientUserId === currentUser.uid || recipientStudentId === currentUser.uid) {
+              if (targetAudience === 'SPECIFIC_STUDENT' && recipientStudentId === currentUser.uid) {
                 return true;
               }
               
-              // General announcements to all users
-              if (targetAudience === 'GENERAL_ALL') {
+              // Course-specific announcements (if student is enrolled)
+              if (targetAudience === 'COURSE_STUDENTS' && courseId && enrolledCourseIds.includes(courseId)) {
                 return true;
               }
               
-              // Student-specific announcements
+              // All students announcements
               if (targetAudience === 'ALL_STUDENTS') {
                 return true;
               }
@@ -170,12 +196,48 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           } else {
             setAnnouncements([]);
           }
-        } else if (userRole === 'admin' || userRole === 'super_admin') {
-          // Admins and Super Admins see: general announcements (GENERAL_ALL) and teacher-specific announcements (ALL_TEACHERS)
+        } else if (userRole === 'admin') {
+          // Admins see: SPECIFIC_USER (if recipientUserId === admin's id and authorRole "admin"), 
+          // GENERAL_ALL (if authorRole "admin")
           const all = await announcementService.getAllAnnouncements(20);
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
-            return targetAudience === 'GENERAL_ALL' || targetAudience === 'ALL_TEACHERS';
+            const recipientUserId = a.recipientUserId;
+            const authorRole = a.authorRole;
+            
+            // Direct message from admin to this admin
+            if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
+              return true;
+            }
+            
+            // General announcements from admin
+            if (targetAudience === 'GENERAL_ALL' && authorRole === 'admin') {
+              return true;
+            }
+            
+            return false;
+          });
+          setAnnouncements(filtered.slice(0, 5));
+        } else if (userRole === 'super_admin') {
+          // Super Admins see: SPECIFIC_USER (if recipientUserId === superAdmin's id and authorRole "admin"), 
+          // GENERAL_ALL (if authorRole "admin")
+          const all = await announcementService.getAllAnnouncements(20);
+          const filtered = all.filter((a: any) => {
+            const targetAudience = a.targetAudience;
+            const recipientUserId = a.recipientUserId;
+            const authorRole = a.authorRole;
+            
+            // Direct message from admin to this super admin
+            if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
+              return true;
+            }
+            
+            // General announcements from admin
+            if (targetAudience === 'GENERAL_ALL' && authorRole === 'admin') {
+              return true;
+            }
+            
+            return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else {
@@ -339,10 +401,15 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                     <div className="p-3 text-sm text-gray-600">{t('notifications.none')}</div>
                   )}
                   {announcements.map((a) => (
-                    <DropdownMenuItem key={a.id} className="block whitespace-normal">
-                      <div>
-                        <div className="font-medium">{a.title}</div>
-                        <div className="text-xs text-gray-600 line-clamp-2">{a.body}</div>
+                    <DropdownMenuItem key={a.id} className="block whitespace-normal p-3 max-w-sm">
+                      <div className="w-full">
+                        <div className="font-medium text-sm mb-1 truncate" title={a.title}>{a.title}</div>
+                        <div className="text-xs text-gray-600 line-clamp-3 break-words" title={a.body}>
+                          {a.body.length > 100 ? `${a.body.substring(0, 100)}...` : a.body}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {a.createdAt.toDate().toLocaleDateString()}
+                        </div>
                       </div>
                     </DropdownMenuItem>
                   ))}

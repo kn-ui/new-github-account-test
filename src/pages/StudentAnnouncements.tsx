@@ -55,17 +55,46 @@ export default function StudentAnnouncements() {
     try {
       setLoading(true);
       
-      // Use optimized service to get dashboard data which includes announcements
-      const data = await studentDataService.getStudentDashboardData(currentUser.uid);
+      // Get all announcements and filter based on student targeting rules
+      const { announcementService, enrollmentService } = await import('@/lib/firestore');
+      const all = await announcementService.getAllAnnouncements(50);
+      
+      // Get student's enrolled courses
+      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+      const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+      
+      // Filter announcements based on student targeting rules
+      const filtered = all.filter((a: any) => {
+        const targetAudience = a.targetAudience;
+        const recipientStudentId = a.recipientStudentId;
+        const courseId = a.courseId;
+        
+        // Direct message to this student
+        if (targetAudience === 'SPECIFIC_STUDENT' && recipientStudentId === currentUser.uid) {
+          return true;
+        }
+        
+        // Course-specific announcements (if student is enrolled)
+        if (targetAudience === 'COURSE_STUDENTS' && courseId && enrolledCourseIds.includes(courseId)) {
+          return true;
+        }
+        
+        // All students announcements
+        if (targetAudience === 'ALL_STUDENTS') {
+          return true;
+        }
+        
+        return false;
+      });
       
       // Set enrolled courses for filtering
-      const validCourses = data.enrollments
+      const validCourses = enrollments
         .filter(e => e.course)
         .map(e => e.course);
       setEnrolledCourses(validCourses);
 
       // Process announcements with course details
-      const withDetails = data.announcements.map((a: any) => ({
+      const withDetails = filtered.map((a: any) => ({
         ...a,
         course: a.courseId ? validCourses.find((c: any) => c?.id === a.courseId) : null,
         isRead: false,

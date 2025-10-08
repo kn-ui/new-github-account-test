@@ -133,10 +133,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
       try {
         const { currentUser } = (await import('@/contexts/AuthContext')).useAuth();
         
+        // Get all announcements
+        const all = await announcementService.getAllAnnouncements(50);
+        
         if (userRole === 'teacher') {
           // Teachers see: SPECIFIC_USER (if recipientUserId === teacher's id and authorRole "admin"), 
           // ALL_TEACHERS, GENERAL_ALL (if authorRole "admin")
-          const all = await announcementService.getAllAnnouncements(20);
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
             const recipientUserId = a.recipientUserId;
@@ -157,14 +159,17 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               return true;
             }
             
+            // Also show teacher's own announcements (for backward compatibility)
+            if (a.authorId === currentUser?.uid) {
+              return true;
+            }
+            
             return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else if (userRole === 'student') {
           // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS
           if (currentUser?.uid) {
-            const all = await announcementService.getAllAnnouncements(20);
-            
             // Get student's enrolled courses
             const { enrollmentService } = await import('@/lib/firestore');
             const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
@@ -190,6 +195,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 return true;
               }
               
+              // Also show general announcements (for backward compatibility)
+              if (!targetAudience || targetAudience === 'GENERAL_ALL') {
+                return true;
+              }
+              
               return false;
             });
             setAnnouncements(filtered.slice(0, 5));
@@ -198,12 +208,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           }
         } else if (userRole === 'admin') {
           // Admins see: SPECIFIC_USER (if recipientUserId === admin's id and authorRole "admin"), 
-          // GENERAL_ALL (if authorRole "admin")
-          const all = await announcementService.getAllAnnouncements(20);
+          // GENERAL_ALL (if authorRole "admin"), and all admin announcements
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
             const recipientUserId = a.recipientUserId;
             const authorRole = a.authorRole;
+            const isAdminAnnouncement = a.isAdminAnnouncement;
             
             // Direct message from admin to this admin
             if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
@@ -215,17 +225,22 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               return true;
             }
             
+            // All admin announcements
+            if (isAdminAnnouncement) {
+              return true;
+            }
+            
             return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else if (userRole === 'super_admin') {
           // Super Admins see: SPECIFIC_USER (if recipientUserId === superAdmin's id and authorRole "admin"), 
-          // GENERAL_ALL (if authorRole "admin")
-          const all = await announcementService.getAllAnnouncements(20);
+          // GENERAL_ALL (if authorRole "admin"), and all admin announcements
           const filtered = all.filter((a: any) => {
             const targetAudience = a.targetAudience;
             const recipientUserId = a.recipientUserId;
             const authorRole = a.authorRole;
+            const isAdminAnnouncement = a.isAdminAnnouncement;
             
             // Direct message from admin to this super admin
             if (targetAudience === 'SPECIFIC_USER' && recipientUserId === currentUser?.uid && authorRole === 'admin') {
@@ -237,13 +252,19 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
               return true;
             }
             
+            // All admin announcements
+            if (isAdminAnnouncement) {
+              return true;
+            }
+            
             return false;
           });
           setAnnouncements(filtered.slice(0, 5));
         } else {
           setAnnouncements(await announcementService.getAllAnnouncements(5));
         }
-      } catch {
+      } catch (error) {
+        console.error('Error loading announcements:', error);
         setAnnouncements([]);
       }
     };

@@ -77,6 +77,7 @@ export default function AdminStudentGrades() {
   const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
@@ -89,6 +90,7 @@ export default function AdminStudentGrades() {
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
+      setIsInitialized(true);
       loadStudentData();
     }
   }, [studentId, userProfile?.role]);
@@ -529,7 +531,7 @@ export default function AdminStudentGrades() {
     );
   }
 
-  if (loading) {
+  if (loading || !isInitialized) {
     return (
       <div className="space-y-6">
         {/* Header */}

@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -212,7 +213,26 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardWrapper>
-                    <AdminStudentGrades />
+                    <Suspense fallback={
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+                            <div>
+                              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+                              <div className="h-4 w-64 bg-gray-200 rounded animate-pulse mt-2"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center py-12">
+                          <div className="text-center">
+                            <div className="text-gray-600 text-lg">Loading...</div>
+                          </div>
+                        </div>
+                      </div>
+                    }>
+                      <AdminStudentGrades />
+                    </Suspense>
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { courseService, HygraphCourse } from @/lib/hygraph;
+import { courseService, HygraphCourse } from '@/lib/hygraph';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();

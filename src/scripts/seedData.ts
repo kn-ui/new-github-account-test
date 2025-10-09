@@ -4,7 +4,7 @@ import {
   Timestamp,
   doc,
   setDoc
-} from @/lib/hygraph;
+} from '@/lib/hygraph';
 
 // Sample data for seeding
 const sampleAssignments = [

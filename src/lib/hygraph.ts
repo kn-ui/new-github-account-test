@@ -173,6 +173,105 @@ export interface HygraphCertificate {
   imageUrl?: string;
 }
 
+export interface HygraphCourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  type: 'document' | 'video' | 'link' | 'other';
+  fileUrl?: string;
+  externalLink?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  course?: {
+    id: string;
+    title: string;
+  };
+}
+
+export interface HygraphExam {
+  id: string;
+  title: string;
+  description: string;
+  courseId: string;
+  questions: any[];
+  durationMinutes: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  course?: {
+    id: string;
+    title: string;
+  };
+}
+
+export interface HygraphExamAttempt {
+  id: string;
+  examId: string;
+  studentId: string;
+  status: 'in_progress' | 'submitted' | 'graded';
+  answers: any[];
+  score?: number;
+  maxScore?: number;
+  submittedAt?: string;
+  gradedAt?: string;
+  manualScores?: Record<string, number>;
+  manualFeedback?: Record<string, string>;
+  isGraded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HygraphGrade {
+  id: string;
+  studentId: string;
+  courseId: string;
+  finalGrade: number;
+  letterGrade: string;
+  notes?: string;
+  calculatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    displayName: string;
+    email: string;
+  };
+  course?: {
+    id: string;
+    title: string;
+  };
+}
+
+export interface HygraphEditRequest {
+  id: string;
+  submissionId: string;
+  assignmentId: string;
+  studentId: string;
+  teacherId: string;
+  request: string;
+  status: 'pending' | 'approved' | 'denied' | 'completed';
+  teacherResponse?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HygraphSupportTicket {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  description: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  userId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // API Base URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -742,4 +841,252 @@ export const studentDataService = {
   }
 };
 
+// Activity Log Service - For attendance tracking
+export const activityLogService = {
+  async upsertToday(uid: string): Promise<void> {
+    return apiCall(`/activity-logs/upsert-today`, {
+      method: 'POST',
+      body: JSON.stringify({ userId: uid }),
+    });
+  },
+
+  async countDays(uid: string, daysBack: number): Promise<number> {
+    return apiCall<number>(`/activity-logs/count-days/${uid}?daysBack=${daysBack}`);
+  },
+};
+
+// Course Material operations
+export const courseMaterialService = {
+  async createCourseMaterial(materialData: Omit<HygraphCourseMaterial, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const response = await apiCall<{ id: string }>('/course-materials', {
+      method: 'POST',
+      body: JSON.stringify(materialData),
+    });
+    return response.id;
+  },
+
+  async getCourseMaterialsByCourse(courseId: string, limitCount = 50): Promise<HygraphCourseMaterial[]> {
+    return apiCall<HygraphCourseMaterial[]>(`/course-materials/course/${courseId}?limit=${limitCount}`);
+  },
+
+  async getMaterialsByTeacher(teacherId: string): Promise<HygraphCourseMaterial[]> {
+    return apiCall<HygraphCourseMaterial[]>(`/course-materials/teacher/${teacherId}`);
+  },
+
+  async updateCourseMaterial(materialId: string, updates: Partial<HygraphCourseMaterial>): Promise<void> {
+    await apiCall(`/course-materials/${materialId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteCourseMaterial(materialId: string): Promise<void> {
+    await apiCall(`/course-materials/${materialId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Exam operations
+export const examService = {
+  async getExamsByCourse(courseId: string): Promise<HygraphExam[]> {
+    return apiCall<HygraphExam[]>(`/exams/course/${courseId}`);
+  },
+
+  async getExamById(examId: string): Promise<HygraphExam | null> {
+    try {
+      return await apiCall<HygraphExam>(`/exams/${examId}`);
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async createExam(examData: Omit<HygraphExam, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const response = await apiCall<{ id: string }>('/exams', {
+      method: 'POST',
+      body: JSON.stringify(examData),
+    });
+    return response.id;
+  },
+
+  async updateExam(examId: string, updates: Partial<HygraphExam>): Promise<void> {
+    await apiCall(`/exams/${examId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteExam(examId: string): Promise<void> {
+    await apiCall(`/exams/${examId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async isExamLocked(examId: string): Promise<{ locked: boolean; reason?: string }> {
+    return apiCall<{ locked: boolean; reason?: string }>(`/exams/${examId}/lock-status`);
+  },
+};
+
+// Exam Attempt operations
+export const examAttemptService = {
+  async getAttemptForStudent(examId: string, studentId: string): Promise<HygraphExamAttempt | null> {
+    try {
+      return await apiCall<HygraphExamAttempt>(`/exam-attempts/student/${studentId}/exam/${examId}`);
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async getAttemptsByStudent(studentId: string): Promise<HygraphExamAttempt[]> {
+    return apiCall<HygraphExamAttempt[]>(`/exam-attempts/student/${studentId}`);
+  },
+
+  async getAttemptsByExam(examId: string): Promise<HygraphExamAttempt[]> {
+    return apiCall<HygraphExamAttempt[]>(`/exam-attempts/exam/${examId}`);
+  },
+
+  async createAttempt(examId: string, studentId: string): Promise<string> {
+    const response = await apiCall<{ id: string }>('/exam-attempts', {
+      method: 'POST',
+      body: JSON.stringify({ examId, studentId }),
+    });
+    return response.id;
+  },
+
+  async getAttemptById(attemptId: string): Promise<HygraphExamAttempt | null> {
+    try {
+      return await apiCall<HygraphExamAttempt>(`/exam-attempts/${attemptId}`);
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async saveProgress(attemptId: string, answers: any[]): Promise<void> {
+    await apiCall(`/exam-attempts/${attemptId}/save`, {
+      method: 'PUT',
+      body: JSON.stringify({ answers }),
+    });
+  },
+
+  async submitAttempt(attemptId: string, data: { answers: any[]; autoScore: number }): Promise<void> {
+    await apiCall(`/exam-attempts/${attemptId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateAttempt(attemptId: string, updates: Partial<HygraphExamAttempt>): Promise<void> {
+    await apiCall(`/exam-attempts/${attemptId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+};
+
+// Grade operations
+export const gradeService = {
+  async getGradesByCourse(courseId: string): Promise<HygraphGrade[]> {
+    return apiCall<HygraphGrade[]>(`/grades/course/${courseId}`);
+  },
+
+  async getGradeByStudentAndCourse(courseId: string, studentId: string): Promise<HygraphGrade | null> {
+    try {
+      return await apiCall<HygraphGrade>(`/grades/student/${studentId}/course/${courseId}`);
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async calculateFinalGrade(courseId: string, studentId: string): Promise<HygraphGrade> {
+    return apiCall<HygraphGrade>(`/grades/calculate`, {
+      method: 'POST',
+      body: JSON.stringify({ courseId, studentId }),
+    });
+  },
+
+  async createGrade(gradeData: Omit<HygraphGrade, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const response = await apiCall<{ id: string }>('/grades', {
+      method: 'POST',
+      body: JSON.stringify(gradeData),
+    });
+    return response.id;
+  },
+
+  async updateGrade(gradeId: string, updates: Partial<HygraphGrade>): Promise<void> {
+    await apiCall(`/grades/${gradeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+};
+
+// Assignment Edit Request operations
+export const assignmentEditRequestService = {
+  async getEditRequestsByStudent(studentId: string): Promise<HygraphEditRequest[]> {
+    return apiCall<HygraphEditRequest[]>(`/edit-requests/student/${studentId}`);
+  },
+
+  async getEditRequestsByTeacher(teacherId: string): Promise<HygraphEditRequest[]> {
+    return apiCall<HygraphEditRequest[]>(`/edit-requests/teacher/${teacherId}`);
+  },
+
+  async createEditRequest(requestData: Omit<HygraphEditRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const response = await apiCall<{ id: string }>('/edit-requests', {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    });
+    return response.id;
+  },
+
+  async updateEditRequest(requestId: string, updates: Partial<HygraphEditRequest>): Promise<void> {
+    await apiCall(`/edit-requests/${requestId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async approveEditRequest(requestId: string, response: string): Promise<void> {
+    await apiCall(`/edit-requests/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ teacherResponse: response }),
+    });
+  },
+
+  async denyEditRequest(requestId: string, response: string): Promise<void> {
+    await apiCall(`/edit-requests/${requestId}/deny`, {
+      method: 'POST',
+      body: JSON.stringify({ teacherResponse: response }),
+    });
+  },
+};
+
+// Support Ticket operations
+export const supportTicketService = {
+  async getSupportTickets(): Promise<HygraphSupportTicket[]> {
+    return apiCall<HygraphSupportTicket[]>('/support-tickets');
+  },
+
+  async createSupportTicket(ticketData: Omit<HygraphSupportTicket, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const response = await apiCall<{ id: string }>('/support-tickets', {
+      method: 'POST',
+      body: JSON.stringify(ticketData),
+    });
+    return response.id;
+  },
+
+  async updateSupportTicket(ticketId: string, updates: Partial<HygraphSupportTicket>): Promise<void> {
+    await apiCall(`/support-tickets/${ticketId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteSupportTicket(ticketId: string): Promise<void> {
+    await apiCall(`/support-tickets/${ticketId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+export { hygraphClient };
 export default hygraphClient;

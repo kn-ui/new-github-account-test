@@ -22,7 +22,7 @@ import {
   Zap,
   Star
 } from 'lucide-react';
-import { eventService } from @/lib/hygraph;
+import { eventService } from '@/lib/hygraph';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { useI18n } from '@/contexts/I18nContext';
 

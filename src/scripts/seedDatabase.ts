@@ -6,7 +6,7 @@ import {
   Timestamp,
   getDocs,
   deleteDoc
-} from @/lib/hygraph;
+} from '@/lib/hygraph';
 
 // Test data for all collections
 const testData = {

@@ -1,4 +1,4 @@
-import { getFirestore, doc, setDoc, getDocs, deleteDoc, collection } from @/lib/hygraph;
+import { getFirestore, doc, setDoc, getDocs, deleteDoc, collection } from '@/lib/hygraph';
 
 // Firebase configuration for Node.js environment
 const firebaseConfig = {

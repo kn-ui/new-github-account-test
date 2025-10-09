@@ -31,6 +31,17 @@ We have successfully started the migration from Firebase Firestore to Hygraph Gr
   - Get user by ID, UID, or email
   - Create, update, and delete users
   - Search users and get statistics
+- ✅ Created Hygraph course service (`src/lib/hygraphCourseService.ts`)
+- ✅ Created backend Hygraph course service (`server/src/services/hygraphCourseService.ts`)
+- ✅ Implemented all course-related operations:
+  - Get courses with pagination and filtering
+  - Get course by ID
+  - Create, update, and delete courses
+  - Search courses by query
+  - Get courses by category and instructor
+  - Course enrollment management
+  - Enrollment progress tracking
+  - Course statistics
 
 ### 5. Backend API Updates
 - ✅ Updated user controller to use Hygraph instead of Firestore
@@ -43,6 +54,20 @@ We have successfully started the migration from Firebase Firestore to Hygraph Gr
   - `updateUserRole` - Updates user role in Hygraph
   - `activateUser`/`deactivateUser` - Manages user status in Hygraph
   - `getUserStats` - Gets user statistics from Hygraph
+- ✅ Updated course controller to use Hygraph instead of Firestore
+- ✅ Modified all course-related endpoints:
+  - `createCourse` - Creates courses in Hygraph
+  - `getAllCourses` - Lists courses with pagination and filtering
+  - `getCourseById` - Fetches course details from Hygraph
+  - `searchCourses` - Searches courses in Hygraph
+  - `updateCourse` - Updates course in Hygraph
+  - `deleteCourse` - Deletes course from Hygraph
+  - `enrollInCourse` - Enrolls students in courses
+  - `getMyEnrollments` - Gets student enrollments
+  - `getCourseEnrollments` - Gets course enrollment list
+  - `updateProgress` - Updates student progress
+  - `getMyCourses` - Gets instructor's courses
+  - `getCourseStats` - Gets course statistics
 
 ### 6. Frontend Context Updates
 - ✅ Updated `ClerkAuthContext.tsx` to use Hygraph user service
@@ -52,8 +77,8 @@ We have successfully started the migration from Firebase Firestore to Hygraph Gr
 ## 🔄 In Progress
 
 ### Backend API Migration
-- 🔄 User controller fully migrated to Hygraph
-- ⏳ Course controller needs migration
+- ✅ User controller fully migrated to Hygraph
+- ✅ Course controller fully migrated to Hygraph
 - ⏳ Assignment controller needs migration
 - ⏳ Exam controller needs migration
 - ⏳ Other controllers need migration
@@ -61,7 +86,7 @@ We have successfully started the migration from Firebase Firestore to Hygraph Gr
 ## ⏳ Pending Tasks
 
 ### 1. Complete Service Layer
-- ⏳ Create Hygraph course service
+- ✅ Create Hygraph course service
 - ⏳ Create Hygraph assignment service
 - ⏳ Create Hygraph exam service
 - ⏳ Create Hygraph announcement service
@@ -73,7 +98,7 @@ We have successfully started the migration from Firebase Firestore to Hygraph Gr
 - ⏳ Create Hygraph certificate service
 
 ### 2. Complete Backend API Migration
-- ⏳ Update course controller
+- ✅ Update course controller
 - ⏳ Update assignment controller
 - ⏳ Update exam controller
 - ⏳ Update announcement controller
@@ -163,9 +188,32 @@ HYGRAPH_TOKEN=<your-hygraph-token>
 
 ## 🎯 Success Criteria
 
-- [ ] All CRUD operations work with Hygraph
+- [x] User CRUD operations work with Hygraph ✅
+- [x] Course CRUD operations work with Hygraph ✅
+- [x] Enrollment operations work with Hygraph ✅
+- [ ] Assignment CRUD operations work with Hygraph
+- [ ] Exam CRUD operations work with Hygraph
 - [ ] No data loss during migration
 - [ ] Performance is maintained or improved
 - [ ] All existing functionality works as expected
 - [ ] Firebase dependencies are completely removed
 - [ ] Documentation is updated
+
+## 📈 Migration Status by Service
+
+| Service | Status | Completion |
+|---------|--------|------------|
+| User Management | ✅ Complete | 100% |
+| Course Management | ✅ Complete | 100% |
+| Enrollment Management | ✅ Complete | 100% |
+| Assignment Management | ⏳ Pending | 0% |
+| Exam Management | ⏳ Pending | 0% |
+| Grade Management | ⏳ Pending | 0% |
+| Announcement Management | ⏳ Pending | 0% |
+| Event Management | ⏳ Pending | 0% |
+| Forum Management | ⏳ Pending | 0% |
+| Blog Management | ⏳ Pending | 0% |
+| Support Ticket Management | ⏳ Pending | 0% |
+| Certificate Management | ⏳ Pending | 0% |
+
+**Overall Progress: 25% (3 out of 12 services migrated)**

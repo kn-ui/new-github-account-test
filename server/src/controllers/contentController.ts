@@ -1,8 +1,8 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
-import blogService from '../services/blogService';
-import eventService from '../services/eventService';
-import forumService from '../services/forumService';
+import { hygraphBlogService } from '../services/hygraphBlogService';
+import { hygraphEventService } from '../services/hygraphEventService';
+import { hygraphForumService } from '../services/hygraphForumService';
 import { sendPaginatedResponse, sendServerError, sendSuccess, sendCreated, sendError } from '../utils/response';
 import nodemailer from 'nodemailer';
 
@@ -13,8 +13,16 @@ export class ContentController {
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.q as string) || undefined;
       const category = (req.query.category as string) || undefined;
-      const result = await blogService.getPosts(page, limit, search, category);
-      sendPaginatedResponse(res, 'Blog posts retrieved', result.posts, page, limit, result.total);
+      
+      const skip = (page - 1) * limit;
+      const filters = {
+        status: 'PUBLISHED' as const,
+        ...(category && { category }),
+        ...(search && { search })
+      };
+      
+      const posts = await hygraphBlogService.getBlogPosts(limit, skip, filters);
+      sendPaginatedResponse(res, 'Blog posts retrieved', posts, page, limit, posts.length);
     } catch (e) {
       sendServerError(res, 'Failed to get blog posts');
     }
@@ -26,8 +34,15 @@ export class ContentController {
       const limit = parseInt(req.query.limit as string) || 50;
       const type = (req.query.type as string) || undefined;
       const month = (req.query.month as string) || undefined;
-      const result = await eventService.getEvents(page, limit, type, month);
-      sendPaginatedResponse(res, 'Events retrieved', result.events, page, limit, result.total);
+      
+      const skip = (page - 1) * limit;
+      const filters = {
+        ...(type && { type }),
+        ...(month && { dateFrom: `${month}-01`, dateTo: `${month}-31` })
+      };
+      
+      const events = await hygraphEventService.getEvents(limit, skip, filters);
+      sendPaginatedResponse(res, 'Events retrieved', events, page, limit, events.length);
     } catch (e) {
       sendServerError(res, 'Failed to get events');
     }
@@ -38,8 +53,14 @@ export class ContentController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const category = (req.query.category as string) || undefined;
-      const result = await forumService.listThreads(page, limit, category);
-      sendPaginatedResponse(res, 'Threads retrieved', result.threads, page, limit, result.total);
+      
+      const skip = (page - 1) * limit;
+      const filters = {
+        ...(category && { category })
+      };
+      
+      const threads = await hygraphForumService.getForumThreads(limit, skip, filters);
+      sendPaginatedResponse(res, 'Threads retrieved', threads, page, limit, threads.length);
     } catch (e) {
       sendServerError(res, 'Failed to get threads');
     }
@@ -50,8 +71,9 @@ export class ContentController {
       const { threadId } = req.params;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 50;
-      const result = await forumService.listPosts(threadId, page, limit);
-      sendPaginatedResponse(res, 'Posts retrieved', result.posts, page, limit, result.total);
+      
+      const posts = await hygraphForumService.getForumPostsByThread(threadId, limit);
+      sendPaginatedResponse(res, 'Posts retrieved', posts, page, limit, posts.length);
     } catch (e) {
       sendServerError(res, 'Failed to get posts');
     }
@@ -59,11 +81,19 @@ export class ContentController {
 
   async createThread(req: AuthenticatedRequest, res: Response) {
     try {
-      const { title, category } = req.body;
-      if (!title || !category) return sendError(res, 'Missing fields');
+      const { title, category, content } = req.body;
+      if (!title || !category || !content) return sendError(res, 'Missing fields');
       const createdBy = req.user!.uid;
       const createdByName = req.user!.email || 'User';
-      const th = await forumService.createThread({ title, category, createdBy, createdByName });
+      
+      const threadData = {
+        title,
+        body: content,
+        category,
+        authorId: createdBy
+      };
+      
+      const th = await hygraphForumService.createForumThread(threadData);
       sendCreated(res, 'Thread created', th);
     } catch (e) {
       sendServerError(res, 'Failed to create thread');
@@ -73,11 +103,18 @@ export class ContentController {
   async createPost(req: AuthenticatedRequest, res: Response) {
     try {
       const { threadId } = req.params;
-      const { body } = req.body;
-      if (!threadId || !body) return sendError(res, 'Missing fields');
+      const { content } = req.body;
+      if (!threadId || !content) return sendError(res, 'Missing fields');
       const createdBy = req.user!.uid;
       const createdByName = req.user!.email || 'User';
-      const post = await forumService.createPost({ threadId, body, createdBy, createdByName });
+      
+      const postData = {
+        threadId,
+        body: content,
+        authorId: createdBy
+      };
+      
+      const post = await hygraphForumService.createForumPost(postData);
       sendCreated(res, 'Post created', post);
     } catch (e) {
       sendServerError(res, 'Failed to create post');

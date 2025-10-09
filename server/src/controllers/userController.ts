@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
-import userService from '../services/userService';
+import hygraphUserService from '../services/hygraphUserService';
 import { createClerkClient } from '@clerk/backend';
 import {
   sendSuccess,
@@ -34,12 +34,14 @@ export class UserController {
         skipPasswordRequirement: true,
       });
 
-      // Step 2: Create user in Firestore
-      const newUser = await userService.createUser({
+      // Step 2: Create user in Hygraph
+      const newUser = await hygraphUserService.createUser({
         uid: clerkUser.id,
         email,
         displayName,
-        role: role || UserRole.STUDENT,
+        role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
+        isActive: true,
+        passwordChanged: true
       });
 
       sendCreated(res, 'User created successfully', newUser);
@@ -62,34 +64,28 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
 
     console.log('Creating/updating profile for user:', { uid, email, displayName, role });
 
-    // Check if user already exists by email
-    const existingUser = await userService.getUserByEmail(email!);
+    // Check if user already exists by UID
+    const existingUser = await hygraphUserService.getUserByUid(uid);
 
     if (existingUser) {
       console.log('User exists, updating profile');
       // Update existing user
-      const updatedUser = await userService.updateUser(existingUser.uid, {
+      const updatedUser = await hygraphUserService.updateUser(existingUser.id, {
         displayName,
-        phoneNumber,
-        dateOfBirth,
-        address,
-        profileImage,
-        role: role || existingUser.role
+        role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN'
       });
 
       sendSuccess(res, 'Profile updated successfully', updatedUser);
     } else {
       console.log('User does not exist, creating new profile');
       // Create new user profile
-      const newUser = await userService.createUser({
+      const newUser = await hygraphUserService.createUser({
         uid: uid,
         email: email || '',
         displayName: displayName || 'New User',
-        phoneNumber,
-        dateOfBirth,
-        address,
-        profileImage,
-        role: role || UserRole.STUDENT
+        role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
+        isActive: true,
+        passwordChanged: true
       });
 
       console.log('New user created:', newUser);
@@ -105,7 +101,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
   async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const uid = req.user!.uid;
-      const user = await userService.getUserById(uid);
+      const user = await hygraphUserService.getUserByUid(uid);
 
       if (!user) {
         sendNotFound(res, 'User profile not found');
@@ -125,12 +121,15 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       const { displayName, phoneNumber, dateOfBirth, address, profileImage } = req.body;
       const uid = req.user!.uid;
 
-      const updatedUser = await userService.updateUser(uid, {
-        displayName,
-        phoneNumber,
-        dateOfBirth,
-        address,
-        profileImage
+      // First get the user to get their Hygraph ID
+      const user = await hygraphUserService.getUserByUid(uid);
+      if (!user) {
+        sendNotFound(res, 'User not found');
+        return;
+      }
+
+      const updatedUser = await hygraphUserService.updateUser(user.id, {
+        displayName
       });
 
       sendSuccess(res, 'Profile updated successfully', updatedUser);
@@ -144,7 +143,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
   async getUserById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
-      const user = await userService.getUserById(userId);
+      const user = await hygraphUserService.getUserById(userId);
 
       if (!user) {
         sendNotFound(res, 'User not found');
@@ -165,15 +164,22 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       const limit = parseInt(req.query.limit as string) || 10;
       const role = req.query.role as UserRole;
 
-      const result = await userService.getAllUsers(page, limit, role);
+      const skip = (page - 1) * limit;
+      const where = role ? { role } : {};
+      
+      const users = await hygraphUserService.getUsers({ first: limit, skip, where });
+      
+      // For now, we'll get all users to calculate total. In production, you might want to implement a count query
+      const allUsers = await hygraphUserService.getUsers();
+      const total = allUsers.length;
 
       sendPaginatedResponse(
         res,
         'Users retrieved successfully',
-        result.users,
+        users,
         page,
         limit,
-        result.total
+        total
       );
     } catch (error) {
       console.error('Get all users error:', error);
@@ -193,15 +199,19 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
         return;
       }
 
-      const result = await userService.searchUsers(searchTerm, page, limit);
+      const users = await hygraphUserService.searchUsers(searchTerm);
+      
+      // Apply pagination manually since Hygraph search doesn't support pagination directly
+      const skip = (page - 1) * limit;
+      const paginatedUsers = users.slice(skip, skip + limit);
 
       sendPaginatedResponse(
         res,
         'Users search completed',
-        result.users,
+        paginatedUsers,
         page,
         limit,
-        result.total
+        users.length
       );
     } catch (error) {
       console.error('Search users error:', error);
@@ -220,7 +230,9 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
         return;
       }
 
-      const updatedUser = await userService.updateUserRole(userId, role);
+      const updatedUser = await hygraphUserService.updateUser(userId, {
+        role: role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN'
+      });
       sendSuccess(res, 'User role updated successfully', updatedUser);
     } catch (error) {
       console.error('Update user role error:', error);
@@ -239,7 +251,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
         return;
       }
 
-      await userService.deactivateUser(userId);
+      await hygraphUserService.updateUser(userId, { isActive: false });
       sendSuccess(res, 'User deactivated successfully');
     } catch (error) {
       console.error('Deactivate user error:', error);
@@ -251,7 +263,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
   async activateUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
-      await userService.activateUser(userId);
+      await hygraphUserService.updateUser(userId, { isActive: true });
       sendSuccess(res, 'User activated successfully');
     } catch (error) {
       console.error('Activate user error:', error);
@@ -262,7 +274,7 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
   // Get user statistics (admin only)
   async getUserStats(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const stats = await userService.getUserStats();
+      const stats = await hygraphUserService.getUserStats();
       sendSuccess(res, 'User statistics retrieved successfully', stats);
     } catch (error) {
       console.error('Get user stats error:', error);

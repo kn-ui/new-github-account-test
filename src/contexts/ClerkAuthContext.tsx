@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
-import { userService, FirestoreUser } from '../lib/firestore';
+import hygraphUserService, { HygraphUser } from '../lib/hygraphUserService';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface AuthContextType {
   currentUser: any | null; // Clerk user type
-  userProfile: FirestoreUser | null;
+  userProfile: HygraphUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, displayName: string, role?: string) => Promise<any>;
   logout: () => Promise<void>;
-  updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
-  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
+  updateUserProfile: (data: Partial<HygraphUser>) => Promise<void>;
+  createUser: (userData: Omit<HygraphUser, 'dateCreated' | 'dateUpdated'>, password?: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,7 +36,7 @@ interface AuthProviderProps {
 const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuthHook();
   const { user } = useUser();
-  const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
+  const [userProfile, setUserProfile] = useState<HygraphUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Login function - redirects to Clerk's sign-in
@@ -57,18 +57,21 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Create user function - for admin use only
-  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
+  const createUser = async (userData: Omit<HygraphUser, 'dateCreated' | 'dateUpdated'>, password?: string): Promise<string> => {
     try {
-      // Create Firestore user profile directly
+      // Create Hygraph user profile directly
       // Note: This assumes the user was created in Clerk via admin API
-      const userId = await userService.createUser({
-        ...userData,
+      const newUser = await hygraphUserService.createUser({
         uid: userData.uid || userData.id || '',
+        email: userData.email,
+        displayName: userData.displayName,
+        role: userData.role,
+        isActive: userData.isActive ?? true,
         passwordChanged: true // Clerk handles password management
       });
       
       toast.success(`User created successfully!`);
-      return userId;
+      return newUser.id;
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);
       throw error;
@@ -89,7 +92,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<FirestoreUser>): Promise<void> => {
+  const updateUserProfile = async (data: Partial<HygraphUser>): Promise<void> => {
     if (!user) {
       throw new Error('No user logged in');
     }
@@ -105,8 +108,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
-      // Update Firestore user profile
-      await userService.updateUser(user.id, data);
+      // Update Hygraph user profile
+      await hygraphUserService.updateUser(userProfile.id, data);
       
       // Update local state
       if (userProfile) {
@@ -144,15 +147,15 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
         });
       }
 
-      // Fetch or create user profile in Firestore
+      // Fetch or create user profile in Hygraph
       const fetchUserProfile = async () => {
         try {
           // First try to get user profile by Clerk user ID
-          let profile = await userService.getUserById(user.id);
+          let profile = await hygraphUserService.getUserByUid(user.id);
           
           // If not found, try to find by email
           if (!profile && user.primaryEmailAddress?.emailAddress) {
-            profile = await userService.getUserByEmail(user.primaryEmailAddress.emailAddress);
+            profile = await hygraphUserService.getUserByEmail(user.primaryEmailAddress.emailAddress);
           }
           
           if (profile) {
@@ -163,14 +166,14 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               uid: user.id,
               displayName: user.fullName || user.firstName || 'User',
               email: user.primaryEmailAddress?.emailAddress || '',
-              role: (user.publicMetadata?.role as 'student' | 'teacher' | 'admin' | 'super_admin') || 'student',
+              role: (user.publicMetadata?.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN') || 'STUDENT',
               isActive: true,
               passwordChanged: true,
               createdAt: new Date(user.createdAt),
               updatedAt: new Date(user.updatedAt)
             };
             
-            await userService.createUser(newProfile);
+            await hygraphUserService.createUser(newProfile);
             setUserProfile(newProfile as any);
           }
         } catch (error) {
@@ -227,18 +230,21 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
   };
 
   // Create user function - for admin use only
-  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
+  const createUser = async (userData: Omit<HygraphUser, 'dateCreated' | 'dateUpdated'>, password?: string): Promise<string> => {
     try {
-      // Create Firestore user profile directly
+      // Create Hygraph user profile directly
       // Note: This assumes the user was created in Clerk via admin API
-      const userId = await userService.createUser({
-        ...userData,
+      const newUser = await hygraphUserService.createUser({
         uid: userData.uid || userData.id || '',
+        email: userData.email,
+        displayName: userData.displayName,
+        role: userData.role,
+        isActive: userData.isActive ?? true,
         passwordChanged: true // Clerk handles password management
       });
       
       toast.success(`User created successfully!`);
-      return userId;
+      return newUser.id;
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);
       throw error;
@@ -259,7 +265,7 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<FirestoreUser>): Promise<void> => {
+  const updateUserProfile = async (data: Partial<HygraphUser>): Promise<void> => {
     if (!user) {
       throw new Error('No user logged in');
     }
@@ -275,8 +281,8 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         }
       });
 
-      // Update Firestore user profile
-      await userService.updateUser(user.id, data);
+      // Update Hygraph user profile
+      await hygraphUserService.updateUser(userProfile.id, data);
       
       // Update local state
       if (userProfile) {
@@ -314,15 +320,15 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         });
       }
 
-      // Fetch or create user profile in Firestore
+      // Fetch or create user profile in Hygraph
       const fetchUserProfile = async () => {
         try {
           // First try to get user profile by Clerk user ID
-          let profile = await userService.getUserById(user.id);
+          let profile = await hygraphUserService.getUserByUid(user.id);
           
           // If not found, try to find by email
           if (!profile && user.primaryEmailAddress?.emailAddress) {
-            profile = await userService.getUserByEmail(user.primaryEmailAddress.emailAddress);
+            profile = await hygraphUserService.getUserByEmail(user.primaryEmailAddress.emailAddress);
           }
           
           if (profile) {
@@ -333,14 +339,14 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
               uid: user.id,
               displayName: user.fullName || user.firstName || 'User',
               email: user.primaryEmailAddress?.emailAddress || '',
-              role: (user.publicMetadata?.role as 'student' | 'teacher' | 'admin' | 'super_admin') || 'student',
+              role: (user.publicMetadata?.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN') || 'STUDENT',
               isActive: true,
               passwordChanged: true,
               createdAt: new Date(user.createdAt),
               updatedAt: new Date(user.updatedAt)
             };
             
-            await userService.createUser(newProfile);
+            await hygraphUserService.createUser(newProfile);
             setUserProfile(newProfile as any);
           }
         } catch (error) {

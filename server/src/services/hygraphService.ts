@@ -400,7 +400,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.appUsers || [];
+        return (response as any).appUsers || [];
       } catch (error) {
         console.error('Error fetching users from Hygraph:', error);
         throw error;
@@ -410,7 +410,7 @@ export const hygraphService = {
     async getById(id: string): Promise<HygraphUser | null> {
       try {
         const response = await hygraphClient.request(GET_USER_BY_ID, { id });
-        return response.appUser || null;
+        return (response as any).appUser || null;
       } catch (error) {
         console.error('Error fetching user by ID from Hygraph:', error);
         throw error;
@@ -420,7 +420,7 @@ export const hygraphService = {
     async getByUid(uid: string): Promise<HygraphUser | null> {
       try {
         const response = await hygraphClient.request(GET_USER_BY_UID, { uid });
-        return response.appUser || null;
+        return (response as any).appUser || null;
       } catch (error) {
         console.error('Error fetching user by UID from Hygraph:', error);
         throw error;
@@ -430,7 +430,7 @@ export const hygraphService = {
     async getByEmail(email: string): Promise<HygraphUser | null> {
       try {
         const response = await hygraphClient.request(GET_USER_BY_EMAIL, { email });
-        return response.appUser || null;
+        return (response as any).appUser || null;
       } catch (error) {
         console.error('Error fetching user by email from Hygraph:', error);
         throw error;
@@ -459,7 +459,7 @@ export const hygraphService = {
             dateUpdated: now
           }
         });
-        return response.createAppUser;
+        return (response as any).createAppUser;
       } catch (error) {
         console.error('Error creating user in Hygraph:', error);
         throw error;
@@ -475,7 +475,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateAppUser;
+        return (response as any).updateAppUser;
       } catch (error) {
         console.error('Error updating user in Hygraph:', error);
         throw error;
@@ -503,7 +503,7 @@ export const hygraphService = {
             ]
           }
         });
-        return response.appUsers || [];
+        return (response as any).appUsers || [];
       } catch (error) {
         console.error('Error searching users in Hygraph:', error);
         throw error;
@@ -520,7 +520,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.courses || [];
+        return (response as any).courses || [];
       } catch (error) {
         console.error('Error fetching courses from Hygraph:', error);
         throw error;
@@ -530,7 +530,7 @@ export const hygraphService = {
     async getById(id: string): Promise<HygraphCourse | null> {
       try {
         const response = await hygraphClient.request(GET_COURSE_BY_ID, { id });
-        return response.course || null;
+        return (response as any).course || null;
       } catch (error) {
         console.error('Error fetching course by ID from Hygraph:', error);
         throw error;
@@ -565,7 +565,7 @@ export const hygraphService = {
             ...(courseData.instructorId && { instructor: { connect: { id: courseData.instructorId } } })
           }
         });
-        return response.createCourse;
+        return (response as any).createCourse;
       } catch (error) {
         console.error('Error creating course in Hygraph:', error);
         throw error;
@@ -581,7 +581,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateCourse;
+        return (response as any).updateCourse;
       } catch (error) {
         console.error('Error updating course in Hygraph:', error);
         throw error;
@@ -607,7 +607,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.enrollments || [];
+        return (response as any).enrollments || [];
       } catch (error) {
         console.error('Error fetching enrollments from Hygraph:', error);
         throw error;
@@ -636,7 +636,7 @@ export const hygraphService = {
             course: { connect: { id: enrollmentData.courseId } }
           }
         });
-        return response.createEnrollment;
+        return (response as any).createEnrollment;
       } catch (error) {
         console.error('Error creating enrollment in Hygraph:', error);
         throw error;
@@ -649,7 +649,7 @@ export const hygraphService = {
           id,
           data: enrollmentData
         });
-        return response.updateEnrollment;
+        return (response as any).updateEnrollment;
       } catch (error) {
         console.error('Error updating enrollment in Hygraph:', error);
         throw error;
@@ -666,7 +666,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.assignments || [];
+        return (response as any).assignments || [];
       } catch (error) {
         console.error('Error fetching assignments from Hygraph:', error);
         throw error;
@@ -676,7 +676,7 @@ export const hygraphService = {
     async getById(id: string): Promise<HygraphAssignment | null> {
       try {
         const response = await hygraphClient.request(GET_ASSIGNMENT_BY_ID, { id });
-        return response.assignment || null;
+        return (response as any).assignment || null;
       } catch (error) {
         console.error('Error fetching assignment by ID from Hygraph:', error);
         throw error;
@@ -709,7 +709,7 @@ export const hygraphService = {
             teacher: { connect: { id: assignmentData.teacherId } }
           }
         });
-        return response.createAssignment;
+        return (response as any).createAssignment;
       } catch (error) {
         console.error('Error creating assignment in Hygraph:', error);
         throw error;
@@ -725,7 +725,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateAssignment;
+        return (response as any).updateAssignment;
       } catch (error) {
         console.error('Error updating assignment in Hygraph:', error);
         throw error;
@@ -751,7 +751,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.submissions || [];
+        return (response as any).submissions || [];
       } catch (error) {
         console.error('Error fetching submissions from Hygraph:', error);
         throw error;
@@ -761,7 +761,7 @@ export const hygraphService = {
     async getById(id: string): Promise<HygraphSubmission | null> {
       try {
         const response = await hygraphClient.request(GET_SUBMISSION_BY_ID, { id });
-        return response.submission || null;
+        return (response as any).submission || null;
       } catch (error) {
         console.error('Error fetching submission by ID from Hygraph:', error);
         throw error;
@@ -796,7 +796,7 @@ export const hygraphService = {
             course: { connect: { id: submissionData.courseId } }
           }
         });
-        return response.createSubmission;
+        return (response as any).createSubmission;
       } catch (error) {
         console.error('Error creating submission in Hygraph:', error);
         throw error;
@@ -812,7 +812,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateSubmission;
+        return (response as any).updateSubmission;
       } catch (error) {
         console.error('Error updating submission in Hygraph:', error);
         throw error;
@@ -829,7 +829,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.exams || [];
+        return (response as any).exams || [];
       } catch (error) {
         console.error('Error fetching exams from Hygraph:', error);
         throw error;
@@ -839,7 +839,7 @@ export const hygraphService = {
     async getById(id: string): Promise<HygraphExam | null> {
       try {
         const response = await hygraphClient.request(GET_EXAM_BY_ID, { id });
-        return response.exam || null;
+        return (response as any).exam || null;
       } catch (error) {
         console.error('Error fetching exam by ID from Hygraph:', error);
         throw error;
@@ -874,7 +874,7 @@ export const hygraphService = {
             course: { connect: { id: examData.courseId } }
           }
         });
-        return response.createExam;
+        return (response as any).createExam;
       } catch (error) {
         console.error('Error creating exam in Hygraph:', error);
         throw error;
@@ -890,7 +890,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateExam;
+        return (response as any).updateExam;
       } catch (error) {
         console.error('Error updating exam in Hygraph:', error);
         throw error;
@@ -916,7 +916,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.examAttempts || [];
+        return (response as any).examAttempts || [];
       } catch (error) {
         console.error('Error fetching exam attempts from Hygraph:', error);
         throw error;
@@ -954,7 +954,7 @@ export const hygraphService = {
             exam: { connect: { id: attemptData.examId } }
           }
         });
-        return response.createExamAttempt;
+        return (response as any).createExamAttempt;
       } catch (error) {
         console.error('Error creating exam attempt in Hygraph:', error);
         throw error;
@@ -970,7 +970,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateExamAttempt;
+        return (response as any).updateExamAttempt;
       } catch (error) {
         console.error('Error updating exam attempt in Hygraph:', error);
         throw error;
@@ -987,7 +987,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.announcements || [];
+        return (response as any).announcements || [];
       } catch (error) {
         console.error('Error fetching announcements from Hygraph:', error);
         throw error;
@@ -1017,7 +1017,7 @@ export const hygraphService = {
             ...(announcementData.courseId && { course: { connect: { id: announcementData.courseId } } })
           }
         });
-        return response.createAnnouncement;
+        return (response as any).createAnnouncement;
       } catch (error) {
         console.error('Error creating announcement in Hygraph:', error);
         throw error;
@@ -1030,7 +1030,7 @@ export const hygraphService = {
           id,
           data: announcementData
         });
-        return response.updateAnnouncement;
+        return (response as any).updateAnnouncement;
       } catch (error) {
         console.error('Error updating announcement in Hygraph:', error);
         throw error;
@@ -1056,7 +1056,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.events || [];
+        return (response as any).events || [];
       } catch (error) {
         console.error('Error fetching events from Hygraph:', error);
         throw error;
@@ -1095,7 +1095,7 @@ export const hygraphService = {
             dateUpdated: now
           }
         });
-        return response.createEvent;
+        return (response as any).createEvent;
       } catch (error) {
         console.error('Error creating event in Hygraph:', error);
         throw error;
@@ -1111,7 +1111,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateEvent;
+        return (response as any).updateEvent;
       } catch (error) {
         console.error('Error updating event in Hygraph:', error);
         throw error;
@@ -1137,7 +1137,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.grades || [];
+        return (response as any).grades || [];
       } catch (error) {
         console.error('Error fetching grades from Hygraph:', error);
         throw error;
@@ -1171,7 +1171,7 @@ export const hygraphService = {
             course: { connect: { id: gradeData.courseId } }
           }
         });
-        return response.createGrade;
+        return (response as any).createGrade;
       } catch (error) {
         console.error('Error creating grade in Hygraph:', error);
         throw error;
@@ -1184,7 +1184,7 @@ export const hygraphService = {
           id,
           data: gradeData
         });
-        return response.updateGrade;
+        return (response as any).updateGrade;
       } catch (error) {
         console.error('Error updating grade in Hygraph:', error);
         throw error;
@@ -1201,7 +1201,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.courseMaterials || [];
+        return (response as any).courseMaterials || [];
       } catch (error) {
         console.error('Error fetching course materials from Hygraph:', error);
         throw error;
@@ -1230,7 +1230,7 @@ export const hygraphService = {
             course: { connect: { id: materialData.courseId } }
           }
         });
-        return response.createCourseMaterial;
+        return (response as any).createCourseMaterial;
       } catch (error) {
         console.error('Error creating course material in Hygraph:', error);
         throw error;
@@ -1246,7 +1246,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateCourseMaterial;
+        return (response as any).updateCourseMaterial;
       } catch (error) {
         console.error('Error updating course material in Hygraph:', error);
         throw error;
@@ -1272,7 +1272,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.supportTickets || [];
+        return (response as any).supportTickets || [];
       } catch (error) {
         console.error('Error fetching support tickets from Hygraph:', error);
         throw error;
@@ -1301,7 +1301,7 @@ export const hygraphService = {
             ...(ticketData.userId && { user: { connect: { id: ticketData.userId } } })
           }
         });
-        return response.createSupportTicket;
+        return (response as any).createSupportTicket;
       } catch (error) {
         console.error('Error creating support ticket in Hygraph:', error);
         throw error;
@@ -1317,7 +1317,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateSupportTicket;
+        return (response as any).updateSupportTicket;
       } catch (error) {
         console.error('Error updating support ticket in Hygraph:', error);
         throw error;
@@ -1334,7 +1334,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.editRequests || [];
+        return (response as any).editRequests || [];
       } catch (error) {
         console.error('Error fetching edit requests from Hygraph:', error);
         throw error;
@@ -1374,7 +1374,7 @@ export const hygraphService = {
             requestedAt: now
           }
         });
-        return response.createEditRequest;
+        return (response as any).createEditRequest;
       } catch (error) {
         console.error('Error creating edit request in Hygraph:', error);
         throw error;
@@ -1390,7 +1390,7 @@ export const hygraphService = {
             respondedAt: requestData.status && requestData.status !== 'PENDING' ? new Date().toISOString() : undefined
           }
         });
-        return response.updateEditRequest;
+        return (response as any).updateEditRequest;
       } catch (error) {
         console.error('Error updating edit request in Hygraph:', error);
         throw error;
@@ -1407,7 +1407,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.forumThreads || [];
+        return (response as any).forumThreads || [];
       } catch (error) {
         console.error('Error fetching forum threads from Hygraph:', error);
         throw error;
@@ -1437,7 +1437,7 @@ export const hygraphService = {
             author: { connect: { id: threadData.authorId } }
           }
         });
-        return response.createForumThread;
+        return (response as any).createForumThread;
       } catch (error) {
         console.error('Error creating forum thread in Hygraph:', error);
         throw error;
@@ -1453,7 +1453,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.forumPosts || [];
+        return (response as any).forumPosts || [];
       } catch (error) {
         console.error('Error fetching forum posts from Hygraph:', error);
         throw error;
@@ -1478,7 +1478,7 @@ export const hygraphService = {
             thread: { connect: { id: postData.threadId } }
           }
         });
-        return response.createForumPost;
+        return (response as any).createForumPost;
       } catch (error) {
         console.error('Error creating forum post in Hygraph:', error);
         throw error;
@@ -1495,7 +1495,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.blogPosts || [];
+        return (response as any).blogPosts || [];
       } catch (error) {
         console.error('Error fetching blog posts from Hygraph:', error);
         throw error;
@@ -1520,7 +1520,7 @@ export const hygraphService = {
             author: { connect: { id: postData.authorId } }
           }
         });
-        return response.createBlogPost;
+        return (response as any).createBlogPost;
       } catch (error) {
         console.error('Error creating blog post in Hygraph:', error);
         throw error;
@@ -1536,7 +1536,7 @@ export const hygraphService = {
             dateUpdated: new Date().toISOString()
           }
         });
-        return response.updateBlogPost;
+        return (response as any).updateBlogPost;
       } catch (error) {
         console.error('Error updating blog post in Hygraph:', error);
         throw error;
@@ -1562,7 +1562,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.certificates || [];
+        return (response as any).certificates || [];
       } catch (error) {
         console.error('Error fetching certificates from Hygraph:', error);
         throw error;
@@ -1586,7 +1586,7 @@ export const hygraphService = {
             user: { connect: { id: certificateData.userId } }
           }
         });
-        return response.createCertificate;
+        return (response as any).createCertificate;
       } catch (error) {
         console.error('Error creating certificate in Hygraph:', error);
         throw error;
@@ -1603,7 +1603,7 @@ export const hygraphService = {
           skip: offset,
           where: where || {}
         });
-        return response.activityLogs || [];
+        return (response as any).activityLogs || [];
       } catch (error) {
         console.error('Error fetching activity logs from Hygraph:', error);
         throw error;
@@ -1625,7 +1625,7 @@ export const hygraphService = {
             user: { connect: { id: logData.userId } }
           }
         });
-        return response.createActivityLog;
+        return (response as any).createActivityLog;
       } catch (error) {
         console.error('Error creating activity log in Hygraph:', error);
         throw error;

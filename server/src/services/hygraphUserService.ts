@@ -49,7 +49,7 @@ export const hygraphUserService = {
         skip: offset,
         where: where || {}
       });
-      return response.appUsers || [];
+      return (response as any).appUsers || [];
     } catch (error) {
       console.error('Error fetching users from Hygraph:', error);
       throw error;
@@ -60,7 +60,7 @@ export const hygraphUserService = {
   async getUserById(id: string): Promise<HygraphUser | null> {
     try {
       const response = await hygraphClient.request(GET_USER_BY_ID, { id });
-      return response.appUser || null;
+      return (response as any).appUser || null;
     } catch (error) {
       console.error('Error fetching user by ID from Hygraph:', error);
       throw error;
@@ -71,7 +71,7 @@ export const hygraphUserService = {
   async getUserByUid(uid: string): Promise<HygraphUser | null> {
     try {
       const response = await hygraphClient.request(GET_USER_BY_UID, { uid });
-      return response.appUser || null;
+      return (response as any).appUser || null;
     } catch (error) {
       console.error('Error fetching user by UID from Hygraph:', error);
       throw error;
@@ -82,7 +82,7 @@ export const hygraphUserService = {
   async getUserByEmail(email: string): Promise<HygraphUser | null> {
     try {
       const response = await hygraphClient.request(GET_USER_BY_EMAIL, { email });
-      return response.appUser || null;
+      return (response as any).appUser || null;
     } catch (error) {
       console.error('Error fetching user by email from Hygraph:', error);
       throw error;
@@ -105,7 +105,7 @@ export const hygraphUserService = {
           dateUpdated: now
         }
       });
-      return response.createAppUser;
+      return (response as any).createAppUser;
     } catch (error) {
       console.error('Error creating user in Hygraph:', error);
       throw error;
@@ -122,7 +122,7 @@ export const hygraphUserService = {
           dateUpdated: new Date().toISOString()
         }
       });
-      return response.updateAppUser;
+      return (response as any).updateAppUser;
     } catch (error) {
       console.error('Error updating user in Hygraph:', error);
       throw error;
@@ -152,7 +152,7 @@ export const hygraphUserService = {
           ]
         }
       });
-      return response.appUsers || [];
+      return (response as any).appUsers || [];
     } catch (error) {
       console.error('Error searching users in Hygraph:', error);
       throw error;
@@ -167,7 +167,7 @@ export const hygraphUserService = {
         skip: 0,
         where: { role }
       });
-      return response.appUsers || [];
+      return (response as any).appUsers || [];
     } catch (error) {
       console.error('Error fetching users by role from Hygraph:', error);
       throw error;
@@ -182,9 +182,39 @@ export const hygraphUserService = {
         skip: 0,
         where: { isActive: true }
       });
-      return response.appUsers || [];
+      return (response as any).appUsers || [];
     } catch (error) {
       console.error('Error fetching active users from Hygraph:', error);
+      throw error;
+    }
+  },
+
+  // Get user statistics
+  async getUserStats(): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    students: number;
+    teachers: number;
+    admins: number;
+  }> {
+    try {
+      const [allUsers, activeUsers, students, teachers, admins] = await Promise.all([
+        this.getUsers(1000, 0),
+        this.getActiveUsers(1000),
+        this.getUsersByRole('STUDENT', 1000),
+        this.getUsersByRole('TEACHER', 1000),
+        this.getUsersByRole('ADMIN', 1000)
+      ]);
+
+      return {
+        totalUsers: allUsers.length,
+        activeUsers: activeUsers.length,
+        students: students.length,
+        teachers: teachers.length,
+        admins: admins.length
+      };
+    } catch (error) {
+      console.error('Error fetching user stats from Hygraph:', error);
       throw error;
     }
   }

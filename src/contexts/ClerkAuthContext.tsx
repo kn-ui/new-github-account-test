@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth as useClerkAuthHook, useUser, ClerkProvider } from '@clerk/nextjs';
+import { useAuth as useClerkAuthHook, useUser, ClerkProvider } from '@clerk/clerk-react';
 import { hygraphUserService, HygraphUser } from '../lib/hygraphUserService';
 import { FirestoreUser } from '../lib/firestore';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
-import { hygraphUserService } from '../services/hygraphService';
+import { hygraphUserService } from '../services/hygraphUserService';
 import { createClerkClient } from '@clerk/backend';
 import {
   sendSuccess,
@@ -167,10 +167,10 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       const skip = (page - 1) * limit;
       const where = role ? { role } : {};
       
-      const users = await hygraphUserService.getUsers({ first: limit, skip, where });
+      const users = await hygraphUserService.getUsers(limit, skip, where);
       
       // For now, we'll get all users to calculate total. In production, you might want to implement a count query
-      const allUsers = await hygraphUserService.getUsers();
+      const allUsers = await hygraphUserService.getUsers(1000, 0);
       const total = allUsers.length;
 
       sendPaginatedResponse(

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth as useClerkAuthHook, useUser, ClerkProvider } from '@clerk/clerk-react';
+import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
 import { hygraphUserService, HygraphUser } from '../lib/hygraphUserService';
 import { FirestoreUser } from '../lib/firestore';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
@@ -231,19 +231,11 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Main ClerkAuthProvider with ClerkProvider wrapper
+// Main ClerkAuthProvider (ClerkProvider is already in main.tsx)
 export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  
-  if (!publishableKey) {
-    return <div>Missing Clerk publishable key</div>;
-  }
-
   return (
-    <ClerkProvider publishableKey={publishableKey}>
-      <ClerkAuthProviderInner>
-        {children}
-      </ClerkAuthProviderInner>
-    </ClerkProvider>
+    <ClerkAuthProviderInner>
+      {children}
+    </ClerkAuthProviderInner>
   );
 };

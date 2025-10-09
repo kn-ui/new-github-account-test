@@ -1,4 +1,4 @@
-import { userService } from '../lib/firestore';
+import { userService } from @/lib/hygraph;
 import { UserRole } from '../types';
 
 const updateRoles = async () => {

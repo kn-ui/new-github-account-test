@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { announcementService, courseService, userService, FirestoreAnnouncement } from '@/lib/firestore';
+import { announcementService, courseService, userService, HygraphAnnouncement } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +51,7 @@ export default function TeacherAnnouncements() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [announcements, setAnnouncements] = useState<HygraphAnnouncement[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +59,7 @@ export default function TeacherAnnouncements() {
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<HygraphAnnouncement | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [courseStudents, setCourseStudents] = useState<{ id: string; name: string }[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
@@ -138,7 +138,6 @@ export default function TeacherAnnouncements() {
         .filter(Boolean)));
       if (ids.length) {
         try {
-          const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(ids as string[]);
           const nameMap: Record<string, string> = {};
           Object.entries(usersMap).forEach(([id, u]: any) => { if (u?.displayName) nameMap[id] = u.displayName; });
           setRecipientNames(nameMap);
@@ -222,7 +221,7 @@ export default function TeacherAnnouncements() {
   };
 
 
-  const handleEdit = (announcement: FirestoreAnnouncement) => {
+  const handleEdit = (announcement: HygraphAnnouncement) => {
     setEditingAnnouncement(announcement);
     setFormData({
       title: announcement.title,
@@ -240,11 +239,9 @@ export default function TeacherAnnouncements() {
     const loadStudents = async () => {
       try {
         if (!formData.courseId) { setCourseStudents([]); return; }
-        const enrollments = await (await import('@/lib/firestore')).enrollmentService.getEnrollmentsByCourse(formData.courseId);
         const ids = Array.from(new Set(enrollments.map((e: any) => e.studentId)));
         const list: { id: string; name: string }[] = [];
         await Promise.all(ids.map(async (id) => {
-          try { const u = await (await import('@/lib/firestore')).userService.getUserById(id); list.push({ id, name: (u as any)?.displayName || id }); } catch {}
         }));
         list.sort((a,b) => a.name.localeCompare(b.name));
         setCourseStudents(list);

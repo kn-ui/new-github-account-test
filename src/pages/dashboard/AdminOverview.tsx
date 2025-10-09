@@ -20,11 +20,11 @@ import {
   Bell,
   MessageSquare
 } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+import { userService } from @/lib/hygraph;
 import { useI18n } from '@/contexts/I18nContext';
-import { courseService } from '@/lib/firestore';
-import { eventService } from '@/lib/firestore';
-import { analyticsService } from '@/lib/firestore';
+import { courseService } from @/lib/hygraph;
+import { eventService } from @/lib/hygraph;
+import { analyticsService } from @/lib/hygraph;
   import DashboardHero from '@/components/DashboardHero';
 
 interface User {

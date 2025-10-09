@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, userService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, userService, HygraphGrade, HygraphExam, HygraphExamAttempt } from @/lib/hygraph;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,7 +76,7 @@ export default function AdminStudentGrades() {
   const [student, setStudent] = useState<StudentInfo | null>(null);
   const [grades, setGrades] = useState<GradeWithDetails[]>([]);
   const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
-  const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
+  const [finalGrades, setFinalGrades] = useState<HygraphGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -278,7 +278,7 @@ export default function AdminStudentGrades() {
       });
 
       const finalGradesResults = await Promise.all(finalGradesPromises);
-      return finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
+      return finalGradesResults.filter(grade => grade !== null) as HygraphGrade[];
     } catch (error) {
       console.error('Error loading final grades:', error);
       return [];

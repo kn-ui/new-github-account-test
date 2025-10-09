@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, gradeService, examService, examAttemptService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
+import { courseService, enrollmentService, assignmentService, submissionService, HygraphCourse, HygraphEnrollment, HygraphAssignment, HygraphSubmission } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,22 +40,22 @@ const CourseDetail = () => {
   // Check if we're in dashboard context
   const isDashboard = window.location.pathname.startsWith('/dashboard/');
   
-  const [course, setCourse] = useState<FirestoreCourse | null>(null);
+  const [course, setCourse] = useState<HygraphCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [enrollment, setEnrollment] = useState<FirestoreEnrollment | null>(null);
-  const [courseMaterials, setCourseMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [enrollment, setEnrollment] = useState<HygraphEnrollment | null>(null);
+  const [courseMaterials, setCourseMaterials] = useState<HygraphCourseMaterial[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
   const [courseAssignments, setCourseAssignments] = useState<any[]>([]);
   const [courseGrades, setCourseGrades] = useState<any[]>([]);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<HygraphCourseMaterial | null>(null);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
-  const [finalGrade, setFinalGrade] = useState<FirestoreGrade | null>(null);
+  const [finalGrade, setFinalGrade] = useState<HygraphGrade | null>(null);
   const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
-  const [courseExams, setCourseExams] = useState<FirestoreExam[]>([]);
+  const [courseExams, setCourseExams] = useState<HygraphExam[]>([]);
   const [examGrades, setExamGrades] = useState<any[]>([]);
 
   useEffect(() => {

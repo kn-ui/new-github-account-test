@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { courseService, HygraphCourse } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,14 +28,14 @@ export default function TeacherCourses() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<FirestoreCourse[]>([]);
+  const [courses, setCourses] = useState<HygraphCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('title-asc');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [courseToEdit, setCourseToEdit] = useState<FirestoreCourse | null>(null);
+  const [courseToEdit, setCourseToEdit] = useState<HygraphCourse | null>(null);
   const [editForm, setEditForm] = useState({ description: '', syllabus: '' });
     
 
@@ -59,7 +59,7 @@ export default function TeacherCourses() {
   };
 
 
-  const openEditDialog = (course: FirestoreCourse) => {
+  const openEditDialog = (course: HygraphCourse) => {
     setCourseToEdit(course);
     setEditForm({ description: course.description, syllabus: course.syllabus });
     setShowEditDialog(true);
@@ -83,14 +83,14 @@ export default function TeacherCourses() {
     }
   };
 
-  const getStatusColor = (course: FirestoreCourse) => {
+  const getStatusColor = (course: HygraphCourse) => {
     if (course.isActive) {
       return 'bg-green-100 text-green-800';
     }
     return 'bg-yellow-100 text-yellow-800';
   };
 
-  const getStatusText = (course: FirestoreCourse) => {
+  const getStatusText = (course: HygraphCourse) => {
     if (course.isActive) {
       return t('teacher.courses.active');
     }

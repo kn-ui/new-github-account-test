@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { courseService, submissionService, assignmentService } from '@/lib/firestore';
+import { courseService, submissionService, assignmentService } from @/lib/hygraph;
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 

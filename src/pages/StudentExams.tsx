@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { examService, examAttemptService, enrollmentService, courseService, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
+import { examService, examAttemptService, enrollmentService, courseService, HygraphExam, HygraphExamAttempt } from @/lib/hygraph;
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ export default function StudentExams() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
-  const [exams, setExams] = useState<(FirestoreExam & { 
+  const [exams, setExams] = useState<(HygraphExam & { 
     courseTitle?: string; 
     status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed'; 
     score?: number;
@@ -41,7 +41,7 @@ export default function StudentExams() {
         const courses = await Promise.all(courseIds.map(cid => courseService.getCourseById(cid)));
         const examsList = (await Promise.all(courseIds.map(cid => examService.getExamsByCourse(cid)))).flat();
         const attempts = await examAttemptService.getAttemptsByStudent(currentUser.uid);
-        const attemptMap = new Map<string, FirestoreExamAttempt>(attempts.map(a => [a.examId, a]));
+        const attemptMap = new Map<string, HygraphExamAttempt>(attempts.map(a => [a.examId, a]));
         const courseTitleMap = new Map<string, string>(courses.filter(Boolean).map((c: any) => [c.id, c.title]));
         
         const normalized = examsList.map((e: any) => {

@@ -17,7 +17,7 @@ import {
   BookOpen,
   Crown
 } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+import { userService } from @/lib/hygraph;
 import { useI18n } from '@/contexts/I18nContext';
 
 interface User {

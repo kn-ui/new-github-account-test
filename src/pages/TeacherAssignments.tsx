@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { assignmentService, courseService, FirestoreAssignment } from '@/lib/firestore';
+import { assignmentService, courseService, HygraphAssignment } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DualDateInput from '@/components/ui/DualDateInput';
@@ -39,14 +39,13 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { truncateTitle, truncateText } from '@/lib/utils';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
+  const [assignments, setAssignments] = useState<HygraphAssignment[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -54,7 +53,7 @@ export default function TeacherAssignments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<HygraphAssignment | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -157,7 +156,7 @@ export default function TeacherAssignments() {
   };
 
 
-  const handleEdit = (assignment: FirestoreAssignment) => {
+  const handleEdit = (assignment: HygraphAssignment) => {
     setEditingAssignment(assignment);
     setFormData({
       title: assignment.title,

@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/contexts/I18nContext";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
+import { eventService, HygraphEvent } from '@/lib/hygraph';
 
 const Index = () => {
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [events, setEvents] = useState<HygraphEvent[]>([]);
   useEffect(() => {
     (async () => {
       try {

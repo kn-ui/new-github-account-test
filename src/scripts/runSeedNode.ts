@@ -1,11 +1,10 @@
-import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, 
   collection, 
   addDoc, 
   Timestamp,
   connectFirestoreEmulator
-} from 'firebase/firestore';
+} from @/lib/hygraph;
 
 // Firebase config
 const firebaseConfig = {

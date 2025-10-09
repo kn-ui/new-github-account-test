@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { announcementService, FirestoreAnnouncement } from '@/lib/firestore';
+import { announcementService, HygraphAnnouncement } from '@/lib/hygraph';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface DashboardLayoutProps {
@@ -55,7 +55,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [announcements, setAnnouncements] = useState<HygraphAnnouncement[]>([]);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -165,7 +165,6 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           // Students see: COURSE_STUDENTS (if enrolled in that course), SPECIFIC_STUDENT (if recipientStudentId matches), ALL_STUDENTS, GENERAL_ALL (if authorRole is admin)
           if (currentUser?.uid) {
             // Get student's enrolled courses
-            const { enrollmentService } = await import('@/lib/firestore');
             const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
             const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
             

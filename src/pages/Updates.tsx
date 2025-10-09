@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
-import { announcementService, blogService, eventService, FirestoreAnnouncement, FirestoreBlog, FirestoreEvent, Timestamp } from '@/lib/firestore';
+  import { announcementService, blogService, eventService, HygraphAnnouncement, HygraphBlog, HygraphEvent } from '@/lib/hygraph';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -15,19 +15,19 @@ import { toast } from 'sonner';
 export default function Updates() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
-  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
-  const [blogs, setBlogs] = useState<FirestoreBlog[]>([]);
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [announcements, setAnnouncements] = useState<HygraphAnnouncement[]>([]);
+  const [blogs, setBlogs] = useState<HygraphBlog[]>([]);
+  const [events, setEvents] = useState<HygraphEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [blogQ, setBlogQ] = useState('');
   const [eventQ, setEventQ] = useState('');
   const [eventStatus, setEventStatus] = useState<'all'|'upcoming'|'past'>('all');
   const [blogLikes, setBlogLikes] = useState<{ [blogId: string]: { count: number; liked: boolean } }>({});
   const [blogDialogOpen, setBlogDialogOpen] = useState(false);
-  const [editingBlog, setEditingBlog] = useState<FirestoreBlog | null>(null);
+  const [editingBlog, setEditingBlog] = useState<HygraphBlog | null>(null);
   const [blogForm, setBlogForm] = useState<{ title: string; content: string }>({ title: '', content: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [blogToDelete, setBlogToDelete] = useState<FirestoreBlog | null>(null);
+  const [blogToDelete, setBlogToDelete] = useState<HygraphBlog | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -91,7 +91,7 @@ export default function Updates() {
     }));
   };
 
-  const openBlogDialog = (blog?: FirestoreBlog) => {
+  const openBlogDialog = (blog?: HygraphBlog) => {
     if (blog) {
       setEditingBlog(blog);
       setBlogForm({ title: blog.title, content: blog.content });

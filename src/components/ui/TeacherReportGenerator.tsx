@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Download, BookOpen, GraduationCap, Users } from 'lucide-react';
-import { courseService, enrollmentService, analyticsService } from '@/lib/firestore';
+import { courseService, enrollmentService, analyticsService } from @/lib/hygraph;
 import { useAuth } from '@/contexts/ClerkAuthContext';
 
 interface TeacherReportGeneratorProps {

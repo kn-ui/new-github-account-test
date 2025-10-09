@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Download, FileText, BarChart3, Users, BookOpen, GraduationCap } from 'lucide-react';
-import { analyticsService, userService, courseService, enrollmentService } from '@/lib/firestore';
+import { analyticsService, userService, courseService, enrollmentService } from @/lib/hygraph;
 
 interface ReportGeneratorProps {
   onReportGenerated: (message: string) => void;

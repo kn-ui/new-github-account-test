@@ -19,7 +19,6 @@ import {
   QuerySnapshot,
   DocumentData
 } from 'firebase/firestore';
-import { db } from './firebase';
 
 export { Timestamp };
 

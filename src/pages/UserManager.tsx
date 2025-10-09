@@ -33,7 +33,7 @@ import {
   Eye,
   Award
 } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+  import { userService } from '@/lib/hygraph';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { api } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

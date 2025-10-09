@@ -8,20 +8,19 @@ import {
   UserCredential,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { userService, FirestoreUser } from '../lib/firestore';
+import { userService, HygraphUser } from @/lib/hygraph;
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
-  userProfile: FirestoreUser | null;
+  userProfile: HygraphUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<UserCredential>;
   signup: (email: string, password: string, displayName: string, role?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
-  updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
-  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
+  updateUserProfile: (data: Partial<HygraphUser>) => Promise<void>;
+  createUser: (userData: Omit<HygraphUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,7 +39,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-  const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
+  const [userProfile, setUserProfile] = useState<HygraphUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Login function
@@ -94,7 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Create user function - for admin use only
-  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
+  const createUser = async (userData: Omit<HygraphUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
       // Set default password based on role if not provided
       const finalPassword = password || (() => {
@@ -139,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<FirestoreUser>): Promise<void> => {
+  const updateUserProfile = async (data: Partial<HygraphUser>): Promise<void> => {
     if (!currentUser) {
       throw new Error('No user logged in');
     }

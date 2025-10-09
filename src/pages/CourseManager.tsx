@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload } from 'lucide-react';
-import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
+  import { courseService, HygraphCourse, enrollmentService, userService } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import DashboardHero from '@/components/DashboardHero';
 
-interface CourseWithApproval extends FirestoreCourse {
+interface CourseWithApproval extends HygraphCourse {
   needsApproval?: boolean;
   approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
@@ -54,8 +54,8 @@ export default function CourseManager() {
   const [showArchived, setShowArchived] = useState(false);
   const { currentUser } = useAuth();
 
-  const [editForm, setEditForm] = useState<Partial<FirestoreCourse>>({});
-  const [createForm, setCreateForm] = useState<Partial<FirestoreCourse>>({
+  const [editForm, setEditForm] = useState<Partial<HygraphCourse>>({});
+  const [createForm, setCreateForm] = useState<Partial<HygraphCourse>>({
     title: '',
     description: '',
     category: '',
@@ -367,7 +367,7 @@ export default function CourseManager() {
         isActive: editForm.isActive,
         instructor: editForm.instructor,
         instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
-      } as Partial<FirestoreCourse>);
+      } as Partial<HygraphCourse>);
       toast.success('Course updated');
       setIsEditOpen(false);
       loadCourses();

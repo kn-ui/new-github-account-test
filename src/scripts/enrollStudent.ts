@@ -1,5 +1,5 @@
 
-import { enrollmentService, userService, courseService } from '../lib/firestore';
+import { enrollmentService, userService, courseService } from @/lib/hygraph;
 
 const enrollStudent = async () => {
   try {

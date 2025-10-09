@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { assignmentEditRequestService, FirestoreAssignmentEditRequest } from '@/lib/firestore';
+import { assignmentEditRequestService, HygraphAssignmentEditRequest } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +28,9 @@ import DashboardHero from '@/components/DashboardHero';
 export default function AssignmentEditRequests() {
   const { currentUser, userProfile } = useAuth();
   const { t } = useI18n();
-  const [requests, setRequests] = useState<FirestoreAssignmentEditRequest[]>([]);
+  const [requests, setRequests] = useState<HygraphAssignmentEditRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState<FirestoreAssignmentEditRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<HygraphAssignmentEditRequest | null>(null);
   const [showHandleDialog, setShowHandleDialog] = useState(false);
   const [teacherResponse, setTeacherResponse] = useState('');
 
@@ -84,7 +84,7 @@ export default function AssignmentEditRequests() {
     }
   };
 
-  const openHandleDialog = (request: FirestoreAssignmentEditRequest) => {
+  const openHandleDialog = (request: HygraphAssignmentEditRequest) => {
     setSelectedRequest(request);
     setTeacherResponse('');
     setShowHandleDialog(true);

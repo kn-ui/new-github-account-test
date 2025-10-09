@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { courseMaterialService, courseService, HygraphCourseMaterial } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,7 +55,7 @@ export default function TeacherCourseMaterials() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [materials, setMaterials] = useState<HygraphCourseMaterial[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,7 +64,7 @@ export default function TeacherCourseMaterials() {
   const [sortBy, setSortBy] = useState<string>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<HygraphCourseMaterial | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -168,7 +167,7 @@ export default function TeacherCourseMaterials() {
   };
 
 
-  const handleEdit = (material: FirestoreCourseMaterial) => {
+  const handleEdit = (material: HygraphCourseMaterial) => {
     setEditingMaterial(material);
     setFormData({
       title: material.title,

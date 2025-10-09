@@ -17,7 +17,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { studentDataService, FirestoreAnnouncement } from '@/lib/firestore';
+import { studentDataService, HygraphAnnouncement } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
-interface AnnouncementWithDetails extends FirestoreAnnouncement {
+interface AnnouncementWithDetails extends HygraphAnnouncement {
   course?: any;
   isRead?: boolean;
   isImportant?: boolean;
@@ -56,7 +56,6 @@ export default function StudentAnnouncements() {
       setLoading(true);
       
       // Get all announcements and filter based on student targeting rules
-      const { announcementService, enrollmentService } = await import('@/lib/firestore');
       const all = await announcementService.getAllAnnouncements(50);
       
       // Get student's enrolled courses

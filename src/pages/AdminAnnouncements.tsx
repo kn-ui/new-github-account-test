@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { announcementService, userService, FirestoreAnnouncement } from '@/lib/firestore';
+import { announcementService, userService, HygraphAnnouncement } from @/lib/hygraph;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +51,7 @@ import {
 export default function AdminAnnouncements() {
   const { t } = useI18n();
   const { currentUser, userProfile } = useAuth();
-  const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
+  const [announcements, setAnnouncements] = useState<HygraphAnnouncement[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +59,7 @@ export default function AdminAnnouncements() {
   const [audienceFilter, setAudienceFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<HygraphAnnouncement | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [userSearch, setUserSearch] = useState('');
   const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
@@ -169,7 +169,7 @@ export default function AdminAnnouncements() {
     }
   };
 
-  const handleEdit = (announcement: FirestoreAnnouncement) => {
+  const handleEdit = (announcement: HygraphAnnouncement) => {
     setEditingAnnouncement(announcement);
     setFormData({
       title: announcement.title,

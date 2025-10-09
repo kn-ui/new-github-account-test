@@ -11,15 +11,15 @@ import {
   examService,
   examAttemptService,
   gradeService,
-  FirestoreCourse,
-  FirestoreEnrollment,
-  FirestoreAssignment,
-  FirestoreCourseMaterial,
-  FirestoreSubmission,
-  FirestoreExam,
-  FirestoreGrade,
+  HygraphCourse,
+  HygraphEnrollment,
+  HygraphAssignment,
+  HygraphCourseMaterial,
+  HygraphSubmission,
+  HygraphExam,
+  HygraphGrade,
   studentDataService,
-} from '@/lib/firestore';
+} from @/lib/hygraph;
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,39 +54,39 @@ export default function TeacherCourseDetail() {
   const activeTab = searchParams.get('tab') || 'overview';
 
   const [loading, setLoading] = useState(true);
-  const [course, setCourse] = useState<FirestoreCourse | null>(null);
-  const [enrollments, setEnrollments] = useState<FirestoreEnrollment[]>([]);
-  const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
-  const [submissions, setSubmissions] = useState<FirestoreSubmission[]>([]);
-  const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
+  const [course, setCourse] = useState<HygraphCourse | null>(null);
+  const [enrollments, setEnrollments] = useState<HygraphEnrollment[]>([]);
+  const [assignments, setAssignments] = useState<HygraphAssignment[]>([]);
+  const [submissions, setSubmissions] = useState<HygraphSubmission[]>([]);
+  const [materials, setMaterials] = useState<HygraphCourseMaterial[]>([]);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<FirestoreCourseMaterial | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<HygraphCourseMaterial | null>(null);
   const [materialForm, setMaterialForm] = useState<{ title: string; description: string; type: 'document' | 'video' | 'link' | 'other'; fileUrl: string; externalLink: string; }>(
     { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
   );
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<HygraphAssignment | null>(null);
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
     { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [assignmentToDelete, setAssignmentToDelete] = useState<FirestoreAssignment | null>(null);
+  const [assignmentToDelete, setAssignmentToDelete] = useState<HygraphAssignment | null>(null);
   const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
-  const [submissionsForAssignment, setSubmissionsForAssignment] = useState<FirestoreSubmission[]>([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<FirestoreAssignment | null>(null);
+  const [submissionsForAssignment, setSubmissionsForAssignment] = useState<HygraphSubmission[]>([]);
+  const [selectedAssignment, setSelectedAssignment] = useState<HygraphAssignment | null>(null);
   const [assignSort, setAssignSort] = useState<'due-asc' | 'due-desc' | 'title-asc' | 'title-desc'>('due-asc');
   const [studentSort, setStudentSort] = useState<'name-asc' | 'name-desc'>('name-asc');
   const [gradeDialogOpen, setGradeDialogOpen] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState<FirestoreSubmission | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<HygraphSubmission | null>(null);
   const [gradeValue, setGradeValue] = useState<number>(0);
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
   const [gradeSort, setGradeSort] = useState<'recent' | 'oldest' | 'grade-desc' | 'grade-asc'>('recent');
   const [examDialogOpen, setExamDialogOpen] = useState(false);
-  const [editingExam, setEditingExam] = useState<FirestoreExam | null>(null);
+  const [editingExam, setEditingExam] = useState<HygraphExam | null>(null);
   const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; startTime: string; durationMinutes: number; questions: any[] }>({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] });
   const [showExamDeleteConfirm, setShowExamDeleteConfirm] = useState(false);
-  const [examToDelete, setExamToDelete] = useState<FirestoreExam | null>(null);
+  const [examToDelete, setExamToDelete] = useState<HygraphExam | null>(null);
   const [examLockStatus, setExamLockStatus] = useState<Record<string, { locked: boolean; reason?: string }>>({});
 
   // Check exam lock status
@@ -132,7 +132,6 @@ export default function TeacherCourseDetail() {
           const nameMap: Record<string, string> = {};
           await Promise.all(ids.map(async (id) => {
             try {
-              const u = await (await import('@/lib/firestore')).userService.getUserById(id);
               if (u?.displayName) nameMap[id] = u.displayName;
             } catch {}
           }));
@@ -190,13 +189,13 @@ export default function TeacherCourseDetail() {
 
   const studentsCount = enrollments.length;
   const assignmentsCount = assignments.length;
-  const [exams, setExams] = useState<FirestoreExam[]>([]);
+  const [exams, setExams] = useState<HygraphExam[]>([]);
   const examsCount = exams.length;
-  const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
+  const [finalGrades, setFinalGrades] = useState<HygraphGrade[]>([]);
   const [examGrades, setExamGrades] = useState<any[]>([]);
   const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
   const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
-  const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<FirestoreEnrollment | null>(null);
+  const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<HygraphEnrollment | null>(null);
   const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
   const [manualGrade, setManualGrade] = useState<number>(0);
   const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
@@ -231,7 +230,7 @@ export default function TeacherCourseDetail() {
     return { letterGrade: 'F', gradePoints: 0.0 };
   };
 
-  const openGradeCalculation = (student?: FirestoreEnrollment) => {
+  const openGradeCalculation = (student?: HygraphEnrollment) => {
     setSelectedStudentForGrade(student || null);
     setGradeCalculationDialogOpen(true);
     setManualGrade(0);
@@ -479,7 +478,6 @@ export default function TeacherCourseDetail() {
                               </Button>
                             )}
                             <Button variant="outline" size="sm" onClick={() => { setEditingMaterial(m); setMaterialForm({ title: m.title, description: m.description, type: m.type, fileUrl: m.fileUrl || '', externalLink: m.externalLink || '' }); setMaterialDialogOpen(true); }}>Edit</Button>
-                            <Button variant="destructive" size="sm" onClick={async () => { try { await (await import('@/lib/firestore')).courseMaterialService.deleteCourseMaterial(m.id); toast.success('Material deleted'); const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id); setMaterials(latest); } catch (e) { toast.error('Failed to delete'); } }}>Delete</Button>
                           </div>
                         </div>
                       </div>
@@ -1020,9 +1018,7 @@ export default function TeacherCourseDetail() {
         onConfirm={async () => {
           if (!assignmentToDelete) return;
           try {
-            await (await import('@/lib/firestore')).assignmentService.deleteAssignment(assignmentToDelete.id);
             toast.success('Assignment deleted');
-            const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course!.id, 1000);
             setAssignments(latest);
           } catch { toast.error('Failed to delete'); }
         }}
@@ -1113,13 +1109,10 @@ export default function TeacherCourseDetail() {
                 if (materialForm.type === 'document') payload.fileUrl = materialForm.fileUrl || '';
                 if (materialForm.type === 'video' || materialForm.type === 'link') payload.externalLink = materialForm.externalLink || '';
                 if (editingMaterial) {
-                  await (await import('@/lib/firestore')).courseMaterialService.updateCourseMaterial(editingMaterial.id, payload);
                   toast.success('Material updated');
                 } else {
-                  await (await import('@/lib/firestore')).courseMaterialService.createCourseMaterial(payload);
                   toast.success('Material added');
                 }
-                const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id, 1000);
                 setMaterials(latest);
                 setMaterialDialogOpen(false);
                 setEditingMaterial(null);
@@ -1167,14 +1160,11 @@ export default function TeacherCourseDetail() {
                   maxScore: assignmentForm.maxScore,
                 };
                 if (editingAssignment) {
-                  await (await import('@/lib/firestore')).assignmentService.updateAssignment(editingAssignment.id, payload);
                   toast.success('Assignment updated');
                 } else {
                   payload.teacherId = course.instructor;
-                  await (await import('@/lib/firestore')).assignmentService.createAssignment(payload);
                   toast.success('Assignment created');
                 }
-                const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000);
                 setAssignments(latest);
                 setAssignmentDialogOpen(false);
                 setEditingAssignment(null);
@@ -1322,10 +1312,8 @@ export default function TeacherCourseDetail() {
               }
               
               try {
-                await (await import('@/lib/firestore')).submissionService.updateSubmission(selectedSubmission.id, { grade: gradeValue, feedback: gradeFeedback, status: 'graded' });
                 studentDataService.clearStudentCache(selectedSubmission.studentId);
                 toast.success('Grade updated');
-                const latest = await (await import('@/lib/firestore')).submissionService.getSubmissionsByCourse(course.id);
                 setSubmissions(latest);
                 setGradeDialogOpen(false);
               } catch { toast.error('Failed to update grade'); }

@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
-import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } from '@/lib/firestore';
+  import { forumService, HygraphForumPost, HygraphForumThread } from '@/lib/hygraph';
 import { ThumbsUp } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
@@ -10,8 +10,8 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 const ForumThread = () => {
   const { threadId } = useParams<{ threadId: string }>();
   const { t } = useI18n();
-  const [thread, setThread] = useState<FirestoreForumThread | null>(null);
-  const [posts, setPosts] = useState<FirestoreForumPost[]>([]);
+  const [thread, setThread] = useState<HygraphForumThread | null>(null);
+  const [posts, setPosts] = useState<HygraphForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);

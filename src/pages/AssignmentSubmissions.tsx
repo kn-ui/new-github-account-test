@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { assignmentService, courseService, submissionService, assignmentEditRequestService, FirestoreEditRequest, studentDataService } from '@/lib/firestore';
+import { assignmentService, courseService, submissionService, assignmentEditRequestService, HygraphEditRequest, studentDataService } from @/lib/hygraph;
 import { FileText, BookOpen, Clock, Edit, ArrowLeft, ChevronDown, User, Calendar, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -26,9 +26,9 @@ export default function AssignmentSubmissions() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'graded'>('all');
   const [grading, setGrading] = useState<{ id: string; grade: number; feedback: string } | null>(null);
-  const [editRequests, setEditRequests] = useState<FirestoreEditRequest[]>([]);
+  const [editRequests, setEditRequests] = useState<HygraphEditRequest[]>([]);
   const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
-  const [selectedEditRequest, setSelectedEditRequest] = useState<FirestoreEditRequest | null>(null);
+  const [selectedEditRequest, setSelectedEditRequest] = useState<HygraphEditRequest | null>(null);
   const [editResponse, setEditResponse] = useState('');
 
   useEffect(() => {
@@ -44,7 +44,6 @@ export default function AssignmentSubmissions() {
         setCourseTitle(course?.title || 'Course');
         const subs = await submissionService.getSubmissionsByAssignment(assignmentId);
         const ids = Array.from(new Set(subs.map((s: any) => s.studentId)));
-        const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(ids);
         const names: Record<string,string> = {};
         Object.entries(usersMap).forEach(([id, u]: any) => { if (u?.displayName) names[id] = u.displayName; });
         setStudentMap(names);
@@ -71,7 +70,7 @@ export default function AssignmentSubmissions() {
       .sort((a: any, b: any) => b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime());
   }, [submissions, search, statusFilter, assignment?.title, courseTitle, studentMap]);
 
-  const handleEditRequestResponse = (request: FirestoreEditRequest) => {
+  const handleEditRequestResponse = (request: HygraphEditRequest) => {
     setSelectedEditRequest(request);
     setShowEditRequestDialog(true);
   };

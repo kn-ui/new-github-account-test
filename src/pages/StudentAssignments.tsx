@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { studentDataService, courseMaterialService, submissionService, FirestoreAssignment } from '@/lib/firestore';
+import { studentDataService, courseMaterialService, submissionService, HygraphAssignment } from @/lib/hygraph;
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText, truncateInstructions } from '@/lib/utils';
 
-interface AssignmentWithStatus extends FirestoreAssignment {
+interface AssignmentWithStatus extends HygraphAssignment {
   courseTitle: string;
   instructorName: string;
   status: 'not-started' | 'in-progress' | 'submitted' | 'graded';

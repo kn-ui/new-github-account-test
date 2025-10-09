@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, courseService, enrollmentService, submissionService, assignmentService, userService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService, assignmentService, userService } from @/lib/hygraph;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

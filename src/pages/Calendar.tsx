@@ -2,7 +2,7 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
-import { eventService, FirestoreEvent } from '@/lib/firestore';
+import { eventService, HygraphEvent } from @/lib/hygraph;
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar';
@@ -10,14 +10,14 @@ import { EventsList } from '@/components/EventsList';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
 
 const Calendar = () => {
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [events, setEvents] = useState<HygraphEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(() => {
     const d = new Date();
     const ethiopianDate = toEthiopianDate(d);
     return `${ethiopianDate.year}-${String(ethiopianDate.month).padStart(2, '0')}`;
   });
-  const [selectedEvent, setSelectedEvent] = useState<FirestoreEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<HygraphEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { t } = useI18n();
 
@@ -41,7 +41,7 @@ const Calendar = () => {
   const firstWeekdayOffset = useMemo(() => getEthiopianFirstWeekdayOffset(ethiopianYear, ethiopianMonth), [ethiopianYear, ethiopianMonth]);
 
   const eventsByDay = useMemo(() => {
-    const map: Record<number, FirestoreEvent[]> = {};
+    const map: Record<number, HygraphEvent[]> = {};
     for (let i = 1; i <= daysInMonth; i++) map[i] = [];
     const [currentEthiopianYear, currentEthiopianMonth] = month.split('-').map(Number);
     events.forEach(e => {

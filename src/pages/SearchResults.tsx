@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, submissionService, FirestoreUser, FirestoreCourse, FirestoreEvent, FirestoreCourseMaterial, FirestoreAnnouncement, FirestoreAssignment } from '@/lib/firestore';
+import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, submissionService, HygraphUser, HygraphCourse, HygraphEvent, HygraphCourseMaterial, HygraphAnnouncement, HygraphAssignment } from @/lib/hygraph;
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, Calendar, FileText, Bell, FolderOpen } from 'lucide-react';
@@ -16,12 +16,12 @@ export default function SearchResults() {
   const [params] = useSearchParams();
   const initialQ = params.get('q') || '';
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<FirestoreUser[]>([]);
-  const [courses, setCourses] = useState<FirestoreCourse[]>([]);
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
-  const [materials, setMaterials] = useState<FirestoreCourseMaterial[]>([]);
-  const [anns, setAnns] = useState<FirestoreAnnouncement[]>([]);
-  const [assignments, setAssignments] = useState<FirestoreAssignment[]>([]);
+  const [users, setUsers] = useState<HygraphUser[]>([]);
+  const [courses, setCourses] = useState<HygraphCourse[]>([]);
+  const [events, setEvents] = useState<HygraphEvent[]>([]);
+  const [materials, setMaterials] = useState<HygraphCourseMaterial[]>([]);
+  const [anns, setAnns] = useState<HygraphAnnouncement[]>([]);
+  const [assignments, setAssignments] = useState<HygraphAssignment[]>([]);
 
   const normalizedQuery = useMemo(() => initialQ.trim().toLowerCase(), [initialQ]);
 

@@ -1,12 +1,12 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { blogService, FirestoreBlog } from '@/lib/firestore';
+import { blogService, HygraphBlog } from @/lib/hygraph;
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { api, BlogPost } from '@/lib/api';
 
 const Blog = () => {
-  const [posts, setPosts] = useState<FirestoreBlog[] | BlogPost[]>([]);
+  const [posts, setPosts] = useState<HygraphBlog[] | BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');

@@ -2,19 +2,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
 import { hygraphUserService, HygraphUser } from '../lib/hygraphUserService';
-import { FirestoreUser } from '../lib/firestore';
+import { HygraphUser } from @/lib/hygraph;
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface AuthContextType {
   currentUser: any | null; // Clerk user type
-  userProfile: FirestoreUser | null;
+  userProfile: HygraphUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, displayName: string, role?: string) => Promise<any>;
   logout: () => Promise<void>;
-  updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
-  createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
+  updateUserProfile: (data: Partial<HygraphUser>) => Promise<void>;
+  createUser: (userData: Omit<HygraphUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,7 +37,7 @@ interface AuthProviderProps {
 const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuthHook();
   const { user } = useUser();
-  const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
+  const [userProfile, setUserProfile] = useState<HygraphUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Login function - redirects to Clerk's sign-in
@@ -58,7 +58,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Create user function - for admin use only
-  const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
+  const createUser = async (userData: Omit<HygraphUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
       // Create Hygraph user profile directly
       // Note: This assumes the user was created in Clerk via admin API
@@ -93,7 +93,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Update user profile
-  const updateUserProfile = async (data: Partial<FirestoreUser>): Promise<void> => {
+  const updateUserProfile = async (data: Partial<HygraphUser>): Promise<void> => {
     if (!user) {
       throw new Error('No user logged in');
     }
@@ -163,8 +163,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
           }
           
           if (profile) {
-            // Convert HygraphUser to FirestoreUser format for compatibility
-            const convertedProfile: FirestoreUser = {
+            // Convert HygraphUser to HygraphUser format for compatibility
+            const convertedProfile: HygraphUser = {
               uid: profile.uid,
               id: profile.id,
               displayName: profile.displayName,
@@ -187,8 +187,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               passwordChanged: true
             });
             
-            // Convert HygraphUser to FirestoreUser format for compatibility
-            const convertedProfile: FirestoreUser = {
+            // Convert HygraphUser to HygraphUser format for compatibility
+            const convertedProfile: HygraphUser = {
               uid: newProfile.uid,
               id: newProfile.id,
               displayName: newProfile.displayName,

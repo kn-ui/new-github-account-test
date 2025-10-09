@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
-import { forumService, FirestoreForumThread, Timestamp } from '@/lib/firestore';
+import { forumService, HygraphForumThread } from @/lib/hygraph;
 import { Search, MessageCircle, Eye, ThumbsUp, Plus } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useI18n } from '@/contexts/I18nContext';
@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/ClerkAuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
 
 const Forum = () => {
-  const [threads, setThreads] = useState<Array<FirestoreForumThread | ApiThread>>([]);
+  const [threads, setThreads] = useState<Array<HygraphForumThread | ApiThread>>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Topics');

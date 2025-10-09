@@ -12,14 +12,11 @@
  * 3. User creation uses this secondary auth, then immediately signs out
  * 4. Main app's auth state remains unchanged, preventing redirects
  */
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from @/lib/hygraph;
 
 // Use the same config as the main Firebase app
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBtIY1wVdePkWCJ84bSr7alOMcI2aihVqw",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "school-management-system-67b85.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "school-management-system-67b85",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "school-management-system-67b85.appspot.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "103441012203195276037",

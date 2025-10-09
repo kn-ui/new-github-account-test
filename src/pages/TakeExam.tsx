@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { examService, examAttemptService } from '@/lib/firestore';
+import { examService, examAttemptService } from @/lib/hygraph;
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

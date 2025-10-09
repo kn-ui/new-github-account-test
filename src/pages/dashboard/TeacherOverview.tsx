@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { analyticsService, courseService, enrollmentService, submissionService } from '@/lib/firestore';
+import { analyticsService, courseService, enrollmentService, submissionService } from @/lib/hygraph;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,7 +58,6 @@ export default function TeacherOverview() {
           const ok = allRes.flatMap((r: any) => (r.status === 'fulfilled' ? r.value : []));
           
           // Filter out submissions for deleted/inactive assignments
-          const { assignmentService } = await import('@/lib/firestore');
           const assignmentIds = Array.from(new Set(ok.flat().map((s: any) => s.assignmentId)));
           const assignmentsMap = await assignmentService.getAssignmentsByIds(assignmentIds);
           
@@ -79,7 +78,6 @@ export default function TeacherOverview() {
           // Resolve student names
           try {
             const ids = Array.from(new Set(flatSubmissions.map((s: any) => s.studentId)));
-            const usersMap = await (await import('@/lib/firestore')).userService.getUsersByIds(ids);
             const nameMap: Record<string, string> = {};
             Object.entries(usersMap).forEach(([id, user]: any) => {
               if (user?.displayName) nameMap[id] = user.displayName;

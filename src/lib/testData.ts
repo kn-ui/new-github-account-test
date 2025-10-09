@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from @/lib/hygraph;
 
 // Comprehensive test data for all collections
 export const testData = {

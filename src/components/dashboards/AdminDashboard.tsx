@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { courseService, HygraphCourse } from @/lib/hygraph;
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [pendingCourses, setPendingCourses] = useState<FirestoreCourse[]>([]);
+  const [pendingCourses, setPendingCourses] = useState<HygraphCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPending = async () => {

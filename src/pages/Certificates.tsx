@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { certificateService, activityLogService, FirestoreCertificate } from '@/lib/firestore';
+import { certificateService, activityLogService, HygraphCertificate } from @/lib/hygraph;
 import { evaluateAndAwardCertificates } from '@/lib/certificates';
 import CertificateCard from '@/components/CertificateCard';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ export default function CertificatesPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
-  const [certs, setCerts] = useState<FirestoreCertificate[]>([]);
+  const [certs, setCerts] = useState<HygraphCertificate[]>([]);
 
   const load = async () => {
     if (!currentUser) return;

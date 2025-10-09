@@ -9,7 +9,7 @@ import {
   Target,
   Zap
 } from 'lucide-react';
-import { analyticsService } from '@/lib/firestore';
+import { analyticsService } from @/lib/hygraph;
 import { 
   RoleDistributionChart, 
   ChartData 

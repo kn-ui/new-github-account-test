@@ -1,4 +1,3 @@
-import { db } from '@/lib/firebase';
 import { 
   collection, 
   addDoc, 
@@ -7,7 +6,7 @@ import {
   Timestamp,
   getDocs,
   deleteDoc
-} from 'firebase/firestore';
+} from @/lib/hygraph;
 
 // Test data for all collections
 const testData = {

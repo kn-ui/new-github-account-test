@@ -1,5 +1,4 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, Timestamp, getDocs, deleteDoc, collection } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDocs, deleteDoc, collection } from @/lib/hygraph;
 
 // Firebase configuration for Node.js environment
 const firebaseConfig = {

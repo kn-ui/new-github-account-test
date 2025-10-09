@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, HygraphGrade, HygraphExam, HygraphExamAttempt } from @/lib/hygraph;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,7 @@ export default function StudentGrades() {
   const { t } = useI18n();
   const [grades, setGrades] = useState<GradeWithDetails[]>([]);
   const [examGrades, setExamGrades] = useState<ExamGradeWithDetails[]>([]);
-  const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
+  const [finalGrades, setFinalGrades] = useState<HygraphGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
@@ -216,7 +216,7 @@ export default function StudentGrades() {
       });
 
       const finalGradesResults = await Promise.all(finalGradesPromises);
-      const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
+      const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as HygraphGrade[];
       console.log('Final grades loaded:', validFinalGrades);
       setFinalGrades(validFinalGrades);
 

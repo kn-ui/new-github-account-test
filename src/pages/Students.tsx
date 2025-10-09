@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { courseService, enrollmentService, userService, FirestoreCourse, FirestoreUser } from '@/lib/firestore';
+import { courseService, enrollmentService, userService, HygraphCourse, HygraphUser } from @/lib/hygraph;
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -27,7 +27,7 @@ export default function StudentsPage() {
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentRow[]>([]);
-  const [courses, setCourses] = useState<FirestoreCourse[]>([]);
+  const [courses, setCourses] = useState<HygraphCourse[]>([]);
   const [search, setSearch] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'progress-desc' | 'progress-asc'>('name');
@@ -56,7 +56,7 @@ export default function StudentsPage() {
         const uniqueStudentIds = Object.keys(idToCourses);
         const profiles = await Promise.all(uniqueStudentIds.map(uid => userService.getUserById(uid)));
         const rows: StudentRow[] = uniqueStudentIds.map((uid, i) => {
-          const profile = profiles[i] as FirestoreUser | null;
+          const profile = profiles[i] as HygraphUser | null;
           const name = profile?.displayName || uid;
           const email = profile?.email || '—';
           const avg = idToCount[uid] ? Math.round(idToProgressSum[uid] / idToCount[uid]) : 0;

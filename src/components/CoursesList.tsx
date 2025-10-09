@@ -19,10 +19,10 @@ import {
   XCircle,
   Calendar
 } from 'lucide-react';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { courseService, HygraphCourse } from @/lib/hygraph;
 import { useI18n } from '@/contexts/I18nContext';
 
-interface CourseWithApproval extends FirestoreCourse {
+interface CourseWithApproval extends HygraphCourse {
   needsApproval?: boolean;
   approvalStatus?: 'pending' | 'approved' | 'rejected';
 }

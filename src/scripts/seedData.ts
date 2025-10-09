@@ -4,8 +4,7 @@ import {
   Timestamp,
   doc,
   setDoc
-} from 'firebase/firestore';
-import { db } from '../lib/firebase';
+} from @/lib/hygraph;
 
 // Sample data for seeding
 const sampleAssignments = [

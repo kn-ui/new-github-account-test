@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/contexts/I18nContext";
-import { courseService, eventService, userService } from "@/lib/firestore";
+import { courseService, eventService, userService } from @/lib/hygraph;
 import {
   Activity,
   Bell,

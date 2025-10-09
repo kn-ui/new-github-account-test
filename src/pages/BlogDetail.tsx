@@ -2,14 +2,12 @@ import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FirestoreBlog } from '@/lib/firestore';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { HygraphBlog, blogService } from '@/lib/hygraph';
 
 export default function BlogDetail() {
   const { t } = useI18n();
   const { blogId } = useParams<{ blogId: string }>();
-  const [blog, setBlog] = useState<FirestoreBlog | null>(null);
+  const [blog, setBlog] = useState<HygraphBlog | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

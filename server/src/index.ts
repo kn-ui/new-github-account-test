@@ -136,7 +136,7 @@ app.listen(PORT, () => {
   console.log(`🚀 St. Raguel Church School API server running on port ${PORT}`);
   console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`🔥 Firebase Project: ${process.env.FIREBASE_PROJECT_ID}`);
+  console.log(`📊 Hygraph CMS: Connected`);
 });
 
 export default app;

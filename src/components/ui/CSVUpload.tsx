@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { userService } from @/lib/hygraph;
+import { userService } from '@/lib/hygraph';
 import { api } from '@/lib/api';
 
 interface CSVUser {

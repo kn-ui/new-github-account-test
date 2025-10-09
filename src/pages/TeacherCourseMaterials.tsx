@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { courseMaterialService, courseService, HygraphCourseMaterial } from @/lib/hygraph;
+import { courseMaterialService, courseService, HygraphCourseMaterial } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

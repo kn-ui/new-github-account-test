@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { enrollmentService, courseService, submissionService, assignmentService } from @/lib/hygraph;
+import { enrollmentService, courseService, submissionService, assignmentService } from '@/lib/hygraph';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

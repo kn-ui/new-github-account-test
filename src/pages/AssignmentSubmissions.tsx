@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { assignmentService, courseService, submissionService, assignmentEditRequestService, HygraphEditRequest, studentDataService } from @/lib/hygraph;
+import { assignmentService, courseService, submissionService, assignmentEditRequestService, HygraphEditRequest, studentDataService } from '@/lib/hygraph';
 import { FileText, BookOpen, Clock, Edit, ArrowLeft, ChevronDown, User, Calendar, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -409,4 +409,3 @@ export default function AssignmentSubmissions() {
     </div>
   );
 }
-

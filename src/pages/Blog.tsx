@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
-import { blogService, HygraphBlog } from @/lib/hygraph;
+import { blogService, HygraphBlog } from '@/lib/hygraph';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { api, BlogPost } from '@/lib/api';

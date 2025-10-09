@@ -1,6 +1,6 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
-import { forumService, HygraphForumThread } from @/lib/hygraph;
+import { forumService, HygraphForumThread } from '@/lib/hygraph';
 import { Search, MessageCircle, Eye, ThumbsUp, Plus } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useI18n } from '@/contexts/I18nContext';

@@ -17,13 +17,8 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { studentDataService, HygraphAnnouncement } from @/lib/hygraph;
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-  import DashboardHero from '@/components/DashboardHero';
+import { studentDataService, HygraphAnnouncement } from '@/lib/hygraph';
+import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface AnnouncementWithDetails extends HygraphAnnouncement {

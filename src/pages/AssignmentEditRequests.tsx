@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { assignmentEditRequestService, HygraphAssignmentEditRequest } from @/lib/hygraph;
+import { assignmentEditRequestService, HygraphAssignmentEditRequest } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';

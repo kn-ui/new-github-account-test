@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { examService, examAttemptService, enrollmentService, courseService, HygraphExam, HygraphExamAttempt } from @/lib/hygraph;
+import { examService, examAttemptService, enrollmentService, courseService, HygraphExam, HygraphExamAttempt } from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

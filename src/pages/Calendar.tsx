@@ -2,7 +2,7 @@
 import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
-import { eventService, HygraphEvent } from @/lib/hygraph;
+import { eventService, HygraphEvent } from '@/lib/hygraph';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar';

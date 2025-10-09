@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { assignmentService, courseService, HygraphAssignment } from @/lib/hygraph;
+import { assignmentService, courseService, HygraphAssignment } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DualDateInput from '@/components/ui/DualDateInput';

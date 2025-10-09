@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Users, BookOpen, TrendingUp, MessageSquare, PlusCircle, BarChart3, Clock, CheckCircle, Plus, Bell, Eye, FileText, Star, X, Send } from 'lucide-react';
 import DualDateInput from '@/components/ui/DualDateInput';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, courseService, enrollmentService, submissionService, announcementService, assignmentService, FirestoreEnrollment } from '@/lib/firestore';
 import CourseMaterialModal from '@/components/ui/CourseMaterialModal';

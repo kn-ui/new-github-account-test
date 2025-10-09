@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import Header from '@/components/Header';
 import CourseCreateForm from '@/components/CourseCreateForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';

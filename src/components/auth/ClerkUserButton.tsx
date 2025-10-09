@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton } from '@clerk/clerk-react';
 
 export const ClerkUserButton: React.FC = () => {
   return (

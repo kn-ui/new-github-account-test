@@ -1,5 +1,5 @@
 import React from 'react';
-import { SignIn } from '@clerk/nextjs';
+import { SignIn } from '@clerk/clerk-react';
 
 interface ClerkSignInProps {
   redirectUrl?: string;

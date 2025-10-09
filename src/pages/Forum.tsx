@@ -4,7 +4,7 @@ import { forumService, FirestoreForumThread, Timestamp } from '@/lib/firestore';
 import { Search, MessageCircle, Eye, ThumbsUp, Plus } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { api, ForumThread as ApiThread } from '@/lib/api';
 
 const Forum = () => {

@@ -3,7 +3,7 @@ import { X, Lightbulb } from 'lucide-react';
 import ReportGenerator from '@/components/ui/ReportGenerator';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 
 export default function AdminReportsPage() {
   const { t } = useI18n();

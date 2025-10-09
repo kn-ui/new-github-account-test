@@ -4,7 +4,7 @@ import { forumService, FirestoreForumPost, FirestoreForumThread, Timestamp } fro
 import { ThumbsUp } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const ForumThread = () => {

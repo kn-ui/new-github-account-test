@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import SuperAdminUsers from './dashboard/SuperAdminUsers';
 import SuperAdminCourses from './dashboard/SuperAdminCourses';
 import SuperAdminEvents from './dashboard/SuperAdminEvents';

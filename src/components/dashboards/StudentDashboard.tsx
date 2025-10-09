@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, enrollmentService, submissionService, announcementService, activityLogService, assignmentService, courseService } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

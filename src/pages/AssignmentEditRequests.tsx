@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { assignmentEditRequestService, FirestoreAssignmentEditRequest } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';

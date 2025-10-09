@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminOverview from '@/pages/dashboard/AdminOverview';
 import TeacherOverview from '@/pages/dashboard/TeacherOverview';

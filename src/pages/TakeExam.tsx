@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { examService, examAttemptService } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

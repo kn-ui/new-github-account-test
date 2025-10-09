@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Download, BookOpen, GraduationCap, Users } from 'lucide-react';
 import { courseService, enrollmentService, analyticsService } from '@/lib/firestore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 
 interface TeacherReportGeneratorProps {
   onReportGenerated: (message: string) => void;

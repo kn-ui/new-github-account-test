@@ -1,4 +1,4 @@
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 // Clerk configuration
 export const clerkConfig = {

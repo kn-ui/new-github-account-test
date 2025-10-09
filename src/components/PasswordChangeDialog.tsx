@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Eye, EyeOff } from 'lucide-react';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { toast } from 'sonner';
 

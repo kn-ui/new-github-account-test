@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { toast } from 'sonner';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';

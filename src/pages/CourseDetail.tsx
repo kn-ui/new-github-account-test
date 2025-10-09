@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseService, enrollmentService, courseMaterialService, assignmentService, submissionService, gradeService, examService, examAttemptService, FirestoreCourse, FirestoreEnrollment, FirestoreCourseMaterial, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';

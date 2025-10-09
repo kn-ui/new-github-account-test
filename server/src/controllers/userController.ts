@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
-import hygraphUserService from '../services/hygraphUserService';
+import { hygraphUserService } from '../services/hygraphService';
 import { createClerkClient } from '@clerk/backend';
 import {
   sendSuccess,

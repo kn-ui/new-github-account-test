@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit';
 // Import routes
 import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
 import devRoutes from './routes/devRoutes';
@@ -82,6 +83,7 @@ app.get('/test', (req, res) => {
 try {
   app.use('/api/users', userRoutes);
   app.use('/api/courses', courseRoutes);
+  app.use('/api/assignments', assignmentRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {

@@ -100,3 +100,6 @@ export const requireTeacherAdminOrSuperAdmin = authorizeRoles(
 
 // Check if user is student, teacher, or admin (authenticated users)
 export const requireAuth = authorizeRoles(UserRole.STUDENT, UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPER_ADMIN);
+
+// Alias for requireAuth
+export const requireStudentOrTeacherOrAdmin = requireAuth;

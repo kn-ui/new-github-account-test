@@ -59,37 +59,9 @@ function resolveServiceAccount(): ServiceAccount | null {
   return null;
 }
 
-// Try explicit service account first
-const sa = resolveServiceAccount();
-if (!admin.apps.length) {
-  if (sa) {
-    try {
-      admin.initializeApp({
-        credential: admin.credential.cert(sa),
-        projectId: sa.projectId,
-      });
-      firebaseInitialized = true;
-      console.log('✅ Firebase initialized with service account');
-    } catch (error) {
-      console.error('❌ Firebase initialization with service account failed:', error);
-    }
-  }
-
-  // Fallback to ADC if not initialized
-  if (!firebaseInitialized) {
-    try {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: process.env.FIREBASE_PROJECT_ID || undefined,
-      });
-      firebaseInitialized = true;
-      console.log('✅ Firebase initialized using application default credentials');
-    } catch (err) {
-      console.error('❌ Firebase initialization failed: No valid credentials found.');
-      firebaseInitialized = false;
-    }
-  }
-}
+// Firebase initialization disabled during Hygraph migration
+// TODO: Remove Firebase entirely once migration is complete
+console.log('⚠️ Firebase initialization skipped during Hygraph migration');
 
 // Export Firebase services
 export const auth = firebaseInitialized ? admin.auth() : null;

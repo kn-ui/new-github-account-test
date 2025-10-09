@@ -25,8 +25,15 @@ const Calendar = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const firestoreEvents = await eventService.getEvents(500);
-        const eventsWithDates = firestoreEvents.map(event => ({ ...event, date: event.date.toDate() }));
+        // Try public events first, fallback to upcoming events
+        let fetchedEvents;
+        try {
+          fetchedEvents = await eventService.getPublicEvents(500);
+        } catch (error) {
+          console.warn('Public events failed, trying upcoming events:', error);
+          fetchedEvents = await eventService.getUpcomingEvents(500);
+        }
+        const eventsWithDates = fetchedEvents.map(event => ({ ...event, date: new Date(event.date) }));
         setEvents(eventsWithDates);
       } finally {
         setLoading(false);

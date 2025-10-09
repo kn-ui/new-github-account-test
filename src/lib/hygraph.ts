@@ -282,6 +282,15 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   // Get Clerk token from localStorage or use empty string
   const authToken = localStorage.getItem('authToken') || '';
   
+  // Debug logging
+  console.log('API Call Debug:', {
+    endpoint,
+    url,
+    hasToken: !!authToken,
+    tokenLength: authToken.length,
+    tokenPreview: authToken ? `${authToken.substring(0, 20)}...` : 'No token'
+  });
+  
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -292,6 +301,12 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   if (!response.ok) {
+    console.error('API Call Failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      url,
+      hasToken: !!authToken
+    });
     throw new Error(`API call failed: ${response.status} ${response.statusText}`);
   }
 
@@ -614,6 +629,14 @@ export const announcementService = {
     return apiCall<HygraphAnnouncement[]>(`/announcements?limit=${limitCount}`);
   },
 
+  async getActiveAnnouncements(limitCount = 20): Promise<HygraphAnnouncement[]> {
+    return apiCall<HygraphAnnouncement[]>(`/announcements/active?limit=${limitCount}`);
+  },
+
+  async getRecentAnnouncements(limitCount = 20): Promise<HygraphAnnouncement[]> {
+    return apiCall<HygraphAnnouncement[]>(`/announcements/recent?limit=${limitCount}`);
+  },
+
   async getPublicGeneralAnnouncements(limitCount = 30): Promise<HygraphAnnouncement[]> {
     return apiCall<HygraphAnnouncement[]>(`/announcements/public?limit=${limitCount}`);
   },
@@ -658,6 +681,14 @@ export const eventService = {
     return apiCall<HygraphEvent[]>(`/events?limit=${limitCount}`);
   },
 
+  async getPublicEvents(limitCount = 10): Promise<HygraphEvent[]> {
+    return apiCall<HygraphEvent[]>(`/events/public?limit=${limitCount}`);
+  },
+
+  async getUpcomingEvents(limitCount = 10): Promise<HygraphEvent[]> {
+    return apiCall<HygraphEvent[]>(`/events/upcoming?limit=${limitCount}`);
+  },
+
   async getAllEvents(): Promise<HygraphEvent[]> {
     return apiCall<HygraphEvent[]>('/events');
   },
@@ -688,6 +719,18 @@ export const eventService = {
 export const blogService = {
   async getBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
     return apiCall<HygraphBlog[]>(`/blog?limit=${limitCount}`);
+  },
+
+  async getPublishedBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
+    return apiCall<HygraphBlog[]>(`/blog/posts/published?limit=${limitCount}`);
+  },
+
+  async getFeaturedBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
+    return apiCall<HygraphBlog[]>(`/blog/posts/featured?limit=${limitCount}`);
+  },
+
+  async getRecentBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
+    return apiCall<HygraphBlog[]>(`/blog/posts/recent?limit=${limitCount}`);
   },
 
   async createBlogPost(blogData: Omit<HygraphBlog, 'id' | 'createdAt' | 'likes'>): Promise<string> {

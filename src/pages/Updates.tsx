@@ -34,9 +34,9 @@ export default function Updates() {
       try {
         setLoading(true);
         const [a, b, e] = await Promise.all([
-          announcementService.getAllAnnouncements(100),
-          blogService.getBlogPosts(30),
-          eventService.getAllEvents(),
+          announcementService.getActiveAnnouncements(100),
+          blogService.getPublishedBlogPosts(30),
+          eventService.getPublicEvents(),
         ]);
         setAnnouncements(a);
         setBlogs(b);

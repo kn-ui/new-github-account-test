@@ -63,7 +63,14 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const fetchedEvents = await eventService.getEvents();
+      // Try public events first, fallback to upcoming events
+      let fetchedEvents;
+      try {
+        fetchedEvents = await eventService.getPublicEvents();
+      } catch (error) {
+        console.warn('Public events failed, trying upcoming events:', error);
+        fetchedEvents = await eventService.getUpcomingEvents();
+      }
       setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);

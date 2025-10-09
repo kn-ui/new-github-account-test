@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TeacherReportGenerator from '@/components/ui/TeacherReportGenerator';
 import { Button } from '@/components/ui/button';
-  import DashboardHero from '@/components/DashboardHero';
+import DashboardHero from '@/components/DashboardHero';
 
   
 export default function TeacherReportsPage() {

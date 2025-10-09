@@ -25,7 +25,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { courseService } from '@/lib/hygraph';
 import { eventService } from '@/lib/hygraph';
 import { analyticsService } from '@/lib/hygraph';
-  import DashboardHero from '@/components/DashboardHero';
+import DashboardHero from '@/components/DashboardHero';
 
 interface User {
   id: string;

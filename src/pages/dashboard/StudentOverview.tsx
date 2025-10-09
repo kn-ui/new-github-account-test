@@ -19,7 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-  import DashboardHero from '@/components/DashboardHero';
+import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 
   

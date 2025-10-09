@@ -275,13 +275,17 @@ export interface HygraphSupportTicket {
 // API Base URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Generic API call function
+// Generic API call function with authentication
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Get Clerk token from localStorage or use empty string
+  const authToken = localStorage.getItem('authToken') || '';
   
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
       ...options.headers,
     },
     ...options,

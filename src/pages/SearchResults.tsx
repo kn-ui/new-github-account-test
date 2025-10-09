@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, submissionService, HygraphUser, HygraphCourse, HygraphEvent, HygraphCourseMaterial, HygraphAnnouncement, HygraphAssignment } from @/lib/hygraph;
+import { userService, courseService, eventService, courseMaterialService, announcementService, assignmentService, enrollmentService, submissionService, HygraphUser, HygraphCourse, HygraphEvent, HygraphCourseMaterial, HygraphAnnouncement, HygraphAssignment } from '@/lib/hygraph';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, Calendar, FileText, Bell, FolderOpen } from 'lucide-react';

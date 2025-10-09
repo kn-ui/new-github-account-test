@@ -6,7 +6,7 @@ import DualDateInput from '@/components/ui/DualDateInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, courseService, enrollmentService, submissionService, announcementService, assignmentService, HygraphEnrollment } from @/lib/hygraph;
+import { analyticsService, courseService, enrollmentService, submissionService, announcementService, assignmentService, HygraphEnrollment } from '@/lib/hygraph';
 import CourseMaterialModal from '@/components/ui/CourseMaterialModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

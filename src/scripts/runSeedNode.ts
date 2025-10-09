@@ -4,7 +4,7 @@ import {
   addDoc, 
   Timestamp,
   connectFirestoreEmulator
-} from @/lib/hygraph;
+} from '@/lib/hygraph';
 
 // Firebase config
 const firebaseConfig = {

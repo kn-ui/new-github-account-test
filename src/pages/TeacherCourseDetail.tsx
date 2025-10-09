@@ -19,7 +19,7 @@ import {
   HygraphExam,
   HygraphGrade,
   studentDataService,
-} from @/lib/hygraph;
+} from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

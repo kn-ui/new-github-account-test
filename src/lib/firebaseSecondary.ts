@@ -12,7 +12,7 @@
  * 3. User creation uses this secondary auth, then immediately signs out
  * 4. Main app's auth state remains unchanged, preventing redirects
  */
-import { getFirestore, connectFirestoreEmulator } from @/lib/hygraph;
+import { getFirestore, connectFirestoreEmulator } from '@/lib/hygraph';
 
 // Use the same config as the main Firebase app
 const firebaseConfig = {

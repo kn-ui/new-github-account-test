@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import DashboardHero from '@/components/DashboardHero';
-import { submissionService, assignmentService, courseService, userService, assignmentEditRequestService, HygraphSubmission, HygraphAssignment, HygraphCourse, HygraphEditRequest } from @/lib/hygraph;
+import { submissionService, assignmentService, courseService, userService, assignmentEditRequestService, HygraphSubmission, HygraphAssignment, HygraphCourse, HygraphEditRequest } from '@/lib/hygraph';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';

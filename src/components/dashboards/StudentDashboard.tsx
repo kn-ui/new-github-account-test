@@ -4,7 +4,7 @@ import { BookOpen, Clock, TrendingUp, Calendar, Bell, Award, Play, FileText, X }
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { analyticsService, enrollmentService, submissionService, announcementService, activityLogService, assignmentService, courseService } from @/lib/hygraph;
+import { analyticsService, enrollmentService, submissionService, announcementService, activityLogService, assignmentService, courseService } from '@/lib/hygraph';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Upload } from 'lucide-react';
-import { userService } from @/lib/hygraph;
+import { userService } from '@/lib/hygraph';
 import CSVUpload from './CSVUpload';
 
 interface AddUserModalProps {

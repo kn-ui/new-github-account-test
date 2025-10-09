@@ -8,7 +8,7 @@ import {
   UserCredential,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { userService, HygraphUser } from @/lib/hygraph;
+import { userService, HygraphUser } from '@/lib/hygraph';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 

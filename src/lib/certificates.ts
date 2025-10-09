@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Timestamp } from @/lib/hygraph;
-import { submissionService, assignmentService, activityLogService, certificateService } from @/lib/hygraph;
+import { Timestamp } from '@/lib/hygraph';
+import { submissionService, assignmentService, activityLogService, certificateService } from '@/lib/hygraph';
 
 export async function evaluateAndAwardCertificates(uid: string) {
   const now = new Date();

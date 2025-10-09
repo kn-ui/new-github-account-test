@@ -21,6 +21,7 @@ import eventRoutes from './routes/eventRoutes';
 import forumRoutes from './routes/forumRoutes';
 import blogRoutes from './routes/blogRoutes';
 import supportTicketRoutes from './routes/supportTicketRoutes';
+import certificateRoutes from './routes/certificateRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
 import devRoutes from './routes/devRoutes';
@@ -98,6 +99,7 @@ try {
   app.use('/api/forum', forumRoutes);
   app.use('/api/blog', blogRoutes);
   app.use('/api/support-tickets', supportTicketRoutes);
+  app.use('/api/certificates', certificateRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {

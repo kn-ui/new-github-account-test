@@ -16,6 +16,7 @@ import courseRoutes from './routes/courseRoutes';
 import assignmentRoutes from './routes/assignmentRoutes';
 import examRoutes from './routes/examRoutes';
 import gradeRoutes from './routes/gradeRoutes';
+import announcementRoutes from './routes/announcementRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
 import devRoutes from './routes/devRoutes';
@@ -88,6 +89,7 @@ try {
   app.use('/api/assignments', assignmentRoutes);
   app.use('/api/exams', examRoutes);
   app.use('/api/grades', gradeRoutes);
+  app.use('/api/announcements', announcementRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {

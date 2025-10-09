@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { AuthenticatedRequest, UserRole } from '../types';
-import courseService from '../services/courseService';
-import userService from '../services/userService';
+import { AuthenticatedRequest, UserRole, Course, Enrollment } from '../types';
+import { hygraphCourseService } from '../services/hygraphCourseService';
+import { hygraphUserService } from '../services/hygraphUserService';
 import {
   sendSuccess,
   sendError,
@@ -18,14 +18,13 @@ export class CourseController {
       const { title, description, syllabus, category, duration, maxStudents, thumbnail, isActive } = req.body;
       const instructorId = req.user!.uid;
 
-      // Get instructor name
-      const instructor = await userService.getUserById(instructorId);
+      // Get instructor name from Hygraph
+      const instructor = await hygraphUserService.getUserByUid(instructorId);
       if (!instructor) {
         sendNotFound(res, 'Instructor not found');
         return;
       }
 
-      const isTeacher = req.user?.role === UserRole.TEACHER;
       const courseData = {
         title,
         description,
@@ -33,14 +32,12 @@ export class CourseController {
         category,
         duration: parseInt(duration) || 8,
         maxStudents: parseInt(maxStudents) || 50,
-        thumbnail,
-
-        // Teachers' courses should be pending approval by default
-        // Admins can choose, defaulting to true if unspecified
+        instructorName: instructor.displayName,
+        instructorId,
         isActive: typeof isActive === 'boolean' ? isActive : true
       };
 
-      const newCourse = await courseService.createCourse(courseData, instructorId, instructor.displayName);
+      const newCourse = await hygraphCourseService.createCourse(courseData);
       sendCreated(res, 'Course created successfully', newCourse);
     } catch (error) {
       console.error('Create course error:', error);
@@ -56,16 +53,35 @@ export class CourseController {
       const category = req.query.category as string;
       const instructorId = req.query.instructor as string;
 
-      const result = await courseService.getAllCourses(page, limit, category, instructorId, true);
-      console.log('CourseController - getAllCourses result:', result);
+      // Build where clause for Hygraph
+      const where: any = { isActive: true };
+      if (category) {
+        where.category = category;
+      }
+      if (instructorId) {
+        // Get instructor's Hygraph ID
+        const instructor = await hygraphUserService.getUserByUid(instructorId);
+        if (instructor) {
+          where.instructor = { id: instructor.id };
+        }
+      }
+
+      const offset = (page - 1) * limit;
+      const courses = await hygraphCourseService.getCourses(limit, offset, where);
+      
+      // Get total count (for now, we'll fetch a large number and count)
+      const allCourses = await hygraphCourseService.getCourses(1000, 0, where);
+      const total = allCourses.length;
+
+      console.log('CourseController - getAllCourses result:', { courses, total });
 
       sendPaginatedResponse(
         res,
         'Courses retrieved successfully',
-        result.courses,
+        courses,
         page,
         limit,
-        result.total
+        total
       );
     } catch (error) {
       console.error('Get all courses error:', error);
@@ -77,7 +93,7 @@ export class CourseController {
   async getCourseById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { courseId } = req.params;
-      const course = await courseService.getCourseById(courseId);
+      const course = await hygraphCourseService.getCourseById(courseId);
 
       if (!course) {
         sendNotFound(res, 'Course not found');
@@ -103,15 +119,20 @@ export class CourseController {
         return;
       }
 
-      const result = await courseService.searchCourses(searchTerm, page, limit);
+      const courses = await hygraphCourseService.searchCourses(searchTerm, limit);
+      
+      // Manual pagination
+      const offset = (page - 1) * limit;
+      const paginatedCourses = courses.slice(offset, offset + limit);
+      const total = courses.length;
 
       sendPaginatedResponse(
         res,
         'Course search completed',
-        result.courses,
+        paginatedCourses,
         page,
         limit,
-        result.total
+        total
       );
     } catch (error) {
       console.error('Search courses error:', error);
@@ -126,25 +147,31 @@ export class CourseController {
       const { title, description, syllabus, category, duration, maxStudents, thumbnail, isActive } = req.body;
       const instructorId = req.user!.uid;
 
-      const updateData = {
-        title,
-        description,
-        syllabus,
-        category,
-        duration: duration ? parseInt(duration) : undefined,
-        maxStudents: maxStudents ? parseInt(maxStudents) : undefined,
-        thumbnail,
-        isActive
-      };
+      // Verify the instructor owns this course or is admin
+      const course = await hygraphCourseService.getCourseById(courseId);
+      if (!course) {
+        sendNotFound(res, 'Course not found');
+        return;
+      }
 
-      // Remove undefined values
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key as keyof typeof updateData] === undefined) {
-          delete updateData[key as keyof typeof updateData];
+      // Check authorization (admin can update any course, instructor can only update their own)
+      if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.SUPER_ADMIN) {
+        if (course.instructor?.uid !== instructorId) {
+          sendError(res, 'Unauthorized to update this course');
+          return;
         }
-      });
+      }
 
-      const updatedCourse = await courseService.updateCourse(courseId, updateData, instructorId);
+      const updateData: any = {};
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (syllabus !== undefined) updateData.syllabus = syllabus;
+      if (category !== undefined) updateData.category = category;
+      if (duration !== undefined) updateData.duration = parseInt(duration);
+      if (maxStudents !== undefined) updateData.maxStudents = parseInt(maxStudents);
+      if (isActive !== undefined) updateData.isActive = isActive;
+
+      const updatedCourse = await hygraphCourseService.updateCourse(courseId, updateData);
       sendSuccess(res, 'Course updated successfully', updatedCourse);
     } catch (error) {
       console.error('Update course error:', error);
@@ -156,7 +183,7 @@ export class CourseController {
   async deleteCourse(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { courseId } = req.params;
-      await courseService.deleteCourse(courseId);
+      await hygraphCourseService.deleteCourse(courseId);
       sendSuccess(res, 'Course deleted successfully');
     } catch (error) {
       console.error('Delete course error:', error);
@@ -170,11 +197,12 @@ export class CourseController {
       const { courseId } = req.params;
       const studentId = req.user!.uid;
 
-      const enrollment = await courseService.enrollStudent(studentId, courseId);
+      const enrollment = await hygraphCourseService.createEnrollment(studentId, courseId);
       sendCreated(res, 'Successfully enrolled in course', enrollment);
     } catch (error) {
       console.error('Enroll in course error:', error);
-      sendServerError(res, 'Failed to enroll in course');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to enroll in course';
+      sendServerError(res, errorMessage);
     }
   }
 
@@ -182,20 +210,9 @@ export class CourseController {
   async getMyEnrollments(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const studentId = req.user!.uid;
-      const enrollments = await courseService.getStudentEnrollments(studentId);
+      const enrollments = await hygraphCourseService.getStudentEnrollments(studentId);
 
-      // Get course details for each enrollment
-      const enrollmentsWithCourses = await Promise.all(
-        enrollments.map(async (enrollment) => {
-          const course = await courseService.getCourseById(enrollment.courseId);
-          return {
-            ...enrollment,
-            course
-          };
-        })
-      );
-
-      sendSuccess(res, 'Enrollments retrieved successfully', enrollmentsWithCourses);
+      sendSuccess(res, 'Enrollments retrieved successfully', enrollments);
     } catch (error) {
       console.error('Get my enrollments error:', error);
       sendServerError(res, 'Failed to get enrollments');
@@ -206,20 +223,9 @@ export class CourseController {
   async getCourseEnrollments(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { courseId } = req.params;
-      const enrollments = await courseService.getCourseEnrollments(courseId);
+      const enrollments = await hygraphCourseService.getCourseEnrollments(courseId);
 
-      // Get student details for each enrollment
-      const enrollmentsWithStudents = await Promise.all(
-        enrollments.map(async (enrollment) => {
-          const student = await userService.getUserById(enrollment.studentId);
-          return {
-            ...enrollment,
-            student
-          };
-        })
-      );
-
-      sendSuccess(res, 'Course enrollments retrieved successfully', enrollmentsWithStudents);
+      sendSuccess(res, 'Course enrollments retrieved successfully', enrollments);
     } catch (error) {
       console.error('Get course enrollments error:', error);
       sendServerError(res, 'Failed to get course enrollments');
@@ -237,7 +243,7 @@ export class CourseController {
         return;
       }
 
-      const updatedEnrollment = await courseService.updateEnrollmentProgress(enrollmentId, lessonId);
+      const updatedEnrollment = await hygraphCourseService.updateEnrollmentProgress(enrollmentId, lessonId);
       sendSuccess(res, 'Progress updated successfully', updatedEnrollment);
     } catch (error) {
       console.error('Update progress error:', error);
@@ -252,15 +258,20 @@ export class CourseController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const result = await courseService.getAllCourses(page, limit, undefined, instructorId);
+      const allCourses = await hygraphCourseService.getCoursesByInstructorUid(instructorId, 1000);
+      const total = allCourses.length;
+      
+      // Manual pagination
+      const offset = (page - 1) * limit;
+      const courses = allCourses.slice(offset, offset + limit);
 
       sendPaginatedResponse(
         res,
         'Instructor courses retrieved successfully',
-        result.courses,
+        courses,
         page,
         limit,
-        result.total
+        total
       );
     } catch (error) {
       console.error('Get my courses error:', error);
@@ -272,7 +283,7 @@ export class CourseController {
   async getCourseStats(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.role === 'teacher' ? req.user.uid : undefined;
-      const stats = await courseService.getCourseStats(instructorId);
+      const stats = await hygraphCourseService.getCourseStats(instructorId);
 
       sendSuccess(res, 'Course statistics retrieved successfully', stats);
     } catch (error) {

@@ -19,6 +19,7 @@ import gradeRoutes from './routes/gradeRoutes';
 import announcementRoutes from './routes/announcementRoutes';
 import eventRoutes from './routes/eventRoutes';
 import forumRoutes from './routes/forumRoutes';
+import blogRoutes from './routes/blogRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
 import devRoutes from './routes/devRoutes';
@@ -94,6 +95,7 @@ try {
   app.use('/api/announcements', announcementRoutes);
   app.use('/api/events', eventRoutes);
   app.use('/api/forum', forumRoutes);
+  app.use('/api/blog', blogRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {

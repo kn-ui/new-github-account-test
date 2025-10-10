@@ -199,11 +199,11 @@ export const hygraphUserService = {
   }> {
     try {
       const [allUsers, activeUsers, students, teachers, admins] = await Promise.all([
-        this.getUsers(1000, 0),
-        this.getActiveUsers(1000),
-        this.getUsersByRole('STUDENT', 1000),
-        this.getUsersByRole('TEACHER', 1000),
-        this.getUsersByRole('ADMIN', 1000)
+        this.getUsers(1000, 0).catch(err => { console.error('Error fetching all users:', err); return []; }),
+        this.getActiveUsers(1000).catch(err => { console.error('Error fetching active users:', err); return []; }),
+        this.getUsersByRole('STUDENT', 1000).catch(err => { console.error('Error fetching students:', err); return []; }),
+        this.getUsersByRole('TEACHER', 1000).catch(err => { console.error('Error fetching teachers:', err); return []; }),
+        this.getUsersByRole('ADMIN', 1000).catch(err => { console.error('Error fetching admins:', err); return []; })
       ]);
 
       return {
@@ -215,7 +215,14 @@ export const hygraphUserService = {
       };
     } catch (error) {
       console.error('Error fetching user stats from Hygraph:', error);
-      throw error;
+      // Return default values instead of throwing
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        students: 0,
+        teachers: 0,
+        admins: 0
+      };
     }
   },
 
@@ -225,7 +232,8 @@ export const hygraphUserService = {
       return await this.getUsers(limit, offset, { role: 'TEACHER' });
     } catch (error) {
       console.error('Error fetching teachers from Hygraph:', error);
-      throw error;
+      // Return empty array instead of throwing to prevent 500 errors
+      return [];
     }
   }
 };

@@ -220,10 +220,10 @@ export const validatePagination = (
     return;
   }
 
-  if (limit < 1 || limit > 100) {
+  if (limit < 1 || limit > 1000) {
     res.status(400).json({
       success: false,
-      message: 'Limit must be between 1 and 100'
+      message: 'Limit must be between 1 and 1000'
     });
     return;
   }

@@ -34,6 +34,7 @@ import {
   Zap
 } from 'lucide-react';
 import { eventService } from '@/lib/hygraph';
+import { Timestamp } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -113,7 +114,13 @@ const EventsPage = () => {
 
   const getEventStatus = (eventDate: Date | Timestamp) => {
     const now = new Date();
-    const date = eventDate instanceof Date ? eventDate : (eventDate as Timestamp)?.toDate();
+    let date: Date | null = null;
+    
+    if (eventDate instanceof Date) {
+      date = eventDate;
+    } else if (eventDate && typeof (eventDate as any).toDate === 'function') {
+      date = (eventDate as Timestamp).toDate();
+    }
     
     if (!date) return 'upcoming';
     

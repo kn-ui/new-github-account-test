@@ -1,0 +1,20 @@
+
+> st-raguel-school-management-system@0.0.0 build
+> vite build
+
+vite v5.4.19 building for production...
+transforming...
+✓ 2833 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                       1.08 kB │ gzip:   0.46 kB
+dist/assets/main-logo-DwDgUGBC.png   19.24 kB
+dist/assets/logo-CMn5nBXt.jpg        80.54 kB
+dist/assets/index-BPB4_JBR.css       98.75 kB │ gzip:  16.06 kB
+dist/assets/index-Orum7sXy.js       524.78 kB │ gzip: 155.64 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 17.83s

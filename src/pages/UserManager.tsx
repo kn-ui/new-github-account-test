@@ -36,6 +36,7 @@ import {
   import { userService } from '@/lib/hygraph';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { api } from '@/lib/api';
+import { formatDateString } from '@/utils/dateUtils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,

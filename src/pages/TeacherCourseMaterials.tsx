@@ -126,11 +126,29 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        const storage = getStorage();
-        const path = `materials/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, fileObj);
-        uploadedUrl = await getDownloadURL(storageRef);
+        try {
+          // Validate file before upload (max 50MB for course materials)
+          const validation = validateFile(fileObj, 50);
+          if (!validation.valid) {
+            toast.error(validation.error || 'Invalid file');
+            return;
+          }
+
+          // Upload file to Hygraph
+          toast.info(`Uploading ${fileObj.name}...`);
+          const uploadResult = await uploadFileViaGraphQL(fileObj);
+          
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error(uploadResult.error || 'Failed to upload file');
+          }
+
+          uploadedUrl = uploadResult.url;
+          toast.success(`File uploaded successfully: ${fileObj.name}`);
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          toast.error('Failed to upload file: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
+          return; // Stop submission if file upload fails
+        }
       }
 
       const materialData: any = {
@@ -414,7 +432,7 @@ export default function TeacherCourseMaterials() {
                     <div className="space-y-2 text-xs text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {material.formatDateString(createdAt)}
+                        {formatDateString(material.createdAt)}
                       </div>
                       <div className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
@@ -500,7 +518,7 @@ export default function TeacherCourseMaterials() {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {material.formatDateString(createdAt)}
+                          {formatDateString(material.createdAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <FolderOpen className="h-3 w-3" />
@@ -653,10 +671,29 @@ export default function TeacherCourseMaterials() {
 
             {formData.type === 'document' && (
               <div>
-                <Label htmlFor="file">Upload File (PDF/Doc)</Label>
-                <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
-                <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
-                <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
+                <Label htmlFor="file">Upload File (PDF/Doc/PPT/XLS)</Label>
+                <Input 
+                  id="file" 
+                  type="file" 
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"
+                  onChange={(e) => setFileObj(e.target.files?.[0] || null)} 
+                />
+                {fileObj && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selected: {fileObj.name} ({formatFileSize(fileObj.size)})
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Max file size: 50MB. Supported: PDF, DOC, PPT, XLS, TXT, ZIP
+                </p>
+                <div className="text-xs text-gray-500 mt-2">Or paste a direct URL:</div>
+                <Input 
+                  id="fileUrl" 
+                  value={formData.fileUrl} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} 
+                  placeholder="https://example.com/file.pdf" 
+                  type="url" 
+                />
               </div>
             )}
 

@@ -7,6 +7,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { analyticsService, enrollmentService, submissionService, announcementService, activityLogService, assignmentService, courseService } from '@/lib/hygraph';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 interface EnrolledCourse {
   id: string | number;
@@ -86,7 +87,7 @@ export default function StudentDashboard() {
               ...s,
               title: a?.title || 'Assignment',
               courseTitle: c?.title || 'Course',
-              dueDate: a?.dueDate ? a.dueDate.toDate().toISOString().slice(0, 10) : '—',
+              dueDate: a?.dueDate ? ((toSafeDate(a.dueDate) || new Date()).toISOString().slice(0, 10)) : '—',
             };
           });
           setUpcomingAssignments(enriched);
@@ -382,7 +383,7 @@ export default function StudentDashboard() {
                       <p className="text-sm text-gray-700 mb-2">{announcement.body}</p>
                       <div className="flex justify-between items-center text-xs text-gray-500">
                         <span>{announcement.courseTitle || 'General'}</span>
-                        <span>{announcement.createdAt ? announcement.createdAt.toDate().toLocaleDateString() : 'Recent'}</span>
+                        <span>{announcement.createdAt ? formatDateString(announcement.createdAt) : 'Recent'}</span>
                       </div>
                     </div>
                   ))
@@ -453,7 +454,7 @@ export default function StudentDashboard() {
                 <div key={a.id} className="p-3 border rounded-lg">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>{a.courseTitle || 'General'}</span>
-                    <span>{a.createdAt ? a.createdAt.toDate().toLocaleString() : ''}</span>
+                    <span>{a.createdAt ? formatDateTimeString(a.createdAt) : ''}</span>
                   </div>
                   <div className="text-sm font-medium text-gray-900">{a.title}</div>
                   <div className="text-sm text-gray-700">{a.body}</div>

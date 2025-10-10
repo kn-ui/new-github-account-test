@@ -136,18 +136,10 @@ export default function StudentAssignments() {
     // Sort assignments
     switch (sortBy) {
       case 'due-date':
-        filtered.sort((a, b) => {
-          const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
-          const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
-          return aDate.getTime() - bDate.getTime();
-        });
+        filtered.sort((a, b) => compareDates(a.dueDate, b.dueDate));
         break;
       case 'due-date-desc':
-        filtered.sort((a, b) => {
-          const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
-          const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
-          return bDate.getTime() - aDate.getTime();
-        });
+        filtered.sort((a, b) => compareDates(b.dueDate, a.dueDate));
         break;
       case 'title-asc':
         filtered.sort((a, b) => a.title.localeCompare(b.title));
@@ -185,8 +177,8 @@ export default function StudentAssignments() {
 
   const getDueDateStatus = (dueDate: any) => {
     const now = new Date();
-    const due = dueDate instanceof Date ? dueDate : dueDate.toDate();
-    if (due < now) {
+    const due = toSafeDate(dueDate);
+    if (!due || due < now) {
       return { text: t('student.assignments.overdue'), color: 'text-red-600' };
     } else if (due.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
       return { text: t('student.assignments.dueSoon'), color: 'text-yellow-600' };
@@ -227,9 +219,7 @@ export default function StudentAssignments() {
 
     // Check if assignment is still within due date
     const now = new Date();
-    const dueDate = selectedAssignment.dueDate instanceof Date 
-      ? selectedAssignment.dueDate 
-      : selectedAssignment.dueDate.toDate();
+    const dueDate = toSafeDate(selectedAssignment.dueDate) || new Date();
     
     if (now > dueDate) {
       toast.error('Cannot submit assignment after the due date');
@@ -390,9 +380,7 @@ export default function StudentAssignments() {
                   <h3 className="font-semibold text-gray-800">Due Date</h3>
                 </div>
                 <p className="text-2xl font-bold text-gray-900 mb-1">{
-                  selectedAssignment.dueDate instanceof Date 
-                    ? selectedAssignment.dueDate.toLocaleDateString()
-                    : selectedAssignment.dueDate.toDate().toLocaleDateString()
+                  formatDateString(selectedAssignment.dueDate)
                 }</p>
                 <p className={`text-sm font-medium ${getDueDateStatus(selectedAssignment.dueDate).color}`}>
                   {getDueDateStatus(selectedAssignment.dueDate).text}
@@ -620,9 +608,7 @@ export default function StudentAssignments() {
                     
                     <div className="text-xs text-gray-500">
                       <p className={dueDateStatus.color}>Due: {
-                        assignment.dueDate instanceof Date 
-                          ? assignment.dueDate.toLocaleDateString()
-                          : assignment.dueDate.toDate().toLocaleDateString()
+                        formatDateString(assignment.dueDate)
                       }</p>
                       <p>Max Score: {assignment.maxScore}</p>
                     </div>
@@ -664,9 +650,7 @@ export default function StudentAssignments() {
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {t('assignments.dueDate')}: {
-                              assignment.dueDate instanceof Date 
-                                ? assignment.dueDate.toLocaleDateString()
-                                : assignment.dueDate.toDate().toLocaleDateString()
+                              formatDateString(assignment.dueDate)
                             }
                           </span>
                           <span className={`flex items-center gap-1 ${dueDateStatus.color}`}>

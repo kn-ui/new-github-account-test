@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, FileText, Clock, CheckCircle, AlertCircle, Play, Eye, Award } from 'lucide-react';
 import { toast } from 'sonner';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function StudentExams() {
   const { currentUser, userProfile } = useAuth();
@@ -46,7 +47,7 @@ export default function StudentExams() {
         
         const normalized = examsList.map((e: any) => {
           const at = attemptMap.get(e.id);
-          const start = e.date?.toDate ? e.date.toDate() : null;
+          const start = toSafeDate(e.date);
           const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
           
           let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed' = 'not_started';
@@ -118,7 +119,7 @@ export default function StudentExams() {
     if (exams.length === 0) return;
     
     setExams(prevExams => prevExams.map(e => {
-      const start = e.date?.toDate ? e.date.toDate() : null;
+      const start = toSafeDate(e.date);
       const end = start && e.durationMinutes ? new Date(start.getTime() + e.durationMinutes * 60000) : null;
       
       let status: 'not_started' | 'in_progress' | 'completed' | 'upcoming' | 'countdown' | 'missed' = e.status;
@@ -246,7 +247,7 @@ export default function StudentExams() {
 
   const list = useMemo(() => {
     return exams.filter(e => (filter === 'all' || e.status === filter) && ([e.title, e.courseTitle || ''].some(v => (v || '').toLowerCase().includes(search.toLowerCase()))))
-      .sort((a,b) => a.date.toDate().getTime() - b.date.toDate().getTime());
+      .sort((a,b) => compareDates(a.date, b.date));
   }, [exams, filter, search]);
 
   if (!userProfile || userProfile.role !== 'student') {
@@ -298,7 +299,7 @@ export default function StudentExams() {
                     <p className="text-sm text-gray-600 truncate">{e.courseTitle}</p>
                     <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
                       <Calendar className="h-3 w-3" />
-                      <span>{e.date.toDate().toLocaleString()}</span>
+                      <span>{e.formatDateTimeString(date)}</span>
                     </div>
                   </div>
                 </div>

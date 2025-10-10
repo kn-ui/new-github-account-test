@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Edit, FileText, Award, ChevronDown } from 'lucide-react';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface ExamAttemptWithStudent extends any {
   studentName?: string;
@@ -200,7 +201,7 @@ export default function ExamResults() {
 
   const formatTime = (timestamp: any) => {
     if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toSafeDate(timestamp) || new Date();
     return date.toLocaleString();
   };
 

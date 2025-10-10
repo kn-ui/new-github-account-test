@@ -9,7 +9,7 @@ import { ClerkAuthProvider } from "@/contexts/ClerkAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+// Note: Signup removed - users created only by admins via UserManager
 import Dashboard from "./pages/Dashboard";
 import DashboardWrapper from "./components/DashboardWrapper";
 import CourseDetail from "./pages/CourseDetail";
@@ -79,7 +79,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            {/* Signup disabled - users created only by admins */}
+            <Route path="/signup" element={<Login />} />
             <Route path="/about" element={<About />} />
             <Route path="/academic" element={<Academic />} />
             <Route path="/admissions" element={<Admissions />} />

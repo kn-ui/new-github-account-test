@@ -26,6 +26,7 @@ import { courseService } from '@/lib/hygraph';
 import { eventService } from '@/lib/hygraph';
 import { analyticsService } from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface User {
   id: string;
@@ -258,7 +259,7 @@ const AdminOverview = () => {
                         <div>
                           <p className="font-semibold text-gray-900 text-lg">{course.title}</p>
                           <p className="text-sm text-gray-600">
-                            {t('calendar.loading').replace('Loading events...', 'Created')} {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.createdAt.toDate().toLocaleDateString()}
+                            {t('calendar.loading').replace('Loading events...', 'Created')} {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.formatDateString(createdAt)}
                           </p>
                         </div>
                       </div>
@@ -306,7 +307,7 @@ const AdminOverview = () => {
                       <div>
                         <p className="font-semibold text-gray-900">{event.title}</p>
                         <p className="text-sm text-gray-600">
-                          {event.date instanceof Date ? event.date.toLocaleDateString() : event.date.toDate().toLocaleDateString()}
+                          {event.date instanceof Date ? event.date.toLocaleDateString() : event.formatDateString(date)}
                         </p>
                       </div>
                     </div>

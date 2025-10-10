@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
+import { formatDateString, formatTimeString } from '@/utils/dateUtils';
 
 interface Question {
   id: string;
@@ -253,7 +254,7 @@ export default function ExamQuestions() {
               <span>{questions.reduce((sum, q) => sum + q.points, 0)} total points</span>
             </div>
             <Badge variant="outline">
-              {exam.date.toDate().toLocaleDateString()}
+              {formatDateString(exam.date)}
             </Badge>
           </div>
         </div>
@@ -637,11 +638,11 @@ export default function ExamQuestions() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Date:</span>
-                  <span>{exam.date.toDate().toLocaleDateString()}</span>
+                  <span>{formatDateString(exam.date)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Start Time:</span>
-                  <span>{exam.startTime.toDate().toLocaleTimeString()}</span>
+                  <span>{formatTimeString(exam.startTime)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Points:</span>

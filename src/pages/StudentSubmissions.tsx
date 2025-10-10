@@ -40,6 +40,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface SubmissionWithDetails {
   id: string;
@@ -207,7 +208,7 @@ export default function StudentSubmissions() {
     const now = new Date();
     const dueDate = selectedAssignment.dueDate instanceof Date 
       ? selectedAssignment.dueDate 
-      : selectedAssignment.dueDate.toDate();
+      : toSafeDate(selectedAssignment.dueDate) || new Date();
     
     if (now > dueDate) {
       toast.error('Cannot submit assignment after the due date');
@@ -330,7 +331,7 @@ export default function StudentSubmissions() {
 
   const isAssignmentOverdue = (assignment: any) => {
     const now = new Date();
-    const dueDate = assignment.dueDate instanceof Date ? assignment.dueDate : assignment.dueDate.toDate();
+    const dueDate = assignment.dueDate instanceof Date ? assignment.dueDate : toSafeDate(assignment.dueDate) || new Date();
     return now > dueDate;
   };
 
@@ -365,7 +366,7 @@ export default function StudentSubmissions() {
       const now = new Date();
       const dueDate = assignmentData.dueDate instanceof Date 
         ? assignmentData.dueDate 
-        : assignmentData.dueDate.toDate();
+        : toSafeDate(assignmentData.dueDate) || new Date();
       
       if (now > dueDate) {
         toast.error('Cannot request edit after the assignment due date');
@@ -859,7 +860,7 @@ export default function StudentSubmissions() {
                 </Button>
                 <Button 
                   onClick={handleSubmitSubmission} 
-                  disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
+                  disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : toSafeDate(selectedAssignment.dueDate) || new Date()))}
                 >
                   {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
                     ? 'Update Submission' 

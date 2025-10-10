@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/ClerkAuthContext';
 import { certificateService, activityLogService, HygraphCertificate } from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function CertificatesPage() {
   const { currentUser, userProfile } = useAuth();
@@ -55,7 +56,7 @@ export default function CertificatesPage() {
               key={c.id}
               type={c.type}
               studentName={userProfile?.displayName || 'Student'}
-              awardedAt={c.awardedAt.toDate()}
+              awardedAt={toSafeDate(c.awardedAt) || new Date()}
               details={c.details}
             />
           ))}

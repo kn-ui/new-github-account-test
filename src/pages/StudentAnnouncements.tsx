@@ -99,7 +99,7 @@ export default function StudentAnnouncements() {
         isRead: false,
       }));
       
-      withDetails.sort((a: any, b: any) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+      withDetails.sort((a: any, b: any) => compareDates(b.createdAt, a.createdAt));
       setAnnouncements(withDetails);
     } catch (error) {
       console.error('Failed to load announcements:', error);
@@ -129,12 +129,12 @@ export default function StudentAnnouncements() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'recent':
-          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          const dateA = toSafeDate(a.createdAt) || new Date();
+          const dateB = toSafeDate(b.createdAt) || new Date();
           return dateB.getTime() - dateA.getTime();
         case 'oldest':
-          const dateAOld = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-          const dateBOld = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          const dateAOld = toSafeDate(a.createdAt) || new Date();
+          const dateBOld = toSafeDate(b.createdAt) || new Date();
           return dateAOld.getTime() - dateBOld.getTime();
         case 'title-asc':
           return a.title.localeCompare(b.title);
@@ -147,8 +147,8 @@ export default function StudentAnnouncements() {
         case 'important':
           if (a.isImportant && !b.isImportant) return -1;
           if (!a.isImportant && b.isImportant) return 1;
-          const dateAImp = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-          const dateBImp = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          const dateAImp = toSafeDate(a.createdAt) || new Date();
+          const dateBImp = toSafeDate(b.createdAt) || new Date();
           return dateBImp.getTime() - dateAImp.getTime();
         default:
           return 0;
@@ -159,7 +159,7 @@ export default function StudentAnnouncements() {
     if (!date) return 'Unknown';
     
     try {
-      const d = date.toDate ? date.toDate() : new Date(date);
+      const d = toSafeDate(date) || new Date();
       const now = new Date();
       const diffTime = now.getTime() - d.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -229,7 +229,7 @@ export default function StudentAnnouncements() {
                       }`} title={announcement.title}>
                         {announcement.title}
                       </p>
-                      <p className="text-sm text-gray-500">{announcement.createdAt.toDate().toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-500">{formatDateString(announcement.createdAt)}</p>
                     </div>
                   </button>
                 ))}
@@ -249,7 +249,7 @@ export default function StudentAnnouncements() {
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {selectedAnnouncement.createdAt.toDate().toLocaleDateString()}
+                        {formatDateString(selectedAnnouncement.createdAt)}
                       </span>
                       <span className="flex items-center gap-1">
                         <BookOpen className="h-4 w-4" />

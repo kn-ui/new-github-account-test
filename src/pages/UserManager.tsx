@@ -214,13 +214,22 @@ const UserManager = () => {
   const exportUsers = () => {
     const csvContent = [
       ['Name', 'Email', 'Role', 'Status', 'Created At'],
-      ...filteredUsers.map(user => [
-        user.displayName,
-        user.email,
-        user.role,
-        user.isActive ? 'Active' : 'Inactive',
-        user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()
-      ])
+      ...filteredUsers.map(user => {
+        let createdAtStr = 'N/A';
+        if (user.createdAt instanceof Date) {
+          createdAtStr = user.createdAt.toLocaleDateString();
+        } else if (user.createdAt && typeof (user.createdAt as any).toDate === 'function') {
+          createdAtStr = formatDateString(user.createdAt);
+        }
+        
+        return [
+          user.displayName,
+          user.email,
+          user.role,
+          user.isActive ? 'Active' : 'Inactive',
+          createdAtStr
+        ];
+      })
     ].map(row => row.join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -585,7 +594,14 @@ const UserManager = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()}
+                      {(() => {
+                        if (!user.createdAt) return 'N/A';
+                        if (user.createdAt instanceof Date) return user.createdAt.toLocaleDateString();
+                        if (typeof (user.createdAt as any).toDate === 'function') {
+                          return formatDateString(user.createdAt);
+                        }
+                        return 'N/A';
+                      })()}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

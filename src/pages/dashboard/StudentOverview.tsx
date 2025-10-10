@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
   
 export default function StudentOverview() {
@@ -59,19 +60,19 @@ export default function StudentOverview() {
           // Process assignments
           const upcoming = data.assignments
             .filter((a: any) => {
-              const dueDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
+              const dueDate = a.dueDate instanceof Date ? a.dueDate : toSafeDate(a.dueDate) || new Date();
               return dueDate > new Date();
             })
             .sort((a: any, b: any) => {
-              const aDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
-              const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
+              const aDate = a.dueDate instanceof Date ? a.dueDate : toSafeDate(a.dueDate) || new Date();
+              const bDate = b.dueDate instanceof Date ? b.dueDate : toSafeDate(b.dueDate) || new Date();
               return aDate.getTime() - bDate.getTime();
             })
             .slice(0, 5)
             .map((a: any) => ({
               ...a,
               courseTitle: data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course',
-              dueDate: (a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate()).toLocaleDateString()
+              dueDate: (a.dueDate instanceof Date ? a.dueDate : toSafeDate(a.dueDate) || new Date()).toLocaleDateString()
             }));
           setUpcomingAssignments(upcoming);
           

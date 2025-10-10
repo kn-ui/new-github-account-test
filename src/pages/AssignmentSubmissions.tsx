@@ -14,6 +14,7 @@ import { FileText, BookOpen, Clock, Edit, ArrowLeft, ChevronDown, User, Calendar
 import DashboardHero from '@/components/DashboardHero';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { toSafeDate, formatDateTimeString, formatDateString, compareDates } from '@/utils/dateUtils';
 
 export default function AssignmentSubmissions() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -67,7 +68,7 @@ export default function AssignmentSubmissions() {
     return submissions
       .filter((s: any) => [assignment?.title || '', courseTitle, studentMap[s.studentId] || s.studentId].some(v => v.toLowerCase().includes(search.toLowerCase())))
       .filter((s: any) => statusFilter === 'all' || s.status === statusFilter)
-      .sort((a: any, b: any) => b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime());
+      .sort((a: any, b: any) => compareDates(b.submittedAt, a.submittedAt));
   }, [submissions, search, statusFilter, assignment?.title, courseTitle, studentMap]);
 
   const handleEditRequestResponse = (request: HygraphEditRequest) => {
@@ -145,7 +146,7 @@ export default function AssignmentSubmissions() {
             <div className="text-2xl font-semibold text-gray-900">{assignment?.title}</div>
             <div className="text-sm text-gray-600 flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{courseTitle}</span>
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Due: {assignment?.dueDate?.toDate ? assignment.dueDate.toDate().toLocaleString() : ''}</span>
+              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Due: {formatDateTimeString(assignment?.dueDate)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -213,7 +214,7 @@ export default function AssignmentSubmissions() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="h-4 w-4" />
-                          <span>Requested: {request.requestedAt.toDate().toLocaleDateString()}</span>
+                          <span>Requested: {formatDateString(request.requestedAt)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <FileText className="h-4 w-4" />
@@ -287,7 +288,7 @@ export default function AssignmentSubmissions() {
                     <Badge variant={s.status === 'submitted' ? 'secondary' : 'default'} className="capitalize">{s.status}</Badge>
                   </div>
                   <div className="text-sm text-gray-600">Student: {studentMap[s.studentId] || s.studentId}</div>
-                  <div className="text-xs text-gray-500">Submitted: {s.submittedAt?.toDate ? s.submittedAt.toDate().toLocaleString() : ''}</div>
+                  <div className="text-xs text-gray-500">Submitted: {formatDateTimeString(s.submittedAt)}</div>
                   {grading?.id === s.id ? (
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>

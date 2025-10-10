@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/ClerkAuthContext';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 import { 
   FileText, 
   Download, 
@@ -291,7 +292,7 @@ export default function SubmissionDetail() {
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {submission.submittedAt.toDate().toLocaleDateString()}
+                      {submission.formatDateString(submittedAt)}
                     </p>
                     <p className="text-xs text-gray-500">Submitted</p>
                   </div>

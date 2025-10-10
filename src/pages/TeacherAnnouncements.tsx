@@ -29,6 +29,7 @@ import {
   SortDesc
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -294,9 +295,9 @@ export default function TeacherAnnouncements() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'recent':
-          return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+          return compareDates(b.createdAt, a.createdAt);
         case 'oldest':
-          return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime();
+          return compareDates(a.createdAt, b.createdAt);
         case 'title-asc':
           return a.title.localeCompare(b.title);
         case 'title-desc':
@@ -443,7 +444,7 @@ export default function TeacherAnnouncements() {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {announcement.createdAt.toDate().toLocaleDateString()}
+                          {announcement.formatDateString(createdAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
@@ -517,7 +518,7 @@ export default function TeacherAnnouncements() {
                 </div>
                 <p className="text-sm text-gray-600 mb-3 break-words overflow-hidden" title={announcement.body}>{truncateText(announcement.body)}</p>
                 <div className="text-xs text-gray-500 mb-3 flex items-center gap-3">
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.createdAt.toDate().toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {announcement.formatDateString(createdAt)}</span>
                   <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {announcement.targetAudience === 'ALL_STUDENTS' ? 'All My Students' : getCourseName(announcement.courseId)}</span>
                 </div>
                 <div className="flex items-center justify-end gap-2">

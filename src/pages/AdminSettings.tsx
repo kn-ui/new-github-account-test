@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function AdminSettings() {
   const { t } = useI18n();
@@ -67,7 +68,7 @@ export default function AdminSettings() {
                 type: "user_registered",
                 user: user.email,
                 timestamp: user.createdAt.toDate
-                  ? user.createdAt.toDate()
+                  ? toSafeDate(user.createdAt) || new Date()
                   : new Date(user.createdAt.seconds * 1000),
                 details: `New ${user.role} registered: ${
                   user.displayName || user.email
@@ -84,7 +85,7 @@ export default function AdminSettings() {
                 type: "course_created",
                 user: course.instructorName,
                 timestamp: course.createdAt.toDate
-                  ? course.createdAt.toDate()
+                  ? toSafeDate(course.createdAt) || new Date()
                   : new Date(course.createdAt.seconds * 1000),
                 details: `Course created: ${course.title}`,
               });
@@ -117,7 +118,7 @@ export default function AdminSettings() {
           if (events.length > 0) {
             const upcomingEvents = events.filter((e) => {
               const eventDate = e.date?.toDate
-                ? e.date.toDate()
+                ? toSafeDate(e.date) || new Date()
                 : new Date(e.date);
               return eventDate > new Date();
             }).length;

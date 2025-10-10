@@ -31,6 +31,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -158,8 +159,8 @@ const CourseDetail = () => {
                   courseId: courseId,
                   courseTitle: course?.title || 'Unknown Course',
                   instructorName: course?.instructorName || 'Unknown Instructor',
-                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
-                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  submittedAt: toSafeDate(attempt.submittedAt) || new Date(),
+                  gradedAt: toSafeDate(attempt.submittedAt) || new Date(),
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
@@ -329,7 +330,7 @@ const CourseDetail = () => {
                     <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-800">Course Enrolled</p>
-                      <p className="text-sm text-gray-600">{enrollment?.enrolledAt.toDate().toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-600">{formatDateString(enrollment?.enrolledAt)}</p>
                     </div>
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   </div>
@@ -457,7 +458,7 @@ const CourseDetail = () => {
                           <div className="min-w-0 flex-1">
                             <h4 className="font-medium text-gray-800">{truncateTitle(assignment.title)}</h4>
                             <p className="text-sm text-gray-600">{truncateText(assignment.description)}</p>
-                            <p className="text-xs text-gray-500">Due: {assignment.dueDate.toDate().toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500">Due: {formatDateString(assignment.dueDate)}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium">Max Score: {assignment.maxScore}</p>
@@ -627,7 +628,7 @@ const CourseDetail = () => {
                               </td>
                               <td className="px-4 py-2 text-center">{finalGrade.gradePoints}</td>
                               <td className="px-4 py-2 text-center capitalize">{finalGrade.calculationMethod.replace('_', ' ')}</td>
-                              <td className="px-4 py-2 text-center">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</td>
+                              <td className="px-4 py-2 text-center">{formatDateString(finalGrade.calculatedAt)}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -664,7 +665,7 @@ const CourseDetail = () => {
                               <tbody className="divide-y">
                                 {courseGrades
                                   .slice()
-                                  .sort((a: any, b: any) => new Date(b.submittedAt.toDate()).getTime() - new Date(a.submittedAt.toDate()).getTime())
+                                  .sort((a: any, b: any) => compareDates(b.submittedAt, a.submittedAt))
                                   .map((grade: any, index: number) => {
                                     const assignment = courseAssignments.find(a => a.id === grade.assignmentId);
                                     return (
@@ -673,7 +674,7 @@ const CourseDetail = () => {
                                         <td className="px-4 py-2">{course?.title || 'Course'}</td>
                                         <td className="px-4 py-2 text-center font-semibold">{grade.grade || 0}</td>
                                         <td className="px-4 py-2 text-center">{assignment?.maxScore || 100}</td>
-                                        <td className="px-4 py-2 text-center">{grade.submittedAt.toDate().toLocaleDateString()}</td>
+                                        <td className="px-4 py-2 text-center">{formatDateString(grade.submittedAt)}</td>
                                       </tr>
                                     );
                                   })}
@@ -763,7 +764,7 @@ const CourseDetail = () => {
                   {selectedMaterial.type}
                 </Badge>
                 <span className="text-sm text-gray-500">
-                  Created: {selectedMaterial.createdAt.toDate().toLocaleDateString()}
+                  Created: {formatDateString(selectedMaterial.createdAt)}
                 </span>
               </div>
 

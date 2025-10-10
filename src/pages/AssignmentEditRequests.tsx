@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function AssignmentEditRequests() {
   const { currentUser, userProfile } = useAuth();
@@ -219,11 +220,11 @@ export default function AssignmentEditRequests() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            Due: {request.dueDate.toDate().toLocaleDateString()}
+                            Due: {request.formatDateString(dueDate)}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            Requested: {request.requestedAt.toDate().toLocaleDateString()}
+                            Requested: {request.formatDateString(requestedAt)}
                           </span>
                         </div>
                         <div className="mt-3">
@@ -296,11 +297,11 @@ export default function AssignmentEditRequests() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Due Date:</span>
-                    <p>{selectedRequest.dueDate.toDate().toLocaleDateString()}</p>
+                    <p>{selectedRequest.formatDateString(dueDate)}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Requested:</span>
-                    <p>{selectedRequest.requestedAt.toDate().toLocaleDateString()}</p>
+                    <p>{selectedRequest.formatDateString(requestedAt)}</p>
                   </div>
                 </div>
                 <div className="mt-3">

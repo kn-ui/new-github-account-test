@@ -20,6 +20,7 @@ import {
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function TeacherOverview() {
   const { t } = useI18n();
@@ -69,8 +70,8 @@ export default function TeacherOverview() {
           const flatSubmissions = validSubmissions
             .filter((s: any) => s && !!s?.submittedAt)
             .sort((a: any, b: any) => {
-              const at = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(0);
-              const bt = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(0);
+              const at = toSafeDate(a.submittedAt) || new Date(0);
+              const bt = toSafeDate(b.submittedAt) || new Date(0);
               return bt - at;
             });
           setRecentSubmissions(flatSubmissions.slice(0, 5));

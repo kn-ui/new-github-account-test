@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface CourseProgress {
   courseId: string;
@@ -97,8 +98,8 @@ export default function StudentProgress() {
             courseTitle: course.title,
             instructorName: course.instructorName,
             progress: enrollment.progress || 0,
-            enrolledAt: enrollment.enrolledAt.toDate(),
-            lastAccessed: enrollment.lastAccessedAt?.toDate(),
+            enrolledAt: toSafeDate(enrollment.enrolledAt) || new Date(),
+            lastAccessed: toSafeDate(enrollment.lastAccessedAt?) || new Date(),
             totalAssignments: assignments.length,
             completedAssignments,
             averageGrade: Math.round(averageGrade),

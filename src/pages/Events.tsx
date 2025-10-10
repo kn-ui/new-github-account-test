@@ -58,7 +58,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date | Timestamp;
+  date: Date | any;
   time: string;
   location: string;
   type: string;
@@ -84,11 +84,11 @@ const EventsPage = () => {
 
   const totalEvents = events.length;
   const upcomingEvents = events.filter(e => {
-    const eventDate = e.date instanceof Date ? e.date : (e.date as Timestamp)?.toDate();
+    const eventDate = toSafeDate(e.date);
     return eventDate && eventDate > new Date();
   }).length;
   const pastEvents = events.filter(e => {
-    const eventDate = e.date instanceof Date ? e.date : (e.date as Timestamp)?.toDate();
+    const eventDate = toSafeDate(e.date);
     return eventDate && eventDate <= new Date();
   }).length;
 
@@ -111,9 +111,15 @@ const EventsPage = () => {
     setFilteredEvents(filtered);
   }, [searchTerm, statusFilter, events]);
 
-  const getEventStatus = (eventDate: Date | Timestamp) => {
+  const getEventStatus = (eventDate: Date | any) => {
     const now = new Date();
-    const date = eventDate instanceof Date ? eventDate : (eventDate as Timestamp)?.toDate();
+    let date: Date | null = null;
+    
+    if (eventDate instanceof Date) {
+      date = eventDate;
+    } else {
+      date = toSafeDate(eventDate);
+    }
     
     if (!date) return 'upcoming';
     
@@ -181,12 +187,11 @@ const EventsPage = () => {
     
     try {
       const date = editForm.date || new Date();
-      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
       await eventService.updateEvent(selectedEvent.id, {
         title: editForm.title,
         description: editForm.description,
-        date: timestampDate,
+        date: date instanceof Date ? date.toISOString() : date,
         time: editForm.time,
         location: editForm.location,
         type: editForm.type,
@@ -209,12 +214,11 @@ const EventsPage = () => {
       }
       
       const date = createForm.date || new Date();
-      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
       await eventService.createEvent({
         title: createForm.title || '',
         description: createForm.description || '',
-        date: timestampDate,
+        date: date instanceof Date ? date.toISOString() : date,
         createdBy: 'system',
         type: createForm.type || 'meeting',
         time: createForm.time || '',
@@ -443,9 +447,11 @@ const EventsPage = () => {
                                     let gregorianEventDate: Date;
                                     if (event.date instanceof Date) {
                                       gregorianEventDate = event.date;
-                                    } else if (event.date && typeof (event.date as Timestamp).toDate === 'function') {
-                                      gregorianEventDate = (event.date as Timestamp).toDate();
                                     } else {
+                                      gregorianEventDate = toSafeDate(event.date) || new Date();
+                                    }
+                                    
+                                    if (!gregorianEventDate || isNaN(gregorianEventDate.getTime())) {
                                       console.error('Invalid event date format:', event.title, event.date);
                                       return 'Invalid Date';
                                     }
@@ -644,7 +650,7 @@ const EventsPage = () => {
                 <span className="font-medium flex-shrink-0">{t('events.title_label')}:</span> 
                 <span className="break-words">{selectedEvent.title}</span>
               </div>
-              <div><span className="font-medium">{t('events.date_label')}:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
+              <div><span className="font-medium">{t('events.date_label')}:</span> {formatEthiopianDate(toEthiopianDate(toSafeDate(selectedEvent.date) || new Date()))}</div>
               {selectedEvent.time && (<div><span className="font-medium">{t('events.time_label')}:</span> {selectedEvent.time}</div>)}
               {selectedEvent.location && (
                 <div className="flex gap-2">
@@ -687,7 +693,7 @@ const EventsPage = () => {
             <div>
               <DualDateInput
                 label={t('events.date_label') as any}
-                value={editForm.date instanceof Date ? editForm.date : (editForm.date as Timestamp)?.toDate() || new Date()}
+                value={toSafeDate(editForm.date) || new Date()}
                 onChange={(d) => setEditForm({ ...editForm, date: d })}
                 defaultMode="ethiopian"
               />

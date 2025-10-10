@@ -137,9 +137,9 @@ const DashboardPreview = () => {
                 </Button>
               </Link>
             ) : (
-              <Link to="/signup">
+              <Link to="/login">
                 <Button variant="success" className="w-full">
-                  Sign Up as Teacher
+                  Sign In
                 </Button>
               </Link>
             )}
@@ -206,4 +206,4 @@ const DashboardPreview = () => {
   );
 };
 
-export default DashboardPreview;
+export default DashboardPreview;t DashboardPreview;

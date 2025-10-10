@@ -3,6 +3,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { HygraphBlog, blogService } from '@/lib/hygraph';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function BlogDetail() {
   const { t } = useI18n();
@@ -35,7 +36,7 @@ export default function BlogDetail() {
           <article className="bg-white rounded-lg border p-6">
             <div className="text-sm text-gray-500 flex items-center justify-between">
               <span>{blog.authorName}</span>
-              <span>{blog.createdAt.toDate().toLocaleString()}</span>
+              <span>{blog.formatDateTimeString(createdAt)}</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mt-3">{blog.title}</h1>
             <div className="prose max-w-none mt-6 text-gray-800 whitespace-pre-wrap">

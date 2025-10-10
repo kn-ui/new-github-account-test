@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { toast } from 'sonner';

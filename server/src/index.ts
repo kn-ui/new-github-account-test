@@ -28,7 +28,7 @@ import devRoutes from './routes/devRoutes';
 
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000; // Force port 5000 for development
 
 // Security middleware
 app.use(helmet());

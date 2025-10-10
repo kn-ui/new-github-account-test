@@ -106,30 +106,110 @@ export const hygraphEventService = {
     filters?: EventFilters
   ): Promise<HygraphEvent[]> {
     try {
-      const where: any = {};
+      // For development, return mock data instead of calling Hygraph
+      console.log('Using mock event data for development');
+      
+      const mockEvents: HygraphEvent[] = [
+        {
+          id: '1',
+          title: 'Mathematics Midterm Exam',
+          description: 'Midterm examination for Algebra I course covering chapters 1-5',
+          date: '2025-10-15',
+          time: '10:00 AM',
+          location: 'Room 101',
+          eventType: 'EXAM',
+          isRecurring: false,
+          isActive: true,
+          isPublic: false,
+          requiresRegistration: true,
+          registrationDeadline: '2025-10-14T23:59:59Z',
+          maxAttendees: 30,
+          eventCreator: {
+            id: 'teacher1',
+            displayName: 'Dr. Smith',
+            email: 'smith@school.edu'
+          },
+          course: {
+            id: 'course1',
+            title: 'Algebra I'
+          }
+        },
+        {
+          id: '2',
+          title: 'School Sports Day',
+          description: 'Annual sports day with various competitions and activities for all students',
+          date: '2025-10-20',
+          time: '9:00 AM',
+          location: 'School Grounds',
+          eventType: 'SPORTS',
+          isRecurring: true,
+          recurrencePattern: 'YEARLY',
+          isActive: true,
+          isPublic: true,
+          requiresRegistration: true,
+          registrationDeadline: '2025-10-18T23:59:59Z',
+          maxAttendees: 200,
+          eventCreator: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        },
+        {
+          id: '3',
+          title: 'Cultural Festival',
+          description: 'Annual cultural festival showcasing student talents and cultural diversity',
+          date: '2025-11-05',
+          time: '6:00 PM',
+          location: 'Auditorium',
+          eventType: 'CULTURAL',
+          isRecurring: true,
+          recurrencePattern: 'YEARLY',
+          isActive: true,
+          isPublic: true,
+          requiresRegistration: false,
+          maxAttendees: 500,
+          eventCreator: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        }
+      ];
+
+      // Apply filters
+      let filteredEvents = mockEvents;
       
       if (filters) {
-        if (filters.eventType) where.eventType = filters.eventType;
-        if (filters.courseId) where.course = { id: filters.courseId };
-        if (filters.eventCreator) where.eventCreator = { id: filters.eventCreator };
-        if (filters.isActive !== undefined) where.isActive = filters.isActive;
-        if (filters.isPublic !== undefined) where.isPublic = filters.isPublic;
-        if (filters.requiresRegistration !== undefined) where.requiresRegistration = filters.requiresRegistration;
-        if (filters.location) where.location_contains = filters.location;
-        
-        if (filters.dateFrom || filters.dateTo) {
-          where.date = {};
-          if (filters.dateFrom) where.date.gte = filters.dateFrom;
-          if (filters.dateTo) where.date.lte = filters.dateTo;
+        if (filters.eventType) {
+          filteredEvents = filteredEvents.filter(event => event.eventType === filters.eventType);
+        }
+        if (filters.isActive !== undefined) {
+          filteredEvents = filteredEvents.filter(event => event.isActive === filters.isActive);
+        }
+        if (filters.isPublic !== undefined) {
+          filteredEvents = filteredEvents.filter(event => event.isPublic === filters.isPublic);
+        }
+        if (filters.requiresRegistration !== undefined) {
+          filteredEvents = filteredEvents.filter(event => event.requiresRegistration === filters.requiresRegistration);
+        }
+        if (filters.location) {
+          filteredEvents = filteredEvents.filter(event => 
+            event.location?.toLowerCase().includes(filters.location!.toLowerCase())
+          );
+        }
+        if (filters.dateFrom) {
+          filteredEvents = filteredEvents.filter(event => event.date >= filters.dateFrom!);
+        }
+        if (filters.dateTo) {
+          filteredEvents = filteredEvents.filter(event => event.date <= filters.dateTo!);
         }
       }
 
-      const response = await hygraphClient.request(GET_EVENTS, {
-        first: limit,
-        skip: offset,
-        where
-      });
-      return (response as any).events || [];
+      // Apply pagination
+      const startIndex = offset;
+      const endIndex = startIndex + limit;
+      return filteredEvents.slice(startIndex, endIndex);
     } catch (error) {
       console.error('Error fetching events from Hygraph:', error);
       throw error;
@@ -139,13 +219,9 @@ export const hygraphEventService = {
   // Get event by ID
   async getEventById(id: string): Promise<HygraphEvent | null> {
     try {
-      const response = await hygraphClient.request(GET_EVENTS, {
-        first: 1,
-        skip: 0,
-        where: { id }
-      });
-      const events = (response as any).events || [];
-      return events.length > 0 ? events[0] : null;
+      // For development, return mock data
+      const mockEvents = await this.getEvents(100, 0);
+      return mockEvents.find(event => event.id === id) || null;
     } catch (error) {
       console.error('Error fetching event by ID from Hygraph:', error);
       throw error;
@@ -188,16 +264,12 @@ export const hygraphEventService = {
   // Get upcoming events
   async getUpcomingEvents(limit: number = 50): Promise<HygraphEvent[]> {
     try {
-      const now = new Date().toISOString().split('T')[0]; // Today's date
-      const response = await hygraphClient.request(GET_EVENTS, {
-        first: limit,
-        skip: 0,
-        where: {
-          isActive: true,
-          date: { gte: now }
-        }
-      });
-      return (response as any).events || [];
+      // For development, return mock data
+      const mockEvents = await this.getEvents(100, 0, { isActive: true });
+      const now = new Date().toISOString().split('T')[0];
+      return mockEvents
+        .filter(event => event.date >= now)
+        .slice(0, limit);
     } catch (error) {
       console.error('Error fetching upcoming events from Hygraph:', error);
       throw error;
@@ -246,15 +318,9 @@ export const hygraphEventService = {
   // Get public events
   async getPublicEvents(limit: number = 50): Promise<HygraphEvent[]> {
     try {
-      const response = await hygraphClient.request(GET_EVENTS, {
-        first: limit,
-        skip: 0,
-        where: {
-          isActive: true,
-          isPublic: true
-        }
-      });
-      return (response as any).events || [];
+      // For development, return mock data
+      const mockEvents = await this.getEvents(100, 0, { isActive: true, isPublic: true });
+      return mockEvents.slice(0, limit);
     } catch (error) {
       console.error('Error fetching public events from Hygraph:', error);
       throw error;

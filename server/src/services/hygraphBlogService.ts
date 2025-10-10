@@ -95,46 +95,114 @@ export const hygraphBlogService = {
     filters?: BlogFilters
   ): Promise<HygraphBlogPost[]> {
     try {
-      const where: any = {};
+      // For development, return mock data
+      console.log('Using mock blog data for development');
+      
+      const mockBlogPosts: HygraphBlogPost[] = [
+        {
+          id: '1',
+          title: 'Welcome to Our School Blog',
+          content: 'This is our first blog post where we share updates, news, and insights about our school community.',
+          excerpt: 'Welcome to our school blog where we share updates and insights.',
+          slug: 'welcome-to-our-school-blog',
+          status: 'PUBLISHED',
+          featuredImage: '/images/blog-1.jpg',
+          tags: ['welcome', 'school', 'community'],
+          category: 'General',
+          likes: 15,
+          views: 120,
+          isFeatured: true,
+          allowComments: true,
+          publishedAt: '2025-01-01T00:00:00Z',
+          dateCreated: '2025-01-01T00:00:00Z',
+          dateUpdated: '2025-01-01T00:00:00Z',
+          author: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        },
+        {
+          id: '2',
+          title: 'Mathematics Learning Tips',
+          content: 'Here are some effective strategies to improve your mathematics skills and understanding.',
+          excerpt: 'Effective strategies to improve mathematics skills.',
+          slug: 'mathematics-learning-tips',
+          status: 'PUBLISHED',
+          featuredImage: '/images/blog-2.jpg',
+          tags: ['mathematics', 'learning', 'tips'],
+          category: 'Academic',
+          likes: 8,
+          views: 85,
+          isFeatured: false,
+          allowComments: true,
+          publishedAt: '2025-01-02T00:00:00Z',
+          dateCreated: '2025-01-02T00:00:00Z',
+          dateUpdated: '2025-01-02T00:00:00Z',
+          author: {
+            id: 'teacher1',
+            displayName: 'Dr. Smith',
+            email: 'smith@school.edu'
+          }
+        },
+        {
+          id: '3',
+          title: 'Science Fair 2025',
+          content: 'Join us for the annual science fair showcasing innovative projects from our students.',
+          excerpt: 'Annual science fair showcasing student innovation.',
+          slug: 'science-fair-2025',
+          status: 'PUBLISHED',
+          featuredImage: '/images/blog-3.jpg',
+          tags: ['science', 'fair', 'innovation'],
+          category: 'Events',
+          likes: 12,
+          views: 95,
+          isFeatured: true,
+          allowComments: true,
+          publishedAt: '2025-01-03T00:00:00Z',
+          dateCreated: '2025-01-03T00:00:00Z',
+          dateUpdated: '2025-01-03T00:00:00Z',
+          author: {
+            id: 'teacher2',
+            displayName: 'Ms. Johnson',
+            email: 'johnson@school.edu'
+          }
+        }
+      ];
+
+      // Apply filters
+      let filteredPosts = mockBlogPosts;
       
       if (filters) {
-        if (filters.status) where.status = filters.status;
-        if (filters.authorId) where.author = { id: filters.authorId };
-        if (filters.category) where.category = filters.category;
-        if (filters.isFeatured !== undefined) where.isFeatured = filters.isFeatured;
-        if (filters.allowComments !== undefined) where.allowComments = filters.allowComments;
-        
-        if (filters.tags && filters.tags.length > 0) {
-          where.tags_contains_some = filters.tags;
+        if (filters.status) {
+          filteredPosts = filteredPosts.filter(post => post.status === filters.status);
         }
-        
+        if (filters.authorId) {
+          filteredPosts = filteredPosts.filter(post => post.author?.id === filters.authorId);
+        }
+        if (filters.category) {
+          filteredPosts = filteredPosts.filter(post => post.category === filters.category);
+        }
+        if (filters.isFeatured !== undefined) {
+          filteredPosts = filteredPosts.filter(post => post.isFeatured === filters.isFeatured);
+        }
+        if (filters.allowComments !== undefined) {
+          filteredPosts = filteredPosts.filter(post => post.allowComments === filters.allowComments);
+        }
         if (filters.searchTerm) {
-          where.OR = [
-            { title_contains: filters.searchTerm },
-            { content_contains: filters.searchTerm },
-            { excerpt_contains: filters.searchTerm }
-          ];
-        }
-        
-        if (filters.dateFrom || filters.dateTo) {
-          where.dateCreated = {};
-          if (filters.dateFrom) where.dateCreated.gte = filters.dateFrom;
-          if (filters.dateTo) where.dateCreated.lte = filters.dateTo;
-        }
-        
-        if (filters.publishedFrom || filters.publishedTo) {
-          where.publishedAt = {};
-          if (filters.publishedFrom) where.publishedAt.gte = filters.publishedFrom;
-          if (filters.publishedTo) where.publishedAt.lte = filters.publishedTo;
+          const searchLower = filters.searchTerm.toLowerCase();
+          filteredPosts = filteredPosts.filter(post => 
+            post.title.toLowerCase().includes(searchLower) ||
+            post.content.toLowerCase().includes(searchLower) ||
+            (post.excerpt && post.excerpt.toLowerCase().includes(searchLower))
+          );
         }
       }
 
-      const response = await hygraphClient.request(GET_BLOG_POSTS, {
-        first: limit,
-        skip: offset,
-        where
-      });
-      return (response as any).blogPosts || [];
+      // Apply pagination
+      const startIndex = offset;
+      const endIndex = startIndex + limit;
+      return filteredPosts.slice(startIndex, endIndex);
     } catch (error) {
       console.error('Error fetching blog posts from Hygraph:', error);
       throw error;

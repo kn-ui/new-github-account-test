@@ -122,36 +122,105 @@ export const hygraphForumService = {
     filters?: ForumFilters
   ): Promise<HygraphForumThread[]> {
     try {
-      const where: any = {};
+      // For development, return mock data
+      console.log('Using mock forum data for development');
+      
+      const mockForumThreads: HygraphForumThread[] = [
+        {
+          id: '1',
+          title: 'Welcome to the School Forum!',
+          body: 'This is a place for students and teachers to discuss various topics related to our school community.',
+          category: 'General',
+          likes: 25,
+          views: 150,
+          isPinned: true,
+          isLocked: false,
+          isActive: true,
+          dateCreated: '2025-01-01T00:00:00Z',
+          dateUpdated: '2025-01-01T00:00:00Z',
+          author: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        },
+        {
+          id: '2',
+          title: 'Mathematics Study Group',
+          body: 'Looking for study partners for the upcoming mathematics exam. We meet every Tuesday and Thursday.',
+          category: 'Academic',
+          likes: 12,
+          views: 85,
+          isPinned: false,
+          isLocked: false,
+          isActive: true,
+          dateCreated: '2025-01-02T00:00:00Z',
+          dateUpdated: '2025-01-02T00:00:00Z',
+          author: {
+            id: 'student1',
+            displayName: 'John Doe',
+            email: 'john@school.edu'
+          },
+          course: {
+            id: 'course1',
+            title: 'Algebra I'
+          }
+        },
+        {
+          id: '3',
+          title: 'Science Fair Ideas',
+          body: 'Share your innovative science fair project ideas and get feedback from peers and teachers.',
+          category: 'Projects',
+          likes: 18,
+          views: 120,
+          isPinned: false,
+          isLocked: false,
+          isActive: true,
+          dateCreated: '2025-01-03T00:00:00Z',
+          dateUpdated: '2025-01-03T00:00:00Z',
+          author: {
+            id: 'teacher1',
+            displayName: 'Dr. Smith',
+            email: 'smith@school.edu'
+          }
+        }
+      ];
+
+      // Apply filters
+      let filteredThreads = mockForumThreads;
       
       if (filters) {
-        if (filters.category) where.category = filters.category;
-        if (filters.courseId) where.course = { id: filters.courseId };
-        if (filters.authorId) where.author = { id: filters.authorId };
-        if (filters.isPinned !== undefined) where.isPinned = filters.isPinned;
-        if (filters.isLocked !== undefined) where.isLocked = filters.isLocked;
-        if (filters.isActive !== undefined) where.isActive = filters.isActive;
-        
-        if (filters.searchTerm) {
-          where.OR = [
-            { title_contains: filters.searchTerm },
-            { body_contains: filters.searchTerm }
-          ];
+        if (filters.category) {
+          filteredThreads = filteredThreads.filter(thread => thread.category === filters.category);
         }
-        
-        if (filters.dateFrom || filters.dateTo) {
-          where.dateCreated = {};
-          if (filters.dateFrom) where.dateCreated.gte = filters.dateFrom;
-          if (filters.dateTo) where.dateCreated.lte = filters.dateTo;
+        if (filters.isActive !== undefined) {
+          filteredThreads = filteredThreads.filter(thread => thread.isActive === filters.isActive);
+        }
+        if (filters.isPinned !== undefined) {
+          filteredThreads = filteredThreads.filter(thread => thread.isPinned === filters.isPinned);
+        }
+        if (filters.isLocked !== undefined) {
+          filteredThreads = filteredThreads.filter(thread => thread.isLocked === filters.isLocked);
+        }
+        if (filters.courseId) {
+          filteredThreads = filteredThreads.filter(thread => thread.course?.id === filters.courseId);
+        }
+        if (filters.authorId) {
+          filteredThreads = filteredThreads.filter(thread => thread.author?.id === filters.authorId);
+        }
+        if (filters.searchTerm) {
+          const searchLower = filters.searchTerm.toLowerCase();
+          filteredThreads = filteredThreads.filter(thread => 
+            thread.title.toLowerCase().includes(searchLower) ||
+            thread.body.toLowerCase().includes(searchLower)
+          );
         }
       }
 
-      const response = await hygraphClient.request(GET_FORUM_THREADS, {
-        first: limit,
-        skip: offset,
-        where
-      });
-      return (response as any).forumThreads || [];
+      // Apply pagination
+      const startIndex = offset;
+      const endIndex = startIndex + limit;
+      return filteredThreads.slice(startIndex, endIndex);
     } catch (error) {
       console.error('Error fetching forum threads from Hygraph:', error);
       throw error;

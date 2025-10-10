@@ -809,7 +809,7 @@ export const blogService = {
 export const forumService = {
   async getForumThreads(limitCount = 10): Promise<HygraphForumThread[]> {
     try {
-      return apiCall<HygraphForumThread[]>(`/forum/threads?limit=${limitCount}`);
+      return apiCall<HygraphForumThread[]>(`/forum/threads/public?limit=${limitCount}`);
     } catch (error) {
       console.warn('Forum threads failed, using test data:', error);
       return apiCall<HygraphForumThread[]>(`/forum/test`);

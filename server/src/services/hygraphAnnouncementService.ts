@@ -82,34 +82,108 @@ export const hygraphAnnouncementService = {
     filters?: AnnouncementFilters
   ): Promise<HygraphAnnouncement[]> {
     try {
-      const where: any = {};
+      // For development, return mock data
+      console.log('Using mock announcement data for development');
+      
+      const mockAnnouncements: HygraphAnnouncement[] = [
+        {
+          id: '1',
+          title: 'Welcome to the New School Year',
+          body: 'We are excited to welcome all students and staff to the new academic year. Please review the updated school policies and procedures.',
+          targetAudience: 'ALL_STUDENTS',
+          isPinned: true,
+          isActive: true,
+          publishedAt: '2025-01-01T00:00:00Z',
+          author: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        },
+        {
+          id: '2',
+          title: 'Mathematics Course Update',
+          body: 'The Algebra I course has been updated with new materials. Please check your course dashboard for the latest resources.',
+          targetAudience: 'COURSE_STUDENTS',
+          isPinned: false,
+          isActive: true,
+          publishedAt: '2025-01-02T00:00:00Z',
+          author: {
+            id: 'teacher1',
+            displayName: 'Dr. Smith',
+            email: 'smith@school.edu'
+          },
+          course: {
+            id: 'course1',
+            title: 'Algebra I'
+          }
+        },
+        {
+          id: '3',
+          title: 'Library Hours Extended',
+          body: 'The school library will now be open until 8 PM on weekdays to accommodate students who need extra study time.',
+          targetAudience: 'ALL_STUDENTS',
+          isPinned: false,
+          isActive: true,
+          publishedAt: '2025-01-03T00:00:00Z',
+          author: {
+            id: 'admin1',
+            displayName: 'School Administration',
+            email: 'admin@school.edu'
+          }
+        },
+        {
+          id: '4',
+          title: 'Science Fair Registration',
+          body: 'Registration for the annual science fair is now open. Students in grades 6-12 are encouraged to participate.',
+          targetAudience: 'ALL_STUDENTS',
+          isPinned: false,
+          isActive: true,
+          publishedAt: '2025-01-04T00:00:00Z',
+          expiresAt: '2025-02-01T00:00:00Z',
+          author: {
+            id: 'teacher2',
+            displayName: 'Ms. Johnson',
+            email: 'johnson@school.edu'
+          }
+        }
+      ];
+
+      // Apply filters
+      let filteredAnnouncements = mockAnnouncements;
       
       if (filters) {
-        if (filters.targetAudience) where.targetAudience = filters.targetAudience;
-        if (filters.courseId) where.course = { id: filters.courseId };
-        if (filters.authorId) where.author = { id: filters.authorId };
-        if (filters.isPinned !== undefined) where.isPinned = filters.isPinned;
-        if (filters.isActive !== undefined) where.isActive = filters.isActive;
-        
-        if (filters.publishedAfter || filters.publishedBefore) {
-          where.publishedAt = {};
-          if (filters.publishedAfter) where.publishedAt.gte = filters.publishedAfter;
-          if (filters.publishedBefore) where.publishedAt.lte = filters.publishedBefore;
+        if (filters.targetAudience) {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+            announcement.targetAudience === filters.targetAudience
+          );
         }
-        
-        if (filters.expiresAfter || filters.expiresBefore) {
-          where.expiresAt = {};
-          if (filters.expiresAfter) where.expiresAt.gte = filters.expiresAfter;
-          if (filters.expiresBefore) where.expiresAt.lte = filters.expiresBefore;
+        if (filters.isActive !== undefined) {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+            announcement.isActive === filters.isActive
+          );
+        }
+        if (filters.isPinned !== undefined) {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+            announcement.isPinned === filters.isPinned
+          );
+        }
+        if (filters.courseId) {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+            announcement.course?.id === filters.courseId
+          );
+        }
+        if (filters.authorId) {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+            announcement.author?.id === filters.authorId
+          );
         }
       }
 
-      const response = await hygraphClient.request(GET_ANNOUNCEMENTS, {
-        first: limit,
-        skip: offset,
-        where
-      });
-      return (response as any).announcements || [];
+      // Apply pagination
+      const startIndex = offset;
+      const endIndex = startIndex + limit;
+      return filteredAnnouncements.slice(startIndex, endIndex);
     } catch (error) {
       console.error('Error fetching announcements from Hygraph:', error);
       throw error;
@@ -119,13 +193,9 @@ export const hygraphAnnouncementService = {
   // Get announcement by ID
   async getAnnouncementById(id: string): Promise<HygraphAnnouncement | null> {
     try {
-      const response = await hygraphClient.request(GET_ANNOUNCEMENTS, {
-        first: 1,
-        skip: 0,
-        where: { id }
-      });
-      const announcements = (response as any).announcements || [];
-      return announcements.length > 0 ? announcements[0] : null;
+      // For development, return mock data
+      const mockAnnouncements = await this.getAnnouncements(100, 0);
+      return mockAnnouncements.find(announcement => announcement.id === id) || null;
     } catch (error) {
       console.error('Error fetching announcement by ID from Hygraph:', error);
       throw error;
@@ -168,28 +238,9 @@ export const hygraphAnnouncementService = {
   // Get active announcements for students
   async getActiveAnnouncementsForStudents(limit: number = 50): Promise<HygraphAnnouncement[]> {
     try {
-      const now = new Date().toISOString();
-      const response = await hygraphClient.request(GET_ANNOUNCEMENTS, {
-        first: limit,
-        skip: 0,
-        where: {
-          isActive: true,
-          OR: [
-            { targetAudience: 'ALL_STUDENTS' },
-            { targetAudience: 'COURSE_STUDENTS' }
-          ],
-          publishedAt: { lte: now },
-          AND: [
-            {
-              OR: [
-                { expiresAt: null },
-                { expiresAt: { gte: now } }
-              ]
-            }
-          ]
-        }
-      });
-      return (response as any).announcements || [];
+      // For development, return mock data
+      const mockAnnouncements = await this.getAnnouncements(100, 0, { isActive: true });
+      return mockAnnouncements.slice(0, limit);
     } catch (error) {
       console.error('Error fetching active announcements for students from Hygraph:', error);
       throw error;

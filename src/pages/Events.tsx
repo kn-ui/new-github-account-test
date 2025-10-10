@@ -34,7 +34,6 @@ import {
   Zap
 } from 'lucide-react';
 import { eventService } from '@/lib/hygraph';
-import { Timestamp } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -59,7 +58,7 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date | Timestamp;
+  date: Date | any;
   time: string;
   location: string;
   type: string;
@@ -112,7 +111,7 @@ const EventsPage = () => {
     setFilteredEvents(filtered);
   }, [searchTerm, statusFilter, events]);
 
-  const getEventStatus = (eventDate: Date | Timestamp) => {
+  const getEventStatus = (eventDate: Date | any) => {
     const now = new Date();
     let date: Date | null = null;
     
@@ -188,12 +187,11 @@ const EventsPage = () => {
     
     try {
       const date = editForm.date || new Date();
-      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
       await eventService.updateEvent(selectedEvent.id, {
         title: editForm.title,
         description: editForm.description,
-        date: timestampDate,
+        date: date instanceof Date ? date.toISOString() : date,
         time: editForm.time,
         location: editForm.location,
         type: editForm.type,
@@ -216,12 +214,11 @@ const EventsPage = () => {
       }
       
       const date = createForm.date || new Date();
-      const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
       await eventService.createEvent({
         title: createForm.title || '',
         description: createForm.description || '',
-        date: timestampDate,
+        date: date instanceof Date ? date.toISOString() : date,
         createdBy: 'system',
         type: createForm.type || 'meeting',
         time: createForm.time || '',

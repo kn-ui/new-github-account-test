@@ -25,12 +25,8 @@ export const useClerkAuth = () => {
     } : null,
     loading: !isLoaded,
     login: async (email: string, password: string) => {
-      // This will be handled by Clerk's SignIn component
-      throw new Error('Use Clerk SignIn component for login');
-    },
-    signup: async (email: string, password: string, displayName: string, role?: string) => {
-      // This will be handled by Clerk's SignUp component
-      throw new Error('Use Clerk SignUp component for signup');
+      // Handled by custom login form in src/pages/Login.tsx
+      throw new Error('Use custom Login page component');
     },
     logout: async () => {
       await signOut();
@@ -40,8 +36,8 @@ export const useClerkAuth = () => {
       await user.update(data);
     },
     createUser: async (userData: any, password?: string) => {
-      // This will be handled by Clerk's admin API or SignUp component
-      throw new Error('Use Clerk admin API or SignUp component for user creation');
+      // Users created by admins only via UserManager.tsx
+      throw new Error('Use admin UserManager to create users');
     }
   };
 };

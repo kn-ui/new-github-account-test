@@ -74,7 +74,7 @@ export default function Updates() {
     return events
       .filter(ev => [ev.title, ev.description, ev.location, ev.type, ev.status].filter(Boolean).some(v => String(v).toLowerCase().includes(q)))
       .filter(ev => {
-        const dt = (ev.date as Timestamp).toDate();
+        const dt = new Date(ev.date);
         if (eventStatus === 'upcoming') return dt >= now;
         if (eventStatus === 'past') return dt < now;
         return true;
@@ -189,7 +189,7 @@ export default function Updates() {
               <div className="space-y-4">
                 {filteredAnnouncements.map(a => (
                   <div key={a.id} className="bg-white rounded-lg border p-4">
-                    <div className="text-sm text-gray-500 mb-1">{a.createdAt.toDate().toLocaleString()}</div>
+                    <div className="text-sm text-gray-500 mb-1">{new Date(a.createdAt).toLocaleString()}</div>
                     <div className="font-semibold text-gray-900">{a.title}</div>
                     <div className="text-gray-700 mt-1">{a.body}</div>
                     {(a as any).externalLink && (
@@ -231,7 +231,7 @@ export default function Updates() {
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{b.authorName}</span>
-                        <span>{b.createdAt.toDate().toLocaleDateString()}</span>
+                        <span>{new Date(b.createdAt).toLocaleDateString()}</span>
                       </div>
                       {(userProfile?.role === 'teacher' || userProfile?.role === 'admin') && 
                        b.authorId === currentUser?.uid && (
@@ -303,7 +303,7 @@ export default function Updates() {
                 {filteredEvents.map(ev => (
                   <div key={ev.id} className="bg-white rounded-lg border p-4 flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-gray-500">{(ev.date as Timestamp).toDate().toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">{new Date(ev.date).toLocaleString()}</div>
                       <div className="font-semibold text-gray-900">{ev.title}</div>
                       <div className="text-gray-700">{ev.description}</div>
                     </div>

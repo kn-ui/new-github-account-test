@@ -23,7 +23,7 @@ const Index = () => {
   const top3 = useMemo(() => {
     const now = new Date();
     return events
-      .filter(ev => (ev.date as Timestamp).toDate() >= now)
+      .filter(ev => new Date(ev.date) >= now)
       .slice(0, 3);
   }, [events]);
 
@@ -67,7 +67,7 @@ const Index = () => {
                 <div key={ev.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6">
                   <div className="flex items-center text-sm text-gray-600 mb-2">
                     <CalendarDays className="w-4 h-4 mr-2 text-blue-600" />
-                    {(ev.date as Timestamp).toDate().toLocaleDateString()}
+                    {new Date(ev.date).toLocaleDateString()}
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">{ev.title}</h3>
                   <p className="text-gray-600 mt-1 line-clamp-3">{ev.description}</p>

@@ -23,6 +23,7 @@ router.put('/profile', userController.updateProfile);
 // Specific routes first (before parameterized routes)
 
 router.get('/search', requireTeacherOrAdmin, validatePagination, userController.searchUsers);
+router.get('/teachers', requireTeacherOrAdmin, validatePagination, userController.getTeachers);
 router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats);
 
 // Admin only routes

@@ -217,5 +217,15 @@ export const hygraphUserService = {
       console.error('Error fetching user stats from Hygraph:', error);
       throw error;
     }
+  },
+
+  // Get teachers with pagination
+  async getTeachers(limit: number = 100, offset: number = 0): Promise<HygraphUser[]> {
+    try {
+      return await this.getUsers(limit, offset, { role: 'TEACHER' });
+    } catch (error) {
+      console.error('Error fetching teachers from Hygraph:', error);
+      throw error;
+    }
   }
 };

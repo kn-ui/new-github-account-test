@@ -901,7 +901,7 @@ export const certificateService = {
 // Analytics and statistics
 export const analyticsService = {
   async getAdminStats() {
-    return apiCall('/users/stats/admin');
+    return apiCall('/users/admin/stats');
   },
 
   async getTeacherStats(teacherId: string) {

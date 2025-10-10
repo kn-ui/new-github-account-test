@@ -281,6 +281,29 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       sendServerError(res, 'Failed to get user statistics');
     }
   }
+
+  // Get all teachers
+  async getTeachers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const teachers = await hygraphUserService.getTeachers(limit, skip);
+      
+      sendPaginatedResponse(
+        res,
+        'Teachers retrieved successfully',
+        teachers,
+        page,
+        limit,
+        teachers.length
+      );
+    } catch (error) {
+      console.error('Get teachers error:', error);
+      sendServerError(res, 'Failed to retrieve teachers');
+    }
+  }
 }
 
 export default new UserController();

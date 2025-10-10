@@ -45,7 +45,19 @@ export const authenticateClerkToken = async (
       return;
     }
 
-    // Verify the Clerk token
+    // For development mode, skip Clerk verification and use dummy user
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Development mode: Skipping Clerk verification');
+      req.user = {
+        uid: 'dev-user',
+        email: 'dev@example.com',
+        role: UserRole.ADMIN // Use admin role for development
+      };
+      next();
+      return;
+    }
+
+    // Verify the Clerk token (only in production)
     const payload = await verifyToken(token, {
       secretKey: process.env.CLERK_SECRET_KEY!
     });

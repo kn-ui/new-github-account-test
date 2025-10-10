@@ -126,11 +126,11 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        const storage = getStorage();
-        const path = `materials/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, fileObj);
-        uploadedUrl = await getDownloadURL(storageRef);
+        // TODO: Implement file upload to cloud storage (e.g., AWS S3, Cloudinary, or similar)
+        // For now, we'll skip file upload and use direct URLs only
+        toast.warning('File upload not yet configured. Please provide a direct file URL instead.');
+        console.warn('File upload skipped - storage not configured');
+        return;
       }
 
       const materialData: any = {
@@ -414,7 +414,7 @@ export default function TeacherCourseMaterials() {
                     <div className="space-y-2 text-xs text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {material.formatDateString(createdAt)}
+                        {formatDateString(material.createdAt)}
                       </div>
                       <div className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
@@ -500,7 +500,7 @@ export default function TeacherCourseMaterials() {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {material.formatDateString(createdAt)}
+                          {formatDateString(material.createdAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <FolderOpen className="h-3 w-3" />

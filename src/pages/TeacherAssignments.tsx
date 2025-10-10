@@ -114,12 +114,10 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
-          const storage = getStorage();
-          const path = `assignments/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-          const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, fileObj, { contentType: fileObj.type || undefined });
-          const url = await getDownloadURL(storageRef);
-          attachments.push({ type: 'file', url, title: fileObj.name });
+          // TODO: Implement file upload to cloud storage (e.g., AWS S3, Cloudinary, or similar)
+          // For now, we'll skip file attachments until proper storage is configured
+          toast.warning('File upload not yet configured. Please use external links for now.');
+          console.warn('File upload skipped - storage not configured');
         } catch (err) {
           console.error('Attachment upload failed', err);
           toast.error('Failed to upload attachment');
@@ -345,7 +343,7 @@ export default function TeacherAssignments() {
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {assignment.formatDateString(dueDate)}
+                      {formatDateString(assignment.dueDate)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />

@@ -141,17 +141,17 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         
         try {
           // Create user via backend API
-          const response = await api.post('/users', {
+          const response = await api.createUser({
             email: user.email,
             displayName: user.displayName,
             role: user.role
           });
           
-          if (response.data.success) {
+          if (response.success) {
             setSuccessCount(prev => prev + 1);
             console.log(`Successfully created user: ${user.email}`);
           } else {
-            throw new Error(response.data.message || 'Failed to create user');
+            throw new Error(response.message || 'Failed to create user');
           }
           
           // Small delay to prevent overwhelming API and show progress
@@ -161,14 +161,15 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         } catch (error: any) {
           setErrorCount(prev => prev + 1);
           // Log specific error for debugging
-          if (error.response?.data?.message?.includes('already in use')) {
+          const errorMessage = error.message || 'Unknown error';
+          if (errorMessage.includes('already in use') || errorMessage.includes('already exists')) {
             uploadErrors.push(`${user.email}: Email already exists`);
             console.error(`User ${user.email} already exists - skipping`);
-          } else if (error.response?.data?.message?.includes('invalid email')) {
+          } else if (errorMessage.includes('invalid email')) {
             uploadErrors.push(`${user.email}: Invalid email format`);
             console.error(`Invalid email ${user.email}:`, error);
           } else {
-            uploadErrors.push(`${user.email}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+            uploadErrors.push(`${user.email}: ${errorMessage}`);
             console.error(`Failed to create user ${user.email}:`, error);
           }
         }

@@ -99,7 +99,7 @@ export default function StudentAnnouncements() {
         isRead: false,
       }));
       
-      withDetails.sort((a: any, b: any) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+      withDetails.sort((a: any, b: any) => compareDates(b.createdAt, a.createdAt));
       setAnnouncements(withDetails);
     } catch (error) {
       console.error('Failed to load announcements:', error);

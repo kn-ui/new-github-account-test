@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+import { useClerkAuth as useAuth } from "@/contexts/ClerkAuthContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { courseService, eventService, userService } from '@/lib/hygraph';
 import {

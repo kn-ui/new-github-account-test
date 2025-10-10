@@ -12,7 +12,7 @@ import {
   ClipboardCheck,
   MessageSquare
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useClerkAuth as useAuth } from "@/contexts/ClerkAuthContext";
 
 const DashboardPreview = () => {
   const { currentUser } = useAuth();

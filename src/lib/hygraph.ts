@@ -307,6 +307,15 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       url,
       hasToken: !!authToken
     });
+    
+    // For 401 errors, try to get a fresh token or redirect to login
+    if (response.status === 401) {
+      // Clear any invalid token
+      localStorage.removeItem('authToken');
+      // You might want to redirect to login here
+      console.warn('Authentication failed, token cleared');
+    }
+    
     throw new Error(`API call failed: ${response.status} ${response.statusText}`);
   }
 

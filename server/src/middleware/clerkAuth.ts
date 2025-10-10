@@ -14,10 +14,34 @@ export const authenticateClerkToken = async (
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
+      // For development, allow requests without authentication
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: Allowing request without authentication');
+        req.user = {
+          uid: 'dev-user',
+          email: 'dev@example.com',
+          role: UserRole.STUDENT
+        };
+        next();
+        return;
+      }
+      
       res.status(401).json({
         success: false,
         message: 'Access token is missing'
       });
+      return;
+    }
+
+    // For development with dummy token, skip verification
+    if (process.env.NODE_ENV === 'development' && token === 'dummy_token_for_development') {
+      console.log('Development mode: Using dummy authentication');
+      req.user = {
+        uid: 'dev-user',
+        email: 'dev@example.com',
+        role: UserRole.STUDENT
+      };
+      next();
       return;
     }
 

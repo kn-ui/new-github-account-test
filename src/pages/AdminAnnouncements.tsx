@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
-import { announcementService, userService, HygraphAnnouncement } from '@/lib/hygraph';
+import { announcementService, HygraphAnnouncement } from '@/lib/hygraph';
+import { hygraphUserService } from '@/lib/hygraphUserService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,7 +85,7 @@ export default function AdminAnnouncements() {
       setLoading(true);
       const [adminAnnouncements, users] = await Promise.all([
         announcementService.getAdminAnnouncements(),
-        userService.getUsers()
+        hygraphUserService.getUsers()
       ]);
       
       setAnnouncements(adminAnnouncements);
@@ -96,10 +97,10 @@ export default function AdminAnnouncements() {
         .filter(Boolean)));
       if (ids.length) {
         try {
-          const usersMap = await userService.getUsersByIds(ids as string[]);
+          const usersMap = await Promise.all(ids.map(id => hygraphUserService.getUserById(id)));
           const nameMap: Record<string, string> = {};
-          Object.entries(usersMap).forEach(([id, u]: any) => { 
-            if (u?.displayName) nameMap[id] = u.displayName; 
+          usersMap.forEach((u: any, index) => { 
+            if (u?.displayName) nameMap[ids[index]] = u.displayName; 
           });
           setRecipientNames(nameMap);
         } catch {}

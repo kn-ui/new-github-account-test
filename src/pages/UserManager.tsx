@@ -154,18 +154,18 @@ const UserManager = () => {
     setIsCreatingUser(true); // Start loading
     try {
       // Create user via backend API
-      const response = await api.post('/users', {
+      const response = await api.createUser({
         email: newUser.email,
         displayName: newUser.displayName,
         role: newUser.role
       });
       
-      if (response.data.success) {
+      if (response.success) {
         setIsAddUserOpen(false);
         setNewUser({ displayName: '', email: '', role: 'student', password: '' });
         fetchUsers();
       } else {
-        throw new Error(response.data.message || 'Failed to create user');
+        throw new Error(response.message || 'Failed to create user');
       }
     } catch (error: any) {
       // Handle API errors with user-friendly messages

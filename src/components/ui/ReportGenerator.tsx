@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, FileText, BarChart3, Users, BookOpen, GraduationCap } from 'lucide-react';
 import { analyticsService, userService, courseService, enrollmentService } from '@/lib/hygraph';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 interface ReportGeneratorProps {
   onReportGenerated: (message: string) => void;
@@ -181,7 +182,6 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     
     // Placeholder for PDF generation
     // import jsPDF from 'jspdf';
-import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
     // const doc = new jsPDF();
     // ... PDF generation logic
     // doc.save(`${filename}.pdf`);

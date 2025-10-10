@@ -33,6 +33,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface AssignmentRow { id: string; title: string; courseId: string; courseTitle: string; dueDate: Date; pending: number; graded: number; avg?: number; }
 
@@ -106,7 +107,7 @@ export default function TeacherGrades() {
         const pending = subs.filter((s: any) => s.status === 'submitted').length;
         const graded = subs.filter((s: any) => s.status === 'graded');
         const avg = graded.length ? (graded.reduce((acc: number, s: any) => acc + (s.grade || 0), 0) / graded.length) : 0;
-        rows.push({ id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 });
+        rows.push({ id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: toSafeDate(a.dueDate) || new Date(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 });
       }
       setAssignments(rows);
     } catch (error) {

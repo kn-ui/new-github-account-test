@@ -75,10 +75,9 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             email: user.email,
             role: user.role,
             isActive: user.isActive,
-            createdAt: user.createdAt?.toDate ? user.createdAt.toDate().toISOString() : 
-                      (user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toISOString() : 
-                       'N/A'),
-            updatedAt: user.updatedAt?.toDate ? user.updatedAt.toDate().toISOString() : 
+            createdAt: user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toISOString() : 
+                      ((toSafeDate(user.createdAt) || new Date()).toISOString()),
+            updatedAt: (toSafeDate(user.updatedAt) || new Date()).toISOString() || 
                       (user.updatedAt?.seconds ? new Date(user.updatedAt.seconds * 1000).toISOString() : 
                        'N/A'),
           }));
@@ -94,8 +93,8 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             studentId: enrollment.studentId,
             status: enrollment.status,
             progress: enrollment.progress,
-            enrolledAt: enrollment.enrolledAt.toDate().toISOString(),
-            lastAccessedAt: enrollment.lastAccessedAt.toDate().toISOString(),
+            enrolledAt: toSafeDate(enrollment.enrolledAt) || new Date().toISOString(),
+            lastAccessedAt: toSafeDate(enrollment.lastAccessedAt) || new Date().toISOString(),
           }));
           filename = `enrollment-records-${new Date().toISOString().split('T')[0]}`;
           break;
@@ -110,7 +109,7 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             duration: course.duration,
             maxStudents: course.maxStudents,
             isActive: course.isActive,
-            createdAt: course.createdAt.toDate().toISOString(),
+            createdAt: toSafeDate(course.createdAt) || new Date().toISOString(),
           }));
           filename = `course-analytics-${new Date().toISOString().split('T')[0]}`;
           break;
@@ -182,6 +181,7 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     
     // Placeholder for PDF generation
     // import jsPDF from 'jspdf';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
     // const doc = new jsPDF();
     // ... PDF generation logic
     // doc.save(`${filename}.pdf`);

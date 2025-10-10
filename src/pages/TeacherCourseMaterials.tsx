@@ -33,6 +33,7 @@ import {
   Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -221,9 +222,9 @@ export default function TeacherCourseMaterials() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'recent':
-          return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+          return compareDates(b.createdAt, a.createdAt);
         case 'oldest':
-          return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime();
+          return compareDates(a.createdAt, b.createdAt);
         case 'title-asc':
           return a.title.localeCompare(b.title);
         case 'title-desc':
@@ -413,7 +414,7 @@ export default function TeacherCourseMaterials() {
                     <div className="space-y-2 text-xs text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {material.createdAt.toDate().toLocaleDateString()}
+                        {material.formatDateString(createdAt)}
                       </div>
                       <div className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
@@ -499,7 +500,7 @@ export default function TeacherCourseMaterials() {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {material.createdAt.toDate().toLocaleDateString()}
+                          {material.formatDateString(createdAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <FolderOpen className="h-3 w-3" />

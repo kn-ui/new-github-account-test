@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 // All dynamic; no hardcoded placeholders
 
@@ -92,7 +93,7 @@ export default function TeacherDashboard() {
             );
             const flatSubmissions = allSubmissions.flat().filter((s: any) => s.submittedAt).sort((a: any, b: any) => {
               try {
-                return b.submittedAt.toDate() - a.submittedAt.toDate();
+                return compareDates(b.submittedAt, a.submittedAt);
               } catch {
                 return 0;
               }
@@ -114,7 +115,7 @@ export default function TeacherDashboard() {
             })
           );
           const allAnnouncements = courseAnnouncements.flat().sort((a: any, b: any) => 
-            b.createdAt.toDate() - a.createdAt.toDate()
+            compareDates(b.createdAt, a.createdAt)
           );
           setAnnouncements(allAnnouncements.slice(0, 5));
 
@@ -395,7 +396,7 @@ export default function TeacherDashboard() {
                           <p className="text-sm text-gray-600">Course: {submission.courseTitle}</p>
                           <p className="text-sm text-gray-500">Student: {submission.studentId}</p>
                           <p className="text-xs text-gray-400">
-                            Submitted: {submission.submittedAt.toDate().toLocaleDateString()}
+                            Submitted: {formatDateString(submission.submittedAt)}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">

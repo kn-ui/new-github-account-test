@@ -25,6 +25,7 @@ import {
 import { eventService } from '@/lib/hygraph';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 interface Event {
   id: string;
@@ -142,7 +143,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
       if (eventDate instanceof Date) {
         gregorianEventDate = eventDate;
       } else if (eventDate && typeof (eventDate as Timestamp).toDate === 'function') {
-        gregorianEventDate = (eventDate as Timestamp).toDate();
+        gregorianEventDate = toSafeDate(eventDate) || new Date();
       } else {
         return 'Invalid Date';
       }

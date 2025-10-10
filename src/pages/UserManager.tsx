@@ -219,7 +219,7 @@ const UserManager = () => {
         if (user.createdAt instanceof Date) {
           createdAtStr = user.createdAt.toLocaleDateString();
         } else if (user.createdAt && typeof (user.createdAt as any).toDate === 'function') {
-          createdAtStr = (user.createdAt as any).toDate().toLocaleDateString();
+          createdAtStr = formatDateString(user.createdAt);
         }
         
         return [
@@ -598,7 +598,7 @@ const UserManager = () => {
                         if (!user.createdAt) return 'N/A';
                         if (user.createdAt instanceof Date) return user.createdAt.toLocaleDateString();
                         if (typeof (user.createdAt as any).toDate === 'function') {
-                          return (user.createdAt as any).toDate().toLocaleDateString();
+                          return formatDateString(user.createdAt);
                         }
                         return 'N/A';
                       })()}

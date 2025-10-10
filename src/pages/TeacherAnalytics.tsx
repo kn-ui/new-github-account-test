@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 interface CourseAnalytics {
   courseId: string;
@@ -182,7 +183,7 @@ export default function TeacherAnalytics() {
                 averageGrade: Math.round(averageGrade),
                 totalAssignments: assignments.length,
                 completedAssignments,
-                lastActivity: (enrollment as any).lastAccessedAt?.toDate ? (enrollment as any).lastAccessedAt.toDate() : new Date()
+                lastActivity: toSafeDate((enrollment as any).lastAccessedAt) || new Date()
               };
             } catch (error) {
               console.error(`Error loading student performance for ${enrollment.studentId}:`, error);

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Download, BookOpen, GraduationCap, Users } from 'lucide-react';
 import { courseService, enrollmentService, analyticsService } from '@/lib/hygraph';
 import { useAuth } from '@/contexts/ClerkAuthContext';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 interface TeacherReportGeneratorProps {
   onReportGenerated: (message: string) => void;
@@ -42,7 +43,7 @@ export default function TeacherReportGenerator({ onReportGenerated }: TeacherRep
             duration_weeks: c.duration,
             max_students: c.maxStudents,
             is_active: c.isActive,
-            created_at: c.createdAt.toDate().toISOString(),
+            created_at: toSafeDate(c.createdAt) || new Date().toISOString(),
           }));
           filename = `my-course-analytics-${today()}`;
           break;
@@ -56,8 +57,8 @@ export default function TeacherReportGenerator({ onReportGenerated }: TeacherRep
             student_id: en.studentId,
             status: en.status,
             progress: en.progress,
-            enrolled_at: en.enrolledAt.toDate().toISOString(),
-            last_accessed_at: en.lastAccessedAt.toDate().toISOString(),
+            enrolled_at: toSafeDate(en.enrolledAt) || new Date().toISOString(),
+            last_accessed_at: toSafeDate(en.lastAccessedAt) || new Date().toISOString(),
           }));
           filename = `my-enrollments-${today()}`;
           break;

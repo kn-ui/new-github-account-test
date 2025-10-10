@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { courseService, submissionService, assignmentService } from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 
 interface AssignmentRow {
@@ -60,7 +61,7 @@ export default function SubmissionsPage() {
           title: a.title,
           courseId: a.courseId,
           courseTitle: a.courseTitle,
-          dueDate: a.dueDate?.toDate ? a.dueDate.toDate() : new Date(),
+          dueDate: toSafeDate(a.dueDate) || new Date(),
           pendingCount: countMap[a.id]?.pending || 0,
           gradedCount: countMap[a.id]?.graded || 0,
         }));

@@ -4,6 +4,7 @@ import { blogService, HygraphBlog } from '@/lib/hygraph';
 import { Search } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { api, BlogPost } from '@/lib/api';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 const Blog = () => {
   const [posts, setPosts] = useState<HygraphBlog[] | BlogPost[]>([]);
@@ -61,7 +62,7 @@ const Blog = () => {
 
   const formatDate = (d: any) => {
     try {
-      if (d?.toDate) return d.toDate().toLocaleDateString();
+      if (d?.toDate) return formatDateString(d);
       if (typeof d === 'string') return new Date(d).toLocaleDateString();
       return '';
     } catch { return ''; }

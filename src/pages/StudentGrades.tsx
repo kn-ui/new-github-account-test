@@ -24,6 +24,7 @@ import {
 import { Link } from 'react-router-dom';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toSafeDate, formatDateString, compareDates } from '@/utils/dateUtils';
 
 interface GradeWithDetails {
   id: string;
@@ -137,8 +138,8 @@ export default function StudentGrades() {
             courseId: assignment.courseId,
             courseTitle: assignment.courseTitle,
             instructorName: assignment.instructorName,
-            submittedAt: submission.submittedAt.toDate(),
-            gradedAt: (submission as any).gradedAt?.toDate() || submission.submittedAt.toDate(),
+                  submittedAt: toSafeDate(submission.submittedAt) || new Date(),
+                  gradedAt: toSafeDate((submission as any).gradedAt) || toSafeDate(submission.submittedAt) || new Date(),
             grade: submission.grade || 0,
             maxScore: assignment.maxScore,
             feedback: submission.feedback || '',
@@ -175,8 +176,8 @@ export default function StudentGrades() {
                   courseId: courseId,
                   courseTitle: course?.title || 'Unknown Course',
                   instructorName: course?.instructorName || 'Unknown Instructor',
-                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
-                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  submittedAt: toSafeDate(attempt.submittedAt) || new Date(),
+                  gradedAt: toSafeDate(attempt.submittedAt) || new Date(),
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
@@ -322,10 +323,10 @@ export default function StudentGrades() {
     // Sort final grades
     switch (sortBy) {
       case 'recent':
-        filtered.sort((a, b) => b.calculatedAt.toDate().getTime() - a.calculatedAt.toDate().getTime());
+        filtered.sort((a, b) => compareDates(b.calculatedAt, a.calculatedAt));
         break;
       case 'oldest':
-        filtered.sort((a, b) => a.calculatedAt.toDate().getTime() - b.calculatedAt.toDate().getTime());
+        filtered.sort((a, b) => compareDates(a.calculatedAt, b.calculatedAt));
         break;
       case 'grade-high':
         filtered.sort((a, b) => b.finalGrade - a.finalGrade);
@@ -669,7 +670,7 @@ export default function StudentGrades() {
               filteredAndSortedFinalGrades.length > 0 ? (
                 ['2025', '2024', '2023', '2022', '2021'].map((year) => {
                   const yearGrades = filteredAndSortedFinalGrades.filter(grade => 
-                    grade.calculatedAt.toDate().getFullYear().toString() === year
+                    (toSafeDate(grade.calculatedAt)?.getFullYear() || 0).toString() === year
                   );
                   
                   return (
@@ -728,7 +729,7 @@ export default function StudentGrades() {
                                           {grade.calculationMethod.replace('_', ' ')}
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 text-sm">
-                                          {grade.calculatedAt.toDate().toLocaleDateString()}
+                                          {formatDateString(grade.calculatedAt)}
                                         </td>
                                       </tr>
                                     );

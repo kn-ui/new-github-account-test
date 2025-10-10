@@ -45,6 +45,7 @@ import {
   Download,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -157,8 +158,8 @@ export default function TeacherCourseDetail() {
                   instructorName: c?.instructorName || 'Unknown Instructor',
                   studentId: attempt.studentId,
                   studentName: nameMap[attempt.studentId] || attempt.studentId,
-                  submittedAt: attempt.submittedAt?.toDate() || new Date(),
-                  gradedAt: attempt.submittedAt?.toDate() || new Date(),
+                  submittedAt: toSafeDate(attempt.submittedAt) || new Date(),
+                  gradedAt: toSafeDate(attempt.submittedAt) || new Date(),
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
@@ -510,8 +511,8 @@ export default function TeacherCourseDetail() {
                       .slice()
                       .sort((a,b) => {
                         switch (assignSort) {
-                          case 'due-asc': return a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime();
-                          case 'due-desc': return b.dueDate.toDate().getTime() - a.dueDate.toDate().getTime();
+                          case 'due-asc': return compareDates(a.dueDate, b.dueDate);
+                          case 'due-desc': return compareDates(b.dueDate, a.dueDate);
                           case 'title-asc': return a.title.localeCompare(b.title);
                           case 'title-desc': return b.title.localeCompare(a.title);
                         }
@@ -528,13 +529,13 @@ export default function TeacherCourseDetail() {
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="text-xs text-gray-500 flex items-center gap-2">
-                                <Calendar className="h-3 w-3" /> Due {a.dueDate.toDate().toLocaleDateString()}
+                                <Calendar className="h-3 w-3" /> Due {formatDateString(a.dueDate)}
                               </div>
                               <Button variant="outline" size="sm" asChild>
                                 <Link to={`/dashboard/submissions/${a.id}/submissions`}>View submissions</Link>
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => { setSelectedAssignment(a); setSubmissionsForAssignment(submissions.filter(s => s.assignmentId === a.id)); setSubmissionsDialogOpen(true); }}>Grade submissions</Button>
-                              <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
+                              <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: (toSafeDate(a.dueDate) || new Date()).toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
                               <Button variant="destructive" size="sm" onClick={() => { setAssignmentToDelete(a); setShowDeleteConfirm(true); }}>Delete</Button>
                             </div>
                           </div>
@@ -558,7 +559,7 @@ export default function TeacherCourseDetail() {
                         <div>
                           <div className="font-medium text-gray-900">{exam.title}</div>
                           <div className="text-sm text-gray-600">{exam.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">{exam.date.toDate().toLocaleString()}</div>
+                          <div className="text-xs text-gray-500 mt-1">{formatDateTimeString(exam.date)}</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/exam-questions/${exam.id}`)}>
@@ -580,8 +581,8 @@ export default function TeacherCourseDetail() {
                               setExamForm({ 
                                 title: exam.title, 
                                 description: exam.description || '', 
-                                date: exam.date.toDate().toISOString().slice(0,16), 
-                                startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), 
+                                date: (toSafeDate(exam.date) || new Date()).toISOString().slice(0,16), 
+                                startTime: (toSafeDate(exam.startTime) || new Date()).toISOString().slice(0,16), 
                                 durationMinutes: (exam as any).durationMinutes || 60, 
                                 questions: (exam as any).questions || [] 
                               }); 
@@ -715,7 +716,7 @@ export default function TeacherCourseDetail() {
                             String(g.finalGrade), 
                             g.letterGrade, 
                             String(g.gradePoints),
-                            g.calculatedAt.toDate().toISOString()
+                            formatDateTimeString(g.calculatedAt)
                           ]);
                         });
                         const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -748,7 +749,7 @@ export default function TeacherCourseDetail() {
                         submissions.filter(s => s.status === 'graded').forEach(s => {
                           const student = studentNames[s.studentId] || s.studentId;
                           const asg = assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId;
-                          rows.push([student, asg, String(s.grade ?? ''), s.submittedAt.toDate().toISOString()]);
+                          rows.push([student, asg, String(s.grade ?? ''), formatDateTimeString(s.submittedAt)]);
                         });
                         const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
                         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -914,8 +915,8 @@ export default function TeacherCourseDetail() {
                             .slice()
                             .sort((a,b) => {
                               switch (gradeSort) {
-                                case 'recent': return b.calculatedAt.toDate().getTime() - a.calculatedAt.toDate().getTime();
-                                case 'oldest': return a.calculatedAt.toDate().getTime() - b.calculatedAt.toDate().getTime();
+                                case 'recent': return compareDates(b.calculatedAt, a.calculatedAt);
+                                case 'oldest': return compareDates(a.calculatedAt, b.calculatedAt);
                                 case 'grade-desc': return b.finalGrade - a.finalGrade;
                                 case 'grade-asc': return a.finalGrade - b.finalGrade;
                               }
@@ -931,7 +932,7 @@ export default function TeacherCourseDetail() {
                               </td>
                               <td className="px-4 py-2">{g.gradePoints}</td>
                               <td className="px-4 py-2 capitalize text-xs">{g.calculationMethod.replace('_', ' ')}</td>
-                              <td className="px-4 py-2">{g.calculatedAt.toDate().toLocaleString()}</td>
+                              <td className="px-4 py-2">{formatDateTimeString(g.calculatedAt)}</td>
                               <td className="px-4 py-2 text-right">
                                 <Button 
                                   size="sm" 
@@ -972,8 +973,8 @@ export default function TeacherCourseDetail() {
                             .slice()
                             .sort((a,b) => {
                               switch (gradeSort) {
-                                case 'recent': return b.submittedAt.toDate().getTime() - a.submittedAt.toDate().getTime();
-                                case 'oldest': return a.submittedAt.toDate().getTime() - b.submittedAt.toDate().getTime();
+                                case 'recent': return compareDates(b.submittedAt, a.submittedAt);
+                                case 'oldest': return compareDates(a.submittedAt, b.submittedAt);
                                 case 'grade-desc': return (b.grade || 0) - (a.grade || 0);
                                 case 'grade-asc': return (a.grade || 0) - (b.grade || 0);
                               }
@@ -984,7 +985,7 @@ export default function TeacherCourseDetail() {
                               <td className="px-4 py-2">{assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId}</td>
                               <td className="px-4 py-2">{typeof s.grade === 'number' ? s.grade : '-'}</td>
                               <td className="px-4 py-2 capitalize">{s.status}</td>
-                              <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
+                              <td className="px-4 py-2">{formatDateTimeString(s.submittedAt)}</td>
                               <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
                             </tr>
                           ))}
@@ -1047,7 +1048,7 @@ export default function TeacherCourseDetail() {
                     <tr key={s.id}>
                       <td className="px-4 py-2">{studentNames[s.studentId] || s.studentId}</td>
                       <td className="px-4 py-2 capitalize">{s.status}</td>
-                      <td className="px-4 py-2">{s.submittedAt.toDate().toLocaleString()}</td>
+                      <td className="px-4 py-2">{formatDateTimeString(s.submittedAt)}</td>
                       <td className="px-4 py-2">{typeof s.grade==='number' ? s.grade : '-'}</td>
                       <td className="px-4 py-2 text-right"><Button size="sm" variant="outline" onClick={() => { setSelectedSubmission(s); setGradeValue(s.grade || 0); setGradeFeedback(s.feedback || ''); setGradeDialogOpen(true); }}>Edit Grade</Button></td>
                     </tr>

@@ -23,6 +23,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import DashboardHero from '@/components/DashboardHero';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function TeacherCourses() {
   const { t } = useI18n();
@@ -116,10 +117,10 @@ export default function TeacherCourses() {
         filtered.sort((a, b) => b.title.localeCompare(a.title));
         break;
       case 'date-newest':
-        filtered.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+        filtered.sort((a, b) => compareDates(b.createdAt, a.createdAt));
         break;
       case 'date-oldest':
-        filtered.sort((a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime());
+        filtered.sort((a, b) => compareDates(a.createdAt, b.createdAt));
         break;
       case 'category':
         filtered.sort((a, b) => a.category.localeCompare(b.category));
@@ -257,7 +258,7 @@ export default function TeacherCourses() {
                       {course.duration} {t('teacher.courses.weeks')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {course.createdAt.toDate().toLocaleDateString()}
+                      {course.formatDateString(createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

@@ -50,6 +50,7 @@ interface NavigationItem {
 }
 
 import logo from '@/assets/logo.jpg';
+import { toSafeDate, formatDateString, formatDateTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
 
@@ -453,7 +454,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                             </button>
                           )}
                           <div className="text-xs text-gray-400 hover:text-gray-400 mt-1 flex items-center justify-between">
-                            <span>{a.createdAt.toDate().toLocaleDateString()}</span>
+                            <span>{formatDateString(a.createdAt)}</span>
                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                               {a.targetAudience === 'SPECIFIC_STUDENT' ? 'Direct' : 
                                a.targetAudience === 'COURSE_STUDENTS' ? 'Course' :

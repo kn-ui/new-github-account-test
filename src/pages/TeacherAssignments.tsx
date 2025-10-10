@@ -40,6 +40,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -162,7 +163,7 @@ export default function TeacherAssignments() {
       title: assignment.title,
       description: assignment.description,
       courseId: assignment.courseId,
-      dueDate: assignment.dueDate.toDate().toISOString().split('T')[0],
+      dueDate: (toSafeDate(assignment.dueDate) || new Date()).toISOString().split('T')[0],
       dueTime: '',
       maxScore: assignment.maxScore,
       instructions: assignment.instructions || '',
@@ -344,7 +345,7 @@ export default function TeacherAssignments() {
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {assignment.dueDate.toDate().toLocaleDateString()}
+                      {assignment.formatDateString(dueDate)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
@@ -353,8 +354,8 @@ export default function TeacherAssignments() {
                     <span>{truncateText(getCourseName(assignment.courseId))}</span>
                   </div>
                 </div>
-                <Badge className={getStatusColor(assignment.dueDate.toDate())}>
-                  {getStatusText(assignment.dueDate.toDate())}
+                <Badge className={getStatusColor(toSafeDate(assignment.dueDate) || new Date())}>
+                  {getStatusText(toSafeDate(assignment.dueDate) || new Date())}
                 </Badge>
               </div>
               <div className="mt-auto pt-4 flex items-center justify-end gap-2">

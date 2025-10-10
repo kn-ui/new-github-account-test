@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
 
 export default function TakeExam() {
   console.log('TakeExam component rendered');
@@ -63,7 +64,7 @@ export default function TakeExam() {
   useEffect(() => {
     if (!exam || !attemptId) return;
 
-    const startTime = (exam as any).date?.toDate ? (exam as any).date.toDate() : null;
+    const startTime = toSafeDate((exam as any).date);
     const durationMinutes = (exam as any).durationMinutes || 0;
     
     if (startTime && durationMinutes) {
@@ -157,7 +158,7 @@ export default function TakeExam() {
   if (!exam) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Exam not found</div>;
 
   const now = new Date();
-  const start = (exam as any).date?.toDate ? (exam as any).date.toDate() : null;
+  const start = toSafeDate((exam as any).date);
   const end = start && (exam as any).durationMinutes ? new Date(start.getTime() + (exam as any).durationMinutes * 60000) : null;
   console.log('now:', now);
   console.log('start:', start);

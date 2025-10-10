@@ -47,6 +47,13 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
     throw new Error('Login should be handled by the Login page component');
   };
 
+  // Signup function - handled by custom signup form
+  const signup = async (email: string, password: string, displayName: string, role?: string): Promise<any> => {
+    // This is now handled by the custom signup form
+    // which uses Clerk's useSignUp hook directly
+    throw new Error('Signup should be handled by the Signup page component');
+  };
+
   // Create user function - for admin use only
   const createUser = async (userData: Omit<HygraphUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
@@ -223,12 +230,6 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
 
 // Main ClerkAuthProvider (ClerkProvider is already in main.tsx)
 export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  return (
-    <ClerkAuthProviderInner>
-      {children}
-    </ClerkAuthProviderInner>
-  );
-};React.FC<AuthProviderProps> = ({ children }) => {
   return (
     <ClerkAuthProviderInner>
       {children}

@@ -126,11 +126,29 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        // TODO: Implement file upload to cloud storage (e.g., AWS S3, Cloudinary, or similar)
-        // For now, we'll skip file upload and use direct URLs only
-        toast.warning('File upload not yet configured. Please provide a direct file URL instead.');
-        console.warn('File upload skipped - storage not configured');
-        return;
+        try {
+          // Validate file before upload (max 50MB for course materials)
+          const validation = validateFile(fileObj, 50);
+          if (!validation.valid) {
+            toast.error(validation.error || 'Invalid file');
+            return;
+          }
+
+          // Upload file to Hygraph
+          toast.info(`Uploading ${fileObj.name}...`);
+          const uploadResult = await uploadFileViaGraphQL(fileObj);
+          
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error(uploadResult.error || 'Failed to upload file');
+          }
+
+          uploadedUrl = uploadResult.url;
+          toast.success(`File uploaded successfully: ${fileObj.name}`);
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          toast.error('Failed to upload file: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error'));
+          return; // Stop submission if file upload fails
+        }
       }
 
       const materialData: any = {
@@ -653,10 +671,29 @@ export default function TeacherCourseMaterials() {
 
             {formData.type === 'document' && (
               <div>
-                <Label htmlFor="file">Upload File (PDF/Doc)</Label>
-                <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
-                <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
-                <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
+                <Label htmlFor="file">Upload File (PDF/Doc/PPT/XLS)</Label>
+                <Input 
+                  id="file" 
+                  type="file" 
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"
+                  onChange={(e) => setFileObj(e.target.files?.[0] || null)} 
+                />
+                {fileObj && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selected: {fileObj.name} ({formatFileSize(fileObj.size)})
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Max file size: 50MB. Supported: PDF, DOC, PPT, XLS, TXT, ZIP
+                </p>
+                <div className="text-xs text-gray-500 mt-2">Or paste a direct URL:</div>
+                <Input 
+                  id="fileUrl" 
+                  value={formData.fileUrl} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} 
+                  placeholder="https://example.com/file.pdf" 
+                  type="url" 
+                />
               </div>
             )}
 

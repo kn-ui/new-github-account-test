@@ -41,6 +41,7 @@ import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { toSafeDate, formatDateString, formatDateTimeString, formatTimeString, compareDates } from '@/utils/dateUtils';
+import { uploadFileViaGraphQL, validateFile, formatFileSize } from '@/lib/hygraphUpload';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -114,13 +115,27 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
-          // TODO: Implement file upload to cloud storage (e.g., AWS S3, Cloudinary, or similar)
-          // For now, we'll skip file attachments until proper storage is configured
-          toast.warning('File upload not yet configured. Please use external links for now.');
-          console.warn('File upload skipped - storage not configured');
+          // Validate file before upload (max 10MB)
+          const validation = validateFile(fileObj, 10);
+          if (!validation.valid) {
+            toast.error(validation.error || 'Invalid file');
+            return;
+          }
+
+          // Upload file to Hygraph
+          toast.info(`Uploading ${fileObj.name}...`);
+          const uploadResult = await uploadFileViaGraphQL(fileObj);
+          
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error(uploadResult.error || 'Failed to upload file');
+          }
+
+          attachments.push({ type: 'file', url: uploadResult.url, title: fileObj.name });
+          toast.success(`File uploaded successfully: ${fileObj.name}`);
         } catch (err) {
           console.error('Attachment upload failed', err);
-          toast.error('Failed to upload attachment');
+          toast.error('Failed to upload attachment: ' + (err instanceof Error ? err.message : 'Unknown error'));
+          return; // Stop submission if file upload fails
         }
       }
       if (formData.linkUrl) attachments.push({ type: 'link', url: formData.linkUrl, title: formData.linkTitle || undefined });

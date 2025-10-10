@@ -307,7 +307,7 @@ const AdminOverview = () => {
                       <div>
                         <p className="font-semibold text-gray-900">{event.title}</p>
                         <p className="text-sm text-gray-600">
-                          {event.date instanceof Date ? event.date.toLocaleDateString() : event.formatDateString(date)}
+                          {event.date instanceof Date ? event.date.toLocaleDateString() : event.formatDateString(event.date)}
                         </p>
                       </div>
                     </div>

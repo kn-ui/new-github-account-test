@@ -1,37 +1,32 @@
 #!/usr/bin/env ts-node
 import 'dotenv/config';
-import fetch from 'node-fetch';
-import { createClerkClient } from '@clerk/backend';
+import { getHygraphUserByUid } from '../server/src/lib/hygraph';
 
 async function main() {
   const base = process.env.TEST_API_BASE_URL || 'http://localhost:5000';
-  const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
 
   const email = `test+${Date.now()}@example.com`;
   const displayName = 'Test User';
 
-  console.log('Creating Clerk user', email);
-  const clerkUser = await clerk.users.createUser({
-    emailAddress: [email],
-    firstName: 'Test',
-    lastName: 'User',
-    skipPasswordChecks: true,
-    skipPasswordRequirement: true,
-  });
-
-  console.log('Calling server /api/users to create record');
+  console.log('Calling server /api/users to create Clerk + Hygraph');
   const res = await fetch(`${base}/api/users`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.TEST_BEARER_TOKEN || ''}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.TEST_BEARER_TOKEN || 'dev'}` },
     body: JSON.stringify({ email, displayName, role: 'student' })
-  });
-  const json = await res.json();
+  } as any);
+  const json: any = await (res as any).json();
   console.log('Server response', json);
 
   if (!res.ok) throw new Error(`Server call failed: ${res.status}`);
 
-  console.log('OK. Clean up Clerk user');
-  await clerk.users.deleteUser(clerkUser.id);
+  const uid = json?.data?.uid;
+  if (!uid) throw new Error('No uid returned from server');
+
+  console.log('Query Hygraph for created user by uid');
+  const hg = await getHygraphUserByUid(uid);
+  if (!hg || hg.email !== email) throw new Error('Hygraph user not found or email mismatch');
+
+  console.log('Test passed');
 }
 
 main().catch((e) => {

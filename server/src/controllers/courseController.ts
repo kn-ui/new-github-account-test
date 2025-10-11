@@ -181,7 +181,7 @@ export class CourseController {
 
       // Check authorization (admin can update any course, instructor can only update their own)
       if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.SUPER_ADMIN) {
-        if (course.instructor?.uid !== instructorId) {
+        if (course.instructor?.uid !== instructorId && course.instructor?.id !== req.user!.hygraphId) {
           sendError(res, 'Unauthorized to update this course');
           return;
         }

@@ -161,8 +161,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
           if (profile) {
             // Convert HygraphUser to HygraphUser format for compatibility
             const convertedProfile: HygraphUser = {
-              uid: profile.uid,
               id: profile.id,
+              uid: profile.uid,
               displayName: profile.displayName,
               email: profile.email,
               role: profile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
@@ -185,8 +185,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
             
             // Convert HygraphUser to HygraphUser format for compatibility
             const convertedProfile: HygraphUser = {
-              uid: newProfile.uid,
               id: newProfile.id,
+              uid: newProfile.uid,
               displayName: newProfile.displayName,
               email: newProfile.email,
               role: newProfile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',

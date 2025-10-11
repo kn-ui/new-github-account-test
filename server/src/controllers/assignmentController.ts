@@ -17,7 +17,7 @@ export class AssignmentController {
   async createAssignment(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { title, description, instructions, dueDate, maxScore, courseId } = req.body;
-      const teacherId = req.user!.uid;
+      const teacherUid = req.user!.uid;
 
       // Validate required fields
       if (!title || !description || !dueDate || !maxScore || !courseId) {
@@ -32,18 +32,20 @@ export class AssignmentController {
         return;
       }
 
+      // Get teacher Hygraph user
+      const teacher = await hygraphUserService.getUserByUid(teacherUid);
+      if (!teacher) {
+        sendNotFound(res, 'Teacher not found');
+        return;
+      }
+
       // Check if teacher is the instructor or admin
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== teacherId) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== teacher.id) {
         sendError(res, 'You can only create assignments for your own courses');
         return;
       }
 
       // Get teacher name from Hygraph
-      const teacher = await hygraphUserService.getUserByUid(teacherId);
-      if (!teacher) {
-        sendNotFound(res, 'Teacher not found');
-        return;
-      }
 
       const assignmentData = {
         title,
@@ -125,7 +127,7 @@ export class AssignmentController {
     try {
       const { assignmentId } = req.params;
       const updateData = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing assignment
       const existingAssignment = await hygraphAssignmentService.getAssignmentById(assignmentId);
@@ -135,7 +137,7 @@ export class AssignmentController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAssignment.teacher?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAssignment.teacher?.id !== userHygraphId) {
         sendError(res, 'You can only update your own assignments');
         return;
       }
@@ -157,7 +159,7 @@ export class AssignmentController {
   async deleteAssignment(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { assignmentId } = req.params;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing assignment
       const existingAssignment = await hygraphAssignmentService.getAssignmentById(assignmentId);
@@ -167,7 +169,7 @@ export class AssignmentController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAssignment.teacher?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAssignment.teacher?.id !== userHygraphId) {
         sendError(res, 'You can only delete your own assignments');
         return;
       }
@@ -340,7 +342,7 @@ export class AssignmentController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && assignment.teacher?.id !== req.user!.uid) {
+      if (req.user!.role !== UserRole.ADMIN && assignment.teacher?.id !== req.user!.hygraphId) {
         sendError(res, 'You can only view submissions for your own assignments');
         return;
       }

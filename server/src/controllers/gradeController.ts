@@ -26,7 +26,7 @@ export class GradeController {
         assignmentGrades, 
         notes 
       } = req.body;
-      const calculatedBy = req.user!.uid;
+      const calculatedByUid = req.user!.uid;
 
       // Validate required fields
       if (!studentId || !courseId || finalGrade === undefined || !letterGrade || gradePoints === undefined) {
@@ -49,7 +49,12 @@ export class GradeController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedBy) {
+      const calculator = await hygraphUserService.getUserByUid(calculatedByUid);
+      if (!calculator) {
+        sendNotFound(res, 'User not found');
+        return;
+      }
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== calculator.id) {
         sendError(res, 'You can only create grades for your own courses');
         return;
       }
@@ -63,7 +68,7 @@ export class GradeController {
         calculationMethod: calculationMethod || 'MANUAL',
         assignmentGrades,
         notes,
-        calculatedBy
+        calculatedBy: calculatedByUid
       };
 
       const newGrade = await hygraphGradeService.createGrade(gradeData);
@@ -135,7 +140,7 @@ export class GradeController {
     try {
       const { gradeId } = req.params;
       const updateData = req.body;
-      const userId = req.user!.uid;
+      const userUid = req.user!.uid;
 
       // Get existing grade
       const existingGrade = await hygraphGradeService.getGradeById(gradeId);
@@ -147,7 +152,7 @@ export class GradeController {
       // Check permissions
       if (req.user!.role !== UserRole.ADMIN && existingGrade.course?.id) {
         const course = await hygraphCourseService.getCourseById(existingGrade.course.id);
-        if (course?.instructor?.uid !== userId) {
+        if (course?.instructor?.uid !== userUid && course?.instructor?.id !== req.user!.hygraphId) {
           sendError(res, 'You can only update grades for your own courses');
           return;
         }
@@ -273,7 +278,7 @@ export class GradeController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedBy) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedByUid && course.instructor?.id !== req.user!.hygraphId) {
         sendError(res, 'You can only calculate grades for your own courses');
         return;
       }

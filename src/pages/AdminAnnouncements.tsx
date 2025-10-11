@@ -75,10 +75,10 @@ export default function AdminAnnouncements() {
   });
 
   useEffect(() => {
-    if (currentUser?.uid && (userProfile?.role === 'ADMIN' || userProfile?.role === 'SUPER_ADMIN')) {
+    if (currentUser?.id && (userProfile?.role === 'ADMIN' || userProfile?.role === 'SUPER_ADMIN')) {
       loadData();
     }
-  }, [currentUser?.uid, userProfile?.role]);
+  }, [currentUser?.id, userProfile?.role]);
 
   const loadData = async () => {
     try {
@@ -133,7 +133,7 @@ export default function AdminAnnouncements() {
       const base: any = {
         title: formData.title,
         body: formData.body,
-        authorId: currentUser!.uid,
+        authorId: userProfile?.id || userProfile?.uid || currentUser!.id,
         authorRole: userProfile?.role,
         isAdminAnnouncement: true,
       };

@@ -17,7 +17,7 @@ export class ExamController {
   async createExam(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { title, description, date, startTime, durationMinutes, totalPoints, questions, courseId } = req.body;
-      const teacherId = req.user!.uid;
+      const teacherUid = req.user!.uid;
 
       // Validate required fields
       if (!title || !date || !totalPoints || !courseId) {
@@ -33,7 +33,12 @@ export class ExamController {
       }
 
       // Check if teacher is the instructor or admin
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== teacherId) {
+      const teacher = await hygraphUserService.getUserByUid(teacherUid);
+      if (!teacher) {
+        sendNotFound(res, 'Teacher not found');
+        return;
+      }
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== teacher.id) {
         sendError(res, 'You can only create exams for your own courses');
         return;
       }

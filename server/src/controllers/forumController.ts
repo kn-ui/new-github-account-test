@@ -27,7 +27,7 @@ export class ForumController {
         isLocked, 
         isActive 
       } = req.body;
-      const authorId = req.user!.uid;
+      const authorHygraphId = req.user!.hygraphId;
 
       // Validate required fields
       if (!title || !body) {
@@ -44,10 +44,10 @@ export class ForumController {
         }
 
         // Check permissions for course-specific threads
-        if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== authorId) {
+        if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== authorHygraphId) {
           // Check if user is enrolled in the course
           const enrollments = await hygraphCourseService.getCourseEnrollments(courseId);
-          const isEnrolled = enrollments.some(e => e.student?.uid === authorId);
+          const isEnrolled = enrollments.some(e => e.student?.id === authorHygraphId);
           
           if (!isEnrolled) {
             sendError(res, 'You can only create threads for courses you are enrolled in or teaching');
@@ -60,7 +60,7 @@ export class ForumController {
         title,
         body,
         category,
-        authorId,
+        authorId: authorHygraphId || (await hygraphUserService.getUserByUid(req.user!.uid))?.id || req.user!.uid,
         courseId,
         isPinned: isPinned || false,
         isLocked: isLocked || false,
@@ -149,7 +149,7 @@ export class ForumController {
     try {
       const { threadId } = req.params;
       const updateData = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing thread
       const existingThread = await hygraphForumService.getForumThreadById(threadId);
@@ -159,7 +159,7 @@ export class ForumController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingThread.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingThread.author?.id !== userHygraphId) {
         sendError(res, 'You can only update your own forum threads');
         return;
       }
@@ -176,7 +176,7 @@ export class ForumController {
   async deleteForumThread(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { threadId } = req.params;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing thread
       const existingThread = await hygraphForumService.getForumThreadById(threadId);
@@ -186,7 +186,7 @@ export class ForumController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingThread.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingThread.author?.id !== userHygraphId) {
         sendError(res, 'You can only delete your own forum threads');
         return;
       }
@@ -280,10 +280,10 @@ export class ForumController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== req.user!.uid) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== req.user!.hygraphId) {
         // Check if user is enrolled in the course
         const enrollments = await hygraphCourseService.getCourseEnrollments(courseId);
-        const isEnrolled = enrollments.some(e => e.student?.uid === req.user!.uid);
+        const isEnrolled = enrollments.some(e => e.student?.id === req.user!.hygraphId);
         
         if (!isEnrolled) {
           sendError(res, 'You can only view forum threads for courses you are enrolled in or teaching');
@@ -486,7 +486,7 @@ export class ForumController {
     try {
       const { postId } = req.params;
       const updateData = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing post
       const existingPost = await hygraphForumService.getForumPostById(postId);
@@ -496,7 +496,7 @@ export class ForumController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingPost.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingPost.author?.id !== userHygraphId) {
         sendError(res, 'You can only update your own forum posts');
         return;
       }
@@ -513,7 +513,7 @@ export class ForumController {
   async deleteForumPost(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { postId } = req.params;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing post
       const existingPost = await hygraphForumService.getForumPostById(postId);
@@ -523,7 +523,7 @@ export class ForumController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingPost.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingPost.author?.id !== userHygraphId) {
         sendError(res, 'You can only delete your own forum posts');
         return;
       }

@@ -27,7 +27,7 @@ export class AnnouncementController {
         courseId, 
         targetStudentId 
       } = req.body;
-      const authorId = req.user!.uid;
+      const authorHygraphId = req.user!.hygraphId;
 
       // Validate required fields
       if (!title || !body || !targetAudience) {
@@ -62,7 +62,7 @@ export class AnnouncementController {
         }
 
         // Check permissions for course-specific announcements
-        if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== authorId) {
+        if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== authorHygraphId) {
           sendError(res, 'You can only create announcements for your own courses');
           return;
         }
@@ -85,7 +85,7 @@ export class AnnouncementController {
         isPinned: isPinned || false,
         isActive: isActive !== false, // Default to true
         expiresAt,
-        authorId,
+        authorId: authorHygraphId || '',
         courseId,
         targetStudentId
       };
@@ -161,7 +161,7 @@ export class AnnouncementController {
     try {
       const { announcementId } = req.params;
       const updateData = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing announcement
       const existingAnnouncement = await hygraphAnnouncementService.getAnnouncementById(announcementId);
@@ -171,7 +171,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only update your own announcements');
         return;
       }
@@ -184,7 +184,7 @@ export class AnnouncementController {
           return;
         }
 
-        if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== userId) {
+        if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== userHygraphId) {
           sendError(res, 'You can only update announcements for your own courses');
           return;
         }
@@ -202,7 +202,7 @@ export class AnnouncementController {
   async deleteAnnouncement(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { announcementId } = req.params;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing announcement
       const existingAnnouncement = await hygraphAnnouncementService.getAnnouncementById(announcementId);
@@ -212,7 +212,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only delete your own announcements');
         return;
       }
@@ -289,10 +289,10 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== req.user!.uid) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== req.user!.hygraphId) {
         // Check if user is enrolled in the course
         const enrollments = await hygraphCourseService.getCourseEnrollments(courseId);
-        const isEnrolled = enrollments.some(e => e.student?.uid === req.user!.uid);
+        const isEnrolled = enrollments.some(e => e.student?.id === req.user!.hygraphId);
         
         if (!isEnrolled) {
           sendError(res, 'You can only view announcements for courses you are enrolled in or teaching');
@@ -323,7 +323,7 @@ export class AnnouncementController {
     try {
       const { announcementId } = req.params;
       const { isPinned } = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing announcement
       const existingAnnouncement = await hygraphAnnouncementService.getAnnouncementById(announcementId);
@@ -333,7 +333,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only manage your own announcements');
         return;
       }
@@ -351,7 +351,7 @@ export class AnnouncementController {
     try {
       const { announcementId } = req.params;
       const { isActive } = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       // Get existing announcement
       const existingAnnouncement = await hygraphAnnouncementService.getAnnouncementById(announcementId);
@@ -361,7 +361,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only manage your own announcements');
         return;
       }
@@ -379,7 +379,7 @@ export class AnnouncementController {
     try {
       const { announcementId } = req.params;
       const { publishAt } = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       if (!publishAt) {
         sendError(res, 'Publish date is required');
@@ -401,7 +401,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only manage your own announcements');
         return;
       }
@@ -419,7 +419,7 @@ export class AnnouncementController {
     try {
       const { announcementId } = req.params;
       const { expiresAt } = req.body;
-      const userId = req.user!.uid;
+      const userHygraphId = req.user!.hygraphId;
 
       if (!expiresAt) {
         sendError(res, 'Expiration date is required');
@@ -441,7 +441,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userId) {
+      if (req.user!.role !== UserRole.ADMIN && existingAnnouncement.author?.id !== userHygraphId) {
         sendError(res, 'You can only manage your own announcements');
         return;
       }
@@ -492,7 +492,7 @@ export class AnnouncementController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== req.user!.uid) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== req.user!.hygraphId) {
         sendError(res, 'You can only view statistics for your own courses');
         return;
       }

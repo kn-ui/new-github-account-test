@@ -33,7 +33,7 @@ export class EventController {
         registrationDeadline, 
         courseId 
       } = req.body;
-      const eventCreator = req.user!.uid;
+      const eventCreatorUid = req.user!.uid;
 
       // Validate required fields
       if (!title || !description || !date || !time || !eventType) {
@@ -77,8 +77,15 @@ export class EventController {
           return;
         }
 
+        // Resolve current user's Hygraph ID and check against course instructor
+        const currentUser = await hygraphUserService.getUserByUid(eventCreatorUid);
+        if (!currentUser) {
+          sendNotFound(res, 'User not found');
+          return;
+        }
+
         // Check permissions for course-specific events
-        if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== eventCreator) {
+        if (req.user!.role !== UserRole.ADMIN && course.instructor?.id !== currentUser.id) {
           sendError(res, 'You can only create events for your own courses');
           return;
         }
@@ -99,7 +106,7 @@ export class EventController {
         isPublic: isPublic || false,
         requiresRegistration: requiresRegistration || false,
         registrationDeadline,
-        eventCreator,
+        eventCreator: req.user!.hygraphId || (await hygraphUserService.getUserByUid(eventCreatorUid))?.id || eventCreatorUid,
         courseId
       };
 

@@ -3,6 +3,24 @@ import { verifyToken } from '@clerk/backend';
 import { hygraphUserService } from '../services/hygraphUserService';
 import { AuthenticatedRequest, UserRole } from '../types';
 
+function normalizeRole(roleLike: string | undefined): UserRole {
+  if (!roleLike) return UserRole.STUDENT;
+  const val = roleLike.toString().toLowerCase();
+  switch (val) {
+    case 'admin':
+      return UserRole.ADMIN;
+    case 'super_admin':
+    case 'superadmin':
+    case 'super-admin':
+      return UserRole.SUPER_ADMIN;
+    case 'teacher':
+      return UserRole.TEACHER;
+    case 'student':
+    default:
+      return UserRole.STUDENT;
+  }
+}
+
 // Verify Clerk token and extract user info
 export const authenticateClerkToken = async (
   req: AuthenticatedRequest,
@@ -61,26 +79,34 @@ export const authenticateClerkToken = async (
     const payload = await verifyToken(token, {
       secretKey: process.env.CLERK_SECRET_KEY!
     });
-    
+
     // Get user data from Hygraph using Clerk user ID
-    const userData = await hygraphUserService.getUserByUid(payload.sub as string);
-
-    let userRole = UserRole.STUDENT; // Default role for new users
-
-    if (userData) {
-      userRole = userData.role as UserRole || UserRole.STUDENT;
-    } else {
-      // User exists in Clerk but not in Hygraph yet
-      // This is expected during initial profile creation
-      console.log(`User ${payload.sub as string} not found in Hygraph, allowing for profile creation`);
+    let userRole: UserRole = UserRole.STUDENT;
+    try {
+      const userData = await hygraphUserService.getUserByUid(payload.sub as string);
+      if (userData) {
+        // Hygraph stores roles as upper-case enums; normalize to internal enum
+        userRole = normalizeRole((userData as any).role as string);
+      } else {
+        console.log(`User ${payload.sub as string} not found in Hygraph, allowing for profile creation`);
+      }
+      // Attach hygraphId if available
+      const hygraphId = (userData as any)?.id as string | undefined;
+      req.user = {
+        uid: payload.sub as string,
+        email: (payload.email as string) || '',
+        role: userRole,
+        hygraphId
+      };
+    } catch (e) {
+      // If Hygraph is unreachable, still allow auth but keep default role
+      console.warn('Hygraph lookup failed during auth, defaulting role to student');
+      req.user = {
+        uid: payload.sub as string,
+        email: (payload.email as string) || '',
+        role: userRole
+      };
     }
-
-    // Attach user info to request
-    req.user = {
-      uid: payload.sub as string,
-      email: (payload.email as string) || '',
-      role: userRole
-    };
 
     next();
   } catch (error) {

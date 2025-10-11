@@ -158,6 +158,7 @@ export interface AuthenticatedRequest extends Request {
     uid: string;
     email: string;
     role: UserRole;
+    hygraphId?: string; // Hygraph internal node ID for this user, if known
   };
 }
 

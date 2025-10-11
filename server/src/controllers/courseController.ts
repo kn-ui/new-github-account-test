@@ -318,7 +318,7 @@ export class CourseController {
         return;
       }
 
-      const courses = await hygraphCourseService.getCoursesByInstructor(instructorId, limit, skip);
+      const courses = await hygraphCourseService.getCoursesByInstructorUid(instructorId, limit);
       
       sendPaginatedResponse(
         res,

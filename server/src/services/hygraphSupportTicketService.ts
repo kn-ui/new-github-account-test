@@ -517,19 +517,16 @@ export const hygraphSupportTicketService = {
         ticketsByCategory[category] = (ticketsByCategory[category] || 0) + 1;
       });
 
-      // Calculate average resolution time - NOT POSSIBLE WITHOUT createdAt
-      const averageResolutionTime = 0;
-
       return {
         totalTickets: allTickets.length,
         openTickets: openTickets.length,
         inProgressTickets: inProgressTickets.length,
         resolvedTickets: resolvedTickets.length,
         closedTickets: closedTickets.length,
-        averageResolutionTime: Math.round(averageResolutionTime * 100) / 100,
         ticketsByPriority,
         ticketsByCategory
-      }; catch (error) {
+      };
+    } catch (error) {
       console.error('Error calculating agent support ticket statistics:', error);
       throw error;
     }

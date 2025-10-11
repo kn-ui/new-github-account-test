@@ -39,7 +39,7 @@ import { useI18n } from '@/contexts/I18nContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  userRole: 'admin' | 'teacher' | 'student' | 'super_admin';
+  userRole: 'admin' | 'teacher' | 'student' | 'super_admin' | string;
 }
 
 interface NavigationItem {
@@ -65,12 +65,13 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const { logout, currentUser } = useAuth();
   const { lang, setLang, t } = useI18n();
 
+  const normalizedRole = (userRole || '').toString().toLowerCase();
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
       { label: t('nav.dashboard'), href: '/dashboard', icon: Home },
     ];
 
-    switch (userRole) {
+    switch (normalizedRole) {
       case 'admin':
         return [
           ...baseItems,
@@ -82,6 +83,8 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
         ];
       case 'super_admin':
+      case 'superadmin':
+      case 'super-admin':
         return [
           ...baseItems,
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
@@ -398,9 +401,9 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={
-                    userRole === 'student' 
+                    normalizedRole === 'student' 
                       ? 'Search courses, events...' 
-                      : userRole === 'teacher' 
+                      : normalizedRole === 'teacher' 
                         ? 'Search courses, students...' 
                         : 'Search users, courses, events...'
                   }

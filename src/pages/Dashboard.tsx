@@ -26,10 +26,13 @@ export default function Dashboard() {
   }
 
   const renderOverview = () => {
-    switch (userProfile.role) {
+    const role = (userProfile.role || '').toString().toLowerCase();
+    switch (role) {
       case 'admin':
         return <AdminOverview />;
       case 'super_admin':
+      case 'super-admin':
+      case 'superadmin':
         return <SuperAdminOverview />;
       case 'teacher':
         return <TeacherOverview />;

@@ -24,6 +24,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   const [successCount, setSuccessCount] = useState(0); // Track successful creations
   const [errorCount, setErrorCount] = useState(0); // Track failed creations
   const [totalUsers, setTotalUsers] = useState(0); // Track total users to create
+  const [results, setResults] = useState<Array<{ email: string; clerkCreated?: boolean; hygraphCreated?: boolean; error?: string; rolledBack?: boolean }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -143,9 +144,12 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
       setCurrentProgress(100);
 
       if (Array.isArray(summary.results)) {
+        setResults(summary.results);
         summary.results.forEach((r: any) => {
           if (r?.error) uploadErrors.push(`${r.email}: ${r.error}`);
         });
+      } else {
+        setResults([]);
       }
 
       if ((summary.failureCount || 0) > 0) {
@@ -357,6 +361,47 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results Section */}
+      {results.length > 0 && (
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Import Results</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clerk</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hygraph</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {results.map((r, idx) => (
+                  <tr key={idx}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{r.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {r.clerkCreated ? (
+                        <span className="text-green-700 inline-flex items-center"><CheckCircle className="h-4 w-4 mr-1" /> Created</span>
+                      ) : (
+                        <span className="text-red-700 inline-flex items-center"><AlertCircle className="h-4 w-4 mr-1" /> Failed</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {r.hygraphCreated ? (
+                        <span className="text-green-700 inline-flex items-center"><CheckCircle className="h-4 w-4 mr-1" /> Created</span>
+                      ) : (
+                        <span className="text-red-700 inline-flex items-center"><AlertCircle className="h-4 w-4 mr-1" /> Failed{r.rolledBack ? ' (Rolled back)' : ''}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{r.error || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

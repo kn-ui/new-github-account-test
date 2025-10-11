@@ -102,6 +102,14 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
+  async post<T = any>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
   // Public contact endpoint
   async sendContactMessage(payload: { name: string; email: string; subject: string; message: string; }): Promise<ApiResponse<any>> {
     return this.request(`/api/content/contact`, { method: 'POST', body: JSON.stringify(payload) });

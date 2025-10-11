@@ -25,8 +25,6 @@ export interface HygraphSupportTicket {
     displayName: string;
     email: string;
   };
-  dateCreated: string;
-  dateUpdated?: string;
   resolvedAt?: string;
   closedAt?: string;
   resolution?: string;
@@ -44,7 +42,6 @@ export interface HygraphSupportTicket {
       id: string;
       displayName: string;
     };
-    dateCreated: string;
     isInternal: boolean;
   }[];
 }
@@ -115,11 +112,7 @@ export const hygraphSupportTicketService = {
           ];
         }
         
-        if (filters.dateFrom || filters.dateTo) {
-          where.dateCreated = {};
-          if (filters.dateFrom) where.dateCreated.gte = filters.dateFrom;
-          if (filters.dateTo) where.dateCreated.lte = filters.dateTo;
-        }
+
         
         if (filters.resolvedFrom || filters.resolvedTo) {
           where.resolvedAt = {};
@@ -291,7 +284,6 @@ export const hygraphSupportTicketService = {
   // Create new support ticket
   async createSupportTicket(ticketData: CreateSupportTicketData): Promise<HygraphSupportTicket> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_SUPPORT_TICKET, {
         data: {
           name: ticketData.name,
@@ -301,8 +293,6 @@ export const hygraphSupportTicketService = {
           priority: ticketData.priority || 'MEDIUM',
           category: ticketData.category || 'GENERAL',
           supportTicketStatus: ticketData.supportTicketStatus || 'OPEN',
-          dateCreated: now,
-          dateUpdated: now,
           user: ticketData.userId ? { connect: { id: ticketData.userId } } : undefined
         }
       });
@@ -317,8 +307,7 @@ export const hygraphSupportTicketService = {
   async updateSupportTicket(id: string, ticketData: UpdateSupportTicketData): Promise<HygraphSupportTicket> {
     try {
       const updateData: any = { 
-        ...ticketData,
-        dateUpdated: new Date().toISOString()
+        ...ticketData
       };
 
       // Handle assignment
@@ -442,7 +431,6 @@ export const hygraphSupportTicketService = {
     ticketsByPriority: { [priority: string]: number };
     ticketsByCategory: { [category: string]: number };
     ticketsByStatus: { [status: string]: number };
-    averageResolutionTime: number; // in hours
   }> {
     try {
       const [allTickets, openTickets, inProgressTickets, resolvedTickets, closedTickets, urgentTickets] = await Promise.all([
@@ -475,18 +463,9 @@ export const hygraphSupportTicketService = {
         ticketsByStatus[status] = (ticketsByStatus[status] || 0) + 1;
       });
 
-      // Calculate average resolution time
-      const resolvedTicketsWithTimes = resolvedTickets.filter(ticket => ticket.resolvedAt && ticket.dateCreated);
-      let totalResolutionTime = 0;
-      resolvedTicketsWithTimes.forEach(ticket => {
-        const created = new Date(ticket.dateCreated);
-        const resolved = new Date(ticket.resolvedAt!);
-        const hours = (resolved.getTime() - created.getTime()) / (1000 * 60 * 60);
-        totalResolutionTime += hours;
-      });
-      const averageResolutionTime = resolvedTicketsWithTimes.length > 0 
-        ? totalResolutionTime / resolvedTicketsWithTimes.length 
-        : 0;
+      // Calculate average resolution time - NOT POSSIBLE WITHOUT dateCreated
+      // The averageResolutionTime will be 0 as dateCreated is no longer available.
+      const averageResolutionTime = 0;
 
       return {
         totalTickets: allTickets.length,
@@ -497,8 +476,7 @@ export const hygraphSupportTicketService = {
         urgentTickets: urgentTickets.length,
         ticketsByPriority,
         ticketsByCategory,
-        ticketsByStatus,
-        averageResolutionTime: Math.round(averageResolutionTime * 100) / 100
+        ticketsByStatus
       };
     } catch (error) {
       console.error('Error calculating support ticket statistics:', error);
@@ -513,7 +491,6 @@ export const hygraphSupportTicketService = {
     inProgressTickets: number;
     resolvedTickets: number;
     closedTickets: number;
-    averageResolutionTime: number;
     ticketsByPriority: { [priority: string]: number };
     ticketsByCategory: { [category: string]: number };
   }> {
@@ -540,18 +517,8 @@ export const hygraphSupportTicketService = {
         ticketsByCategory[category] = (ticketsByCategory[category] || 0) + 1;
       });
 
-      // Calculate average resolution time
-      const resolvedTicketsWithTimes = resolvedTickets.filter(ticket => ticket.resolvedAt && ticket.dateCreated);
-      let totalResolutionTime = 0;
-      resolvedTicketsWithTimes.forEach(ticket => {
-        const created = new Date(ticket.dateCreated);
-        const resolved = new Date(ticket.resolvedAt!);
-        const hours = (resolved.getTime() - created.getTime()) / (1000 * 60 * 60);
-        totalResolutionTime += hours;
-      });
-      const averageResolutionTime = resolvedTicketsWithTimes.length > 0 
-        ? totalResolutionTime / resolvedTicketsWithTimes.length 
-        : 0;
+      // Calculate average resolution time - NOT POSSIBLE WITHOUT dateCreated
+      const averageResolutionTime = 0;
 
       return {
         totalTickets: allTickets.length,
@@ -562,8 +529,7 @@ export const hygraphSupportTicketService = {
         averageResolutionTime: Math.round(averageResolutionTime * 100) / 100,
         ticketsByPriority,
         ticketsByCategory
-      };
-    } catch (error) {
+      }; catch (error) {
       console.error('Error calculating agent support ticket statistics:', error);
       throw error;
     }

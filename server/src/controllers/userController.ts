@@ -44,7 +44,7 @@ export class UserController {
       }
 
       // Step 1: Create user in Clerk with default password
-      let clerkUser;
+      let clerkUser: any;
       try {
         clerkUser = await clerkClient.users.createUser({
           emailAddress: [email],
@@ -85,27 +85,34 @@ export class UserController {
 
         sendCreated(res, 'User created successfully', newUser);
       } catch (hygraphError: any) {
-        // If Hygraph is not configured, create a mock user response
-        if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-          console.warn('Hygraph not configured, creating mock user response');
-          const mockUser = {
-            id: 'mock-' + clerkUser.id,
-            uid: clerkUser.id,
-            email,
-            displayName,
-            role: userRole.toUpperCase(),
-            isActive: true,
-            passwordChanged: false,
-            dateCreated: new Date().toISOString(),
-            dateUpdated: new Date().toISOString()
-          };
-          sendCreated(res, 'User created successfully (Hygraph not configured)', mockUser);
-        } else {
-          throw hygraphError;
+        // If Hygraph user creation fails, roll back the Clerk user creation
+        if (clerkUser && clerkUser.id && !clerkUser.id.startsWith('mock-')) {
+          console.log(`Attempting to delete Clerk user ${clerkUser.id} due to Hygraph failure.`);
+          try {
+            await clerkClient.users.deleteUser(clerkUser.id);
+            console.log(`Successfully deleted Clerk user ${clerkUser.id}.`);
+          } catch (deleteError: any) {
+            console.error(`CRITICAL: Failed to delete Clerk user ${clerkUser.id} after Hygraph failure. Manual cleanup required.`, deleteError);
+          }
         }
+        // Re-throw the error to be handled by the main catch block, which will send a server error response
+        throw hygraphError;
       }
     } catch (error: any) {
       console.error('Create user error:', error);
+
+      if (error.clerkError && Array.isArray(error.errors) && error.errors.length > 0) {
+        const firstError = error.errors[0];
+        if (firstError.code === 'form_identifier_exists') {
+          sendError(res, firstError.message, undefined, 409); // 409 Conflict
+        } else {
+          // Use the status from the Clerk error if available, otherwise default to 400
+          sendError(res, firstError.longMessage || firstError.message, undefined, error.status || 400);
+        }
+        return;
+      }
+
+      // Fallback for non-Clerk errors or unexpected formats
       if (error.message?.includes('email_address_taken') || error.message?.includes('already in use')) {
         sendError(res, 'Email already in use', undefined, 409);
       } else if (error.message?.includes('invalid email')) {

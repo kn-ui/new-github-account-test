@@ -22,8 +22,6 @@ export interface HygraphBlogPost {
   isFeatured: boolean;
   allowComments: boolean;
   publishedAt?: string;
-  dateCreated: string;
-  dateUpdated?: string;
   author?: {
     id: string;
     displayName: string;
@@ -36,7 +34,6 @@ export interface HygraphBlogPost {
       id: string;
       displayName: string;
     };
-    dateCreated: string;
   }[];
 }
 
@@ -114,8 +111,6 @@ export const hygraphBlogService = {
           isFeatured: true,
           allowComments: true,
           publishedAt: '2025-01-01T00:00:00Z',
-          dateCreated: '2025-01-01T00:00:00Z',
-          dateUpdated: '2025-01-01T00:00:00Z',
           author: {
             id: 'admin1',
             displayName: 'School Administration',
@@ -137,8 +132,6 @@ export const hygraphBlogService = {
           isFeatured: false,
           allowComments: true,
           publishedAt: '2025-01-02T00:00:00Z',
-          dateCreated: '2025-01-02T00:00:00Z',
-          dateUpdated: '2025-01-02T00:00:00Z',
           author: {
             id: 'teacher1',
             displayName: 'Dr. Smith',
@@ -160,8 +153,6 @@ export const hygraphBlogService = {
           isFeatured: true,
           allowComments: true,
           publishedAt: '2025-01-03T00:00:00Z',
-          dateCreated: '2025-01-03T00:00:00Z',
-          dateUpdated: '2025-01-03T00:00:00Z',
           author: {
             id: 'teacher2',
             displayName: 'Ms. Johnson',
@@ -387,7 +378,6 @@ export const hygraphBlogService = {
           isFeatured: postData.isFeatured || false,
           allowComments: postData.allowComments !== false, // Default to true
           publishedAt: postData.status === 'PUBLISHED' ? now : undefined,
-          dateCreated: now,
           author: { connect: { id: postData.authorId } }
         }
       });
@@ -401,10 +391,7 @@ export const hygraphBlogService = {
   // Update blog post
   async updateBlogPost(id: string, postData: UpdateBlogPostData): Promise<HygraphBlogPost> {
     try {
-      const updateData: any = { 
-        ...postData,
-        dateUpdated: new Date().toISOString()
-      };
+      const updateData: any = { ...postData };
 
       // If status is being changed to PUBLISHED, set publishedAt
       if (postData.status === 'PUBLISHED') {

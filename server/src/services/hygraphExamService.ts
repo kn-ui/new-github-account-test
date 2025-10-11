@@ -21,8 +21,6 @@ export interface HygraphExam {
   totalPoints: number;
   questions?: any; // JSON
   firstAttemptTimestamp?: string;
-  dateCreated: string;
-  dateUpdated: string;
   course?: {
     id: string;
     title: string;
@@ -41,7 +39,6 @@ export interface HygraphExamAttempt {
   isGraded: boolean;
   startedAt: string;
   submittedAt?: string;
-  dateUpdated?: string;
   student?: {
     id: string;
     displayName: string;
@@ -179,7 +176,6 @@ export const hygraphExamService = {
   // Create new exam
   async createExam(examData: CreateExamData): Promise<HygraphExam> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_EXAM, {
         data: {
           title: examData.title,
@@ -190,8 +186,6 @@ export const hygraphExamService = {
           totalPoints: examData.totalPoints,
           questions: examData.questions,
           firstAttemptTimestamp: examData.firstAttemptTimestamp,
-          dateCreated: now,
-          dateUpdated: now,
           course: { connect: { id: examData.courseId } }
         }
       });
@@ -207,10 +201,7 @@ export const hygraphExamService = {
     try {
       const response = await hygraphClient.request(UPDATE_EXAM, {
         id,
-        data: {
-          ...examData,
-          dateUpdated: new Date().toISOString()
-        }
+        data: examData
       });
       return (response as any).updateExam;
     } catch (error) {
@@ -321,7 +312,6 @@ export const hygraphExamService = {
           isGraded: false,
           score: 0,
           startedAt: now,
-          dateUpdated: now,
           student: { connect: { id: attemptData.studentId } },
           exam: { connect: { id: attemptData.examId } }
         }
@@ -338,10 +328,7 @@ export const hygraphExamService = {
     try {
       const response = await hygraphClient.request(UPDATE_EXAM_ATTEMPT, {
         id,
-        data: {
-          ...attemptData,
-          dateUpdated: new Date().toISOString()
-        }
+        data: attemptData
       });
       return (response as any).updateExamAttempt;
     } catch (error) {
@@ -359,8 +346,7 @@ export const hygraphExamService = {
         data: {
           answers,
           examAttemptStatus: 'SUBMITTED',
-          submittedAt: now,
-          dateUpdated: now
+          submittedAt: now
         }
       });
       return (response as any).updateExamAttempt;
@@ -379,8 +365,7 @@ export const hygraphExamService = {
           score,
           feedback,
           examAttemptStatus: 'GRADED',
-          isGraded: true,
-          dateUpdated: new Date().toISOString()
+          isGraded: true
         }
       });
       return (response as any).updateExamAttempt;
@@ -414,8 +399,7 @@ export const hygraphExamService = {
           totalAutoPoints,
           score: autoScore,
           examAttemptStatus: 'GRADED',
-          isGraded: true,
-          dateUpdated: new Date().toISOString()
+          isGraded: true
         }
       });
       return (response as any).updateExamAttempt;

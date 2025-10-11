@@ -17,8 +17,6 @@ export interface HygraphForumThread {
   isPinned: boolean;
   isLocked: boolean;
   isActive: boolean;
-  dateCreated: string;
-  dateUpdated?: string;
   author?: {
     id: string;
     displayName: string;
@@ -32,7 +30,6 @@ export interface HygraphForumThread {
   lastPost?: {
     id: string;
     body: string;
-    dateCreated: string;
     author?: {
       id: string;
       displayName: string;
@@ -44,8 +41,6 @@ export interface HygraphForumPost {
   id: string;
   body: string;
   likes: number;
-  dateCreated: string;
-  dateUpdated?: string;
   isActive: boolean;
   author?: {
     id: string;
@@ -136,8 +131,6 @@ export const hygraphForumService = {
           isPinned: true,
           isLocked: false,
           isActive: true,
-          dateCreated: '2025-01-01T00:00:00Z',
-          dateUpdated: '2025-01-01T00:00:00Z',
           author: {
             id: 'admin1',
             displayName: 'School Administration',
@@ -154,8 +147,6 @@ export const hygraphForumService = {
           isPinned: false,
           isLocked: false,
           isActive: true,
-          dateCreated: '2025-01-02T00:00:00Z',
-          dateUpdated: '2025-01-02T00:00:00Z',
           author: {
             id: 'student1',
             displayName: 'John Doe',
@@ -176,8 +167,6 @@ export const hygraphForumService = {
           isPinned: false,
           isLocked: false,
           isActive: true,
-          dateCreated: '2025-01-03T00:00:00Z',
-          dateUpdated: '2025-01-03T00:00:00Z',
           author: {
             id: 'teacher1',
             displayName: 'Dr. Smith',
@@ -318,7 +307,6 @@ export const hygraphForumService = {
   // Create new forum thread
   async createForumThread(threadData: CreateForumThreadData): Promise<HygraphForumThread> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_FORUM_THREAD, {
         data: {
           title: threadData.title,
@@ -329,7 +317,6 @@ export const hygraphForumService = {
           isPinned: threadData.isPinned || false,
           isLocked: threadData.isLocked || false,
           isActive: threadData.isActive !== false, // Default to true
-          dateCreated: now,
           author: { connect: { id: threadData.authorId } },
           course: threadData.courseId ? { connect: { id: threadData.courseId } } : undefined
         }
@@ -458,12 +445,10 @@ export const hygraphForumService = {
   // Create new forum post
   async createForumPost(postData: CreateForumPostData): Promise<HygraphForumPost> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_FORUM_POST, {
         data: {
           body: postData.body,
           likes: 0,
-          dateCreated: now,
           isActive: postData.isActive !== false, // Default to true
           author: { connect: { id: postData.authorId } },
           thread: { connect: { id: postData.threadId } },

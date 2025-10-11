@@ -18,8 +18,6 @@ export interface HygraphUser {
   role: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN';
   isActive: boolean;
   passwordChanged: boolean;
-  dateCreated: string;
-  dateUpdated: string;
 }
 
 export interface CreateUserData {
@@ -92,7 +90,6 @@ export const hygraphUserService = {
   // Create a new user
   async createUser(userData: CreateUserData): Promise<HygraphUser> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_USER, {
         data: {
           uid: userData.uid,
@@ -100,9 +97,7 @@ export const hygraphUserService = {
           displayName: userData.displayName,
           role: userData.role,
           isActive: userData.isActive ?? true,
-          passwordChanged: userData.passwordChanged ?? true,
-          dateCreated: now,
-          dateUpdated: now
+          passwordChanged: userData.passwordChanged ?? false,
         }
       });
       return (response as any).createAppUser;
@@ -117,10 +112,7 @@ export const hygraphUserService = {
     try {
       const response = await hygraphClient.request(UPDATE_USER, {
         id,
-        data: {
-          ...userData,
-          dateUpdated: new Date().toISOString()
-        }
+        data: userData
       });
       return (response as any).updateAppUser;
     } catch (error) {

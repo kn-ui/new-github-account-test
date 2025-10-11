@@ -80,8 +80,6 @@ export interface HygraphUser {
   role: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN';
   isActive: boolean;
   passwordChanged: boolean;
-  dateCreated: string;
-  dateUpdated: string;
 }
 
 export interface HygraphCourse {
@@ -94,8 +92,6 @@ export interface HygraphCourse {
   syllabus: string;
   isActive: boolean;
   instructorName: string;
-  dateCreated: string;
-  dateUpdated: string;
   instructor?: {
     id: string;
     displayName: string;
@@ -131,8 +127,6 @@ export interface HygraphAssignment {
   dueDate: string;
   maxScore: number;
   isActive: boolean;
-  dateCreated: string;
-  dateUpdated: string;
   course?: {
     id: string;
     title: string;
@@ -179,8 +173,6 @@ export interface HygraphExam {
   totalPoints: number;
   questions?: any; // JSON
   firstAttemptTimestamp?: string;
-  dateCreated: string;
-  dateUpdated: string;
   course?: {
     id: string;
     title: string;
@@ -199,7 +191,6 @@ export interface HygraphExamAttempt {
   isGraded: boolean;
   startedAt: string;
   submittedAt?: string;
-  dateUpdated?: string;
   student?: {
     id: string;
     displayName: string;
@@ -215,18 +206,10 @@ export interface HygraphExamAttempt {
 export interface HygraphAnnouncement {
   id: string;
   title: string;
-  body: string;
-  targetAudience?: 'ALL_STUDENTS' | 'COURSE_STUDENTS' | 'SPECIFIC_STUDENT';
-  externalLink?: string;
-  recipientStudentId?: string;
-  dateCreated: string;
+  content: string;
   author?: {
     id: string;
     displayName: string;
-  };
-  course?: {
-    id: string;
-    title: string;
   };
 }
 
@@ -243,8 +226,6 @@ export interface HygraphEvent {
   eventStatus: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   isActive: boolean;
   eventCreator: string;
-  dateCreated: string;
-  dateUpdated: string;
 }
 
 export interface HygraphGrade {
@@ -275,8 +256,6 @@ export interface HygraphCourseMaterial {
   type: string;
   externalLink?: string;
   isActive: boolean;
-  dateCreated: string;
-  dateUpdated: string;
   course?: {
     id: string;
     title: string;
@@ -290,8 +269,6 @@ export interface HygraphSupportTicket {
   subject: string;
   message: string;
   supportTicketStatus: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  dateCreated: string;
-  dateUpdated?: string;
   user?: {
     id: string;
     displayName: string;
@@ -326,9 +303,7 @@ export interface HygraphForumThread {
   category?: string;
   likes: number;
   views: number;
-  dateCreated: string;
   lastActivityAt: string;
-  dateUpdated?: string;
   author?: {
     id: string;
     displayName: string;
@@ -339,8 +314,6 @@ export interface HygraphForumPost {
   id: string;
   body: string;
   likes: number;
-  dateCreated: string;
-  dateUpdated?: string;
   author?: {
     id: string;
     displayName: string;
@@ -356,8 +329,6 @@ export interface HygraphBlogPost {
   title: string;
   content: string;
   likes: number;
-  dateCreated: string;
-  dateUpdated?: string;
   author?: {
     id: string;
     displayName: string;
@@ -381,7 +352,6 @@ export interface HygraphActivityLog {
   id: string;
   dateKey: string;
   source: string;
-  dateCreated: string;
   user?: {
     id: string;
     displayName: string;
@@ -446,7 +416,6 @@ export const hygraphService = {
       passwordChanged?: boolean;
     }): Promise<HygraphUser> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_USER, {
           data: {
             uid: userData.uid,
@@ -454,9 +423,7 @@ export const hygraphService = {
             displayName: userData.displayName,
             role: userData.role,
             isActive: userData.isActive ?? true,
-            passwordChanged: userData.passwordChanged ?? true,
-            dateCreated: now,
-            dateUpdated: now
+            passwordChanged: userData.passwordChanged ?? false
           }
         });
         return (response as any).createAppUser;
@@ -470,10 +437,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_USER, {
           id,
-          data: {
-            ...userData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: userData
         });
         return (response as any).updateAppUser;
       } catch (error) {
@@ -549,7 +513,6 @@ export const hygraphService = {
       isActive?: boolean;
     }): Promise<HygraphCourse> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_COURSE, {
           data: {
             title: courseData.title,
@@ -560,8 +523,6 @@ export const hygraphService = {
             syllabus: courseData.syllabus,
             instructorName: courseData.instructorName,
             isActive: courseData.isActive ?? true,
-            dateCreated: now,
-            dateUpdated: now,
             ...(courseData.instructorId && { instructor: { connect: { id: courseData.instructorId } } })
           }
         });
@@ -576,10 +537,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_COURSE, {
           id,
-          data: {
-            ...courseData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: courseData
         });
         return (response as any).updateCourse;
       } catch (error) {
@@ -694,7 +652,6 @@ export const hygraphService = {
       isActive?: boolean;
     }): Promise<HygraphAssignment> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_ASSIGNMENT, {
           data: {
             title: assignmentData.title,
@@ -703,8 +660,6 @@ export const hygraphService = {
             dueDate: assignmentData.dueDate,
             maxScore: assignmentData.maxScore,
             isActive: assignmentData.isActive ?? true,
-            dateCreated: now,
-            dateUpdated: now,
             course: { connect: { id: assignmentData.courseId } },
             teacher: { connect: { id: assignmentData.teacherId } }
           }
@@ -720,10 +675,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_ASSIGNMENT, {
           id,
-          data: {
-            ...assignmentData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: assignmentData
         });
         return (response as any).updateAssignment;
       } catch (error) {
@@ -790,7 +742,6 @@ export const hygraphService = {
             maxScore: submissionData.maxScore,
             isActive: submissionData.isActive ?? true,
             submittedAt: now,
-            dateUpdated: now,
             student: { connect: { id: submissionData.studentId } },
             assignment: { connect: { id: submissionData.assignmentId } },
             course: { connect: { id: submissionData.courseId } }
@@ -807,10 +758,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_SUBMISSION, {
           id,
-          data: {
-            ...submissionData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: submissionData
         });
         return (response as any).updateSubmission;
       } catch (error) {
@@ -858,7 +806,6 @@ export const hygraphService = {
       firstAttemptTimestamp?: string;
     }): Promise<HygraphExam> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_EXAM, {
           data: {
             title: examData.title,
@@ -869,8 +816,6 @@ export const hygraphService = {
             totalPoints: examData.totalPoints,
             questions: examData.questions,
             firstAttemptTimestamp: examData.firstAttemptTimestamp,
-            dateCreated: now,
-            dateUpdated: now,
             course: { connect: { id: examData.courseId } }
           }
         });
@@ -885,10 +830,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_EXAM, {
           id,
-          data: {
-            ...examData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: examData
         });
         return (response as any).updateExam;
       } catch (error) {
@@ -949,7 +891,6 @@ export const hygraphService = {
             isGraded: attemptData.isGraded,
             startedAt: now,
             submittedAt: attemptData.examAttemptStatus === 'SUBMITTED' || attemptData.examAttemptStatus === 'GRADED' ? now : undefined,
-            dateUpdated: now,
             student: { connect: { id: attemptData.studentId } },
             exam: { connect: { id: attemptData.examId } }
           }
@@ -965,10 +906,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_EXAM_ATTEMPT, {
           id,
-          data: {
-            ...attemptData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: attemptData
         });
         return (response as any).updateExamAttempt;
       } catch (error) {
@@ -1004,7 +942,6 @@ export const hygraphService = {
       courseId?: string;
     }): Promise<HygraphAnnouncement> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_ANNOUNCEMENT, {
           data: {
             title: announcementData.title,
@@ -1012,7 +949,6 @@ export const hygraphService = {
             targetAudience: announcementData.targetAudience,
             externalLink: announcementData.externalLink,
             recipientStudentId: announcementData.recipientStudentId,
-            dateCreated: now,
             author: { connect: { id: announcementData.authorId } },
             ...(announcementData.courseId && { course: { connect: { id: announcementData.courseId } } })
           }
@@ -1077,7 +1013,6 @@ export const hygraphService = {
       isActive?: boolean;
     }): Promise<HygraphEvent> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_EVENT, {
           data: {
             title: eventData.title,
@@ -1090,9 +1025,7 @@ export const hygraphService = {
             currentAttendees: eventData.currentAttendees || 0,
             eventStatus: eventData.eventStatus,
             eventCreator: eventData.eventCreator,
-            isActive: eventData.isActive ?? true,
-            dateCreated: now,
-            dateUpdated: now
+            isActive: eventData.isActive ?? true
           }
         });
         return (response as any).createEvent;
@@ -1106,10 +1039,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_EVENT, {
           id,
-          data: {
-            ...eventData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: eventData
         });
         return (response as any).updateEvent;
       } catch (error) {
@@ -1217,7 +1147,6 @@ export const hygraphService = {
       isActive?: boolean;
     }): Promise<HygraphCourseMaterial> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_COURSE_MATERIAL, {
           data: {
             title: materialData.title,
@@ -1225,8 +1154,6 @@ export const hygraphService = {
             type: materialData.type,
             externalLink: materialData.externalLink,
             isActive: materialData.isActive ?? true,
-            dateCreated: now,
-            dateUpdated: now,
             course: { connect: { id: materialData.courseId } }
           }
         });
@@ -1241,10 +1168,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_COURSE_MATERIAL, {
           id,
-          data: {
-            ...materialData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: materialData
         });
         return (response as any).updateCourseMaterial;
       } catch (error) {
@@ -1288,7 +1212,6 @@ export const hygraphService = {
       supportTicketStatus?: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
     }): Promise<HygraphSupportTicket> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_SUPPORT_TICKET, {
           data: {
             name: ticketData.name,
@@ -1296,8 +1219,6 @@ export const hygraphService = {
             subject: ticketData.subject,
             message: ticketData.message,
             supportTicketStatus: ticketData.supportTicketStatus || 'OPEN',
-            dateCreated: now,
-            dateUpdated: now,
             ...(ticketData.userId && { user: { connect: { id: ticketData.userId } } })
           }
         });
@@ -1312,10 +1233,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_SUPPORT_TICKET, {
           id,
-          data: {
-            ...ticketData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: ticketData
         });
         return (response as any).updateSupportTicket;
       } catch (error) {
@@ -1431,9 +1349,7 @@ export const hygraphService = {
             category: threadData.category,
             likes: threadData.likes || 0,
             views: threadData.views || 0,
-            dateCreated: now,
             lastActivityAt: now,
-            dateUpdated: now,
             author: { connect: { id: threadData.authorId } }
           }
         });
@@ -1509,14 +1425,11 @@ export const hygraphService = {
       likes?: number;
     }): Promise<HygraphBlogPost> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_BLOG_POST, {
           data: {
             title: postData.title,
             content: postData.content,
             likes: postData.likes || 0,
-            dateCreated: now,
-            dateUpdated: now,
             author: { connect: { id: postData.authorId } }
           }
         });
@@ -1531,10 +1444,7 @@ export const hygraphService = {
       try {
         const response = await hygraphClient.request(UPDATE_BLOG_POST, {
           id,
-          data: {
-            ...postData,
-            dateUpdated: new Date().toISOString()
-          }
+          data: postData
         });
         return (response as any).updateBlogPost;
       } catch (error) {
@@ -1616,12 +1526,10 @@ export const hygraphService = {
       source: string;
     }): Promise<HygraphActivityLog> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_ACTIVITY_LOG, {
           data: {
             dateKey: logData.dateKey,
             source: logData.source,
-            dateCreated: now,
             user: { connect: { id: logData.userId } }
           }
         });

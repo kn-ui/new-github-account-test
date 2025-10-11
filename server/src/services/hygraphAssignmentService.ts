@@ -20,8 +20,6 @@ export interface HygraphAssignment {
   dueDate: string;
   maxScore: number;
   isActive: boolean;
-  dateCreated: string;
-  dateUpdated: string;
   course?: {
     id: string;
     title: string;
@@ -41,7 +39,6 @@ export interface HygraphSubmission {
   maxScore?: number;
   isActive: boolean;
   submittedAt: string;
-  dateUpdated?: string;
   student?: {
     id: string;
     displayName: string;
@@ -156,7 +153,6 @@ export const hygraphAssignmentService = {
   // Create new assignment
   async createAssignment(assignmentData: CreateAssignmentData): Promise<HygraphAssignment> {
     try {
-      const now = new Date().toISOString();
       const response = await hygraphClient.request(CREATE_ASSIGNMENT, {
         data: {
           title: assignmentData.title,
@@ -165,8 +161,6 @@ export const hygraphAssignmentService = {
           dueDate: assignmentData.dueDate,
           maxScore: assignmentData.maxScore,
           isActive: assignmentData.isActive ?? true,
-          dateCreated: now,
-          dateUpdated: now,
           course: { connect: { id: assignmentData.courseId } },
           teacher: { connect: { id: assignmentData.teacherId } }
         }
@@ -183,10 +177,7 @@ export const hygraphAssignmentService = {
     try {
       const response = await hygraphClient.request(UPDATE_ASSIGNMENT, {
         id,
-        data: {
-          ...assignmentData,
-          dateUpdated: new Date().toISOString()
-        }
+        data: assignmentData
       });
       return (response as any).updateAssignment;
     } catch (error) {
@@ -292,7 +283,6 @@ export const hygraphAssignmentService = {
           submissionStatus: submissionData.submissionStatus || 'SUBMITTED',
           isActive: true,
           submittedAt: now,
-          dateUpdated: now,
           student: { connect: { id: submissionData.studentId } },
           assignment: { connect: { id: submissionData.assignmentId } },
           course: { connect: { id: submissionData.courseId } }
@@ -310,10 +300,7 @@ export const hygraphAssignmentService = {
     try {
       const response = await hygraphClient.request(UPDATE_SUBMISSION, {
         id,
-        data: {
-          ...submissionData,
-          dateUpdated: new Date().toISOString()
-        }
+        data: submissionData
       });
       return (response as any).updateSubmission;
     } catch (error) {
@@ -330,8 +317,7 @@ export const hygraphAssignmentService = {
         data: {
           grade,
           feedback,
-          submissionStatus: 'GRADED',
-          dateUpdated: new Date().toISOString()
+          submissionStatus: 'GRADED'
         }
       });
       return (response as any).updateSubmission;

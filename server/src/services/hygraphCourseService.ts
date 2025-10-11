@@ -22,8 +22,6 @@ export interface HygraphCourse {
   syllabus: string;
   isActive: boolean;
   instructorName: string;
-  dateCreated: string;
-  dateUpdated: string;
   instructor?: {
     id: string;
     uid: string;
@@ -116,7 +114,6 @@ export const hygraphCourseService = {
   // Create a new course
   async createCourse(courseData: CreateCourseData): Promise<HygraphCourse> {
     try {
-      const now = new Date().toISOString();
       const data: any = {
         title: courseData.title,
         description: courseData.description,
@@ -125,9 +122,7 @@ export const hygraphCourseService = {
         maxStudents: courseData.maxStudents,
         syllabus: courseData.syllabus,
         instructorName: courseData.instructorName,
-        isActive: courseData.isActive ?? true,
-        dateCreated: now,
-        dateUpdated: now
+        isActive: courseData.isActive ?? true
       };
 
       // Connect to instructor if instructorId provided
@@ -151,8 +146,7 @@ export const hygraphCourseService = {
   async updateCourse(id: string, courseData: UpdateCourseData): Promise<HygraphCourse> {
     try {
       const data: any = {
-        ...courseData,
-        dateUpdated: new Date().toISOString()
+        ...courseData
       };
 
       // Connect to instructor if instructorId provided

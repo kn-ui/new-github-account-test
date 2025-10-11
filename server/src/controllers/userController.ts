@@ -52,7 +52,7 @@ export class UserController {
         publicMetadata: {
           role: userRole
         },
-        skipPasswordChecks: false,
+        skipPasswordChecks: true,
         skipPasswordRequirement: false,
       });
 

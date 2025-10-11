@@ -174,31 +174,40 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
             setUserProfile(convertedProfile);
           } else {
             // Create a new user profile if none exists
-            const newProfile = await hygraphUserService.createUser({
-              uid: user.id,
-              displayName: user.fullName || user.firstName || 'User',
-              email: user.primaryEmailAddress?.emailAddress || '',
-              role: (user.publicMetadata?.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN') || 'STUDENT',
-              isActive: true,
-              passwordChanged: true
-            });
-            
-            // Convert HygraphUser to HygraphUser format for compatibility
-            const convertedProfile: HygraphUser = {
-              uid: newProfile.uid,
-              id: newProfile.id,
-              displayName: newProfile.displayName,
-              email: newProfile.email,
-              role: newProfile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-              isActive: newProfile.isActive,
-              passwordChanged: newProfile.passwordChanged,
-              createdAt: new Date(newProfile.createdAt),
-              updatedAt: new Date(newProfile.updatedAt)
-            };
-            setUserProfile(convertedProfile);
+            try {
+              const newProfile = await hygraphUserService.createUser({
+                uid: user.id,
+                displayName: user.fullName || user.firstName || 'User',
+                email: user.primaryEmailAddress?.emailAddress || '',
+                role: (user.publicMetadata?.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN') || 'STUDENT',
+                isActive: true,
+                passwordChanged: true
+              });
+              
+              // Convert HygraphUser to HygraphUser format for compatibility
+              const convertedProfile: HygraphUser = {
+                uid: newProfile.uid,
+                id: newProfile.id,
+                displayName: newProfile.displayName,
+                email: newProfile.email,
+                role: newProfile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
+                isActive: newProfile.isActive,
+                passwordChanged: newProfile.passwordChanged,
+                createdAt: new Date(newProfile.createdAt),
+                updatedAt: new Date(newProfile.updatedAt)
+              };
+              setUserProfile(convertedProfile);
+            } catch (createError: any) {
+              // Silently fail if Hygraph is not configured
+              // User can still use the app, but some features may not work
+              console.warn('Failed to create Hygraph user profile:', createError.message);
+              if (createError.message?.includes('Hygraph database is not properly configured')) {
+                console.warn('Hygraph is not configured. User profile not created in Hygraph.');
+              }
+            }
           }
         } catch (error) {
-          console.log('Error fetching/creating user profile:', error);
+          console.log('Error fetching user profile:', error);
         }
       };
 

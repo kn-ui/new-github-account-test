@@ -63,7 +63,10 @@ export class UserController {
         role: role || UserRole.STUDENT,
       });
 
-      sendCreated(res, 'User created successfully', newUser);
+      sendCreated(res, 'User created successfully', {
+        ...newUser,
+        uid: clerkUser.id,
+      });
     } catch (error: any) {
       console.error('Create user error:', error);
       if (error.message?.includes('email_address_taken')) {
@@ -94,6 +97,8 @@ export class UserController {
       email: string;
       clerkResult?: { id: string } | null;
       hygraphResult?: { uid: string } | null;
+      clerkCreated: boolean;
+      hygraphCreated: boolean;
       rolledBack?: boolean;
       error?: string;
     }> = [];
@@ -101,7 +106,7 @@ export class UserController {
     await Promise.all(
       users.map((u, index) =>
         limit(async () => {
-          const result: any = { rowIndex: index, email: u.email };
+          const result: any = { rowIndex: index, email: u.email, clerkCreated: false, hygraphCreated: false };
           try {
             const clerkUser = await clerkClient.users.createUser({
               emailAddress: [u.email],
@@ -112,6 +117,7 @@ export class UserController {
               skipPasswordRequirement: true,
             });
             result.clerkResult = { id: clerkUser.id };
+            result.clerkCreated = true;
 
             try {
               const created = await createHygraphUser({
@@ -122,6 +128,7 @@ export class UserController {
                 isActive: u.isActive ?? true,
               });
               result.hygraphResult = { uid: created.uid };
+              result.hygraphCreated = true;
             } catch (hyErr: any) {
               result.error = `Hygraph error: ${hyErr?.message || 'Unknown error'}`;
               if (rollbackOnHygraphFail && result.clerkResult?.id) {
@@ -147,7 +154,10 @@ export class UserController {
       total: users.length,
       successCount: results.filter(r => r.hygraphResult && r.clerkResult && !r.error).length,
       failureCount: results.filter(r => r.error).length,
-      results,
+      results: results.map(r => ({
+        ...r,
+        errorMessage: r.error || undefined,
+      })),
     };
 
     sendSuccess(res, 'Bulk user creation completed', summary);

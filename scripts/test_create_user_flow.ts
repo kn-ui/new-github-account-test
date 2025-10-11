@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 import 'dotenv/config';
 import { getHygraphUserByUid } from '../server/src/lib/hygraph';
+import { createClerkClient } from '@clerk/backend';
 
 async function main() {
   const base = process.env.TEST_API_BASE_URL || 'http://localhost:5000';
@@ -25,6 +26,17 @@ async function main() {
   console.log('Query Hygraph for created user by uid');
   const hg = await getHygraphUserByUid(uid);
   if (!hg || hg.email !== email) throw new Error('Hygraph user not found or email mismatch');
+
+  // Cleanup Clerk user if possible
+  try {
+    if (process.env.CLERK_SECRET_KEY) {
+      const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+      await clerk.users.deleteUser(uid);
+      console.log('Cleaned up Clerk user');
+    }
+  } catch (e) {
+    console.warn('Cleanup failed (non-fatal):', (e as any)?.message || e);
+  }
 
   console.log('Test passed');
 }

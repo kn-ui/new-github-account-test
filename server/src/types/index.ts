@@ -109,7 +109,7 @@ export interface Enrollment {
   progress: number; // percentage completed
   completedLessons: string[]; // Array of lesson IDs
   lastAccessedAt: Date;
-  status: 'active' | 'completed' | 'dropped';
+  enrollmentStatus: 'active' | 'completed' | 'dropped';
 }
 
 // Forum Post interface

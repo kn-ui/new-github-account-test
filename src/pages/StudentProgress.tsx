@@ -140,7 +140,7 @@ export default function StudentProgress() {
           description: 'Achieve 90% or higher in Biblical Studies course',
           targetDate: new Date('2024-04-30'),
           progress: 100,
-          status: 'completed'
+          enrollmentStatus: 'COMPLETED'
         }
       ];
       setLearningGoals(mockGoals);

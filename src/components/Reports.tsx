@@ -75,7 +75,7 @@ export function Reports() {
             courseId: enrollment.courseId,
             courseTitle: enrollment.course?.title || 'Unknown Course',
             studentId: enrollment.studentId,
-            status: enrollment.status,
+            status: enrollment.enrollmentStatus,
             progress: enrollment.progress,
             enrolledAt: toSafeDate(enrollment.enrolledAt) || new Date().toISOString(),
             lastAccessedAt: toSafeDate(enrollment.lastAccessedAt) || new Date().toISOString(),

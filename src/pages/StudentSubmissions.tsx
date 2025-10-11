@@ -60,7 +60,8 @@ interface SubmissionWithDetails {
 
 // Helper functions for status styling
 const getStatusColor = (status: string) => {
-  switch (status) {
+  const statusLower = status?.toLowerCase();
+  switch (statusLower) {
     case 'submitted':
       return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'graded':
@@ -73,7 +74,8 @@ const getStatusColor = (status: string) => {
 };
 
 const getStatusIcon = (status: string) => {
-  switch (status) {
+  const statusLower = status?.toLowerCase();
+  switch (statusLower) {
     case 'submitted':
       return <CheckCircle className="h-4 w-4" />;
     case 'graded':
@@ -223,7 +225,7 @@ export default function StudentSubmissions() {
         const updateData = {
           content: submissionContent,
           attachments: submissionAttachments,
-          status: 'submitted' as const,
+          submissionStatus: 'SUBMITTED' as const,
           updatedAt: new Date()
         };
 
@@ -254,7 +256,7 @@ export default function StudentSubmissions() {
           studentEmail: userProfile?.email || currentUser?.email || '',
           content: submissionContent,
           attachments: submissionAttachments,
-          status: 'submitted' as const,
+          submissionStatus: 'SUBMITTED' as const,
           submittedAt: new Date(),
           isActive: true,
           createdAt: new Date(),
@@ -286,7 +288,7 @@ export default function StudentSubmissions() {
                            submission.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            submission.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesStatus = statusFilter === 'all' || submission.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || submission.submissionStatus?.toLowerCase() === statusFilter.toLowerCase();
       const matchesCourse = courseFilter === 'all' || submission.courseTitle === courseFilter;
       
       return matchesSearch && matchesStatus && matchesCourse;
@@ -1183,13 +1185,13 @@ export default function StudentSubmissions() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <Badge className={`${getStatusColor(submission.status)} px-3 py-1`}>
+                      <Badge className={`${getStatusColor(submission.submissionStatus)} px-3 py-1`}>
                         <div className="flex items-center gap-1">
-                          {getStatusIcon(submission.status)}
-                          {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                          {getStatusIcon(submission.submissionStatus)}
+                          {submission.submissionStatus?.charAt(0).toUpperCase() + submission.submissionStatus?.slice(1).toLowerCase()}
                         </div>
                       </Badge>
-                      {submission.status === 'graded' && submission.grade !== undefined && (
+                      {submission.submissionStatus === 'GRADED' && submission.grade !== undefined && (
                         <div className="text-right">
                           <p className="text-sm font-semibold text-green-600">
                             {submission.grade}/{submission.maxScore}
@@ -1231,10 +1233,10 @@ export default function StudentSubmissions() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-lg font-semibold text-gray-900">{truncateTitle(submission.assignmentTitle)}</h3>
-                          <Badge className={`${getStatusColor(submission.status)} flex-shrink-0`}>
+                          <Badge className={`${getStatusColor(submission.submissionStatus)} flex-shrink-0`}>
                             <div className="flex items-center gap-1">
-                              {getStatusIcon(submission.status)}
-                              {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                              {getStatusIcon(submission.submissionStatus)}
+                              {submission.submissionStatus?.charAt(0).toUpperCase() + submission.submissionStatus?.slice(1).toLowerCase()}
                             </div>
                           </Badge>
                         </div>
@@ -1253,7 +1255,7 @@ export default function StudentSubmissions() {
                           </span>
                         </div>
                         
-                        {submission.status === 'graded' && submission.grade !== undefined && (
+                        {submission.submissionStatus === 'GRADED' && submission.grade !== undefined && (
                           <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
                               <span className="font-medium">{t('student.submissions.grade')}:</span>
@@ -1280,7 +1282,7 @@ export default function StudentSubmissions() {
                           View Course
                         </Link>
                       </Button>
-                      {submission.status === 'draft' && (
+                      {submission.submissionStatus === 'DRAFT' && (
                         <Button size="sm" onClick={() => handleSubmissionAction(submission.assignmentId, 'edit')}>
                           <Edit className="h-4 w-4 mr-2" />
                           {t('student.submissions.continue')}

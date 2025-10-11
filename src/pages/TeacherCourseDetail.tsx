@@ -142,7 +142,7 @@ export default function TeacherCourseDetail() {
           const examGradesPromises = exs.map(async (exam) => {
             try {
               const attempts = await examAttemptService.getAttemptsByExam(exam.id);
-              const gradedAttempts = attempts.filter(attempt => attempt.status === 'graded' && attempt.isGraded);
+              const gradedAttempts = attempts.filter(attempt => attempt.examAttemptStatus === 'graded' && attempt.isGraded);
               
               return gradedAttempts.map(attempt => {
                 // Calculate manual score from manualScores object
@@ -163,7 +163,7 @@ export default function TeacherCourseDetail() {
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
-                  status: 'graded',
+                  submissionStatus: 'GRADED',
                   autoScore: attempt.autoScore || 0,
                   manualScore: manualScore
                 };
@@ -651,7 +651,7 @@ export default function TeacherCourseDetail() {
                       .map(e => (
                       <div key={e.id} className="py-2 flex items-center justify-between">
                         <div className="text-sm text-gray-700">{studentNames[e.studentId] || e.studentId}</div>
-                        <Badge variant="secondary" className="capitalize">{e.status}</Badge>
+                        <Badge variant="secondary" className="capitalize">{e.enrollmentStatus?.toLowerCase()}</Badge>
                       </div>
                     ))}
                   </div>
@@ -746,7 +746,7 @@ export default function TeacherCourseDetail() {
                       } else {
                         // export CSV for graded submissions
                         const rows = [['Student','Assignment','Grade','Submitted At']];
-                        submissions.filter(s => s.status === 'graded').forEach(s => {
+                        submissions.filter(s => s.submissionStatus === 'GRADED').forEach(s => {
                           const student = studentNames[s.studentId] || s.studentId;
                           const asg = assignments.find(a => a.id === s.assignmentId)?.title || s.assignmentId;
                           rows.push([student, asg, String(s.grade ?? ''), formatDateTimeString(s.submittedAt)]);
@@ -954,7 +954,7 @@ export default function TeacherCourseDetail() {
                     <div className="text-gray-500 text-sm">No final grades calculated yet.</div>
                   )
                 ) : (
-                  submissions.filter(s => s.status === 'graded').length > 0 ? (
+                  submissions.filter(s => s.submissionStatus === 'GRADED').length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50">
@@ -969,7 +969,7 @@ export default function TeacherCourseDetail() {
                         </thead>
                         <tbody className="divide-y">
                           {submissions
-                            .filter(s => s.status === 'graded')
+                            .filter(s => s.submissionStatus === 'GRADED')
                             .slice()
                             .sort((a,b) => {
                               switch (gradeSort) {

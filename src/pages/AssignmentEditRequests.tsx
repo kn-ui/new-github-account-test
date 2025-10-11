@@ -220,11 +220,11 @@ export default function AssignmentEditRequests() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            Due: {request.formatDateString(dueDate)}
+                            Due: {formatDateString(request.dueDate)}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            Requested: {request.formatDateString(requestedAt)}
+                            Requested: {formatDateString(request.requestedAt)}
                           </span>
                         </div>
                         <div className="mt-3">
@@ -297,11 +297,11 @@ export default function AssignmentEditRequests() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Due Date:</span>
-                    <p>{selectedRequest.formatDateString(dueDate)}</p>
+                    <p>{formatDateString(selectedRequest.dueDate)}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Requested:</span>
-                    <p>{selectedRequest.formatDateString(requestedAt)}</p>
+                    <p>{formatDateString(selectedRequest.requestedAt)}</p>
                   </div>
                 </div>
                 <div className="mt-3">

@@ -321,7 +321,7 @@ export default function AssignmentSubmissions() {
                           }
                           
                           try {
-                            await submissionService.updateSubmission(s.id, { grade: grading.grade, feedback: grading.feedback, status: 'graded' });
+                            await submissionService.updateSubmission(s.id, { grade: grading.grade, feedback: grading.feedback, submissionStatus: 'GRADED' });
                             studentDataService.clearStudentCache(s.studentId);
                             toast.success('Grade saved');
                             const fresh = await submissionService.getSubmissionsByAssignment(assignmentId!);

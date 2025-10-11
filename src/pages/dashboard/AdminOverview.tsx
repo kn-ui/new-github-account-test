@@ -259,7 +259,7 @@ const AdminOverview = () => {
                         <div>
                           <p className="font-semibold text-gray-900 text-lg">{course.title}</p>
                           <p className="text-sm text-gray-600">
-                            {t('calendar.loading').replace('Loading events...', 'Created')} {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : course.formatDateString(createdAt)}
+                            {t('calendar.loading').replace('Loading events...', 'Created')} {course.createdAt instanceof Date ? course.createdAt.toLocaleDateString() : formatDateString(course.createdAt)}
                           </p>
                         </div>
                       </div>

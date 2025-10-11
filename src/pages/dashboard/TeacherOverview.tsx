@@ -214,8 +214,8 @@ export default function TeacherOverview() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={submission.status === 'submitted' ? 'secondary' : 'default'}>
-                        {submission.status}
+                      <Badge variant={submission.submissionStatus === 'SUBMITTED' ? 'secondary' : 'default'}>
+                        {submission.submissionStatus}
                       </Badge>
                       <Button variant="ghost" size="sm" asChild>
                         <Link to={`/dashboard/submissions/${submission.id}`}>

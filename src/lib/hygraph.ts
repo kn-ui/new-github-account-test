@@ -46,7 +46,7 @@ export interface HygraphEnrollment {
   id: string;
   courseId: string;
   studentId: string;
-  status: 'ACTIVE' | 'COMPLETED';
+  enrollmentStatus: 'ACTIVE' | 'COMPLETED';
   progress: number;
   completedLessons: string[];
   enrolledAt: string;
@@ -76,7 +76,7 @@ export interface HygraphSubmission {
   assignmentId: string;
   studentId: string;
   submittedAt: string;
-  status: 'SUBMITTED' | 'GRADED';
+  submissionStatus: 'SUBMITTED' | 'GRADED';
   grade?: number;
   feedback?: string;
   content: string;
@@ -109,7 +109,7 @@ export interface HygraphEvent {
   location: string;
   maxAttendees: number;
   currentAttendees: number;
-  status: string;
+  eventStatus: string;
   isActive: boolean;
 }
 
@@ -212,7 +212,7 @@ export interface HygraphExamAttempt {
   id: string;
   examId: string;
   studentId: string;
-  status: 'in_progress' | 'submitted' | 'graded';
+  examAttemptStatus: 'in_progress' | 'submitted' | 'graded';
   answers: any[];
   score?: number;
   maxScore?: number;
@@ -265,7 +265,7 @@ export interface HygraphSupportTicket {
   email: string;
   subject: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  supportTicketStatus: 'open' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   userId?: string;
   createdAt: string;

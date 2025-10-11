@@ -228,7 +228,7 @@ export default function CourseManager() {
       await enrollmentService.createEnrollment({ 
         courseId: selectedCourseForEnroll.id, 
         studentId, 
-        status: 'active', 
+        enrollmentStatus: 'ACTIVE', 
         progress: 0, 
         completedLessons: [] 
       } as any);
@@ -285,7 +285,7 @@ export default function CourseManager() {
           await enrollmentService.createEnrollment({ 
             courseId: selectedCourseForEnroll.id, 
             studentId: uid, 
-            status: 'active', 
+            enrollmentStatus: 'ACTIVE', 
             progress: 0, 
             completedLessons: [] 
           } as any);
@@ -939,6 +939,11 @@ export default function CourseManager() {
                 <Plus className="h-5 w-5 text-green-600" />
                 Create Course
               </DialogTitle>
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Fill in all required fields. The course will be created with the selected instructor.
+                </p>
+              </div>
             </DialogHeader>
             <div className="space-y-4">
               {createStep === 1 && (

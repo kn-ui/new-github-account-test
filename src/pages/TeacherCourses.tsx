@@ -258,7 +258,7 @@ export default function TeacherCourses() {
                       {course.duration} {t('teacher.courses.weeks')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {course.formatDateString(createdAt)}
+                      {formatDateString(course.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

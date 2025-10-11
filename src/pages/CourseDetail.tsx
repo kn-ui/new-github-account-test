@@ -147,7 +147,7 @@ const CourseDetail = () => {
           const examAttemptsPromises = exams.map(async (exam) => {
             try {
               const attempt = await examAttemptService.getAttemptForStudent(exam.id, currentUser.uid);
-              if (attempt && attempt.status === 'graded' && attempt.isGraded) {
+              if (attempt && attempt.examAttemptStatus === 'graded' && attempt.isGraded) {
                 // Calculate manual score from manualScores object
                 const manualScores = attempt.manualScores || {};
                 const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
@@ -164,7 +164,7 @@ const CourseDetail = () => {
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
-                  status: 'graded',
+                  submissionStatus: 'GRADED',
                   autoScore: attempt.autoScore || 0,
                   manualScore: manualScore
                 };

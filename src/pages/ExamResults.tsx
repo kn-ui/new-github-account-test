@@ -330,8 +330,8 @@ export default function ExamResults() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <Badge className={getStatusColor(attempt.status)}>
-                          {attempt.status}
+                        <Badge className={getStatusColor(attempt.examAttemptStatus)}>
+                          {attempt.examAttemptStatus}
                         </Badge>
                         <div className="text-right">
                           <div className="text-2xl font-bold">

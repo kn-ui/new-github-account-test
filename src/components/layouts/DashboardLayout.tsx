@@ -132,6 +132,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
   useEffect(() => {
     const loadAnnouncements = async () => {
+      // Don't load announcements if user is not logged in
+      if (!currentUser || !userRole) {
+        return;
+      }
+      
       try {
         // Get all announcements (increased limit to show more)
         const all = await announcementService.getAllAnnouncements(100);
@@ -251,7 +256,16 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
         setAnnouncements([]);
       }
     };
-    loadAnnouncements();
+    
+    // Only load announcements if user is authenticated
+    if (currentUser && userRole) {
+      loadAnnouncements();
+    }
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      setAnnouncements([]);
+    };
   }, [userRole, currentUser]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {

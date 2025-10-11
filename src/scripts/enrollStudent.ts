@@ -26,7 +26,7 @@ const enrollStudent = async () => {
         await enrollmentService.createEnrollment({
           courseId: course.id,
           studentId: student.uid,
-          status: 'active',
+          enrollmentStatus: 'ACTIVE',
           progress: 0,
           completedLessons: [],
         });

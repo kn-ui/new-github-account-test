@@ -173,7 +173,7 @@ export const testData = {
       id: 'enrollment-001',
       courseId: 'course-001',
       studentId: 'student-001', // This will be replaced with actual Firebase Auth UID
-      status: 'active',
+      enrollmentStatus: 'ACTIVE',
       progress: 75,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006'],
       enrolledAt: Timestamp.now(),
@@ -183,7 +183,7 @@ export const testData = {
       id: 'enrollment-002',
       courseId: 'course-001',
       studentId: 'student-002', // This will be replaced with actual Firebase Auth UID
-      status: 'active',
+      enrollmentStatus: 'ACTIVE',
       progress: 50,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004'],
       enrolledAt: Timestamp.now(),
@@ -193,7 +193,7 @@ export const testData = {
       id: 'enrollment-003',
       courseId: 'course-002',
       studentId: 'student-001', // This will be replaced with actual Firebase Auth UID
-      status: 'active',
+      enrollmentStatus: 'ACTIVE',
       progress: 30,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],
       enrolledAt: Timestamp.now(),
@@ -203,7 +203,7 @@ export const testData = {
       id: 'enrollment-004',
       courseId: 'course-002',
       studentId: 'student-003', // This will be replaced with actual Firebase Auth UID
-      status: 'completed',
+      enrollmentStatus: 'COMPLETED',
       progress: 100,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
       enrolledAt: Timestamp.now(),
@@ -213,7 +213,7 @@ export const testData = {
       id: 'enrollment-005',
       courseId: 'course-003',
       studentId: 'student-004', // This will be replaced with actual Firebase Auth UID
-      status: 'active',
+      enrollmentStatus: 'ACTIVE',
       progress: 25,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],
       enrolledAt: Timestamp.now(),
@@ -223,7 +223,7 @@ export const testData = {
       id: 'enrollment-006',
       courseId: 'course-004',
       studentId: 'student-005',
-      status: 'active',
+      enrollmentStatus: 'ACTIVE',
       progress: 60,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
       enrolledAt: Timestamp.now(),
@@ -238,7 +238,7 @@ export const testData = {
       assignmentId: 'assignment-001',
       studentId: 'student-001',
       submittedAt: Timestamp.now(),
-      status: 'graded',
+      submissionStatus: 'GRADED',
       grade: 95,
       feedback: 'Excellent work! Your analysis shows deep understanding of the biblical text. Well done on connecting historical context with theological implications.'
     },
@@ -248,7 +248,7 @@ export const testData = {
       assignmentId: 'assignment-001',
       studentId: 'student-002',
       submittedAt: Timestamp.now(),
-      status: 'submitted',
+      submissionStatus: 'SUBMITTED',
       grade: null,
       feedback: null
     },
@@ -258,7 +258,7 @@ export const testData = {
       assignmentId: 'assignment-002',
       studentId: 'student-003',
       submittedAt: Timestamp.now(),
-      status: 'graded',
+      submissionStatus: 'GRADED',
       grade: 88,
       feedback: 'Good analysis of ethical principles. Consider exploring alternative viewpoints more thoroughly in future assignments.'
     },
@@ -268,7 +268,7 @@ export const testData = {
       assignmentId: 'assignment-003',
       studentId: 'student-004',
       submittedAt: Timestamp.now(),
-      status: 'submitted',
+      submissionStatus: 'SUBMITTED',
       grade: null,
       feedback: null
     }
@@ -292,7 +292,7 @@ export const testData = {
       email: 'mary.johnson@student.straguel.edu',
       subject: 'Assignment Submission Problem',
       message: 'I tried to submit my assignment but the system gave me an error message. Can you help me resolve this?',
-      status: 'in_progress',
+      supportTicketStatus: 'in_progress',
       createdAt: Timestamp.now()
     },
     {
@@ -469,7 +469,7 @@ export const getTestData = {
   getStudentStats: (studentId: string) => {
     const myEnrollments = testData.enrollments.filter(e => e.studentId === studentId);
     const mySubmissions = testData.submissions.filter(s => s.studentId === studentId);
-    const pendingAssignments = mySubmissions.filter(s => s.status === 'submitted').length;
+    const pendingAssignments = mySubmissions.filter(s => s.submissionStatus === 'SUBMITTED').length;
     const averageProgress = myEnrollments.length > 0 
       ? Math.round(myEnrollments.reduce((sum, e) => sum + e.progress, 0) / myEnrollments.length)
       : 0;

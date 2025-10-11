@@ -105,9 +105,9 @@ export class EventController {
 
       const newEvent = await hygraphEventService.createEvent(eventData);
       sendCreated(res, 'Event created successfully', newEvent);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create event error:', error);
-      sendServerError(res, 'Failed to create event');
+      sendServerError(res, 'Failed to create event: ' + (error.message || 'Unknown error'));
     }
   }
 

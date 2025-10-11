@@ -128,7 +128,7 @@ export default function TeacherGrades() {
       await submissionService.updateSubmission(selectedSubmission.id, {
         grade: grade,
         feedback: feedback,
-        status: 'graded'
+        submissionStatus: 'GRADED'
       });
 
       toast.success('Submission graded successfully');

@@ -95,10 +95,10 @@ export default function SubmissionDetail() {
     }
     
     try {
-      await submissionService.updateSubmission(submission.id, { grade, feedback, status: 'graded' });
+      await submissionService.updateSubmission(submission.id, { grade, feedback, submissionStatus: 'GRADED' });
       toast.success('Grade updated');
       setGradeDialog(false);
-      setSubmission({ ...submission, grade, feedback, status: 'graded' });
+      setSubmission({ ...submission, grade, feedback, submissionStatus: 'GRADED' });
     } catch (e) {
       console.error(e);
       toast.error('Failed to save grade');
@@ -292,15 +292,15 @@ export default function SubmissionDetail() {
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {submission.formatDateString(submittedAt)}
+                      {formatDateString(submission.submittedAt)}
                     </p>
                     <p className="text-xs text-gray-500">Submitted</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Badge variant={submission.status === 'graded' ? 'secondary' : submission.status === 'submitted' ? 'default' : 'outline'}>
-                    {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                  <Badge variant={submission.submissionStatus === 'GRADED' ? 'secondary' : submission.submissionStatus === 'SUBMITTED' ? 'default' : 'outline'}>
+                    {submission.submissionStatus.charAt(0).toUpperCase() + submission.submissionStatus.slice(1).toLowerCase()}
                   </Badge>
                 </div>
               </CardContent>

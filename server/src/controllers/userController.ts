@@ -44,6 +44,7 @@ export class UserController {
           displayName,
           role: role || UserRole.STUDENT,
           isActive: true,
+          passwordChanged: false,
         });
       } catch (hyErr: any) {
         // Attempt rollback of Clerk user to avoid orphan accounts on failures
@@ -126,6 +127,7 @@ export class UserController {
                 displayName: u.displayName,
                 role: u.role || UserRole.STUDENT,
                 isActive: u.isActive ?? true,
+                passwordChanged: false,
               });
               result.hygraphResult = { uid: created.uid };
               result.hygraphCreated = true;

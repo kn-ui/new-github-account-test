@@ -47,7 +47,7 @@ const StudentCourses = React.memo(() => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   useEffect(() => {
-    if (currentUser?.uid && userProfile?.role === 'student') {
+    if (currentUser?.uid && userProfile?.role === 'STUDENT') {
       loadEnrolledCourses();
     }
   }, [currentUser?.uid, userProfile?.role]);
@@ -120,7 +120,7 @@ const StudentCourses = React.memo(() => {
     return t('student.progress.notStarted');
   };
 
-  if (!userProfile || userProfile.role !== 'student') {
+  if (!userProfile || userProfile.role !== 'STUDENT') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

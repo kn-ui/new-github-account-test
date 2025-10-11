@@ -59,7 +59,7 @@ export default function StudentAssignments() {
   const [assignmentResources, setAssignmentResources] = useState<any[]>([]);
 
   useEffect(() => {
-    if (currentUser?.uid && userProfile?.role === 'student') {
+    if (currentUser?.uid && userProfile?.role === 'STUDENT') {
       loadAssignments();
     }
   }, [currentUser?.uid, userProfile?.role]);
@@ -461,7 +461,7 @@ export default function StudentAssignments() {
     );
   }
 
-  if (!userProfile || userProfile.role !== 'student') {
+  if (!userProfile || userProfile.role !== 'STUDENT') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

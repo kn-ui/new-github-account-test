@@ -92,6 +92,7 @@ router.get('/public', eventController.getPublicEvents);
 router.get('/type/:eventType', eventController.getEventsByType);
 router.get('/date-range', eventController.getEventsByDateRange);
 router.get('/registration-required', eventController.getEventsRequiringRegistration);
+router.get('/', eventController.getPublicEvents); // Add public access to main events endpoint
 
 // Protected routes (authentication required)
 router.use(authenticateToken);
@@ -122,7 +123,7 @@ router.patch('/:eventId/registration-deadline', requireTeacherOrAdmin, eventCont
 router.get('/stats/creator', eventController.getCreatorEventStats);
 
 // Admin only routes
-router.get('/', requireAdmin, validatePagination, eventController.getAllEvents);
+router.get('/admin', requireAdmin, validatePagination, eventController.getAllEvents);
 router.get('/stats/overview', requireAdmin, eventController.getEventStats);
 
 export default router;

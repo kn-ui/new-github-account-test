@@ -26,8 +26,15 @@ router.get('/search', requireTeacherOrAdmin, validatePagination, userController.
 router.get('/teachers', requireTeacherOrAdmin, validatePagination, userController.getTeachers);
 router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats);
 
+// Student data endpoints
+router.get('/dashboard/:userId', requireAuth, userController.getStudentDashboardData);
+router.get('/courses/:userId', requireAuth, userController.getStudentCoursesData);
+router.get('/assignments/:userId', requireAuth, userController.getStudentAssignmentsData);
+router.get('/submissions/:userId', requireAuth, userController.getStudentSubmissionsData);
+
 // Admin only routes
 router.get('/', requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
+router.get('/all', requireAdminOrSuperAdmin, validatePagination, userController.getUsers);
 
 // Parameterized routes last
 

@@ -54,6 +54,7 @@ router.use(authenticateToken);
 // Specific routes first (before parameterized routes)
 router.get('/student/enrollments', courseController.getMyEnrollments);
 router.get('/instructor/my-courses', requireTeacherOrAdmin, validatePagination, courseController.getMyCourses);
+router.get('/instructor/:instructorId', requireTeacherOrAdmin, validatePagination, courseController.getCoursesByInstructor);
 router.get('/admin/stats', requireTeacherAdminOrSuperAdmin, courseController.getCourseStats);
 
 router.put('/enrollments/:enrollmentId/progress', courseController.updateProgress);

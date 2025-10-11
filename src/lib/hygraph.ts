@@ -332,7 +332,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 export const userService = {
   async getUsers(limitCount?: number): Promise<HygraphUser[]> {
     const limit = limitCount || 10;
-    return apiCall<HygraphUser[]>(`/users?limit=${limit}`);
+    return apiCall<HygraphUser[]>(`/users/all?limit=${limit}`);
   },
 
   async getUserById(uid: string): Promise<HygraphUser | null> {

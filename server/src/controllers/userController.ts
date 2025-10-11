@@ -328,6 +328,120 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       sendServerError(res, 'Failed to retrieve teachers');
     }
   }
+
+  // Get all users (for admin use)
+  async getUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const skip = (page - 1) * limit;
+
+      const users = await hygraphUserService.getUsers(limit, skip);
+      
+      sendPaginatedResponse(
+        res,
+        'Users retrieved successfully',
+        users,
+        page,
+        limit,
+        users.length
+      );
+    } catch (error) {
+      console.error('Get users error:', error);
+      sendServerError(res, 'Failed to retrieve users');
+    }
+  }
+
+  // Student data endpoints
+  async getStudentDashboardData(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      
+      // Verify user can access this data
+      if (req.user!.uid !== userId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      // For now, return mock data. In production, this would aggregate data from multiple services
+      const dashboardData = {
+        totalCourses: 0,
+        completedCourses: 0,
+        inProgressCourses: 0,
+        totalAssignments: 0,
+        submittedAssignments: 0,
+        pendingAssignments: 0,
+        averageGrade: 0,
+        recentActivity: [],
+        upcomingDeadlines: []
+      };
+
+      sendSuccess(res, 'Student dashboard data retrieved successfully', dashboardData);
+    } catch (error) {
+      console.error('Get student dashboard data error:', error);
+      sendServerError(res, 'Failed to retrieve student dashboard data');
+    }
+  }
+
+  async getStudentCoursesData(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      
+      // Verify user can access this data
+      if (req.user!.uid !== userId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      // For now, return mock data. In production, this would get enrolled courses
+      const coursesData = [];
+
+      sendSuccess(res, 'Student courses data retrieved successfully', coursesData);
+    } catch (error) {
+      console.error('Get student courses data error:', error);
+      sendServerError(res, 'Failed to retrieve student courses data');
+    }
+  }
+
+  async getStudentAssignmentsData(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      
+      // Verify user can access this data
+      if (req.user!.uid !== userId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      // For now, return mock data. In production, this would get assignments for enrolled courses
+      const assignmentsData = [];
+
+      sendSuccess(res, 'Student assignments data retrieved successfully', assignmentsData);
+    } catch (error) {
+      console.error('Get student assignments data error:', error);
+      sendServerError(res, 'Failed to retrieve student assignments data');
+    }
+  }
+
+  async getStudentSubmissionsData(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      
+      // Verify user can access this data
+      if (req.user!.uid !== userId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      // For now, return mock data. In production, this would get submissions for the student
+      const submissionsData = [];
+
+      sendSuccess(res, 'Student submissions data retrieved successfully', submissionsData);
+    } catch (error) {
+      console.error('Get student submissions data error:', error);
+      sendServerError(res, 'Failed to retrieve student submissions data');
+    }
+  }
 }
 
 export default new UserController();

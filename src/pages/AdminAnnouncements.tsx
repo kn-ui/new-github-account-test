@@ -75,7 +75,7 @@ export default function AdminAnnouncements() {
   });
 
   useEffect(() => {
-    if (currentUser?.uid && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
+    if (currentUser?.uid && (userProfile?.role === 'ADMIN' || userProfile?.role === 'SUPER_ADMIN')) {
       loadData();
     }
   }, [currentUser?.uid, userProfile?.role]);
@@ -265,7 +265,7 @@ export default function AdminAnnouncements() {
     }
   };
 
-  if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
+  if (!userProfile || (userProfile.role !== 'ADMIN' && userProfile.role !== 'SUPER_ADMIN')) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

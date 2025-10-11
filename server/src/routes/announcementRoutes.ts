@@ -101,6 +101,7 @@ router.get('/stats/author', announcementController.getAuthorAnnouncementStats);
 
 // Admin only routes
 router.get('/', requireAdmin, validatePagination, announcementController.getAllAnnouncements);
+router.get('/admin', requireAdmin, validatePagination, announcementController.getAllAnnouncements);
 router.get('/stats/overview', requireAdmin, announcementController.getAnnouncementStats);
 
 export default router;

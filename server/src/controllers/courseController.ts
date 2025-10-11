@@ -304,6 +304,36 @@ export class CourseController {
     }
   }
 
+  // Get courses by instructor ID
+  async getCoursesByInstructor(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { instructorId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      // Verify user can access this data
+      if (req.user!.uid !== instructorId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      const courses = await hygraphCourseService.getCoursesByInstructor(instructorId, limit, skip);
+      
+      sendPaginatedResponse(
+        res,
+        'Instructor courses retrieved successfully',
+        courses,
+        page,
+        limit,
+        courses.length
+      );
+    } catch (error) {
+      console.error('Get courses by instructor error:', error);
+      sendServerError(res, 'Failed to get instructor courses');
+    }
+  }
+
   // Get course statistics
   async getCourseStats(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {

@@ -41,7 +41,7 @@ export default function TeacherCourses() {
     
 
   useEffect(() => {
-    if (currentUser?.uid && userProfile?.role === 'teacher') {
+    if (currentUser?.uid && userProfile?.role === 'TEACHER') {
       loadCourses();
     }
   }, [currentUser?.uid, userProfile?.role]);
@@ -130,7 +130,7 @@ export default function TeacherCourses() {
     return filtered;
   }, [courses, searchTerm, statusFilter, sortBy]);
 
-  if (!userProfile || userProfile.role !== 'teacher') {
+  if (!userProfile || userProfile.role !== 'TEACHER') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

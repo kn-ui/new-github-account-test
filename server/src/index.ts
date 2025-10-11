@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
 import enrollmentRoutes from './routes/enrollmentRoutes';
 import assignmentRoutes from './routes/assignmentRoutes';
+import submissionRoutes from './routes/submissionRoutes';
 import examRoutes from './routes/examRoutes';
 import gradeRoutes from './routes/gradeRoutes';
 import announcementRoutes from './routes/announcementRoutes';
@@ -94,6 +95,7 @@ try {
   app.use('/api/courses', courseRoutes);
   app.use('/api/enrollments', enrollmentRoutes);
   app.use('/api/assignments', assignmentRoutes);
+  app.use('/api/submissions', submissionRoutes);
   app.use('/api/exams', examRoutes);
   app.use('/api/grades', gradeRoutes);
   app.use('/api/announcements', announcementRoutes);

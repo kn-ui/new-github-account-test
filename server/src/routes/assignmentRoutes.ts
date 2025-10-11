@@ -5,55 +5,11 @@ import { validateAssignmentCreation, validatePagination } from '../middleware/va
 
 const router = Router();
 
-// Test endpoint that doesn't require authentication (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Assignments test endpoint working',
-    data: [
-      {
-        id: '1',
-        title: 'Math Problem Set 1',
-        description: 'Complete the algebra problems',
-        instructions: 'Show all your work and submit by the due date',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        maxScore: 100,
-        isActive: true,
-        course: {
-          id: 'course1',
-          title: 'Algebra I'
-        },
-        teacher: {
-          id: 'teacher1',
-          displayName: 'John Doe'
-        },
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'Essay Assignment',
-        description: 'Write a 500-word essay on climate change',
-        instructions: 'Use proper citations and follow MLA format',
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        maxScore: 100,
-        isActive: true,
-        course: {
-          id: 'course2',
-          title: 'English Literature'
-        },
-        teacher: {
-          id: 'teacher2',
-          displayName: 'Jane Smith'
-        },
-        createdAt: new Date().toISOString()
-      }
-    ],
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: 2,
-      totalPages: 1
-    }
+    message: 'Assignment service is healthy'
   });
 });
 

@@ -5,41 +5,11 @@ import { validateCourseCreation, validatePagination } from '../middleware/valida
 
 const router = Router();
 
-// Test endpoint that doesn't require Firebase (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Courses test endpoint working',
-    data: [
-      {
-        id: '1',
-        title: 'Introduction to Mathematics',
-        description: 'Basic mathematics course for beginners',
-        instructor: 'John Doe',
-        category: 'Mathematics',
-        duration: 8,
-        maxStudents: 30,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'English Literature',
-        description: 'Exploring classic and modern literature',
-        instructor: 'Jane Smith',
-        category: 'Literature',
-        duration: 12,
-        maxStudents: 25,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      }
-    ],
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: 2,
-      totalPages: 1
-    }
+    message: 'Course service is healthy'
   });
 });
 

@@ -5,86 +5,14 @@ import { validatePagination } from '../middleware/validation';
 
 const router = Router();
 
-// Test endpoint that doesn't require authentication (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Events test endpoint working',
-    data: [
-      {
-        id: '1',
-        title: 'Mathematics Midterm Exam',
-        description: 'Midterm examination for Algebra I course covering chapters 1-5',
-        date: '2025-10-15',
-        time: '10:00 AM',
-        location: 'Room 101',
-        eventType: 'EXAM',
-        isRecurring: false,
-        isActive: true,
-        isPublic: false,
-        requiresRegistration: true,
-        registrationDeadline: '2025-10-14T23:59:59Z',
-        maxAttendees: 30,
-        eventCreator: {
-          id: 'teacher1',
-          displayName: 'Dr. Smith',
-          email: 'smith@school.edu'
-        },
-        course: {
-          id: 'course1',
-          title: 'Algebra I'
-        }
-      },
-      {
-        id: '2',
-        title: 'School Sports Day',
-        description: 'Annual sports day with various competitions and activities for all students',
-        date: '2025-10-20',
-        time: '9:00 AM',
-        location: 'School Grounds',
-        eventType: 'SPORTS',
-        isRecurring: true,
-        recurrencePattern: 'YEARLY',
-        isActive: true,
-        isPublic: true,
-        requiresRegistration: true,
-        registrationDeadline: '2025-10-18T23:59:59Z',
-        maxAttendees: 200,
-        eventCreator: {
-          id: 'admin1',
-          displayName: 'School Administration',
-          email: 'admin@school.edu'
-        }
-      },
-      {
-        id: '3',
-        title: 'Cultural Festival',
-        description: 'Annual cultural festival showcasing student talents and cultural diversity',
-        date: '2025-11-05',
-        time: '6:00 PM',
-        location: 'Auditorium',
-        eventType: 'CULTURAL',
-        isRecurring: true,
-        recurrencePattern: 'YEARLY',
-        isActive: true,
-        isPublic: true,
-        requiresRegistration: false,
-        maxAttendees: 500,
-        eventCreator: {
-          id: 'admin1',
-          displayName: 'School Administration',
-          email: 'admin@school.edu'
-        }
-      }
-    ],
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: 3,
-      totalPages: 1
-    }
+    message: 'Service is healthy'
   });
 });
+
 
 // Public endpoints (no authentication required)
 router.get('/upcoming', eventController.getUpcomingEvents);

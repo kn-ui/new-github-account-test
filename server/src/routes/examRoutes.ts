@@ -5,49 +5,14 @@ import { validatePagination } from '../middleware/validation';
 
 const router = Router();
 
-// Test endpoint that doesn't require authentication (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Exams test endpoint working',
-    data: [
-      {
-        id: '1',
-        title: 'Midterm Mathematics Exam',
-        description: 'Algebra and geometry concepts',
-        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        startTime: '09:00',
-        durationMinutes: 120,
-        totalPoints: 100,
-        course: {
-          id: 'course1',
-          title: 'Algebra I'
-        },
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'Final English Literature Exam',
-        description: 'Comprehensive literature analysis',
-        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        startTime: '10:00',
-        durationMinutes: 180,
-        totalPoints: 150,
-        course: {
-          id: 'course2',
-          title: 'English Literature'
-        },
-        createdAt: new Date().toISOString()
-      }
-    ],
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: 2,
-      totalPages: 1
-    }
+    message: 'Service is healthy'
   });
 });
+
 
 // Public routes
 router.get('/search', validatePagination, examController.getAllExams);

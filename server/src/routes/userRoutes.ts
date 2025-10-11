@@ -6,14 +6,14 @@ import { validateUserRegistration, validatePagination } from '../middleware/vali
 
 const router = Router();
 
-// Test endpoint for Hygraph connection (must be before authentication middleware)
-router.get('/test-hygraph', (req, res) => {
+// Health check endpoint for Hygraph connection
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'User routes test endpoint working',
+    message: 'User service is healthy',
     hygraphConfig: {
-      endpoint: process.env.HYGRAPH_ENDPOINT ? 'Set' : 'Not set',
-      token: process.env.HYGRAPH_TOKEN ? 'Set' : 'Not set'
+      endpoint: process.env.HYGRAPH_ENDPOINT ? 'Configured' : 'Not configured',
+      token: process.env.HYGRAPH_TOKEN ? 'Configured' : 'Not configured'
     }
   });
 });
@@ -47,6 +47,11 @@ router.get('/submissions/:userId', requireAuth, userController.getStudentSubmiss
 // Admin only routes
 router.get('/', requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
 router.get('/all', requireAdminOrSuperAdmin, validatePagination, userController.getUsers);
+
+// Additional user lookup routes
+router.get('/email/:email', requireTeacherOrAdmin, userController.getUserByEmail);
+router.get('/teachers', requireTeacherOrAdmin, validatePagination, userController.getTeachers);
+router.get('/students-by-teacher/:teacherId', requireTeacherOrAdmin, validatePagination, userController.getStudentsByTeacher);
 
 // Parameterized routes last
 

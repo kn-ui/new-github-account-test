@@ -273,7 +273,7 @@ export interface HygraphSupportTicket {
 }
 
 // API Base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Generic API call function with authentication
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -639,21 +639,11 @@ export const announcementService = {
   },
 
   async getActiveAnnouncements(limitCount = 20): Promise<HygraphAnnouncement[]> {
-    try {
-      return apiCall<HygraphAnnouncement[]>(`/announcements/active?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Active announcements failed, using test data:', error);
-      return apiCall<HygraphAnnouncement[]>(`/announcements/test`);
-    }
+    return apiCall<HygraphAnnouncement[]>(`/announcements/active?limit=${limitCount}`);
   },
 
   async getRecentAnnouncements(limitCount = 20): Promise<HygraphAnnouncement[]> {
-    try {
-      return apiCall<HygraphAnnouncement[]>(`/announcements/recent?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Recent announcements failed, using test data:', error);
-      return apiCall<HygraphAnnouncement[]>(`/announcements/test`);
-    }
+    return apiCall<HygraphAnnouncement[]>(`/announcements/recent?limit=${limitCount}`);
   },
 
   async getPublicGeneralAnnouncements(limitCount = 30): Promise<HygraphAnnouncement[]> {
@@ -701,21 +691,11 @@ export const eventService = {
   },
 
   async getPublicEvents(limitCount = 10): Promise<HygraphEvent[]> {
-    try {
-      return apiCall<HygraphEvent[]>(`/events/public?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Public events failed, using test data:', error);
-      return apiCall<HygraphEvent[]>(`/events/test`);
-    }
+    return apiCall<HygraphEvent[]>(`/events/public?limit=${limitCount}`);
   },
 
   async getUpcomingEvents(limitCount = 10): Promise<HygraphEvent[]> {
-    try {
-      return apiCall<HygraphEvent[]>(`/events/upcoming?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Upcoming events failed, using test data:', error);
-      return apiCall<HygraphEvent[]>(`/events/test`);
-    }
+    return apiCall<HygraphEvent[]>(`/events/upcoming?limit=${limitCount}`);
   },
 
   async getAllEvents(): Promise<HygraphEvent[]> {
@@ -751,30 +731,15 @@ export const blogService = {
   },
 
   async getPublishedBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
-    try {
-      return apiCall<HygraphBlog[]>(`/blog/posts/published?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Published blog posts failed, using test data:', error);
-      return apiCall<HygraphBlog[]>(`/blog/test`);
-    }
+    return apiCall<HygraphBlog[]>(`/blog/posts/published?limit=${limitCount}`);
   },
 
   async getFeaturedBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
-    try {
-      return apiCall<HygraphBlog[]>(`/blog/posts/featured?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Featured blog posts failed, using test data:', error);
-      return apiCall<HygraphBlog[]>(`/blog/test`);
-    }
+    return apiCall<HygraphBlog[]>(`/blog/posts/featured?limit=${limitCount}`);
   },
 
   async getRecentBlogPosts(limitCount = 10): Promise<HygraphBlog[]> {
-    try {
-      return apiCall<HygraphBlog[]>(`/blog/posts/recent?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Recent blog posts failed, using test data:', error);
-      return apiCall<HygraphBlog[]>(`/blog/test`);
-    }
+    return apiCall<HygraphBlog[]>(`/blog/posts/recent?limit=${limitCount}`);
   },
 
   async createBlogPost(blogData: Omit<HygraphBlog, 'id' | 'createdAt' | 'likes'>): Promise<string> {
@@ -808,12 +773,7 @@ export const blogService = {
 // Forum operations
 export const forumService = {
   async getForumThreads(limitCount = 10): Promise<HygraphForumThread[]> {
-    try {
-      return apiCall<HygraphForumThread[]>(`/forum/threads/public?limit=${limitCount}`);
-    } catch (error) {
-      console.warn('Forum threads failed, using test data:', error);
-      return apiCall<HygraphForumThread[]>(`/forum/test`);
-    }
+    return apiCall<HygraphForumThread[]>(`/forum/threads/public?limit=${limitCount}`);
   },
 
   async getForumThreadById(threadId: string): Promise<HygraphForumThread | null> {

@@ -106,21 +106,9 @@ export const hygraphUserService = {
     } catch (error: any) {
       console.error('Error creating user in Hygraph:', error);
       
-      // If Hygraph is not configured, return a mock user
+      // If Hygraph is not configured properly, throw a clear error
       if (error.message?.includes('GraphQL Error') || error.message?.includes('404') || error.message?.includes('400')) {
-        console.warn('Hygraph not configured, creating mock user response');
-        const now = new Date().toISOString();
-        return {
-          id: 'mock-' + userData.uid,
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.displayName,
-          role: userData.role,
-          isActive: userData.isActive ?? true,
-          passwordChanged: userData.passwordChanged ?? false,
-          createdAt: now,
-          updatedAt: now
-        };
+        throw new Error('Hygraph is not configured properly. Please set HYGRAPH_ENDPOINT and HYGRAPH_TOKEN environment variables.');
       }
       
       throw error;

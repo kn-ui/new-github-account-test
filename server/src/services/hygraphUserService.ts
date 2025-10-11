@@ -105,16 +105,14 @@ export const hygraphUserService = {
       return (response as any).createAppUser;
     } catch (error: any) {
       console.error('Error creating user in Hygraph:', error);
+      console.error('Full error details:', JSON.stringify(error, null, 2));
       
-      // If Hygraph is not configured properly, throw a clear error
-      if (error.message?.includes('GraphQL Error') || 
-          error.message?.includes('404') || 
-          error.message?.includes('400') ||
-          error.message?.includes('fetch failed') ||
-          error.message?.includes('ENOTFOUND')) {
-        throw new Error('Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
+      // Log the response property if it exists (for GraphQL errors)
+      if (error.response) {
+        console.error('GraphQL error response:', JSON.stringify(error.response, null, 2));
       }
       
+      // Re-throw with more details for debugging
       throw error;
     }
   },

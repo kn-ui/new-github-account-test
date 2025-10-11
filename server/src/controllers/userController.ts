@@ -21,13 +21,6 @@ export class UserController {
   // Admin: Create a new user
   async createUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      // Check if Hygraph is properly configured before attempting to create user
-      if (!isHygraphConfigured()) {
-        console.error('Hygraph is not configured. Missing HYGRAPH_ENDPOINT or HYGRAPH_TOKEN.');
-        sendServerError(res, 'User creation failed: Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
-        return;
-      }
-
       const { email, displayName, role } = req.body;
 
       // Determine default password based on role
@@ -94,6 +87,8 @@ export class UserController {
         sendCreated(res, 'User created successfully', newUser);
       } catch (hygraphError: any) {
         console.error('Hygraph user creation failed:', hygraphError);
+        console.error('Hygraph error message:', hygraphError.message);
+        console.error('Hygraph error response:', hygraphError.response);
         
         // If Hygraph user creation fails, roll back the Clerk user creation
         if (clerkUser && clerkUser.id && !clerkUser.id.startsWith('mock-')) {
@@ -109,13 +104,8 @@ export class UserController {
           }
         }
         
-        // Send a clear error message about Hygraph configuration
-        if (hygraphError.message?.includes('Hygraph database is not properly configured') || 
-            hygraphError.message?.includes('Hygraph is not configured')) {
-          sendServerError(res, 'User creation failed: Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
-        } else {
-          sendServerError(res, `User creation failed: ${hygraphError.message || 'Unknown error occurred'}`);
-        }
+        // Send the actual error message from Hygraph for debugging
+        sendServerError(res, `User creation failed: ${hygraphError.message || 'Unknown error occurred'}`);
         return;
       }
     } catch (error: any) {
@@ -146,13 +136,6 @@ export class UserController {
 // Create or update user profile
 async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    // Check if Hygraph is properly configured before attempting to create/update profile
-    if (!isHygraphConfigured()) {
-      console.error('Hygraph is not configured. Missing HYGRAPH_ENDPOINT or HYGRAPH_TOKEN.');
-      sendServerError(res, 'Profile creation/update failed: Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
-      return;
-    }
-
     const { displayName, phoneNumber, dateOfBirth, address, profileImage, role } = req.body;
     const uid = req.user!.uid;
     const email = req.user!.email;

@@ -106,16 +106,9 @@ export const hygraphUserService = {
       return response.createAppUser;
     } catch (error: any) {
       console.error('Error creating user in Hygraph:', error);
+      console.error('Full error details:', error);
       
-      // If Hygraph is not configured properly, throw a clear error
-      if (error.message?.includes('GraphQL Error') || 
-          error.message?.includes('404') || 
-          error.message?.includes('400') ||
-          error.message?.includes('fetch failed') ||
-          error.message?.includes('ENOTFOUND')) {
-        throw new Error('Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
-      }
-      
+      // Re-throw the original error for debugging
       throw error;
     }
   },

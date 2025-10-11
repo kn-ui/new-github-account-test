@@ -198,12 +198,9 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               };
               setUserProfile(convertedProfile);
             } catch (createError: any) {
-              // Silently fail if Hygraph is not configured
-              // User can still use the app, but some features may not work
-              console.warn('Failed to create Hygraph user profile:', createError.message);
-              if (createError.message?.includes('Hygraph database is not properly configured')) {
-                console.warn('Hygraph is not configured. User profile not created in Hygraph.');
-              }
+              // Log the error but allow the app to continue
+              console.error('Failed to create Hygraph user profile:', createError);
+              console.error('Error details:', createError.message, createError.response);
             }
           }
         } catch (error) {

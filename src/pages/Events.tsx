@@ -80,7 +80,7 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: 'ACADEMIC', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
 
   const totalEvents = events.length;
@@ -195,7 +195,7 @@ const EventsPage = () => {
         date: date instanceof Date ? date.toISOString() : date,
         time: editForm.time,
         location: editForm.location,
-        type: editForm.type,
+        eventType: editForm.type,
         maxAttendees: editForm.maxAttendees,
       });
       setIsEditOpen(false);
@@ -203,6 +203,7 @@ const EventsPage = () => {
       fetchEvents();
     } catch (e) {
       console.error(e);
+      toast.error('Failed to update event. Please check all required fields.');
     }
   };
 
@@ -220,18 +221,20 @@ const EventsPage = () => {
         title: createForm.title || '',
         description: createForm.description || '',
         date: date instanceof Date ? date.toISOString() : date,
-        createdBy: 'system',
-        type: createForm.type || 'meeting',
-        time: createForm.time || '',
+        eventType: createForm.type || 'ACADEMIC',
+        time: createForm.time || '09:00',
         location: createForm.location || '',
         maxAttendees: createForm.maxAttendees || 50,
-        currentAttendees: createForm.currentAttendees || 0,
-        status: getEventStatus(date),
+        isActive: true,
+        isPublic: false,
+        requiresRegistration: false,
+        isRecurring: false
       });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
       console.error(e);
+      toast.error('Failed to create event. Please check all required fields.');
     }
   };
 
@@ -599,14 +602,20 @@ const EventsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('events.type_label')} (max 50 characters)</label>
-                <Input 
-                  value={String(createForm.type || '')} 
-                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value.slice(0, 50) } as any)}
-                  placeholder="e.g., meeting, conference, workshop"
-                  maxLength={50}
-                />
-                <p className="text-xs text-gray-500 mt-1">{(createForm.type || '').length}/50 characters</p>
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
+                <select
+                  value={String(createForm.type || 'ACADEMIC')}
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="ACADEMIC">Academic</option>
+                  <option value="SOCIAL">Social</option>
+                  <option value="SPORTS">Sports</option>
+                  <option value="CULTURAL">Cultural</option>
+                  <option value="ADMINISTRATIVE">Administrative</option>
+                  <option value="EXAM">Exam</option>
+                  <option value="HOLIDAY">Holiday</option>
+                </select>
               </div>
             </div>
             <div>
@@ -705,13 +714,20 @@ const EventsPage = () => {
                 <Input value={String(editForm.time || '')} onChange={(e) => setEditForm({ ...editForm, time: e.target.value } as any)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('events.type_label')} (max 50 characters)</label>
-                <Input 
-                  value={String(editForm.type || '')} 
-                  onChange={(e) => setEditForm({ ...editForm, type: e.target.value.slice(0, 50) } as any)}
-                  maxLength={50}
-                />
-                <p className="text-xs text-gray-500 mt-1">{(editForm.type || '').length}/50 characters</p>
+                <label className="block text-sm font-medium mb-1">{t('events.type_label')}</label>
+                <select
+                  value={String(editForm.type || 'ACADEMIC')}
+                  onChange={(e) => setEditForm({ ...editForm, type: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="ACADEMIC">Academic</option>
+                  <option value="SOCIAL">Social</option>
+                  <option value="SPORTS">Sports</option>
+                  <option value="CULTURAL">Cultural</option>
+                  <option value="ADMINISTRATIVE">Administrative</option>
+                  <option value="EXAM">Exam</option>
+                  <option value="HOLIDAY">Holiday</option>
+                </select>
               </div>
             </div>
             <div>

@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit';
 // Import routes
 import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
+import enrollmentRoutes from './routes/enrollmentRoutes';
 import assignmentRoutes from './routes/assignmentRoutes';
 import examRoutes from './routes/examRoutes';
 import gradeRoutes from './routes/gradeRoutes';
@@ -91,6 +92,7 @@ app.get('/test', (req, res) => {
 try {
   app.use('/api/users', userRoutes);
   app.use('/api/courses', courseRoutes);
+  app.use('/api/enrollments', enrollmentRoutes);
   app.use('/api/assignments', assignmentRoutes);
   app.use('/api/exams', examRoutes);
   app.use('/api/grades', gradeRoutes);

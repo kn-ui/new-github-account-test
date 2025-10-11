@@ -76,6 +76,8 @@ export const CREATE_USER = `
       role
       isActive
       passwordChanged
+      createdAt
+      updatedAt
     }
   }
 `;

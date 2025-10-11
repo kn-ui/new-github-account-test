@@ -339,8 +339,7 @@ export interface HygraphForumPost {
   id: string;
   body: string;
   likes: number;
-  createdAt: string;
-  updatedAt?: string;
+  dateCreated: string;
   author?: {
     id: string;
     displayName: string;
@@ -557,7 +556,6 @@ export const hygraphService = {
             syllabus: courseData.syllabus,
             instructorName: courseData.instructorName,
             isActive: courseData.isActive ?? true,
-,
             ...(courseData.instructorId && { instructor: { connect: { id: courseData.instructorId } } })
           }
         });
@@ -698,7 +696,6 @@ export const hygraphService = {
             dueDate: assignmentData.dueDate,
             maxScore: assignmentData.maxScore,
             isActive: assignmentData.isActive ?? true,
-,
             course: { connect: { id: assignmentData.courseId } },
             teacher: { connect: { id: assignmentData.teacherId } }
           }
@@ -860,7 +857,6 @@ export const hygraphService = {
             totalPoints: examData.totalPoints,
             questions: examData.questions,
             firstAttemptTimestamp: examData.firstAttemptTimestamp,
-,
             course: { connect: { id: examData.courseId } }
           }
         });
@@ -1076,7 +1072,7 @@ export const hygraphService = {
             currentAttendees: eventData.currentAttendees || 0,
             eventStatus: eventData.eventStatus,
             eventCreator: eventData.eventCreator,
-            isActive: eventData.isActive ?? true,
+            isActive: eventData.isActive ?? true
           }
         });
         return response.createEvent;
@@ -1208,7 +1204,6 @@ export const hygraphService = {
             type: materialData.type,
             externalLink: materialData.externalLink,
             isActive: materialData.isActive ?? true,
-,
             course: { connect: { id: materialData.courseId } }
           }
         });
@@ -1277,7 +1272,6 @@ export const hygraphService = {
             subject: ticketData.subject,
             message: ticketData.message,
             supportTicketStatus: ticketData.supportTicketStatus || 'OPEN',
-,
             ...(ticketData.userId && { user: { connect: { id: ticketData.userId } } })
           }
         });
@@ -1449,7 +1443,7 @@ export const hygraphService = {
           data: {
             body: postData.body,
             likes: postData.likes || 0,
-,
+            dateCreated: now,
             author: { connect: { id: postData.authorId } },
             thread: { connect: { id: postData.threadId } }
           }
@@ -1491,7 +1485,6 @@ export const hygraphService = {
             title: postData.title,
             content: postData.content,
             likes: postData.likes || 0,
-,
             author: { connect: { id: postData.authorId } }
           }
         });

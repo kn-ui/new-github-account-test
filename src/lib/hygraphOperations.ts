@@ -76,6 +76,8 @@ export const CREATE_USER = `
       role
       isActive
       passwordChanged
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -1051,7 +1053,7 @@ export const GET_FORUM_THREADS = `
         id
         body
         likes
-        createdAt
+        dateCreated
         author {
           id
           displayName
@@ -1083,8 +1085,7 @@ export const GET_FORUM_POSTS = `
       id
       body
       likes
-      createdAt
-      updatedAt
+      dateCreated
       author {
         id
         displayName
@@ -1103,8 +1104,7 @@ export const CREATE_FORUM_POST = `
       id
       body
       likes
-      createdAt
-      updatedAt
+      dateCreated
     }
   }
 `;

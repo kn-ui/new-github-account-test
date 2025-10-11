@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
 import { hygraphUserService, HygraphUser } from '../lib/hygraphUserService';
-import { HygraphUser } from '@/lib/hygraph';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 

@@ -339,7 +339,8 @@ export interface HygraphForumPost {
   id: string;
   body: string;
   likes: number;
-  dateCreated: string;
+  createdAt: string;
+  updatedAt?: string;
   author?: {
     id: string;
     displayName: string;
@@ -1438,12 +1439,10 @@ export const hygraphService = {
       likes?: number;
     }): Promise<HygraphForumPost> {
       try {
-        const now = new Date().toISOString();
         const response = await hygraphClient.request(CREATE_FORUM_POST, {
           data: {
             body: postData.body,
             likes: postData.likes || 0,
-            dateCreated: now,
             author: { connect: { id: postData.authorId } },
             thread: { connect: { id: postData.threadId } }
           }

@@ -1053,7 +1053,7 @@ export const GET_FORUM_THREADS = `
         id
         body
         likes
-        dateCreated
+        createdAt
         author {
           id
           displayName
@@ -1085,7 +1085,8 @@ export const GET_FORUM_POSTS = `
       id
       body
       likes
-      dateCreated
+      createdAt
+      updatedAt
       author {
         id
         displayName
@@ -1104,7 +1105,8 @@ export const CREATE_FORUM_POST = `
       id
       body
       likes
-      dateCreated
+      createdAt
+      updatedAt
     }
   }
 `;

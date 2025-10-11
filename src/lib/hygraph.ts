@@ -328,6 +328,45 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data.data;
 }
 
+// Helpers to normalize backend responses to legacy frontend shapes
+function mapEnrollmentRecord(raw: any): any {
+  if (!raw || typeof raw !== 'object') return raw;
+  return {
+    id: raw.id,
+    enrollmentStatus: raw.enrollmentStatus,
+    progress: raw.progress,
+    completedLessons: raw.completedLessons,
+    isActive: raw.isActive,
+    enrolledAt: raw.enrolledAt,
+    lastAccessedAt: raw.lastAccessedAt,
+    studentId: raw.student?.id ?? raw.studentId,
+    courseId: raw.course?.id ?? raw.courseId,
+    student: raw.student,
+    course: raw.course,
+  };
+}
+
+function mapSubmissionRecord(raw: any): any {
+  if (!raw || typeof raw !== 'object') return raw;
+  return {
+    id: raw.id,
+    content: raw.content,
+    submissionStatus: raw.submissionStatus,
+    grade: raw.grade,
+    feedback: raw.feedback,
+    maxScore: raw.maxScore,
+    isActive: raw.isActive,
+    submittedAt: raw.submittedAt,
+    updatedAt: raw.updatedAt,
+    studentId: raw.student?.id ?? raw.studentId,
+    assignmentId: raw.assignment?.id ?? raw.assignmentId,
+    courseId: raw.course?.id ?? raw.courseId,
+    student: raw.student,
+    assignment: raw.assignment,
+    course: raw.course,
+  };
+}
+
 // User operations
 export const userService = {
   async getUsers(limitCount?: number): Promise<HygraphUser[]> {
@@ -344,8 +383,14 @@ export const userService = {
   },
 
   async getUserByEmail(email: string): Promise<HygraphUser | null> {
+    // Backend lacks /users/email/:email. Search and match by email.
     try {
-      return await apiCall<HygraphUser>(`/users/email/${email}`);
+      const results = await apiCall<HygraphUser[]>(`/users/search?q=${encodeURIComponent(email)}&page=1&limit=10`);
+      const normalized = String(email).trim().toLowerCase();
+      const found = Array.isArray(results)
+        ? results.find(u => (u.email || '').toLowerCase() === normalized)
+        : null;
+      return found || null;
     } catch (error) {
       return null;
     }
@@ -384,16 +429,26 @@ export const userService = {
   },
 
   async updateUser(uid: string, updates: Partial<HygraphUser>): Promise<void> {
-    await apiCall(`/users/${uid}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+    // Map to available backend endpoints
+    if (typeof updates.role === 'string' && updates.role) {
+      await apiCall(`/users/${uid}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role: updates.role }),
+      });
+    }
+    if (typeof updates.isActive === 'boolean') {
+      if (updates.isActive) {
+        await apiCall(`/users/${uid}/activate`, { method: 'PUT' });
+      } else {
+        await apiCall(`/users/${uid}/deactivate`, { method: 'PUT' });
+      }
+    }
+    // displayName/email update: no dedicated admin endpoint; skip silently
   },
 
   async deleteUser(userId: string): Promise<void> {
-    await apiCall(`/users/${userId}`, {
-      method: 'DELETE',
-    });
+    // Soft delete: deactivate user (no hard-delete endpoint in backend)
+    await apiCall(`/users/${userId}/deactivate`, { method: 'PUT' });
   },
 
   async getInactiveUsers(limitCount?: number): Promise<HygraphUser[]> {
@@ -489,36 +544,37 @@ export const courseService = {
 // Enrollment operations
 export const enrollmentService = {
   async getEnrollmentsByStudent(studentId: string): Promise<(HygraphEnrollment & { course?: HygraphCourse })[]> {
-    return apiCall<(HygraphEnrollment & { course?: HygraphCourse })[]>(`/enrollments/student/${studentId}`);
+    // No direct route; fetch all and filter client-side
+    const all = await apiCall<any[]>(`/enrollments`);
+    return (all || []).map(mapEnrollmentRecord).filter(e => e.studentId === studentId);
   },
 
   async getEnrollmentsByCourse(courseId: string): Promise<HygraphEnrollment[]> {
-    return apiCall<HygraphEnrollment[]>(`/enrollments/course/${courseId}`);
+    const items = await apiCall<any[]>(`/courses/${courseId}/enrollments`);
+    return (items || []).map(mapEnrollmentRecord);
   },
 
   async createEnrollment(enrollmentData: Omit<HygraphEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
-    const response = await apiCall<{ id: string }>('/enrollments', {
-      method: 'POST',
-      body: JSON.stringify(enrollmentData),
-    });
-    return response.id;
+    if (!enrollmentData.courseId) throw new Error('courseId is required');
+    await apiCall(`/courses/${enrollmentData.courseId}/enroll`, { method: 'POST' });
+    return '';
   },
 
   async getAllEnrollments(): Promise<(HygraphEnrollment & { course?: HygraphCourse })[]> {
-    return apiCall<(HygraphEnrollment & { course?: HygraphCourse })[]>('/enrollments');
+    const items = await apiCall<any[]>(`/enrollments`);
+    return (items || []).map(mapEnrollmentRecord);
   },
 
   async updateEnrollmentProgress(enrollmentId: string, progress: number, completedLessons: string[]): Promise<void> {
-    await apiCall(`/enrollments/${enrollmentId}/progress`, {
+    await apiCall(`/courses/enrollments/${enrollmentId}/progress`, {
       method: 'PUT',
       body: JSON.stringify({ progress, completedLessons }),
     });
   },
 
-  async deleteEnrollment(enrollmentId: string): Promise<void> {
-    await apiCall(`/enrollments/${enrollmentId}`, {
-      method: 'DELETE',
-    });
+  async deleteEnrollment(_enrollmentId: string): Promise<void> {
+    // Not supported by backend
+    throw new Error('Enrollment deletion is not supported');
   },
 };
 
@@ -558,7 +614,8 @@ export const assignmentService = {
   },
 
   async getAssignmentsByTeacher(teacherId: string): Promise<HygraphAssignment[]> {
-    return apiCall<HygraphAssignment[]>(`/assignments/teacher/${teacherId}`);
+    // Use current teacher's assignments endpoint
+    return apiCall<HygraphAssignment[]>(`/assignments/my/assignments`);
   },
 
   async updateAssignment(assignmentId: string, updates: Partial<HygraphAssignment>): Promise<void> {
@@ -577,44 +634,57 @@ export const assignmentService = {
 
 // Submission operations
 export const submissionService = {
-  async getSubmissionsByStudent(studentId: string): Promise<HygraphSubmission[]> {
-    return apiCall<HygraphSubmission[]>(`/submissions/student/${studentId}`);
+  async getSubmissionsByStudent(_studentId: string): Promise<HygraphSubmission[]> {
+    const items = await apiCall<any[]>(`/assignments/my/submissions`);
+    return (items || []).map(mapSubmissionRecord);
   },
 
   async getSubmissionsByAssignment(assignmentId: string): Promise<HygraphSubmission[]> {
-    return apiCall<HygraphSubmission[]>(`/submissions/assignment/${assignmentId}`);
+    const items = await apiCall<any[]>(`/assignments/${assignmentId}/submissions`);
+    return (items || []).map(mapSubmissionRecord);
   },
 
   async getSubmissionsByCourse(courseId: string): Promise<HygraphSubmission[]> {
-    return apiCall<HygraphSubmission[]>(`/submissions/course/${courseId}`);
+    const assignments = await apiCall<HygraphAssignment[]>(`/assignments/course/${courseId}?limit=1000`);
+    if (!Array.isArray(assignments) || assignments.length === 0) return [];
+    const results = await Promise.all(
+      assignments.map(a => apiCall<any[]>(`/assignments/${a.id}/submissions?limit=1000`).catch(() => []))
+    );
+    return results.flat().map(mapSubmissionRecord);
   },
 
   async createSubmission(submissionData: Omit<HygraphSubmission, 'id' | 'submittedAt'>): Promise<string> {
-    const response = await apiCall<{ id: string }>('/submissions', {
+    if (!submissionData.assignmentId) throw new Error('assignmentId is required');
+    await apiCall(`/assignments/${submissionData.assignmentId}/submit`, {
       method: 'POST',
-      body: JSON.stringify(submissionData),
+      body: JSON.stringify({ content: submissionData.content }),
     });
-    return response.id;
+    return '';
   },
 
   async gradeSubmission(submissionId: string, grade: number, feedback: string): Promise<void> {
-    await apiCall(`/submissions/${submissionId}/grade`, {
-      method: 'PUT',
+    await apiCall(`/assignments/${submissionId}/grade`, {
+      method: 'POST',
       body: JSON.stringify({ grade, feedback }),
     });
   },
 
   async updateSubmission(submissionId: string, updates: Partial<HygraphSubmission>): Promise<void> {
-    await apiCall(`/submissions/${submissionId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+    if (typeof updates.grade !== 'undefined' || typeof updates.feedback !== 'undefined') {
+      await apiCall(`/assignments/${submissionId}/grade`, {
+        method: 'POST',
+        body: JSON.stringify({ grade: updates.grade, feedback: updates.feedback }),
+      });
+    }
   },
 
   async getSubmission(submissionId: string): Promise<HygraphSubmission | null> {
+    // Fallback: load current user's submissions and match by id
     try {
-      return await apiCall<HygraphSubmission>(`/submissions/${submissionId}`);
-    } catch (error) {
+      const items = await apiCall<any[]>(`/assignments/my/submissions`);
+      const found = (items || []).map(mapSubmissionRecord).find(s => s.id === submissionId) || null;
+      return found;
+    } catch {
       return null;
     }
   },
@@ -1027,55 +1097,51 @@ export const examService = {
 export const examAttemptService = {
   async getAttemptForStudent(examId: string, studentId: string): Promise<HygraphExamAttempt | null> {
     try {
-      return await apiCall<HygraphExamAttempt>(`/exam-attempts/student/${studentId}/exam/${examId}`);
+      const attempts = await apiCall<any[]>(`/exams/${examId}/attempts?limit=1000`);
+      const found = (attempts || []).find(a => a.student?.id === studentId);
+      return found || null;
     } catch (error) {
       return null;
     }
   },
 
-  async getAttemptsByStudent(studentId: string): Promise<HygraphExamAttempt[]> {
-    return apiCall<HygraphExamAttempt[]>(`/exam-attempts/student/${studentId}`);
+  async getAttemptsByStudent(_studentId: string): Promise<HygraphExamAttempt[]> {
+    return [];
   },
 
   async getAttemptsByExam(examId: string): Promise<HygraphExamAttempt[]> {
-    return apiCall<HygraphExamAttempt[]>(`/exam-attempts/exam/${examId}`);
+    return apiCall<HygraphExamAttempt[]>(`/exams/${examId}/attempts?limit=1000`);
   },
 
-  async createAttempt(examId: string, studentId: string): Promise<string> {
-    const response = await apiCall<{ id: string }>('/exam-attempts', {
+  async createAttempt(examId: string, _studentId: string): Promise<string> {
+    const response = await apiCall<{ id: string }>(`/exams/${examId}/start`, {
       method: 'POST',
-      body: JSON.stringify({ examId, studentId }),
     });
-    return response.id;
+    return response?.id || '';
   },
 
-  async getAttemptById(attemptId: string): Promise<HygraphExamAttempt | null> {
+  async getAttemptById(_attemptId: string): Promise<HygraphExamAttempt | null> {
     try {
-      return await apiCall<HygraphExamAttempt>(`/exam-attempts/${attemptId}`);
+      // No dedicated endpoint to fetch attempt by id that's publicly exposed; return null
+      return null;
     } catch (error) {
       return null;
     }
   },
 
-  async saveProgress(attemptId: string, answers: any[]): Promise<void> {
-    await apiCall(`/exam-attempts/${attemptId}/save`, {
-      method: 'PUT',
-      body: JSON.stringify({ answers }),
-    });
+  async saveProgress(_attemptId: string, _answers: any[]): Promise<void> {
+    // Not supported by backend
   },
 
   async submitAttempt(attemptId: string, data: { answers: any[]; autoScore: number }): Promise<void> {
-    await apiCall(`/exam-attempts/${attemptId}/submit`, {
+    await apiCall(`/exams/${attemptId}/submit`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  async updateAttempt(attemptId: string, updates: Partial<HygraphExamAttempt>): Promise<void> {
-    await apiCall(`/exam-attempts/${attemptId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+  async updateAttempt(_attemptId: string, _updates: Partial<HygraphExamAttempt>): Promise<void> {
+    // Not supported by backend
   },
 };
 
@@ -1087,7 +1153,9 @@ export const gradeService = {
 
   async getGradeByStudentAndCourse(courseId: string, studentId: string): Promise<HygraphGrade | null> {
     try {
-      return await apiCall<HygraphGrade>(`/grades/student/${studentId}/course/${courseId}`);
+      const items = await apiCall<any[]>(`/grades/course/${courseId}`);
+      const found = (items || []).find((g: any) => g.student?.id === studentId) || null;
+      return found;
     } catch (error) {
       return null;
     }

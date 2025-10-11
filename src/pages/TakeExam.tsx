@@ -35,13 +35,20 @@ export default function TakeExam() {
         setLoading(true);
         const found = await examService.getExamById(examId);
         if (found) setExam(found);
-        let attempt = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
-        if (!attempt) {
+        let existing = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
+        if (!existing) {
           const id = await examAttemptService.createAttempt(examId, currentUser.uid);
-          attempt = await examAttemptService.getAttemptById(id);
+          // After creation, re-query attempts for the exam and current student
+          existing = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
+          if (!existing && id) {
+            // best-effort: set attemptId to returned id even if fetch failed
+            setAttemptId(id);
+          }
         }
-        setAttemptId(attempt!.id);
-        setAttempt(attempt);
+        if (existing) {
+          setAttemptId(existing.id);
+          setAttempt(existing);
+        }
         const initial: Record<string, any> = {};
         (found as any)?.questions?.forEach((q: any) => {
           const saved = attempt?.answers?.find((a: any) => a.questionId === q.id)?.response;

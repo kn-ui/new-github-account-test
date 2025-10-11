@@ -573,6 +573,11 @@ const EventsPage = () => {
               <CalendarIcon className="h-5 w-5 text-purple-600" />
               {t('events.createEventTitle')}
             </DialogTitle>
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> All fields marked with * are required. The event will be created and visible to all users.
+              </p>
+            </div>
           </DialogHeader>
           <div className="space-y-4">
             <div>

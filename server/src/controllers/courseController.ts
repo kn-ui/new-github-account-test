@@ -15,13 +15,38 @@ export class CourseController {
   // Create a new course (admin only)
   async createCourse(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { title, description, syllabus, category, duration, maxStudents, thumbnail, isActive } = req.body;
-      const instructorId = req.user!.uid;
+      const { title, description, syllabus, category, duration, maxStudents, instructor, instructorName, isActive } = req.body;
+      
+      // Admins can specify an instructor, otherwise use the authenticated user
+      let instructorId = req.user!.uid;
+      let finalInstructorName = instructorName;
+      
+      // If instructor is provided (admin creating course for another instructor)
+      if (instructor && req.user!.role === 'admin') {
+        instructorId = instructor;
+        
+        // Get instructor name from Hygraph if not provided
+        if (!finalInstructorName) {
+          const instructorUser = await hygraphUserService.getUserByUid(instructorId);
+          if (!instructorUser) {
+            sendNotFound(res, 'Instructor not found');
+            return;
+          }
+          finalInstructorName = instructorUser.displayName;
+        }
+      } else {
+        // Teacher creating their own course - get their name
+        const currentUser = await hygraphUserService.getUserByUid(instructorId);
+        if (!currentUser) {
+          sendNotFound(res, 'User not found');
+          return;
+        }
+        finalInstructorName = currentUser.displayName;
+      }
 
-      // Get instructor name from Hygraph
-      const instructor = await hygraphUserService.getUserByUid(instructorId);
-      if (!instructor) {
-        sendNotFound(res, 'Instructor not found');
+      // Validate required fields
+      if (!title || !description || !category || !syllabus) {
+        sendError(res, 'Missing required fields: title, description, category, syllabus');
         return;
       }
 
@@ -32,16 +57,16 @@ export class CourseController {
         category,
         duration: parseInt(duration) || 8,
         maxStudents: parseInt(maxStudents) || 50,
-        instructorName: instructor.displayName,
+        instructorName: finalInstructorName,
         instructorId,
         isActive: typeof isActive === 'boolean' ? isActive : true
       };
 
       const newCourse = await hygraphCourseService.createCourse(courseData);
       sendCreated(res, 'Course created successfully', newCourse);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create course error:', error);
-      sendServerError(res, 'Failed to create course');
+      sendServerError(res, 'Failed to create course: ' + (error.message || 'Unknown error'));
     }
   }
 

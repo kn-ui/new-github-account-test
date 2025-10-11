@@ -298,7 +298,21 @@ const UserManager = () => {
                   </div>
                 </div>
                 <DialogDescription>
-                  {mode==='single' ? t('users.singleDescription') : t('users.bulkDescription')}
+                  {mode==='single' ? (
+                    <>
+                      {t('users.singleDescription')}
+                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-sm text-blue-800 font-medium mb-1">Default Passwords by Role:</p>
+                        <ul className="text-xs text-blue-700 space-y-1">
+                          <li>• Student: <code className="bg-blue-100 px-1 py-0.5 rounded">student123</code></li>
+                          <li>• Teacher: <code className="bg-blue-100 px-1 py-0.5 rounded">teacher123</code></li>
+                          <li>• Admin: <code className="bg-blue-100 px-1 py-0.5 rounded">admin123</code></li>
+                          <li>• Super Admin: <code className="bg-blue-100 px-1 py-0.5 rounded">superadmin123</code></li>
+                        </ul>
+                        <p className="text-xs text-blue-600 mt-2 italic">Users will be required to change their password on first login.</p>
+                      </div>
+                    </>
+                  ) : t('users.bulkDescription')}
                 </DialogDescription>
               </DialogHeader>
               {mode==='single' ? (

@@ -22,35 +22,59 @@ export class UserController {
     try {
       const { email, displayName, role } = req.body;
 
-      // Step 1: Create user in Clerk
+      // Determine default password based on role
+      const userRole = role || UserRole.STUDENT;
+      let defaultPassword: string;
+      
+      switch (userRole.toLowerCase()) {
+        case 'teacher':
+          defaultPassword = 'teacher123';
+          break;
+        case 'admin':
+          defaultPassword = 'admin123';
+          break;
+        case 'super_admin':
+        case 'superadmin':
+          defaultPassword = 'superadmin123';
+          break;
+        case 'student':
+        default:
+          defaultPassword = 'student123';
+          break;
+      }
+
+      // Step 1: Create user in Clerk with default password
       const clerkUser = await clerkClient.users.createUser({
         emailAddress: [email],
+        password: defaultPassword,
         firstName: displayName.split(' ')[0],
         lastName: displayName.split(' ').slice(1).join(' ') || '',
         publicMetadata: {
-          role: role || UserRole.STUDENT
+          role: userRole
         },
-        skipPasswordChecks: true,
-        skipPasswordRequirement: true,
+        skipPasswordChecks: false,
+        skipPasswordRequirement: false,
       });
 
-      // Step 2: Create user in Hygraph
+      // Step 2: Create user in Hygraph (passwordChanged: false so they must change on first login)
       const newUser = await hygraphUserService.createUser({
         uid: clerkUser.id,
         email,
         displayName,
-        role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
+        role: userRole.toUpperCase() as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
         isActive: true,
-        passwordChanged: true
+        passwordChanged: false // User must change password on first login
       });
 
       sendCreated(res, 'User created successfully', newUser);
     } catch (error: any) {
       console.error('Create user error:', error);
-      if (error.message?.includes('email_address_taken')) {
+      if (error.message?.includes('email_address_taken') || error.message?.includes('already in use')) {
         sendError(res, 'Email already in use', undefined, 409);
+      } else if (error.message?.includes('invalid email')) {
+        sendError(res, 'Invalid email address', undefined, 400);
       } else {
-        sendServerError(res, 'Failed to create user');
+        sendServerError(res, 'Failed to create user: ' + (error.message || 'Unknown error'));
       }
     }
   }

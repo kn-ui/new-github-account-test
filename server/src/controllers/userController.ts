@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import { hygraphUserService } from '../services/hygraphUserService';
 import { createClerkClient } from '@clerk/backend';
+import { isHygraphConfigured } from '../config/hygraph';
 import {
   sendSuccess,
   sendError,
@@ -85,6 +86,8 @@ export class UserController {
 
         sendCreated(res, 'User created successfully', newUser);
       } catch (hygraphError: any) {
+        console.error('Hygraph user creation failed:', hygraphError);
+        
         // If Hygraph user creation fails, roll back the Clerk user creation
         if (clerkUser && clerkUser.id && !clerkUser.id.startsWith('mock-')) {
           console.log(`Attempting to delete Clerk user ${clerkUser.id} due to Hygraph failure.`);
@@ -93,10 +96,19 @@ export class UserController {
             console.log(`Successfully deleted Clerk user ${clerkUser.id}.`);
           } catch (deleteError: any) {
             console.error(`CRITICAL: Failed to delete Clerk user ${clerkUser.id} after Hygraph failure. Manual cleanup required.`, deleteError);
+            // Send a critical error response
+            sendServerError(res, `User creation partially failed. User was created in Clerk but not in Hygraph. Please contact support. Error: ${hygraphError.message}`);
+            return;
           }
         }
-        // Re-throw the error to be handled by the main catch block, which will send a server error response
-        throw hygraphError;
+        
+        // Send a clear error message about Hygraph configuration
+        if (hygraphError.message?.includes('Hygraph is not configured')) {
+          sendServerError(res, 'User creation failed: Hygraph database is not properly configured. Please contact the system administrator to set up the database connection.');
+        } else {
+          sendServerError(res, `User creation failed: ${hygraphError.message || 'Unknown error occurred'}`);
+        }
+        return;
       }
     } catch (error: any) {
       console.error('Create user error:', error);
@@ -137,68 +149,33 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
     try {
       existingUser = await hygraphUserService.getUserByUid(uid);
     } catch (hygraphError: any) {
-      if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-        console.warn('Hygraph not configured, skipping user lookup');
-      } else {
-        throw hygraphError;
-      }
+      // Log error but continue - user might not exist yet
+      console.log('Error looking up user (may not exist yet):', hygraphError.message);
     }
 
     if (existingUser) {
       console.log('User exists, updating profile');
-      try {
-        // Update existing user
-        const updatedUser = await hygraphUserService.updateUser(existingUser.id, {
-          displayName,
-          role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN'
-        });
+      // Update existing user
+      const updatedUser = await hygraphUserService.updateUser(existingUser.id, {
+        displayName,
+        role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN'
+      });
 
-        sendSuccess(res, 'Profile updated successfully', updatedUser);
-      } catch (hygraphError: any) {
-        if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-          console.warn('Hygraph not configured, creating mock update response');
-          const mockUser = {
-            ...existingUser,
-            displayName,
-            role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-          };
-          sendSuccess(res, 'Profile updated successfully (Hygraph not configured)', mockUser);
-        } else {
-          throw hygraphError;
-        }
-      }
+      sendSuccess(res, 'Profile updated successfully', updatedUser);
     } else {
       console.log('User does not exist, creating new profile');
-      try {
-        // Create new user profile
-        const newUser = await hygraphUserService.createUser({
-          uid: uid,
-          email: email || '',
-          displayName: displayName || 'New User',
-          role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-          isActive: true,
-          passwordChanged: true
-        });
+      // Create new user profile
+      const newUser = await hygraphUserService.createUser({
+        uid: uid,
+        email: email || '',
+        displayName: displayName || 'New User',
+        role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
+        isActive: true,
+        passwordChanged: true
+      });
 
-        console.log('New user created:', newUser);
-        sendCreated(res, 'Profile created successfully', newUser);
-      } catch (hygraphError: any) {
-        if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-          console.warn('Hygraph not configured, creating mock user response');
-          const mockUser = {
-            id: 'mock-' + uid,
-            uid: uid,
-            email: email || '',
-            displayName: displayName || 'New User',
-            role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-            isActive: true,
-            passwordChanged: true,
-          };
-          sendCreated(res, 'Profile created successfully (Hygraph not configured)', mockUser);
-        } else {
-          throw hygraphError;
-        }
-      }
+      console.log('New user created:', newUser);
+      sendCreated(res, 'Profile created successfully', newUser);
     }
   } catch (error) {
     console.error('Create/Update profile error:', error);

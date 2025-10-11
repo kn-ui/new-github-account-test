@@ -24,3 +24,10 @@ export const hygraphConfig = {
   endpoint: HYGRAPH_ENDPOINT,
   token: HYGRAPH_TOKEN,
 };
+
+// Helper function to check if Hygraph is properly configured
+export const isHygraphConfigured = (): boolean => {
+  return !!(HYGRAPH_ENDPOINT && HYGRAPH_TOKEN && 
+           !HYGRAPH_ENDPOINT.includes('dummy') && 
+           HYGRAPH_TOKEN !== 'dummy-token');
+};

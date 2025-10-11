@@ -22,7 +22,6 @@ router.get('/test', (req, res) => {
           isPinned: true,
           isLocked: false,
           isActive: true,
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'admin1',
             displayName: 'School Administration',
@@ -31,7 +30,6 @@ router.get('/test', (req, res) => {
           lastPost: {
             id: 'post1',
             body: 'Great to have this forum!',
-            dateCreated: new Date().toISOString(),
             author: {
               id: 'student1',
               displayName: 'John Doe'
@@ -48,7 +46,6 @@ router.get('/test', (req, res) => {
           isPinned: false,
           isLocked: false,
           isActive: true,
-          dateCreated: new Date().toISOString(),
           course: {
             id: 'course1',
             title: 'Algebra I'
@@ -69,7 +66,6 @@ router.get('/test', (req, res) => {
           isPinned: false,
           isLocked: false,
           isActive: true,
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'teacher1',
             displayName: 'Dr. Johnson',
@@ -82,7 +78,6 @@ router.get('/test', (req, res) => {
           id: '1',
           body: 'This is a great initiative! Looking forward to participating in discussions.',
           likes: 5,
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'student1',
             displayName: 'John Doe',
@@ -97,7 +92,6 @@ router.get('/test', (req, res) => {
           id: '2',
           body: 'I\'m interested in joining the study group. When do you usually meet?',
           likes: 3,
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'student3',
             displayName: 'Mike Wilson',

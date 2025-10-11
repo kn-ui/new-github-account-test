@@ -12,8 +12,8 @@ export const GET_USERS = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -28,8 +28,8 @@ export const GET_USER_BY_ID = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -44,8 +44,8 @@ export const GET_USER_BY_UID = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -60,8 +60,8 @@ export const GET_USER_BY_EMAIL = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -76,8 +76,8 @@ export const CREATE_USER = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -92,8 +92,8 @@ export const UPDATE_USER = `
       role
       isActive
       passwordChanged
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -119,8 +119,8 @@ export const GET_COURSES = `
       syllabus
       isActive
       instructorName
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       instructor {
         id
         displayName
@@ -142,8 +142,8 @@ export const GET_COURSE_BY_ID = `
       syllabus
       isActive
       instructorName
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       instructor {
         id
         displayName
@@ -200,8 +200,8 @@ export const CREATE_COURSE = `
       syllabus
       isActive
       instructorName
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -218,8 +218,8 @@ export const UPDATE_COURSE = `
       syllabus
       isActive
       instructorName
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -296,8 +296,8 @@ export const GET_ASSIGNMENTS = `
       dueDate
       maxScore
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       course {
         id
         title
@@ -320,8 +320,8 @@ export const GET_ASSIGNMENT_BY_ID = `
       dueDate
       maxScore
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       course {
         id
         title
@@ -359,8 +359,8 @@ export const CREATE_ASSIGNMENT = `
       dueDate
       maxScore
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -375,8 +375,8 @@ export const UPDATE_ASSIGNMENT = `
       dueDate
       maxScore
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -401,7 +401,7 @@ export const GET_SUBMISSIONS = `
       maxScore
       isActive
       submittedAt
-      dateUpdated
+      updatedAt
       student {
         id
         displayName
@@ -431,7 +431,7 @@ export const GET_SUBMISSION_BY_ID = `
       maxScore
       isActive
       submittedAt
-      dateUpdated
+      updatedAt
       student {
         id
         displayName
@@ -465,7 +465,7 @@ export const CREATE_SUBMISSION = `
       maxScore
       isActive
       submittedAt
-      dateUpdated
+      updatedAt
     }
   }
 `;
@@ -481,7 +481,7 @@ export const UPDATE_SUBMISSION = `
       maxScore
       isActive
       submittedAt
-      dateUpdated
+      updatedAt
     }
   }
 `;
@@ -499,8 +499,8 @@ export const GET_EXAMS = `
       totalPoints
       questions
       firstAttemptTimestamp
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       course {
         id
         title
@@ -521,8 +521,8 @@ export const GET_EXAM_BY_ID = `
       totalPoints
       questions
       firstAttemptTimestamp
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       course {
         id
         title
@@ -561,8 +561,8 @@ export const CREATE_EXAM = `
       totalPoints
       questions
       firstAttemptTimestamp
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -579,8 +579,8 @@ export const UPDATE_EXAM = `
       totalPoints
       questions
       firstAttemptTimestamp
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -608,7 +608,7 @@ export const GET_EXAM_ATTEMPTS = `
       isGraded
       startedAt
       submittedAt
-      dateUpdated
+      updatedAt
       student {
         id
         displayName
@@ -637,7 +637,7 @@ export const CREATE_EXAM_ATTEMPT = `
       isGraded
       startedAt
       submittedAt
-      dateUpdated
+      updatedAt
     }
   }
 `;
@@ -656,7 +656,7 @@ export const UPDATE_EXAM_ATTEMPT = `
       isGraded
       startedAt
       submittedAt
-      dateUpdated
+      updatedAt
     }
   }
 `;
@@ -671,7 +671,7 @@ export const GET_ANNOUNCEMENTS = `
       targetAudience
       externalLink
       recipientStudentId
-      dateCreated
+      createdAt
       author {
         id
         displayName
@@ -693,7 +693,7 @@ export const CREATE_ANNOUNCEMENT = `
       targetAudience
       externalLink
       recipientStudentId
-      dateCreated
+      createdAt
     }
   }
 `;
@@ -707,7 +707,7 @@ export const UPDATE_ANNOUNCEMENT = `
       targetAudience
       externalLink
       recipientStudentId
-      dateCreated
+      createdAt
     }
   }
 `;
@@ -736,8 +736,8 @@ export const GET_EVENTS = `
       eventStatus
       isActive
       eventCreator
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -757,8 +757,8 @@ export const CREATE_EVENT = `
       eventStatus
       isActive
       eventCreator
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -778,8 +778,8 @@ export const UPDATE_EVENT = `
       eventStatus
       isActive
       eventCreator
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -860,8 +860,8 @@ export const GET_COURSE_MATERIALS = `
       type
       externalLink
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       course {
         id
         title
@@ -879,8 +879,8 @@ export const CREATE_COURSE_MATERIAL = `
       type
       externalLink
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -894,8 +894,8 @@ export const UPDATE_COURSE_MATERIAL = `
       type
       externalLink
       isActive
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -918,8 +918,8 @@ export const GET_SUPPORT_TICKETS = `
       subject
       message
       supportTicketStatus
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       user {
         id
         displayName
@@ -938,8 +938,8 @@ export const CREATE_SUPPORT_TICKET = `
       subject
       message
       supportTicketStatus
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -953,8 +953,8 @@ export const UPDATE_SUPPORT_TICKET = `
       subject
       message
       supportTicketStatus
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -1042,9 +1042,9 @@ export const GET_FORUM_THREADS = `
       category
       likes
       views
-      dateCreated
+      createdAt
       lastActivityAt
-      dateUpdated
+      updatedAt
       author {
         id
         displayName
@@ -1053,7 +1053,7 @@ export const GET_FORUM_THREADS = `
         id
         body
         likes
-        dateCreated
+        createdAt
         author {
           id
           displayName
@@ -1072,9 +1072,9 @@ export const CREATE_FORUM_THREAD = `
       category
       likes
       views
-      dateCreated
+      createdAt
       lastActivityAt
-      dateUpdated
+      updatedAt
     }
   }
 `;
@@ -1085,8 +1085,8 @@ export const GET_FORUM_POSTS = `
       id
       body
       likes
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       author {
         id
         displayName
@@ -1105,8 +1105,8 @@ export const CREATE_FORUM_POST = `
       id
       body
       likes
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -1119,8 +1119,8 @@ export const GET_BLOG_POSTS = `
       title
       content
       likes
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
       author {
         id
         displayName
@@ -1136,8 +1136,8 @@ export const CREATE_BLOG_POST = `
       title
       content
       likes
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -1149,8 +1149,8 @@ export const UPDATE_BLOG_POST = `
       title
       content
       likes
-      dateCreated
-      dateUpdated
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -1200,7 +1200,7 @@ export const GET_ACTIVITY_LOGS = `
       id
       dateKey
       source
-      dateCreated
+      createdAt
       user {
         id
         displayName
@@ -1215,7 +1215,7 @@ export const CREATE_ACTIVITY_LOG = `
       id
       dateKey
       source
-      dateCreated
+      createdAt
     }
   }
 `;

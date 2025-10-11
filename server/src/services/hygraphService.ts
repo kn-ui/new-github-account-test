@@ -146,7 +146,7 @@ export interface HygraphSubmission {
   maxScore?: number;
   isActive: boolean;
   submittedAt: string;
-  dateUpdated?: string;
+  updatedAt?: string;
   student?: {
     id: string;
     displayName: string;
@@ -1388,8 +1388,6 @@ export const hygraphService = {
           data: {
             body: postData.body,
             likes: postData.likes || 0,
-            dateCreated: now,
-            dateUpdated: now,
             author: { connect: { id: postData.authorId } },
             thread: { connect: { id: postData.threadId } }
           }

@@ -18,8 +18,8 @@ export interface HygraphUser {
   role: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN';
   isActive: boolean;
   passwordChanged: boolean;
-  dateCreated: string;
-  dateUpdated: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateUserData {
@@ -101,8 +101,6 @@ export const hygraphUserService = {
           role: userData.role,
           isActive: userData.isActive ?? true,
           passwordChanged: userData.passwordChanged ?? true,
-          dateCreated: now,
-          dateUpdated: now
         }
       });
       return response.createAppUser;
@@ -119,7 +117,6 @@ export const hygraphUserService = {
         id,
         data: {
           ...userData,
-          dateUpdated: new Date().toISOString()
         }
       });
       return response.updateAppUser;

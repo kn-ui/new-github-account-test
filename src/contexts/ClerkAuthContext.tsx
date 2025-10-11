@@ -169,8 +169,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               role: profile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
               isActive: profile.isActive,
               passwordChanged: profile.passwordChanged,
-              createdAt: new Date(profile.dateCreated),
-              updatedAt: new Date(profile.dateUpdated)
+              createdAt: new Date(profile.createdAt),
+              updatedAt: new Date(profile.updatedAt)
             };
             setUserProfile(convertedProfile);
           } else {
@@ -193,8 +193,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               role: newProfile.role as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
               isActive: newProfile.isActive,
               passwordChanged: newProfile.passwordChanged,
-              createdAt: new Date(newProfile.dateCreated),
-              updatedAt: new Date(newProfile.dateUpdated)
+              createdAt: new Date(newProfile.createdAt),
+              updatedAt: new Date(newProfile.updatedAt)
             };
             setUserProfile(convertedProfile);
           }

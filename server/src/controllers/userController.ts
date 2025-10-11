@@ -161,7 +161,6 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
             ...existingUser,
             displayName,
             role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-            dateUpdated: new Date().toISOString()
           };
           sendSuccess(res, 'Profile updated successfully (Hygraph not configured)', mockUser);
         } else {
@@ -194,8 +193,6 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
             role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
             isActive: true,
             passwordChanged: true,
-            dateCreated: new Date().toISOString(),
-            dateUpdated: new Date().toISOString()
           };
           sendCreated(res, 'Profile created successfully (Hygraph not configured)', mockUser);
         } else {

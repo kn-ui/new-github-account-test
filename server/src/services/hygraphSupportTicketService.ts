@@ -463,8 +463,8 @@ export const hygraphSupportTicketService = {
         ticketsByStatus[status] = (ticketsByStatus[status] || 0) + 1;
       });
 
-      // Calculate average resolution time - NOT POSSIBLE WITHOUT dateCreated
-      // The averageResolutionTime will be 0 as dateCreated is no longer available.
+      // Calculate average resolution time - NOT POSSIBLE WITHOUT createdAt
+      // The averageResolutionTime will be 0 as createdAt is no longer available.
       const averageResolutionTime = 0;
 
       return {
@@ -517,7 +517,7 @@ export const hygraphSupportTicketService = {
         ticketsByCategory[category] = (ticketsByCategory[category] || 0) + 1;
       });
 
-      // Calculate average resolution time - NOT POSSIBLE WITHOUT dateCreated
+      // Calculate average resolution time - NOT POSSIBLE WITHOUT createdAt
       const averageResolutionTime = 0;
 
       return {

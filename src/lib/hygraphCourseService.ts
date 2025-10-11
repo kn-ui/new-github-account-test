@@ -18,8 +18,8 @@ export interface HygraphCourse {
   syllabus: string;
   isActive: boolean;
   instructorName: string;
-  dateCreated: string;
-  dateUpdated: string;
+  createdAt: string;
+  updatedAt: string;
   instructor?: {
     id: string;
     displayName: string;
@@ -93,8 +93,6 @@ export const hygraphCourseService = {
           syllabus: courseData.syllabus,
           instructorName: courseData.instructorName,
           isActive: courseData.isActive ?? true,
-          dateCreated: now,
-          dateUpdated: now,
           ...(courseData.instructorId && { instructor: { connect: { id: courseData.instructorId } } })
         }
       });
@@ -112,7 +110,6 @@ export const hygraphCourseService = {
         id,
         data: {
           ...courseData,
-          dateUpdated: new Date().toISOString(),
           ...(courseData.instructorId && { instructor: { connect: { id: courseData.instructorId } } })
         }
       });

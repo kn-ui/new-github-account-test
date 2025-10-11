@@ -27,7 +27,6 @@ router.get('/test', (req, res) => {
           isFeatured: true,
           allowComments: true,
           publishedAt: new Date().toISOString(),
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'admin1',
             displayName: 'School Administration',
@@ -49,7 +48,6 @@ router.get('/test', (req, res) => {
           isFeatured: false,
           allowComments: true,
           publishedAt: new Date().toISOString(),
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'teacher1',
             displayName: 'Dr. Smith',
@@ -71,7 +69,6 @@ router.get('/test', (req, res) => {
           isFeatured: true,
           allowComments: true,
           publishedAt: new Date().toISOString(),
-          dateCreated: new Date().toISOString(),
           author: {
             id: 'admin1',
             displayName: 'School Administration',

@@ -21,7 +21,6 @@ router.get('/test', (req, res) => {
           supportTicketStatus: 'OPEN',
           priority: 'HIGH',
           category: 'TECHNICAL',
-          dateCreated: new Date().toISOString(),
           user: {
             id: 'student1',
             displayName: 'John Doe',
@@ -37,7 +36,6 @@ router.get('/test', (req, res) => {
           supportTicketStatus: 'IN_PROGRESS',
           priority: 'MEDIUM',
           category: 'ACADEMIC',
-          dateCreated: new Date().toISOString(),
           assignedTo: {
             id: 'teacher1',
             displayName: 'Dr. Johnson',
@@ -58,7 +56,6 @@ router.get('/test', (req, res) => {
           supportTicketStatus: 'RESOLVED',
           priority: 'LOW',
           category: 'ACADEMIC',
-          dateCreated: new Date().toISOString(),
           resolvedAt: new Date().toISOString(),
           resolution: 'Grade reviewed and corrected. Student notified via email.',
           assignedTo: {

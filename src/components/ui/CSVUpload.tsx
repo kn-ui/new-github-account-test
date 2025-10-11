@@ -129,62 +129,32 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     setTotalUsers(preview.length);
     
     try {
-      const uploadErrors: string[] = []; // Renamed to avoid conflict with state
-      
-      for (let i = 0; i < preview.length; i++) {
-        const user = preview[i];
-        
-        // Update progress
-        setCurrentProgress(Math.round(((i + 1) / totalUsers) * 100));
-        
-        console.log(`Creating user ${i + 1}/${totalUsers}: ${user.email}`);
-        
-        try {
-          // Create user via backend API
-          const response = await api.post('/users', {
-            email: user.email,
-            displayName: user.displayName,
-            role: user.role
-          });
-          
-          if (response.data.success) {
-            setSuccessCount(prev => prev + 1);
-            console.log(`Successfully created user: ${user.email}`);
-          } else {
-            throw new Error(response.data.message || 'Failed to create user');
-          }
-          
-          // Small delay to prevent overwhelming API and show progress
-          if (i < preview.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        } catch (error: any) {
-          setErrorCount(prev => prev + 1);
-          // Log specific error for debugging
-          if (error.response?.data?.message?.includes('already in use')) {
-            uploadErrors.push(`${user.email}: Email already exists`);
-            console.error(`User ${user.email} already exists - skipping`);
-          } else if (error.response?.data?.message?.includes('invalid email')) {
-            uploadErrors.push(`${user.email}: Invalid email format`);
-            console.error(`Invalid email ${user.email}:`, error);
-          } else {
-            uploadErrors.push(`${user.email}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
-            console.error(`Failed to create user ${user.email}:`, error);
-          }
-        }
+      const uploadErrors: string[] = [];
+      const response = await api.post('/users/bulk?rollbackOnHygraphFail=false', {
+        users: preview
+      } as any);
+
+      const summary = response.data?.data || response.data;
+      if (!summary) throw new Error('No summary returned from server');
+
+      setSuccessCount(summary.successCount || 0);
+      setErrorCount(summary.failureCount || 0);
+      setTotalUsers(summary.total || preview.length);
+      setCurrentProgress(100);
+
+      if (Array.isArray(summary.results)) {
+        summary.results.forEach((r: any) => {
+          if (r?.error) uploadErrors.push(`${r.email}: ${r.error}`);
+        });
       }
-      
-      // Reset progress
-      setCurrentProgress(0);
-      
-      // Show summary of results
-      if (errorCount > 0) {
-        const errorSummary = `Successfully created ${successCount} users. ${errorCount} users failed:\n\n${uploadErrors.join('\n')}`;
+
+      if ((summary.failureCount || 0) > 0) {
+        const errorSummary = `Successfully created ${summary.successCount} users. ${summary.failureCount} users failed:\n\n${uploadErrors.join('\n')}`;
         onError(errorSummary);
       } else {
-        onUsersCreated(successCount);
+        onUsersCreated(summary.successCount || preview.length);
       }
-      
+
       resetUpload();
     } catch (error) {
       setCurrentProgress(0);

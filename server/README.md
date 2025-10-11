@@ -8,7 +8,9 @@ A comprehensive backend API for the St. Raguel Church School Management System b
 - **Course Management**: Create, update, delete, and manage courses
 - **Enrollment System**: Student enrollment and progress tracking
 - **Role-Based Access**: Student, Teacher, and Admin roles with specific permissions
-- **Firebase Integration**: Authentication, Firestore database, and Storage
+- **Firebase Integration**: Firestore database and Storage
+- **Clerk Auth**: Authentication via Clerk
+- **Hygraph (GraphCMS)**: Content API for AppUser, Course, Enrollment, etc.
 - **RESTful API**: Clean, documented API endpoints
 - **TypeScript**: Full type safety and better development experience
 
@@ -61,12 +63,19 @@ A comprehensive backend API for the St. Raguel Church School Management System b
    FIREBASE_CLIENT_EMAIL=your-client-email
    FIREBASE_CLIENT_ID=your-client-id
    
-   # JWT Configuration
-   JWT_SECRET=your-super-secret-jwt-key
-   JWT_EXPIRE=7d
+   # Clerk (Auth)
+   CLERK_SECRET_KEY=sk_test_xxx
+   # Optional dev bypass for local testing only
+   CLERK_DEV_BYPASS=true
+   CLERK_DEV_USER_ID=dev-user-uid
+   CLERK_DEV_USER_EMAIL=dev@example.com
    
    # CORS Configuration
    FRONTEND_URL=http://localhost:5173
+   
+    # Hygraph
+    HYGRAPH_ENDPOINT=https://api-us-east-1.hygraph.com/v2/your-content-api
+    HYGRAPH_TOKEN=your_hygraph_perm_token
    
    # Upload Configuration
    MAX_FILE_SIZE=10485760
@@ -100,9 +109,9 @@ http://localhost:5000/api
 ```
 
 ### Authentication
-All protected endpoints require a Bearer token in the Authorization header:
+All protected endpoints require a Bearer token (Clerk session token) in the Authorization header:
 ```
-Authorization: Bearer <firebase-id-token>
+Authorization: Bearer <clerk-session-token>
 ```
 
 ### Endpoints
@@ -111,6 +120,8 @@ Authorization: Bearer <firebase-id-token>
 - `GET /health` - Check API status
 
 #### User Management
+- `POST /api/users` - Admin create a user. Creates Clerk user, Hygraph AppUser, and legacy Firestore record.
+- `POST /api/users/bulk` - Admin bulk create users. Limited concurrency (3-5), optional rollback on Hygraph failure via `?rollbackOnHygraphFail=true`.
 - `POST /api/users/profile` - Create/Update user profile
 - `GET /api/users/profile` - Get current user profile
 - `PUT /api/users/profile` - Update current user profile
@@ -237,6 +248,44 @@ server/
 - **Rate Limiting**: (Recommended for production)
 
 ## Development Guidelines
+## Migration & Tools
+
+### Firestore → Hygraph Migration
+
+Run a dry run first:
+
+```bash
+node -r ts-node/register scripts/migrate_firestore_to_hygraph.ts --collection=students --batchSize=200 --concurrency=3 --dryRun=true
+```
+
+Then real run for a subset:
+
+```bash
+node -r ts-node/register scripts/migrate_firestore_to_hygraph.ts --collection=students --batchSize=100 --concurrency=3 --dryRun=false
+```
+
+Results are written incrementally to `migration-results.json` with successes and failures for resumability.
+
+### Test create-user flow
+
+```bash
+node -r ts-node/register scripts/test_create_user_flow.ts
+```
+
+Environment needed:
+```
+TEST_API_BASE_URL=http://localhost:5000
+CLERK_SECRET_KEY=sk_test_xxx
+TEST_BEARER_TOKEN=<clerk_session_token_or_dev_bypass>
+```
+
+## Manual QA Checklist
+
+- Set `HYGRAPH_ENDPOINT` and `HYGRAPH_TOKEN`, restart server.
+- Create a single user from Admin UI → verify Clerk user exists and Hygraph AppUser created.
+- Upload a 10-row CSV → verify JSON summary returns per-row Clerk/Hygraph result.
+- Run migration script in `--dryRun`, then real for a small batch and review `migration-results.json`.
+
 
 ### Code Style
 - Use TypeScript for type safety

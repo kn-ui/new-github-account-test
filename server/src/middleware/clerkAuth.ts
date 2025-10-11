@@ -10,6 +10,17 @@ export const authenticateClerkToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const isDev = (process.env.NODE_ENV || 'development') !== 'production';
+    if (isDev && process.env.CLERK_DEV_BYPASS === 'true') {
+      console.warn('Development mode: Skipping Clerk verification. Ensure this is disabled in production.');
+      // Minimal user context to proceed; default to admin for local testing only
+      req.user = {
+        uid: process.env.CLERK_DEV_USER_ID || 'dev-user-uid',
+        email: process.env.CLERK_DEV_USER_EMAIL || 'dev@example.com',
+        role: UserRole.ADMIN
+      };
+      return next();
+    }
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 

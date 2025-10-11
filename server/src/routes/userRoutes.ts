@@ -15,6 +15,9 @@ router.use(authenticateToken);
 // Admin: Create a new user
 router.post('/', requireAdmin, validateUserRegistration, userController.createUser);
 
+// Admin: Bulk create users
+router.post('/bulk', requireAdmin, userController.bulkCreateUsers);
+
 // User profile routes  
 router.post('/profile', userController.createOrUpdateProfile);
 router.get('/profile', userController.getProfile);

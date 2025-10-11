@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import userService from '../services/userService';
 import { createClerkClient } from '@clerk/backend';
+import pLimit from 'p-limit';
+import { createHygraphUser } from '../lib/hygraph';
 import {
   sendSuccess,
   sendError,
@@ -34,7 +36,26 @@ export class UserController {
         skipPasswordRequirement: true,
       });
 
-      // Step 2: Create user in Firestore
+      // Step 2: Create user in Hygraph using Clerk UID as canonical uid
+      try {
+        await createHygraphUser({
+          uid: clerkUser.id,
+          email,
+          displayName,
+          role: role || UserRole.STUDENT,
+          isActive: true,
+        });
+      } catch (hyErr: any) {
+        // Attempt rollback of Clerk user to avoid orphan accounts on failures
+        try {
+          await clerkClient.users.deleteUser(clerkUser.id);
+        } catch (rbErr) {
+          console.error('Failed to rollback Clerk user after Hygraph failure', rbErr);
+        }
+        throw hyErr;
+      }
+
+      // Step 3: Create user in Firestore (legacy for read-paths)
       const newUser = await userService.createUser({
         uid: clerkUser.id,
         email,
@@ -51,6 +72,85 @@ export class UserController {
         sendServerError(res, 'Failed to create user');
       }
     }
+  }
+
+  // Admin: Bulk create users with limited concurrency and optional rollback
+  async bulkCreateUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const rollbackOnHygraphFail = String(req.query.rollbackOnHygraphFail || 'false') === 'true';
+    const maxConcurrency = Math.min(
+      Math.max(parseInt(String(req.query.concurrency || '3')) || 3, 1),
+      5
+    );
+    const users: Array<{ email: string; displayName: string; role?: UserRole; isActive?: boolean }> = req.body?.users || [];
+
+    if (!Array.isArray(users) || users.length === 0) {
+      sendError(res, 'No users provided');
+      return;
+    }
+
+    const limit = pLimit(maxConcurrency);
+    const results: Array<{
+      rowIndex: number;
+      email: string;
+      clerkResult?: { id: string } | null;
+      hygraphResult?: { uid: string } | null;
+      rolledBack?: boolean;
+      error?: string;
+    }> = [];
+
+    await Promise.all(
+      users.map((u, index) =>
+        limit(async () => {
+          const result: any = { rowIndex: index, email: u.email };
+          try {
+            const clerkUser = await clerkClient.users.createUser({
+              emailAddress: [u.email],
+              firstName: u.displayName?.split(' ')[0] || '',
+              lastName: u.displayName?.split(' ').slice(1).join(' ') || '',
+              publicMetadata: { role: u.role || UserRole.STUDENT },
+              skipPasswordChecks: true,
+              skipPasswordRequirement: true,
+            });
+            result.clerkResult = { id: clerkUser.id };
+
+            try {
+              const created = await createHygraphUser({
+                uid: clerkUser.id,
+                email: u.email,
+                displayName: u.displayName,
+                role: u.role || UserRole.STUDENT,
+                isActive: u.isActive ?? true,
+              });
+              result.hygraphResult = { uid: created.uid };
+            } catch (hyErr: any) {
+              result.error = `Hygraph error: ${hyErr?.message || 'Unknown error'}`;
+              if (rollbackOnHygraphFail && result.clerkResult?.id) {
+                try {
+                  await clerkClient.users.deleteUser(result.clerkResult.id);
+                  result.rolledBack = true;
+                } catch (rbErr: any) {
+                  result.error += ` | Rollback failed: ${rbErr?.message || 'Unknown'}`;
+                  result.rolledBack = false;
+                }
+              }
+            }
+          } catch (ckErr: any) {
+            result.error = `Clerk error: ${ckErr?.message || 'Unknown error'}`;
+          } finally {
+            results[index] = result;
+          }
+        })
+      )
+    );
+
+    const summary = {
+      total: users.length,
+      successCount: results.filter(r => r.hygraphResult && r.clerkResult && !r.error).length,
+      failureCount: results.filter(r => r.error).length,
+      results,
+    };
+
+    sendSuccess(res, 'Bulk user creation completed', summary);
   }
 
 // Create or update user profile

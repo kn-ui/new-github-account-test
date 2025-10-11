@@ -58,18 +58,8 @@ export class UserController {
           skipPasswordRequirement: false,
         });
       } catch (clerkError: any) {
-        if (clerkError.message?.includes('Missing Clerk Secret Key') || clerkError.message?.includes('CLERK_SECRET_KEY')) {
-          console.warn('Clerk not configured, creating mock user');
-          clerkUser = {
-            id: 'mock-' + Date.now(),
-            emailAddresses: [{ emailAddress: email }],
-            firstName: displayName.split(' ')[0],
-            lastName: displayName.split(' ').slice(1).join(' ') || '',
-            publicMetadata: { role: userRole }
-          };
-        } else {
-          throw clerkError;
-        }
+        console.error('Clerk configuration error:', clerkError);
+        throw clerkError;
       }
 
       // Step 2: Create user in Hygraph (passwordChanged: false so they must change on first login)
@@ -136,13 +126,10 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
     let existingUser = null;
     try {
       existingUser = await hygraphUserService.getUserByUid(uid);
-    } catch (hygraphError: any) {
-      if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-        console.warn('Hygraph not configured, skipping user lookup');
-      } else {
+      } catch (hygraphError: any) {
+        console.error('Hygraph error:', hygraphError);
         throw hygraphError;
       }
-    }
 
     if (existingUser) {
       console.log('User exists, updating profile');
@@ -155,17 +142,8 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
 
         sendSuccess(res, 'Profile updated successfully', updatedUser);
       } catch (hygraphError: any) {
-        if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-          console.warn('Hygraph not configured, creating mock update response');
-          const mockUser = {
-            ...existingUser,
-            displayName,
-            role: (role || existingUser.role) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-          };
-          sendSuccess(res, 'Profile updated successfully (Hygraph not configured)', mockUser);
-        } else {
-          throw hygraphError;
-        }
+        console.error('Hygraph update error:', hygraphError);
+        throw hygraphError;
       }
     } else {
       console.log('User does not exist, creating new profile');
@@ -183,21 +161,8 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
         console.log('New user created:', newUser);
         sendCreated(res, 'Profile created successfully', newUser);
       } catch (hygraphError: any) {
-        if (hygraphError.message?.includes('GraphQL Error') || hygraphError.message?.includes('400')) {
-          console.warn('Hygraph not configured, creating mock user response');
-          const mockUser = {
-            id: 'mock-' + uid,
-            uid: uid,
-            email: email || '',
-            displayName: displayName || 'New User',
-            role: (role || UserRole.STUDENT) as 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN',
-            isActive: true,
-            passwordChanged: true,
-          };
-          sendCreated(res, 'Profile created successfully (Hygraph not configured)', mockUser);
-        } else {
-          throw hygraphError;
-        }
+        console.error('Hygraph create error:', hygraphError);
+        throw hygraphError;
       }
     }
   } catch (error) {
@@ -525,6 +490,55 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
     } catch (error) {
       console.error('Get student submissions data error:', error);
       sendServerError(res, 'Failed to retrieve student submissions data');
+    }
+  }
+
+  // Get user by email
+  async getUserByEmail(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+      const user = await hygraphUserService.getUserByEmail(email);
+
+      if (!user) {
+        sendNotFound(res, 'User not found');
+        return;
+      }
+
+      sendSuccess(res, 'User retrieved successfully', user);
+    } catch (error) {
+      console.error('Get user by email error:', error);
+      sendServerError(res, 'Failed to get user');
+    }
+  }
+
+  // Get students by teacher
+  async getStudentsByTeacher(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { teacherId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      // Check permissions
+      if (req.user!.uid !== teacherId && req.user!.role !== UserRole.ADMIN && req.user!.role !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Access denied');
+        return;
+      }
+
+      // For now, return empty array. In production, this would get students enrolled in teacher's courses
+      const students = [];
+
+      sendPaginatedResponse(
+        res,
+        'Students retrieved successfully',
+        students,
+        page,
+        limit,
+        students.length
+      );
+    } catch (error) {
+      console.error('Get students by teacher error:', error);
+      sendServerError(res, 'Failed to retrieve students');
     }
   }
 }

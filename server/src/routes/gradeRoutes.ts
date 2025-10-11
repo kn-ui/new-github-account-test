@@ -5,55 +5,14 @@ import { validatePagination } from '../middleware/validation';
 
 const router = Router();
 
-// Test endpoint that doesn't require authentication (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Grades test endpoint working',
-    data: [
-      {
-        id: '1',
-        finalGrade: 85.5,
-        letterGrade: 'B',
-        gradePoints: 3.0,
-        calculationMethod: 'WEIGHTED_AVERAGE',
-        student: {
-          id: 'student1',
-          displayName: 'John Doe',
-          email: 'john@example.com'
-        },
-        course: {
-          id: 'course1',
-          title: 'Algebra I'
-        },
-        calculatedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        finalGrade: 92.0,
-        letterGrade: 'A-',
-        gradePoints: 3.7,
-        calculationMethod: 'WEIGHTED_AVERAGE',
-        student: {
-          id: 'student2',
-          displayName: 'Jane Smith',
-          email: 'jane@example.com'
-        },
-        course: {
-          id: 'course2',
-          title: 'English Literature'
-        },
-        calculatedAt: new Date().toISOString()
-      }
-    ],
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: 2,
-      totalPages: 1
-    }
+    message: 'Service is healthy'
   });
 });
+
 
 // Public utility endpoints
 router.post('/convert-to-letter', gradeController.convertToLetterGrade);

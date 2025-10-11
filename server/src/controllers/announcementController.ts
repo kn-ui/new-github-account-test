@@ -504,6 +504,34 @@ export class AnnouncementController {
       sendServerError(res, 'Failed to retrieve course announcement statistics');
     }
   }
+
+  // Get public announcements (no authentication required)
+  async getPublicAnnouncements(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const filters: AnnouncementFilters = {
+        isActive: true,
+        isPublic: true
+      };
+
+      const announcements = await hygraphAnnouncementService.getAnnouncements(limit, skip, filters);
+      
+      sendPaginatedResponse(
+        res,
+        'Public announcements retrieved successfully',
+        announcements,
+        page,
+        limit,
+        announcements.length
+      );
+    } catch (error) {
+      console.error('Get public announcements error:', error);
+      sendServerError(res, 'Failed to get public announcements');
+    }
+  }
 }
 
 export default new AnnouncementController();

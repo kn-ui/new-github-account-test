@@ -5,80 +5,14 @@ import { validatePagination } from '../middleware/validation';
 
 const router = Router();
 
-// Test endpoint that doesn't require authentication (temporary)
-router.get('/test', (req, res) => {
+// Health check endpoint
+router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Support Tickets test endpoint working',
-    data: {
-      tickets: [
-        {
-          id: '1',
-          name: 'John Doe',
-          email: 'john@school.edu',
-          subject: 'Login Issues',
-          message: 'I am unable to log into my account. I keep getting an error message.',
-          supportTicketStatus: 'OPEN',
-          priority: 'HIGH',
-          category: 'TECHNICAL',
-          user: {
-            id: 'student1',
-            displayName: 'John Doe',
-            email: 'john@school.edu'
-          }
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          email: 'jane@school.edu',
-          subject: 'Assignment Submission Problem',
-          message: 'I cannot submit my assignment through the online portal. The submit button is not working.',
-          supportTicketStatus: 'IN_PROGRESS',
-          priority: 'MEDIUM',
-          category: 'ACADEMIC',
-          assignedTo: {
-            id: 'teacher1',
-            displayName: 'Dr. Johnson',
-            email: 'johnson@school.edu'
-          },
-          user: {
-            id: 'student2',
-            displayName: 'Jane Smith',
-            email: 'jane@school.edu'
-          }
-        },
-        {
-          id: '3',
-          name: 'Mike Wilson',
-          email: 'mike@school.edu',
-          subject: 'Grade Inquiry',
-          message: 'I would like to discuss my recent exam grade. I believe there might be an error in the grading.',
-          supportTicketStatus: 'RESOLVED',
-          priority: 'LOW',
-          category: 'ACADEMIC',
-          resolvedAt: new Date().toISOString(),
-          resolution: 'Grade reviewed and corrected. Student notified via email.',
-          assignedTo: {
-            id: 'teacher2',
-            displayName: 'Prof. Davis',
-            email: 'davis@school.edu'
-          },
-          user: {
-            id: 'student3',
-            displayName: 'Mike Wilson',
-            email: 'mike@school.edu'
-          }
-        }
-      ],
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: 3,
-        totalPages: 1
-      }
-    }
+    message: 'Service is healthy'
   });
 });
+
 
 // Public endpoints (no authentication required)
 // Note: In production, you might want to add some public support ticket endpoints

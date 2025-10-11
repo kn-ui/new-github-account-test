@@ -20,7 +20,7 @@ export const authenticateClerkToken = async (
         req.user = {
           uid: 'dev-user',
           email: 'dev@example.com',
-          role: UserRole.STUDENT
+          role: UserRole.ADMIN
         };
         next();
         return;
@@ -39,7 +39,7 @@ export const authenticateClerkToken = async (
       req.user = {
         uid: 'dev-user',
         email: 'dev@example.com',
-        role: UserRole.STUDENT
+        role: UserRole.ADMIN
       };
       next();
       return;

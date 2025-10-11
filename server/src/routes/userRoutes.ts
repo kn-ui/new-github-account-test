@@ -6,6 +6,18 @@ import { validateUserRegistration, validatePagination } from '../middleware/vali
 
 const router = Router();
 
+// Test endpoint for Hygraph connection (must be before authentication middleware)
+router.get('/test-hygraph', (req, res) => {
+  res.json({
+    success: true,
+    message: 'User routes test endpoint working',
+    hygraphConfig: {
+      endpoint: process.env.HYGRAPH_ENDPOINT ? 'Set' : 'Not set',
+      token: process.env.HYGRAPH_TOKEN ? 'Set' : 'Not set'
+    }
+  });
+});
+
 // Public routes (no authentication required)
 // Note: User registration happens through Firebase Auth on frontend
 

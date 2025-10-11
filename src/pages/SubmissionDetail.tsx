@@ -292,7 +292,7 @@ export default function SubmissionDetail() {
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {submission.formatDateString(submittedAt)}
+                      {formatDateString(submission.submittedAt)}
                     </p>
                     <p className="text-xs text-gray-500">Submitted</p>
                   </div>

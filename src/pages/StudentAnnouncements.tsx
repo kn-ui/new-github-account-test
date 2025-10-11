@@ -17,9 +17,10 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { studentDataService, HygraphAnnouncement } from '@/lib/hygraph';
+import { studentDataService, HygraphAnnouncement, announcementService, enrollmentService } from '@/lib/hygraph';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { formatDateString } from '@/utils/dateUtils';
 
 interface AnnouncementWithDetails extends HygraphAnnouncement {
   course?: any;

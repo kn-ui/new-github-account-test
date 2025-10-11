@@ -257,6 +257,7 @@ export class GradeController {
     try {
       const { studentId, courseId } = req.body;
       const calculatedBy = req.user!.uid;
+      const calculatedByHygraphId = req.user!.hygraphId;
 
       if (!studentId || !courseId) {
         sendError(res, 'Missing required fields: studentId, courseId');
@@ -278,7 +279,7 @@ export class GradeController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedByUid && course.instructor?.id !== req.user!.hygraphId) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedBy && course.instructor?.id !== calculatedByHygraphId) {
         sendError(res, 'You can only calculate grades for your own courses');
         return;
       }
@@ -305,6 +306,7 @@ export class GradeController {
     try {
       const { courseId } = req.params;
       const calculatedBy = req.user!.uid;
+      const calculatedByHygraphId = req.user!.hygraphId;
 
       // Verify course exists
       const course = await hygraphCourseService.getCourseById(courseId);
@@ -314,7 +316,7 @@ export class GradeController {
       }
 
       // Check permissions
-      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedBy) {
+      if (req.user!.role !== UserRole.ADMIN && course.instructor?.uid !== calculatedBy && course.instructor?.id !== calculatedByHygraphId) {
         sendError(res, 'You can only calculate grades for your own courses');
         return;
       }

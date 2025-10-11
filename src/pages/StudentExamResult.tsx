@@ -72,7 +72,7 @@ export default function StudentExamResult() {
   const percentage = totalPoints > 0 ? Math.round((total / totalPoints) * 100) : 0;
   
   // Check if exam is fully graded
-  const isFullyGraded = attempt.isGraded || (attempt.status === 'graded');
+  const isFullyGraded = attempt.isGraded || (attempt.examAttemptStatus === 'graded');
   const hasManualQuestions = exam.questions?.some((q: any) => q.type === 'short') || false;
   
   // Debug logging
@@ -159,7 +159,7 @@ export default function StudentExamResult() {
 
             <div className="text-xs text-gray-500 space-y-1">
               <div>Submitted: {attempt.submittedAt?.toDate?.()?.toLocaleString() || 'Unknown'}</div>
-              <div>Status: {attempt.status || 'Unknown'}</div>
+              <div>Status: {attempt.examAttemptStatus || 'Unknown'}</div>
             </div>
           </CardContent>
         </Card>

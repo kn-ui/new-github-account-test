@@ -89,7 +89,7 @@ export default function TeacherAnalytics() {
         try {
           // Get enrollments for this course
           const enrollments = await enrollmentService.getEnrollmentsByCourse(course.id);
-          const activeEnrollments = enrollments.filter(e => e.status === 'active');
+          const activeEnrollments = enrollments.filter(e => e.enrollmentStatus === 'ACTIVE');
           
           // Calculate average progress
           const averageProgress = activeEnrollments.length > 0 

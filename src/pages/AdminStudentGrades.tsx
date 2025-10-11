@@ -42,7 +42,7 @@ interface GradeWithDetails {
   grade: number;
   maxScore: number;
   feedback: string;
-  status: 'graded';
+  submissionStatus: 'GRADED';
 }
 
 interface ExamGradeWithDetails {
@@ -57,7 +57,7 @@ interface ExamGradeWithDetails {
   grade: number;
   maxScore: number;
   feedback: string;
-  status: 'graded';
+  submissionStatus: 'GRADED';
   autoScore: number;
   manualScore: number;
 }
@@ -179,7 +179,7 @@ export default function AdminStudentGrades() {
         try {
           const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
           const studentSubmissions = submissions.filter(s => 
-            s.studentId === studentId && s.status === 'graded' && s.grade !== undefined
+            s.studentId === studentId && s.submissionStatus === 'GRADED' && s.grade !== undefined
           );
           
           return studentSubmissions.map(submission => ({
@@ -194,7 +194,7 @@ export default function AdminStudentGrades() {
             grade: submission.grade || 0,
             maxScore: assignment.maxScore,
             feedback: submission.feedback || '',
-            status: 'graded' as const
+            submissionStatus: 'GRADED' as const
           }));
         } catch (error) {
           console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
@@ -222,7 +222,7 @@ export default function AdminStudentGrades() {
           const examAttemptsPromises = courseExams.map(async (exam) => {
             try {
               const attempt = await examAttemptService.getAttemptForStudent(exam.id, studentId!);
-              if (attempt && attempt.status === 'graded' && attempt.isGraded) {
+              if (attempt && attempt.examAttemptStatus === 'graded' && attempt.isGraded) {
                 const manualScores = attempt.manualScores || {};
                 const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
                 
@@ -238,7 +238,7 @@ export default function AdminStudentGrades() {
                   grade: attempt.score || 0,
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
-                  status: 'graded' as const,
+                  submissionStatus: 'GRADED' as const,
                   autoScore: attempt.autoScore || 0,
                   manualScore: manualScore
                 };

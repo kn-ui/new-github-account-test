@@ -107,7 +107,7 @@ const EventsPage = () => {
       );
     }
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(event => event.status && event.status === statusFilter);
+      filtered = filtered.filter(event => event.eventStatus && event.eventStatus.toLowerCase() === statusFilter.toLowerCase());
     }
     setFilteredEvents(filtered);
   }, [searchTerm, statusFilter, events]);
@@ -239,7 +239,8 @@ const EventsPage = () => {
   };
 
   const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'upcoming':
         return 'default';
       case 'ongoing':
@@ -499,10 +500,10 @@ const EventsPage = () => {
                       
                       <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
                         <Badge 
-                          variant={getStatusBadgeVariant(event.status)}
+                          variant={getStatusBadgeVariant(event.eventStatus)}
                           className="text-sm px-3 py-1"
                         >
-                          {event.status}
+                          {event.eventStatus}
                         </Badge>
                         
                         <div className="flex items-center gap-2">
@@ -677,7 +678,7 @@ const EventsPage = () => {
                 <span className="font-medium flex-shrink-0">{t('events.type_label')}:</span> 
                 <span className="break-words">{selectedEvent.type}</span>
               </div>
-              <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
+              <div><span className="font-medium">Status:</span> {selectedEvent.eventStatus}</div>
               <div className="flex gap-2">
                 <span className="font-medium flex-shrink-0">{t('events.description_label')}:</span> 
                 <span className="break-words max-h-40 overflow-y-auto block text-sm">{selectedEvent.description}</span>

@@ -239,7 +239,7 @@ export default function StudentAssignments() {
         studentEmail: userProfile.email || currentUser.email || '',
         content: submissionContent,
         attachments: selectedFile ? [selectedFile.name] : [], // For now, just store filename
-        status: 'submitted' as const,
+        submissionStatus: 'SUBMITTED' as const,
         submittedAt: new Date(),
         isActive: true,
         createdAt: new Date(),

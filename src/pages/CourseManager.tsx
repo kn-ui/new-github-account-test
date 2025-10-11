@@ -228,7 +228,7 @@ export default function CourseManager() {
       await enrollmentService.createEnrollment({ 
         courseId: selectedCourseForEnroll.id, 
         studentId, 
-        status: 'active', 
+        enrollmentStatus: 'ACTIVE', 
         progress: 0, 
         completedLessons: [] 
       } as any);
@@ -285,7 +285,7 @@ export default function CourseManager() {
           await enrollmentService.createEnrollment({ 
             courseId: selectedCourseForEnroll.id, 
             studentId: uid, 
-            status: 'active', 
+            enrollmentStatus: 'ACTIVE', 
             progress: 0, 
             completedLessons: [] 
           } as any);

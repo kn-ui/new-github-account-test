@@ -400,10 +400,10 @@ export default function TeacherDashboard() {
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge variant={submission.status === 'graded' ? 'default' : 'secondary'}>
-                            {submission.status}
+                          <Badge variant={submission.submissionStatus === 'GRADED' ? 'default' : 'secondary'}>
+                            {submission.submissionStatus}
                           </Badge>
-                          {submission.status === 'submitted' && (
+                          {submission.submissionStatus === 'SUBMITTED' && (
                             <Button size="sm">
                               Grade
                             </Button>

@@ -165,7 +165,7 @@ export default function TakeExam() {
   console.log('end:', end);
   const beforeStart = start ? now < start : false;
   const afterEnd = end ? now > end : false;
-  const isSubmitted = attempt && (attempt.status === 'submitted' || attempt.status === 'graded');
+  const isSubmitted = attempt && (attempt.examAttemptStatus === 'submitted' || attempt.examAttemptStatus === 'graded');
 
   // Format time remaining
   const formatTime = (ms: number) => {

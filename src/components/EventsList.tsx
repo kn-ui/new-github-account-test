@@ -86,7 +86,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                            event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            event.location?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === 'all' || event.type === typeFilter;
-      const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || event.eventStatus?.toLowerCase() === statusFilter.toLowerCase();
       
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -320,10 +320,10 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                     </Badge>
                   )}
                   
-                  {event.status && (
-                    <Badge className={`flex items-center gap-1 text-xs ${getStatusColor(event.status)}`}>
-                      {getStatusIcon(event.status)}
-                      <span className="capitalize">{event.status}</span>
+                  {event.eventStatus && (
+                    <Badge className={`flex items-center gap-1 text-xs ${getStatusColor(event.eventStatus)}`}>
+                      {getStatusIcon(event.eventStatus)}
+                      <span className="capitalize">{event.eventStatus}</span>
                     </Badge>
                   )}
                 </div>

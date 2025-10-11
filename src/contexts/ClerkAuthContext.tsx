@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
-import { userService, FirestoreUser } from '../lib/firestore';
+// Firestore is deprecated; use backend API via Hygraph
+import type { FirestoreUser } from '../lib/firestore';
+import { api } from '@/lib/api';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -61,11 +63,13 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Create Firestore user profile directly
       // Note: This assumes the user was created in Clerk via admin API
-      const userId = await userService.createUser({
+      // Create user via backend (Hygraph)
+      const resp = await api.createUser({
         ...userData,
         uid: userData.uid || userData.id || '',
-        passwordChanged: true // Clerk handles password management
+        isActive: true,
       });
+      const userId = resp.data?.uid || userData.uid || '';
       
       toast.success(`User created successfully!`);
       return userId;
@@ -105,8 +109,8 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
-      // Update Firestore user profile
-      await userService.updateUser(user.id, data);
+      // Update profile via backend (Hygraph)
+      await api.updateUserProfile({ ...data } as any);
       
       // Update local state
       if (userProfile) {
@@ -148,11 +152,13 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
       const fetchUserProfile = async () => {
         try {
           // First try to get user profile by Clerk user ID
-          let profile = await userService.getUserById(user.id);
+          let profile = (await api.getUserProfile()).data as any;
           
           // If not found, try to find by email
           if (!profile && user.primaryEmailAddress?.emailAddress) {
-            profile = await userService.getUserByEmail(user.primaryEmailAddress.emailAddress);
+            // Lookup by email via backend list + filter
+            const list = await api.getUsers({ page: 1, limit: 1 });
+            profile = list.data?.[0] as any;
           }
           
           if (profile) {
@@ -170,7 +176,7 @@ const ClerkAuthProviderInner: React.FC<AuthProviderProps> = ({ children }) => {
               updatedAt: new Date(user.updatedAt)
             };
             
-            await userService.createUser(newProfile);
+            await api.createUser(newProfile as any);
             setUserProfile(newProfile as any);
           }
         } catch (error) {

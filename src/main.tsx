@@ -3,6 +3,7 @@ import App from "./App";
 import "./index.css";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkAuthProvider } from '@/contexts/ClerkAuthContext';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -12,8 +13,10 @@ if (!PUBLISHABLE_KEY) {
 
 createRoot(document.getElementById("root")!).render(
   <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-    <I18nProvider>
-      <App />
-    </I18nProvider>
+    <ClerkAuthProvider>
+      <I18nProvider>
+        <App />
+      </I18nProvider>
+    </ClerkAuthProvider>
   </ClerkProvider>
 );

@@ -38,6 +38,7 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+// Deprecated: Firebase Auth. Use ClerkAuthProvider instead. Keeping to avoid import crashes if any file still references it.
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);

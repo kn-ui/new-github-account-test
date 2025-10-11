@@ -34,7 +34,7 @@ export class UserController {
         skipPasswordRequirement: true,
       });
 
-      // Step 2: Create user in Firestore
+      // Step 2: Create user in Hygraph
       const newUser = await userService.createUser({
         uid: clerkUser.id,
         email,

@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { verifyToken } from '@clerk/backend';
-import { firestore } from '../config/firebase';
+import { hygraphClient } from '../config/hygraph';
+import { gql } from 'graphql-request';
 import { AuthenticatedRequest, UserRole } from '../types';
 
 // Verify Clerk token and extract user info
@@ -26,19 +27,26 @@ export const authenticateClerkToken = async (
       secretKey: process.env.CLERK_SECRET_KEY!
     });
     
-    // Get user data from Firestore using Clerk user ID
-    const userDoc = await firestore.collection('users').doc(payload.sub as string).get();
-
-    let userData = null;
-    let userRole = UserRole.STUDENT; // Default role for new users
-
-    if (userDoc.exists) {
-      userData = userDoc.data();
-      userRole = userData?.role || UserRole.STUDENT;
-    } else {
-      // User exists in Clerk but not in Firestore yet
-      // This is expected during initial profile creation
-      console.log(`User ${payload.sub as string} not found in Firestore, allowing for profile creation`);
+    // Get user data from Hygraph (AppUser) using Clerk user ID
+    let userRole = UserRole.STUDENT; // default
+    try {
+      const query = gql`
+        query GetAppUserByUid($uid: String!) {
+          appUser(where: { uid: $uid }) {
+            uid
+            email
+            displayName
+            role
+            isActive
+          }
+        }
+      `;
+      const data = await hygraphClient.request<{ appUser: { role?: UserRole } | null }>(query, { uid: payload.sub });
+      if (data?.appUser?.role) {
+        userRole = data.appUser.role as UserRole;
+      }
+    } catch (e) {
+      console.warn('Hygraph fetch of user failed, defaulting to student:', e);
     }
 
     // Attach user info to request

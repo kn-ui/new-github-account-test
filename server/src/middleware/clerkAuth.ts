@@ -79,9 +79,11 @@ export const authenticateClerkToken = async (
     }
     
     // Extract user info from Clerk payload
+    // Clerk stores email in emailAddress or email field depending on the token type
+    const emailAddress = payload.email || payload.emailAddress || payload.email_address || '';
     const clerkUser: ClerkUserPayload = {
       uid: payload.sub as string,
-      email: payload.email as string,
+      email: emailAddress as string,
       displayName: payload.name as string || payload.first_name as string
     };
 
@@ -90,6 +92,7 @@ export const authenticateClerkToken = async (
     
     // Get user data from Hygraph (AppUser) using Clerk user ID
     let userRole = UserRole.STUDENT; // default
+    let hygraphUser = null;
     try {
       const query = gql`
         query GetAppUserByUid($uid: String!) {
@@ -102,9 +105,17 @@ export const authenticateClerkToken = async (
           }
         }
       `;
-      const data = await hygraphClient.request<{ appUser: { role?: UserRole } | null }>(query, { uid: clerkUser.uid });
-      if (data?.appUser?.role) {
-        userRole = data.appUser.role as UserRole;
+      const data = await hygraphClient.request<{ appUser: { role?: UserRole; email?: string; isActive?: boolean } | null }>(query, { uid: clerkUser.uid });
+      if (data?.appUser) {
+        hygraphUser = data.appUser;
+        userRole = data.appUser.role as UserRole || UserRole.STUDENT;
+        
+        // Check if user is inactive
+        if (data.appUser.isActive === false) {
+          console.warn(`Inactive user attempting to access: ${clerkUser.uid}`);
+        }
+      } else {
+        console.warn(`User not found in Hygraph: ${clerkUser.uid} (${clerkUser.email})`);
       }
     } catch (e) {
       console.warn('Hygraph fetch of user failed, defaulting to student:', e);

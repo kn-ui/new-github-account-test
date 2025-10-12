@@ -148,18 +148,21 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         });
       }
 
-      // Fetch or create user profile via API
+      // Fetch user profile via API (do not create automatically)
       const fetchUserProfile = async () => {
         try {
-          // First try to get user profile by Clerk user ID
+          // Try to get user profile by Clerk user ID
           let profile;
           try {
             const response = await clerkApi.getUserProfile();
             profile = response.data;
           } catch (error: any) {
-            // If 404, user doesn't exist, try to create one
+            // If 404, user doesn't exist in Hygraph
             if (error.message?.includes('404') || error.message?.includes('not found')) {
-              profile = null;
+              console.warn('User profile not found in Hygraph. Please contact an administrator.');
+              toast.error('Your account has not been set up yet. Please contact an administrator to create your profile.');
+              setUserProfile(null);
+              return;
             } else if (error.message?.includes('Access token is missing') || error.message?.includes('401') || error.message?.includes('403')) {
               // Authentication issue - token might not be ready yet
               console.log('Auth token not ready, will retry...');
@@ -171,30 +174,12 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
           
           if (profile) {
             setUserProfile(profile as any);
-          } else {
-            // Create a new user profile if none exists
-            const newProfileData = {
-              uid: user.id,
-              displayName: user.fullName || user.firstName || 'User',
-              email: user.primaryEmailAddress?.emailAddress || '',
-              role: (user.publicMetadata?.role as 'student' | 'teacher' | 'admin' | 'super_admin') || 'student',
-              isActive: true,
-            };
-            
-            try {
-              const response = await clerkApi.createOrUpdateProfile(newProfileData);
-              setUserProfile(response.data as any);
-            } catch (createError: any) {
-              console.error('Error creating user profile:', createError);
-              // Still try to create via createUser endpoint
-              const response = await api.createUser(newProfileData);
-              setUserProfile(response.data as any);
-            }
           }
         } catch (error: any) {
           // Only log non-auth errors
           if (!error.message?.includes('Access token is missing') && !error.message?.includes('401') && !error.message?.includes('403')) {
-            console.error('Error fetching/creating user profile:', error);
+            console.error('Error fetching user profile:', error);
+            toast.error('Failed to load your profile. Please try again.');
           }
         }
       };

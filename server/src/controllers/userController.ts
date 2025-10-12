@@ -56,17 +56,22 @@ export class UserController {
     }
   }
 
-// Create or update user profile
+// Create or update user profile (only updates existing users, does not create new ones)
 async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { displayName, phoneNumber, dateOfBirth, address, profileImage, role } = req.body;
+    const { displayName, phoneNumber, dateOfBirth, address, profileImage } = req.body;
     const uid = req.user!.uid;
     const email = req.user!.email;
 
-    console.log('Creating/updating profile for user:', { uid, email, displayName, role });
+    console.log('Updating profile for user:', { uid, email, displayName });
 
-    // Check if user already exists by email
-    const existingUser = await userService.getUserByEmail(email!);
+    // Check if user exists by UID (primary check)
+    let existingUser = await userService.getUserById(uid);
+    
+    // Fallback: check by email if UID lookup fails and email is available
+    if (!existingUser && email) {
+      existingUser = await userService.getUserByEmail(email);
+    }
 
     if (existingUser) {
       console.log('User exists, updating profile');
@@ -76,31 +81,19 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
         phoneNumber,
         dateOfBirth,
         address,
-        profileImage,
-        role: role || existingUser.role
+        profileImage
+        // Note: role cannot be updated via this endpoint, only via updateUserRole
       });
 
       sendSuccess(res, 'Profile updated successfully', updatedUser);
     } else {
-      console.log('User does not exist, creating new profile');
-      // Create new user profile using upsert (idempotent)
-      const newUser = await userService.upsertUser({
-        uid: uid,
-        email: email || '',
-        displayName: displayName || 'New User',
-        phoneNumber,
-        dateOfBirth,
-        address,
-        profileImage,
-        role: role || UserRole.STUDENT
-      });
-
-      console.log('New user created:', newUser);
-      sendCreated(res, 'Profile created successfully', newUser);
+      // User does not exist - DO NOT create automatically
+      console.warn(`Attempted to create profile for non-existent user: ${uid}`);
+      sendError(res, 'User profile not found. Please contact an administrator to create your account.', undefined, 404);
     }
   } catch (error) {
-    console.error('Create/Update profile error:', error);
-    sendServerError(res, 'Failed to create or update profile');
+    console.error('Update profile error:', error);
+    sendServerError(res, 'Failed to update profile');
   }
 }
 
@@ -108,13 +101,18 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
   async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const uid = req.user!.uid;
+      const email = req.user!.email;
+      console.log(`Fetching profile for user: { uid: '${uid}', email: '${email}' }`);
+      
       const user = await userService.getUserById(uid);
 
       if (!user) {
+        console.warn(`User profile not found in Hygraph for uid: ${uid}`);
         sendNotFound(res, 'User profile not found');
         return;
       }
 
+      console.log(`Profile found: { uid: '${user.uid}', email: '${user.email}', role: '${user.role}' }`);
       sendSuccess(res, 'Profile retrieved successfully', user);
     } catch (error) {
       console.error('Get profile error:', error);

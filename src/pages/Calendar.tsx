@@ -25,7 +25,7 @@ const Calendar = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const firestoreEvents = await eventService.getEvents(500);
+        const firestoreEvents = await eventService.getEvents(100);
         const eventsWithDates = firestoreEvents.map(event => ({ ...event, date: event.date.toDate() }));
         setEvents(eventsWithDates);
       } finally {

@@ -158,6 +158,10 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
             // If 404, user doesn't exist, try to create one
             if (error.message?.includes('404') || error.message?.includes('not found')) {
               profile = null;
+            } else if (error.message?.includes('Access token is missing') || error.message?.includes('401') || error.message?.includes('403')) {
+              // Authentication issue - token might not be ready yet
+              console.log('Auth token not ready, will retry...');
+              return;
             } else {
               throw error;
             }
@@ -186,7 +190,10 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
             }
           }
         } catch (error: any) {
-          console.error('Error fetching/creating user profile:', error);
+          // Only log non-auth errors
+          if (!error.message?.includes('Access token is missing') && !error.message?.includes('401') && !error.message?.includes('403')) {
+            console.error('Error fetching/creating user profile:', error);
+          }
         }
       };
 

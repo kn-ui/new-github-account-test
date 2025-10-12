@@ -1,6 +1,9 @@
 // Load environment variables first, before any other imports
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+// Load .env from server directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 
 import express from 'express';
@@ -118,12 +121,21 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+// Utility function to mask sensitive data in logs
+function maskToken(token?: string): string {
+  if (!token) return 'MISSING';
+  if (token.length < 12) return `${token.slice(0, 3)}... (len:${token.length})`;
+  return `${token.slice(0, 6)}...${token.slice(-6)} (len:${token.length})`;
+}
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 St. Raguel Church School API server running on port ${PORT}`);
   console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
   console.log(`🔗 Hygraph endpoint: ${process.env.VITE_HYGRAPH_ENDPOINT || process.env.HYGRAPH_ENDPOINT}`);
+  console.log(`🔑 HYGRAPH_TOKEN: ${maskToken(process.env.VITE_HYGRAPH_TOKEN || process.env.HYGRAPH_TOKEN)}`);
+  console.log(`🔐 CLERK_SECRET_KEY: ${maskToken(process.env.CLERK_SECRET_KEY)}`);
 });
 
 export default app;

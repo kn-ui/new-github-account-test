@@ -4,6 +4,7 @@ import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
 // Import from the new types file instead of firestore
 import type { FirestoreUser } from '../lib/types';
 import { api, setAuthToken, removeAuthToken } from '@/lib/api';
+import { useClerkApiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -38,6 +39,7 @@ interface AuthProviderProps {
 export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuthHook();
   const { user } = useUser();
+  const clerkApi = useClerkApiClient(); // Use the new API client with token refresh
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,8 +63,8 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
   // Create user function - for admin use only
   const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
-      // Create user via backend (Hygraph)
-      const resp = await api.createUser({
+      // Create user via backend (Hygraph) using the new API client with token refresh
+      const resp = await clerkApi.createUser({
         ...userData,
         uid: userData.uid || userData.id || '',
         isActive: true,
@@ -107,8 +109,8 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
         }
       });
 
-      // Update profile via backend (Hygraph)
-      await api.updateUserProfile({ ...data } as any);
+      // Update profile via backend (Hygraph) using the new API client with token refresh
+      await clerkApi.updateUserProfile({ ...data } as any);
       
       // Update local state
       if (userProfile) {
@@ -152,7 +154,7 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
           // First try to get user profile by Clerk user ID
           let profile;
           try {
-            const response = await api.getUserProfile();
+            const response = await clerkApi.getUserProfile();
             profile = response.data;
           } catch (error: any) {
             // If 404, user doesn't exist, try to create one
@@ -180,7 +182,7 @@ export const ClerkAuthProvider: React.FC<AuthProviderProps> = ({ children }) => 
             };
             
             try {
-              const response = await api.createOrUpdateProfile(newProfileData);
+              const response = await clerkApi.createOrUpdateProfile(newProfileData);
               setUserProfile(response.data as any);
             } catch (createError: any) {
               console.error('Error creating user profile:', createError);

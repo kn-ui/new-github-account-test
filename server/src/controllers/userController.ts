@@ -34,8 +34,8 @@ export class UserController {
         skipPasswordRequirement: true,
       });
 
-      // Step 2: Create user in Hygraph
-      const newUser = await userService.createUser({
+      // Step 2: Upsert user in Hygraph (idempotent operation)
+      const newUser = await userService.upsertUser({
         uid: clerkUser.id,
         email,
         displayName,
@@ -47,8 +47,11 @@ export class UserController {
       console.error('Create user error:', error);
       if (error.message?.includes('email_address_taken')) {
         sendError(res, 'Email already in use', undefined, 409);
+      } else if (error.isValidationError) {
+        // Handle Hygraph validation errors
+        sendError(res, 'Invalid user data', error.originalError, 400);
       } else {
-        sendServerError(res, 'Failed to create user');
+        sendServerError(res, 'Failed to create user', error);
       }
     }
   }
@@ -80,8 +83,8 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       sendSuccess(res, 'Profile updated successfully', updatedUser);
     } else {
       console.log('User does not exist, creating new profile');
-      // Create new user profile
-      const newUser = await userService.createUser({
+      // Create new user profile using upsert (idempotent)
+      const newUser = await userService.upsertUser({
         uid: uid,
         email: email || '',
         displayName: displayName || 'New User',

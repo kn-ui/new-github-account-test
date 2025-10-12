@@ -18,7 +18,10 @@ router.post('/contact', contentController.sendContactEmail);
 router.post('/hygraph', async (req, res) => {
   try {
     const { query, variables } = req.body || {};
-    if (!query) return res.status(400).json({ success: false, message: 'Missing query' });
+    if (!query) {
+      res.status(400).json({ success: false, message: 'Missing query' });
+      return;
+    }
     const data = await hygraphClient.request(query, variables);
     res.json({ success: true, data });
   } catch (e: any) {

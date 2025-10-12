@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Timestamp } from 'firebase/firestore';
-import { submissionService, assignmentService, activityLogService, certificateService } from '@/lib/firestore';
+import { submissionService, assignmentService, activityLogService, certificateService, Timestamp } from '@/lib/firestore';
 
 export async function evaluateAndAwardCertificates(uid: string) {
   const now = new Date();

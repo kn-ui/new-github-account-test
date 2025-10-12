@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Firebase storage removed - files should be handled via backend or cloud storage service  
 import { truncateTitle, truncateText } from '@/lib/utils';
 
 export default function TeacherAssignments() {

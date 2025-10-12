@@ -40,7 +40,13 @@ router.get('/course/:courseId',
 );
 
 // Get assignments by teacher - Teachers can see own, Admins see any
-router.get('/teacher/:teacherId?', 
+router.get('/teacher/:teacherId', 
+  requirePermission('assignments.read'),
+  assignmentController.getAssignmentsByTeacher
+);
+
+// Get assignments by current teacher (no teacherId parameter)
+router.get('/teacher', 
   requirePermission('assignments.read'),
   assignmentController.getAssignmentsByTeacher
 );
@@ -64,7 +70,13 @@ router.get('/:assignmentId/submissions',
 );
 
 // Get submissions by student - Students see own, Teachers/Admins see any
-router.get('/submissions/student/:studentId?', 
+router.get('/submissions/student/:studentId', 
+  requirePermission('assignments.read'),
+  assignmentController.getSubmissionsByStudent
+);
+
+// Get submissions by current student (no studentId parameter)
+router.get('/submissions/student', 
   requirePermission('assignments.read'),
   assignmentController.getSubmissionsByStudent
 );

@@ -107,7 +107,7 @@ export const requirePermission = (permission: string) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -132,7 +132,7 @@ export const requireRole = (minimumRole: UserRole) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 

@@ -64,7 +64,13 @@ router.get('/:examId/attempts',
 );
 
 // Get exam attempts by student - Students see own, Teachers/Admins see any
-router.get('/attempts/student/:studentId?', 
+router.get('/attempts/student/:studentId', 
+  requirePermission('exams.read'),
+  examController.getExamAttemptsByStudent
+);
+
+// Get exam attempts by current student (no studentId parameter)
+router.get('/attempts/student', 
   requirePermission('exams.read'),
   examController.getExamAttemptsByStudent
 );

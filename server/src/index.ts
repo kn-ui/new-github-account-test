@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
+import fileRoutes from './routes/fileRoutes';
 import devRoutes from './routes/devRoutes';
 
 
@@ -75,6 +76,7 @@ try {
   app.use('/api/courses', courseRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
+  app.use('/api/files', fileRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {
     app.use('/api/dev/seed', devRoutes);
   }

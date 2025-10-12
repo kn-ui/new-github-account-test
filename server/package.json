@@ -20,18 +20,20 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/backend": "^2.17.2",
-    "graphql": "^16.9.0",
-    "graphql-request": "^7.1.0",
     "bcryptjs": "^3.0.2",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
+    "form-data": "^4.0.4",
+    "graphql": "^16.9.0",
+    "graphql-request": "^7.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1"
   },
   "devDependencies": {
@@ -42,6 +44,7 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.1.0",
+    "@types/node-fetch": "^2.6.13",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

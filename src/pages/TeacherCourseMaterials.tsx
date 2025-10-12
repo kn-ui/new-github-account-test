@@ -5,7 +5,9 @@ import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
-// Firebase storage removed - files should be handled via backend or cloud storage service
+// Firebase storage removed - using Hygraph file storage via backend
+import FileUploadComponent from '@/components/FileUploadComponent';
+import { api, FileUpload } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

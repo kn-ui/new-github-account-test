@@ -95,6 +95,14 @@ export interface ForumThreadPost {
   createdAt: string;
 }
 
+export interface FileUpload {
+  id: string;
+  url: string;
+  fileName: string;
+  size: number;
+  mimeType: string;
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -322,6 +330,82 @@ class ApiClient {
     if (params?.limit) sp.append('limit', String(params.limit));
     const query = sp.toString() ? `?${sp.toString()}` : '';
     return this.request<any[]>(`/api/content/support/my-tickets${query}`);
+  }
+
+  // File Upload APIs
+  async uploadFile(file: File): Promise<ApiResponse<FileUpload>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const token = localStorage.getItem('authToken');
+    
+    return this.requestFormData<FileUpload>('/api/files/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+  }
+
+  async uploadMultipleFiles(files: File[]): Promise<ApiResponse<{ files: FileUpload[] }>> {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    const token = localStorage.getItem('authToken');
+    
+    return this.requestFormData<{ files: FileUpload[] }>('/api/files/upload-multiple', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+  }
+
+  async deleteFile(fileId: string): Promise<ApiResponse> {
+    return this.request(`/api/files/${fileId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getFile(fileId: string): Promise<ApiResponse<FileUpload>> {
+    return this.request<FileUpload>(`/api/files/${fileId}`);
+  }
+
+  async listFiles(params?: { page?: number; limit?: number; }): Promise<ApiResponse<FileUpload[]>> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    const query = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<FileUpload[]>(`/api/files${query}`);
+  }
+
+  // Helper method for form data requests (files)
+  private async requestFormData<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = buildUrl(endpoint);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        // Don't set Content-Type for FormData - let browser set it with boundary
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API form data request failed:', error);
+      throw error;
+    }
   }
 }
 

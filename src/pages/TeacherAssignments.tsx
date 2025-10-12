@@ -39,7 +39,9 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-// Firebase storage removed - files should be handled via backend or cloud storage service  
+// Firebase storage removed - using Hygraph file storage via backend
+import FileUploadComponent from '@/components/FileUploadComponent';
+import { api, FileUpload } from '@/lib/api';
 import { truncateTitle, truncateText } from '@/lib/utils';
 
 export default function TeacherAssignments() {

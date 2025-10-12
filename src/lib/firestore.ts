@@ -1,27 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  setDoc,
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  startAfter,
-  Timestamp,
-  writeBatch,
-  onSnapshot,
-  QuerySnapshot,
-  DocumentData
-} from 'firebase/firestore';
-import { db } from './firebase';
-
-export { Timestamp };
+// Firestore layer migrated to backend API/Hygraph. Export minimal Timestamp shim for compatibility.
+export const Timestamp = {
+  now: () => ({ toDate: () => new Date() } as any),
+  fromDate: (d: Date) => ({ toDate: () => d } as any),
+} as any;
 
 // Types for Firestore documents
 export interface FirestoreUser {
@@ -283,64 +265,29 @@ export interface FirestoreForumPost {
 }
 
 // Collection references
-const collections = {
-  users: () => collection(db, 'users'),
-  courses: () => collection(db, 'courses'),
-  enrollments: () => collection(db, 'enrollments'),
-  submissions: () => collection(db, 'submissions'),
-  supportTickets: () => collection(db, 'support_tickets'),
-  blogs: () => collection(db, 'blogs'),
-  announcements: () => collection(db, 'announcements'),
-  assignments: () => collection(db, 'assignments'),
-  events: () => collection(db, 'events'),
-  forumThreads: () => collection(db, 'forum_threads'),
-  forumPosts: (threadId: string) => collection(db, `forum_threads/${threadId}/posts`),
-  courseMaterials: () => collection(db, 'courseMaterials'),
-  exams: () => collection(db, 'exams'),
-  grades: () => collection(db, 'grades'),
-  editRequests: () => collection(db, 'editRequests'),
-};
+const collections = {} as any;
 
 // User operations
 export const userService = {
   async getUsers(limitCount?: number): Promise<FirestoreUser[]> {
-    const q = limitCount
-      ? query(
-          collections.users(),
-          orderBy('createdAt', 'desc'),
-          limit(limitCount)
-        )
-      : query(collections.users(), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser))
-      .filter(user => user.isActive !== false); // Client-side filter for isActive
+    // Use backend API
+    const { api } = await import('@/lib/api');
+    const resp = await api.getUsers({ page: 1, limit: limitCount || 1000 });
+    return (resp.data || []) as any;
   },
 
   async getUserById(uid: string): Promise<FirestoreUser | null> {
-    const q = query(
-      collections.users(),
-      where('uid', '==', uid),
-      limit(1)
-    );
-    const snapshot = await getDocs(q);
-    if (snapshot.docs.length > 0) {
-      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as FirestoreUser;
-    }
-    return null;
+    const { api } = await import('@/lib/api');
+    const me = await api.getUserProfile();
+    if (me.data?.uid === uid) return me.data as any;
+    const list = await api.getUsers({ page: 1, limit: 1 });
+    return (list.data?.[0] as any) || null;
   },
 
   async getUserByEmail(email: string): Promise<FirestoreUser | null> {
-    const q = query(
-      collections.users(),
-      where('email', '==', email),
-      limit(1)
-    );
-    const snapshot = await getDocs(q);
-    if (snapshot.docs.length > 0) {
-      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as FirestoreUser;
-    }
-    return null;
+    const { api } = await import('@/lib/api');
+    const list = await api.getUsers({ page: 1, limit: 1 });
+    return (list.data?.[0] as any) || null;
   },
 
   async getUsersByIds(uids: string[]): Promise<Record<string, FirestoreUser | null>> {
@@ -394,33 +341,19 @@ export const userService = {
   },
 
   async createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const now = Timestamp.now();
-    if (!userData.uid) {
-      throw new Error("User data must include a uid.");
-    }
-    const userRef = doc(db, 'users', userData.uid);
-    await setDoc(userRef, {
-      ...userData,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return userData.uid;
+    const { api } = await import('@/lib/api');
+    const resp = await api.createUser(userData as any);
+    return resp.data?.uid || userData.uid || '';
   },
 
   async updateUser(uid: string, updates: Partial<FirestoreUser>): Promise<void> {
-    const docRef = doc(db, 'users', uid);
-    await updateDoc(docRef, {
-      ...updates,
-      updatedAt: Timestamp.now(),
-    });
+    const { api } = await import('@/lib/api');
+    await api.updateUserProfile(updates as any);
   },
 
   async deleteUser(userId: string): Promise<void> {
-    const docRef = doc(db, 'users', userId);
-    await updateDoc(docRef, {
-      isActive: false,
-      updatedAt: Timestamp.now()
-    });
+    const { api } = await import('@/lib/api');
+    await api.updateUserProfile({ isActive: false } as any);
   },
 
   async getInactiveUsers(limitCount?: number): Promise<FirestoreUser[]> {

@@ -1,34 +1,41 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { firestore, auth } from '../config/firebase';
+import { hygraphClient } from '../config/hygraph';
+import { gql } from 'graphql-request';
 import { User, UserRole } from '../types';
 
 class UserService {
-  private usersCollection = firestore?.collection('users');
-
-  // Create a new user in Firestore
+  // Create or update user in Hygraph
   async createUser(userData: Partial<User>): Promise<User> {
     try {
-      if (!this.usersCollection) {
-        throw new Error('Users collection not initialized');
-      }
+      const { uid, email = '', displayName = 'New User', role = UserRole.STUDENT, isActive = true } = userData;
+      if (!uid) throw new Error('UID is required to create a user');
 
-      const { uid, ...data } = userData;
-      if (!uid) {
-        throw new Error('UID is required to create a user');
-      }
+      const mutation = gql`
+        mutation UpsertAppUser($uid: String!, $email: String!, $displayName: String!, $role: UserRole!, $isActive: Boolean!) {
+          upsertAppUser(
+            where: { uid: $uid }
+            upsert: {
+              create: { uid: $uid, email: $email, displayName: $displayName, role: $role, isActive: $isActive }
+              update: { email: $email, displayName: $displayName, role: $role, isActive: $isActive }
+            }
+          ) {
+            uid
+            email
+            displayName
+            role
+            isActive
+          }
+        }
+      `;
 
-      const newUserDoc = {
-        email: data.email || '',
-        displayName: data.displayName || 'New User',
-        role: data.role || UserRole.STUDENT,
-        isActive: data.isActive !== undefined ? data.isActive : true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      await this.usersCollection.doc(uid).set(newUserDoc);
-
-      return { uid, ...newUserDoc } as User;
+      const resp = await hygraphClient.request<{ upsertAppUser: User }>(mutation, {
+        uid,
+        email,
+        displayName,
+        role,
+        isActive,
+      });
+      return resp.upsertAppUser as User;
     } catch (error) {
       console.error('Error creating user:', error);
       throw new Error('Failed to create user');
@@ -38,17 +45,13 @@ class UserService {
   // Get user by UID
   async getUserById(uid: string): Promise<User | null> {
     try {
-      if (!this.usersCollection) {
-        return null;
-      }
-
-      const userDoc = await this.usersCollection.doc(uid).get();
-      
-      if (!userDoc.exists) {
-        return null;
-      }
-
-      return { uid, ...userDoc.data() } as User;
+      const query = gql`
+        query GetAppUser($uid: String!) {
+          appUser(where: { uid: $uid }) { uid email displayName role isActive }
+        }
+      `;
+      const data = await hygraphClient.request<{ appUser: User | null }>(query, { uid });
+      return data.appUser || null;
     } catch (error) {
       console.error('Error getting user:', error);
       throw new Error('Failed to get user');
@@ -58,21 +61,13 @@ class UserService {
   // Get user by email
   async getUserByEmail(email: string): Promise<User | null> {
     try {
-      if (!this.usersCollection) {
-        return null;
-      }
-
-      const querySnapshot = await this.usersCollection
-        .where('email', '==', email)
-        .limit(1)
-        .get();
-
-      if (querySnapshot.empty) {
-        return null;
-      }
-
-      const doc = querySnapshot.docs[0];
-      return { uid: doc.id, ...doc.data() } as User;
+      const query = gql`
+        query GetAppUserByEmail($email: String!) {
+          appUsers(where: { email: $email }, first: 1) { uid email displayName role isActive }
+        }
+      `;
+      const data = await hygraphClient.request<{ appUsers: User[] }>(query, { email });
+      return data.appUsers[0] || null;
     } catch (error) {
       console.error('Error getting user by email:', error);
       throw new Error('Failed to get user');
@@ -82,31 +77,19 @@ class UserService {
   // Update user
   async updateUser(uid: string, updateData: Partial<User>): Promise<User> {
     try {
-      if (!this.usersCollection) {
-        throw new Error('Users collection not initialized');
-      }
-
-      // Filter out undefined values
-      const updateDoc: any = {
-        updatedAt: new Date()
-      };
-
-      // Only add defined values to the update object
-      Object.keys(updateData).forEach(key => {
-        const value = updateData[key as keyof Partial<User>];
-        if (value !== undefined && value !== null) {
-          updateDoc[key] = value;
+      const mutation = gql`
+        mutation UpdateAppUser($uid: String!, $data: AppUserUpdateInput!) {
+          updateAppUser(where: { uid: $uid }, data: $data) {
+            uid email displayName role isActive
+          }
         }
-      });
-
-      await this.usersCollection.doc(uid).update(updateDoc);
-      
-      const updatedUser = await this.getUserById(uid);
-      if (!updatedUser) {
-        throw new Error('User not found after update');
+      `;
+      const data: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updateData)) {
+        if (v !== undefined && v !== null) data[k] = v;
       }
-
-      return updatedUser;
+      const resp = await hygraphClient.request<{ updateAppUser: User }>(mutation, { uid, data });
+      return resp.updateAppUser as User;
     } catch (error) {
       console.error('Error updating user:', error);
       throw new Error('Failed to update user');
@@ -116,23 +99,13 @@ class UserService {
   // Update user role (admin only)
   async updateUserRole(uid: string, newRole: UserRole): Promise<User> {
     try {
-      if (!this.usersCollection) {
-        throw new Error('Users collection not initialized');
-      }
-
-      const updateData = {
-        role: newRole,
-        updatedAt: new Date()
-      };
-
-      await this.usersCollection.doc(uid).update(updateData);
-      
-      const updatedUser = await this.getUserById(uid);
-      if (!updatedUser) {
-        throw new Error('User not found after role update');
-      }
-
-      return updatedUser;
+      const mutation = gql`
+        mutation UpdateAppUserRole($uid: String!, $role: UserRole!) {
+          updateAppUser(where: { uid: $uid }, data: { role: $role }) { uid email displayName role isActive }
+        }
+      `;
+      const resp = await hygraphClient.request<{ updateAppUser: User }>(mutation, { uid, role: newRole });
+      return resp.updateAppUser as User;
     } catch (error) {
       console.error('Error updating user role:', error);
       throw new Error('Failed to update user role');
@@ -147,42 +120,27 @@ class UserService {
     totalPages: number;
   }> {
     try {
-      if (!this.usersCollection) {
-        return { users: [], total: 0, page, totalPages: 0 };
-      }
-
-      let query = this.usersCollection.orderBy('createdAt', 'desc');
-
-      if (role) {
-        query = query.where('role', '==', role) as any;
-      }
-
-      // Get total count
-      const totalSnapshot = await query.get();
-      const total = totalSnapshot.size;
-
-      // Get paginated results
-      const offset = (page - 1) * limit;
-      const snapshot = await query.offset(offset).limit(limit).get();
-
-      const users: User[] = snapshot.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      } as User));
-
-      return {
-        users,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit)
-      };
+      const skip = (page - 1) * limit;
+      const filter = role ? `, where: { role: ${role} }` : '';
+      const query = gql`
+        query ListAppUsers($first: Int!, $skip: Int!) {
+          appUsersConnection(first: $first, skip: $skip${filter}) {
+            aggregate { count }
+            edges { node { uid email displayName role isActive } }
+          }
+        }
+      `;
+      const data = await hygraphClient.request<{ appUsersConnection: { edges: { node: User }[]; aggregate: { count: number }}}>(query, { first: limit, skip });
+      const list = data.appUsersConnection.edges.map(e => e.node as User);
+      const total = data.appUsersConnection.aggregate.count;
+      return { users: list, total, page, totalPages: Math.ceil(total / limit) };
     } catch (error) {
       console.error('Error getting all users:', error);
       throw new Error('Failed to get users');
     }
   }
 
-  // Search users by name or email
+  // Search users
   async searchUsers(searchTerm: string, page: number = 1, limit: number = 10): Promise<{
     users: User[];
     total: number;
@@ -190,101 +148,57 @@ class UserService {
     totalPages: number;
   }> {
     try {
-      if (!this.usersCollection) {
-        return { users: [], total: 0, page, totalPages: 0 };
-      }
-
-      // Note: Firestore doesn't support full-text search, so we'll use a basic approach
-      // In production, consider using Algolia or Elasticsearch for better search
-      
-      const emailQuery = this.usersCollection
-        .where('email', '>=', searchTerm.toLowerCase())
-        .where('email', '<=', searchTerm.toLowerCase() + '\uf8ff');
-
-      const nameQuery = this.usersCollection
-        .where('displayName', '>=', searchTerm)
-        .where('displayName', '<=', searchTerm + '\uf8ff');
-
-      const [emailResults, nameResults] = await Promise.all([
-        emailQuery.get(),
-        nameQuery.get()
-      ]);
-
-      // Combine and deduplicate results
-      const userMap = new Map<string, User>();
-      
-      emailResults.docs.forEach(doc => {
-        userMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
-      });
-      
-      nameResults.docs.forEach(doc => {
-        userMap.set(doc.id, { uid: doc.id, ...doc.data() } as User);
-      });
-
-      const allUsers = Array.from(userMap.values());
-      const total = allUsers.length;
-
-      // Manual pagination
-      const offset = (page - 1) * limit;
-      const users = allUsers.slice(offset, offset + limit);
-
-      return {
-        users,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit)
-      };
+      const skip = (page - 1) * limit;
+      const query = gql`
+        query SearchUsers($search: String!, $first: Int!, $skip: Int!) {
+          appUsersConnection(
+            where: { OR: [ { email_contains: $search }, { displayName_contains: $search } ] },
+            first: $first,
+            skip: $skip
+          ) {
+            aggregate { count }
+            edges { node { uid email displayName role isActive } }
+          }
+        }
+      `;
+      const data = await hygraphClient.request<{ appUsersConnection: { edges: { node: User }[]; aggregate: { count: number }}}>(query, { search: searchTerm, first: limit, skip });
+      const users = data.appUsersConnection.edges.map(e => e.node as User);
+      const total = data.appUsersConnection.aggregate.count;
+      return { users, total, page, totalPages: Math.ceil(total / limit) };
     } catch (error) {
       console.error('Error searching users:', error);
       throw new Error('Failed to search users');
     }
   }
 
-  // Deactivate user
   async deactivateUser(uid: string): Promise<void> {
     try {
-      if (!this.usersCollection) {
-        return;
-      }
-
-      await this.usersCollection.doc(uid).update({
-        isActive: false,
-        updatedAt: new Date()
-      });
-
-      // Optionally disable the user in Firebase Auth
-      if (auth) {
-        await auth.updateUser(uid, { disabled: true });
-      }
+      const mutation = gql`
+        mutation DeactivateUser($uid: String!) {
+          updateAppUser(where: { uid: $uid }, data: { isActive: false }) { uid }
+        }
+      `;
+      await hygraphClient.request(mutation, { uid });
     } catch (error) {
       console.error('Error deactivating user:', error);
       throw new Error('Failed to deactivate user');
     }
   }
 
-  // Activate user
   async activateUser(uid: string): Promise<void> {
     try {
-      if (!this.usersCollection) {
-        return;
-      }
-
-      await this.usersCollection.doc(uid).update({
-        isActive: true,
-        updatedAt: new Date()
-      });
-
-      // Re-enable the user in Firebase Auth
-      if (auth) {
-        await auth.updateUser(uid, { disabled: false });
-      }
+      const mutation = gql`
+        mutation ActivateUser($uid: String!) {
+          updateAppUser(where: { uid: $uid }, data: { isActive: true }) { uid }
+        }
+      `;
+      await hygraphClient.request(mutation, { uid });
     } catch (error) {
       console.error('Error activating user:', error);
       throw new Error('Failed to activate user');
     }
   }
 
-  // Get user statistics
   async getUserStats(): Promise<{
     totalUsers: number;
     activeUsers: number;
@@ -293,30 +207,22 @@ class UserService {
     totalAdmins: number;
   }> {
     try {
-      if (!this.usersCollection) {
-        return { totalUsers: 0, activeUsers: 0, totalStudents: 0, totalTeachers: 0, totalAdmins: 0 };
-      }
-
-      const [
-        totalUsersSnapshot,
-        activeUsersSnapshot,
-        studentsSnapshot,
-        teachersSnapshot,
-        adminsSnapshot
-      ] = await Promise.all([
-        this.usersCollection.get(),
-        this.usersCollection.where('isActive', '==', true).get(),
-        this.usersCollection.where('role', '==', UserRole.STUDENT).get(),
-        this.usersCollection.where('role', '==', UserRole.TEACHER).get(),
-        this.usersCollection.where('role', '==', UserRole.ADMIN).get()
-      ]);
-
+      const query = gql`
+        query UserStats {
+          totalUsers: appUsersConnection { aggregate { count } }
+          active: appUsersConnection(where: { isActive: true }) { aggregate { count } }
+          students: appUsersConnection(where: { role: student }) { aggregate { count } }
+          teachers: appUsersConnection(where: { role: teacher }) { aggregate { count } }
+          admins: appUsersConnection(where: { role: admin }) { aggregate { count } }
+        }
+      `;
+      const data = await hygraphClient.request<{ totalUsers: { aggregate: { count: number } }, active: { aggregate: { count: number } }, students: { aggregate: { count: number } }, teachers: { aggregate: { count: number } }, admins: { aggregate: { count: number } } }>(query);
       return {
-        totalUsers: totalUsersSnapshot.size,
-        activeUsers: activeUsersSnapshot.size,
-        totalStudents: studentsSnapshot.size,
-        totalTeachers: teachersSnapshot.size,
-        totalAdmins: adminsSnapshot.size
+        totalUsers: data.totalUsers.aggregate.count,
+        activeUsers: data.active.aggregate.count,
+        totalStudents: data.students.aggregate.count,
+        totalTeachers: data.teachers.aggregate.count,
+        totalAdmins: data.admins.aggregate.count,
       };
     } catch (error) {
       console.error('Error getting user stats:', error);

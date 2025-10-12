@@ -1,13 +1,5 @@
-import { db } from '@/lib/firebase';
-import { 
-  collection, 
-  addDoc, 
-  doc, 
-  setDoc, 
-  Timestamp,
-  getDocs,
-  deleteDoc
-} from 'firebase/firestore';
+// Firebase seeding removed. Use backend dev seed endpoints if needed.
+export default {} as any;
 
 // Test data for all collections
 const testData = {

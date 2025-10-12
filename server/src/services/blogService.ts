@@ -1,33 +1,44 @@
-import { firestore } from '../config/firebase';
+import { hygraphClient } from '../config/hygraph';
+import { gql } from 'graphql-request';
 import { BlogPost } from '../types';
 
 class BlogService {
-  // Use collection name 'blogs' to match existing data
-  private collection = firestore?.collection('blogs');
-
   async getPosts(page = 1, limit = 10, search?: string, category?: string): Promise<{ posts: BlogPost[]; total: number; }> {
     try {
-      if (!this.collection) {
-        return { posts: [], total: 0 };
-      }
+      const skip = (page - 1) * limit;
+      const whereParts: string[] = [];
+      if (search) whereParts.push(`title_contains: $search`);
+      if (category) whereParts.push(`category: $category`);
+      const where = whereParts.length ? `where: { ${whereParts.join(', ')} }` : '';
 
-      let query: FirebaseFirestore.Query = this.collection.orderBy('createdAt', 'desc');
+      const query = gql`
+        query ListBlogPosts($first: Int!, $skip: Int!, $search: String, $category: String) {
+          blogPostsConnection(first: $first, skip: $skip, ${where}, orderBy: createdAt_DESC) {
+            aggregate { count }
+            edges { node { id title content likes author { displayName uid } category } }
+          }
+        }
+      `;
 
-      if (category) {
-        query = query.where('category', '==', category);
-      }
+      const data = await hygraphClient.request<{
+        blogPostsConnection: { aggregate: { count: number }, edges: { node: any }[] }
+      }>(query, { first: limit, skip, search, category });
 
-      // Simple title prefix search if provided
-      if (search) {
-        query = query.where('title', '>=', search).where('title', '<=', search + '\uf8ff');
-      }
-
-      const snapshot = await query.get();
-      const total = snapshot.size;
-      const offset = (page - 1) * limit;
-      const docs = snapshot.docs.slice(offset, offset + limit);
-
-      const posts: BlogPost[] = docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+      const posts: BlogPost[] = data.blogPostsConnection.edges.map(e => ({
+        id: e.node.id,
+        title: e.node.title,
+        excerpt: '',
+        content: e.node.content,
+        authorId: e.node.author?.uid || '',
+        authorName: e.node.author?.displayName || '',
+        category: e.node.category || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        readTime: undefined,
+        image: undefined,
+        tags: [],
+      }));
+      const total = data.blogPostsConnection.aggregate.count;
       return { posts, total };
     } catch (e) {
       console.error('BlogService.getPosts error:', e);

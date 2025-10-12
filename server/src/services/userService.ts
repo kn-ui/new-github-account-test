@@ -15,8 +15,20 @@ class UserService {
           upsertAppUser(
             where: { uid: $uid }
             upsert: {
-              create: { uid: $uid, email: $email, displayName: $displayName, role: $role, isActive: $isActive }
-              update: { email: $email, displayName: $displayName, role: $role, isActive: $isActive }
+              create: { 
+                uid: $uid, 
+                email: $email, 
+                displayName: $displayName, 
+                role: $role, 
+                isActive: $isActive,
+                passwordChanged: false
+              }
+              update: { 
+                email: $email, 
+                displayName: $displayName, 
+                role: $role, 
+                isActive: $isActive 
+              }
             }
           ) {
             uid
@@ -24,18 +36,31 @@ class UserService {
             displayName
             role
             isActive
+            passwordChanged
+            createdAt
+            updatedAt
           }
         }
       `;
 
-      const resp = await hygraphClient.request<{ upsertAppUser: User }>(mutation, {
+      const resp = await hygraphClient.request<{ upsertAppUser: any }>(mutation, {
         uid,
         email,
         displayName,
         role,
         isActive,
       });
-      return resp.upsertAppUser as User;
+      
+      const user = resp.upsertAppUser;
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt)
+      } as User;
     } catch (error) {
       console.error('Error creating user:', error);
       throw new Error('Failed to create user');
@@ -47,11 +72,32 @@ class UserService {
     try {
       const query = gql`
         query GetAppUser($uid: String!) {
-          appUser(where: { uid: $uid }) { uid email displayName role isActive }
+          appUser(where: { uid: $uid }) { 
+            uid 
+            email 
+            displayName 
+            role 
+            isActive 
+            passwordChanged
+            createdAt
+            updatedAt
+          }
         }
       `;
-      const data = await hygraphClient.request<{ appUser: User | null }>(query, { uid });
-      return data.appUser || null;
+      const data = await hygraphClient.request<{ appUser: any | null }>(query, { uid });
+      
+      if (!data.appUser) return null;
+
+      const user = data.appUser;
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt)
+      } as User;
     } catch (error) {
       console.error('Error getting user:', error);
       throw new Error('Failed to get user');
@@ -63,11 +109,32 @@ class UserService {
     try {
       const query = gql`
         query GetAppUserByEmail($email: String!) {
-          appUsers(where: { email: $email }, first: 1) { uid email displayName role isActive }
+          appUsers(where: { email: $email }, first: 1) { 
+            uid 
+            email 
+            displayName 
+            role 
+            isActive 
+            passwordChanged
+            createdAt
+            updatedAt
+          }
         }
       `;
-      const data = await hygraphClient.request<{ appUsers: User[] }>(query, { email });
-      return data.appUsers[0] || null;
+      const data = await hygraphClient.request<{ appUsers: any[] }>(query, { email });
+      
+      if (!data.appUsers[0]) return null;
+
+      const user = data.appUsers[0];
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt)
+      } as User;
     } catch (error) {
       console.error('Error getting user by email:', error);
       throw new Error('Failed to get user');

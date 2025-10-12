@@ -17,13 +17,13 @@ class ForumService {
               node {
                 id
                 title
+                body
                 category
-                createdBy
-                createdByName
+                likes
+                views
+                author { uid displayName }
                 createdAt
                 lastActivityAt
-                pinned
-                tags
               }
             }
           }
@@ -32,12 +32,26 @@ class ForumService {
 
       const response = await hygraphClient.request<{
         forumThreadsConnection: {
-          edges: { node: ForumThread }[];
+          edges: { node: any }[];
           aggregate: { count: number };
         };
       }>(query, { first: limit, skip });
 
-      const threads = response.forumThreadsConnection.edges.map(edge => edge.node);
+      const threads: ForumThread[] = response.forumThreadsConnection.edges.map(edge => {
+        const thread = edge.node;
+        return {
+          id: thread.id,
+          title: thread.title,
+          category: thread.category || 'General',
+          createdBy: thread.author?.uid || '',
+          createdByName: thread.author?.displayName || 'Unknown User',
+          createdAt: new Date(thread.createdAt),
+          lastActivityAt: new Date(thread.lastActivityAt),
+          pinned: false,
+          tags: []
+        };
+      });
+      
       const total = response.forumThreadsConnection.aggregate.count;
 
       return { threads, total };
@@ -52,9 +66,9 @@ class ForumService {
       const skip = (page - 1) * limit;
 
       const query = gql`
-        query GetForumPosts($threadId: String!, $first: Int!, $skip: Int!) {
+        query GetForumPosts($threadId: ID!, $first: Int!, $skip: Int!) {
           forumPostsConnection(
-            where: { threadId: $threadId }, 
+            where: { thread: { id: $threadId } }, 
             first: $first, 
             skip: $skip, 
             orderBy: createdAt_ASC
@@ -63,10 +77,10 @@ class ForumService {
             edges {
               node {
                 id
-                threadId
                 body
-                createdBy
-                createdByName
+                likes
+                thread { id }
+                author { uid displayName }
                 createdAt
               }
             }
@@ -76,12 +90,23 @@ class ForumService {
 
       const response = await hygraphClient.request<{
         forumPostsConnection: {
-          edges: { node: ForumThreadPost }[];
+          edges: { node: any }[];
           aggregate: { count: number };
         };
       }>(query, { threadId, first: limit, skip });
 
-      const posts = response.forumPostsConnection.edges.map(edge => edge.node);
+      const posts: ForumThreadPost[] = response.forumPostsConnection.edges.map(edge => {
+        const post = edge.node;
+        return {
+          id: post.id,
+          threadId: post.thread?.id || threadId,
+          body: post.body,
+          createdBy: post.author?.uid || '',
+          createdByName: post.author?.displayName || 'Unknown User',
+          createdAt: new Date(post.createdAt)
+        };
+      });
+      
       const total = response.forumPostsConnection.aggregate.count;
 
       return { posts, total };
@@ -102,35 +127,53 @@ class ForumService {
         mutation CreateForumThread(
           $title: String!
           $category: String!
+          $body: String!
           $createdBy: String!
-          $createdByName: String!
         ) {
           createForumThread(data: {
             title: $title
+            body: $body
             category: $category
-            createdBy: $createdBy
-            createdByName: $createdByName
-            pinned: false
-            tags: []
+            author: { connect: { uid: $createdBy } }
+            likes: 0
+            views: 0
+            lastActivityAt: "${new Date().toISOString()}"
           }) {
             id
             title
+            body
             category
-            createdBy
-            createdByName
+            likes
+            views
+            author { uid displayName }
             createdAt
             lastActivityAt
-            pinned
-            tags
           }
         }
       `;
 
-      const response = await hygraphClient.request<{ createForumThread: ForumThread }>(mutation, params);
-      return response.createForumThread;
+      const response = await hygraphClient.request<{ createForumThread: any }>(mutation, {
+        title: params.title,
+        category: params.category,
+        body: `Started by ${params.createdByName}`,
+        createdBy: params.createdBy
+      });
+
+      const thread = response.createForumThread;
+      return {
+        id: thread.id,
+        title: thread.title,
+        category: thread.category,
+        createdBy: thread.author?.uid || params.createdBy,
+        createdByName: thread.author?.displayName || params.createdByName,
+        createdAt: new Date(thread.createdAt),
+        lastActivityAt: new Date(thread.lastActivityAt),
+        pinned: false,
+        tags: []
+      };
     } catch (error) {
       console.error('Error creating forum thread:', error);
-      throw new Error('Forum threads collection not initialized');
+      throw new Error('Failed to create forum thread');
     }
   }
 
@@ -144,30 +187,33 @@ class ForumService {
       // Create the post
       const createPostMutation = gql`
         mutation CreateForumPost(
-          $threadId: String!
+          $threadId: ID!
           $body: String!
           $createdBy: String!
-          $createdByName: String!
         ) {
           createForumPost(data: {
-            threadId: $threadId
+            thread: { connect: { id: $threadId } }
             body: $body
-            createdBy: $createdBy
-            createdByName: $createdByName
+            author: { connect: { uid: $createdBy } }
+            likes: 0
           }) {
             id
-            threadId
             body
-            createdBy
-            createdByName
+            likes
+            thread { id }
+            author { uid displayName }
             createdAt
           }
         }
       `;
 
-      const postResponse = await hygraphClient.request<{ createForumPost: ForumThreadPost }>(
+      const postResponse = await hygraphClient.request<{ createForumPost: any }>(
         createPostMutation, 
-        params
+        {
+          threadId: params.threadId,
+          body: params.body,
+          createdBy: params.createdBy
+        }
       );
 
       // Update thread's last activity
@@ -181,10 +227,18 @@ class ForumService {
 
       await hygraphClient.request(updateThreadMutation, { id: params.threadId });
 
-      return postResponse.createForumPost;
+      const post = postResponse.createForumPost;
+      return {
+        id: post.id,
+        threadId: post.thread?.id || params.threadId,
+        body: post.body,
+        createdBy: post.author?.uid || params.createdBy,
+        createdByName: post.author?.displayName || params.createdByName,
+        createdAt: new Date(post.createdAt)
+      };
     } catch (error) {
       console.error('Error creating forum post:', error);
-      throw new Error('Forum posts or threads collection not initialized');
+      throw new Error('Failed to create forum post');
     }
   }
 
@@ -195,19 +249,33 @@ class ForumService {
           forumThread(where: { id: $id }) {
             id
             title
+            body
             category
-            createdBy
-            createdByName
+            likes
+            views
+            author { uid displayName }
             createdAt
             lastActivityAt
-            pinned
-            tags
           }
         }
       `;
 
-      const response = await hygraphClient.request<{ forumThread: ForumThread | null }>(query, { id: threadId });
-      return response.forumThread;
+      const response = await hygraphClient.request<{ forumThread: any | null }>(query, { id: threadId });
+      
+      if (!response.forumThread) return null;
+
+      const thread = response.forumThread;
+      return {
+        id: thread.id,
+        title: thread.title,
+        category: thread.category,
+        createdBy: thread.author?.uid || '',
+        createdByName: thread.author?.displayName || 'Unknown User',
+        createdAt: new Date(thread.createdAt),
+        lastActivityAt: new Date(thread.lastActivityAt),
+        pinned: false,
+        tags: []
+      };
     } catch (error) {
       console.error('Error getting forum thread:', error);
       throw new Error('Failed to get forum thread');
@@ -221,13 +289,13 @@ class ForumService {
           updateForumThread(where: { id: $id }, data: $data) {
             id
             title
+            body
             category
-            createdBy
-            createdByName
+            likes
+            views
+            author { uid displayName }
             createdAt
             lastActivityAt
-            pinned
-            tags
           }
         }
       `;
@@ -235,17 +303,28 @@ class ForumService {
       // Filter out undefined values
       const data: Record<string, any> = {};
       Object.entries(updateData).forEach(([key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && key !== 'createdBy' && key !== 'createdByName') {
           data[key] = value;
         }
       });
 
-      const response = await hygraphClient.request<{ updateForumThread: ForumThread }>(mutation, {
+      const response = await hygraphClient.request<{ updateForumThread: any }>(mutation, {
         id: threadId,
         data
       });
 
-      return response.updateForumThread;
+      const thread = response.updateForumThread;
+      return {
+        id: thread.id,
+        title: thread.title,
+        category: thread.category,
+        createdBy: thread.author?.uid || '',
+        createdByName: thread.author?.displayName || 'Unknown User',
+        createdAt: new Date(thread.createdAt),
+        lastActivityAt: new Date(thread.lastActivityAt),
+        pinned: false,
+        tags: []
+      };
     } catch (error) {
       console.error('Error updating forum thread:', error);
       throw new Error('Failed to update forum thread');

@@ -9,14 +9,14 @@ class EventService {
       const skip = (page - 1) * limit;
 
       // Build where clause
-      const whereConditions: string[] = [];
-      if (type) whereConditions.push(`type: ${type}`);
+      const whereConditions: string[] = ['isActive: true'];
+      if (type) whereConditions.push(`type: "${type}"`);
       if (month) {
-        whereConditions.push(`date_gte: "${month}-01"`);
-        whereConditions.push(`date_lte: "${month}-31"`);
+        whereConditions.push(`date_gte: "${month}-01T00:00:00.000Z"`);
+        whereConditions.push(`date_lte: "${month}-31T23:59:59.999Z"`);
       }
 
-      const whereClause = whereConditions.length > 0 ? `where: { ${whereConditions.join(', ')} }` : '';
+      const whereClause = `where: { ${whereConditions.join(', ')} }`;
 
       const query = gql`
         query GetEvents($first: Int!, $skip: Int!) {
@@ -31,6 +31,11 @@ class EventService {
                 type
                 location
                 description
+                status
+                maxAttendees
+                currentAttendees
+                isActive
+                createdBy
                 createdAt
                 updatedAt
               }
@@ -41,12 +46,26 @@ class EventService {
 
       const response = await hygraphClient.request<{
         eventsConnection: {
-          edges: { node: EventItem }[];
+          edges: { node: any }[];
           aggregate: { count: number };
         };
       }>(query, { first: limit, skip });
 
-      const events = response.eventsConnection.edges.map(edge => edge.node);
+      const events: EventItem[] = response.eventsConnection.edges.map(edge => {
+        const event = edge.node;
+        return {
+          id: event.id,
+          title: event.title,
+          date: event.date.split('T')[0], // Convert to YYYY-MM-DD format
+          time: event.time,
+          type: event.type,
+          location: event.location,
+          description: event.description,
+          createdAt: new Date(event.createdAt),
+          updatedAt: new Date(event.updatedAt)
+        };
+      });
+      
       const total = response.eventsConnection.aggregate.count;
 
       return { events, total };
@@ -56,16 +75,19 @@ class EventService {
     }
   }
 
-  async createEvent(eventData: Partial<EventItem>): Promise<EventItem> {
+  async createEvent(eventData: Partial<EventItem & { createdBy: string }>): Promise<EventItem> {
     try {
       const mutation = gql`
         mutation CreateEvent(
           $title: String!
-          $date: Date!
+          $date: DateTime!
           $time: String!
-          $type: EventType!
+          $type: String!
           $location: String!
-          $description: String
+          $description: String!
+          $createdBy: String!
+          $maxAttendees: Int!
+          $status: EventStatus!
         ) {
           createEvent(data: {
             title: $title
@@ -74,6 +96,11 @@ class EventService {
             type: $type
             location: $location
             description: $description
+            createdBy: $createdBy
+            maxAttendees: $maxAttendees
+            currentAttendees: 0
+            status: $status
+            isActive: true
           }) {
             id
             title
@@ -82,6 +109,11 @@ class EventService {
             type
             location
             description
+            status
+            maxAttendees
+            currentAttendees
+            isActive
+            createdBy
             createdAt
             updatedAt
           }
@@ -90,15 +122,30 @@ class EventService {
 
       const variables = {
         title: eventData.title || 'Untitled Event',
-        date: eventData.date || new Date().toISOString().split('T')[0],
+        date: eventData.date ? `${eventData.date}T${eventData.time || '00:00'}:00.000Z` : new Date().toISOString(),
         time: eventData.time || '00:00',
         type: eventData.type || 'academic',
         location: eventData.location || 'TBD',
-        description: eventData.description || null
+        description: eventData.description || '',
+        createdBy: eventData.createdBy || 'system',
+        maxAttendees: 100,
+        status: 'UPCOMING'
       };
 
-      const response = await hygraphClient.request<{ createEvent: EventItem }>(mutation, variables);
-      return response.createEvent;
+      const response = await hygraphClient.request<{ createEvent: any }>(mutation, variables);
+      
+      const event = response.createEvent;
+      return {
+        id: event.id,
+        title: event.title,
+        date: event.date.split('T')[0],
+        time: event.time,
+        type: event.type,
+        location: event.location,
+        description: event.description,
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
     } catch (error) {
       console.error('Error creating event:', error);
       throw new Error('Failed to create event');
@@ -117,26 +164,46 @@ class EventService {
             type
             location
             description
+            status
+            maxAttendees
+            currentAttendees
+            isActive
+            createdBy
             createdAt
             updatedAt
           }
         }
       `;
 
-      // Filter out undefined values
+      // Filter out undefined values and format date if provided
       const data: Record<string, any> = {};
       Object.entries(updateData).forEach(([key, value]) => {
         if (value !== undefined) {
-          data[key] = value;
+          if (key === 'date' && updateData.time) {
+            data.date = `${value}T${updateData.time}:00.000Z`;
+          } else if (key !== 'time' || !updateData.date) {
+            data[key] = value;
+          }
         }
       });
 
-      const response = await hygraphClient.request<{ updateEvent: EventItem }>(mutation, {
+      const response = await hygraphClient.request<{ updateEvent: any }>(mutation, {
         id: eventId,
         data
       });
 
-      return response.updateEvent;
+      const event = response.updateEvent;
+      return {
+        id: event.id,
+        title: event.title,
+        date: event.date.split('T')[0],
+        time: event.time,
+        type: event.type,
+        location: event.location,
+        description: event.description,
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
     } catch (error) {
       console.error('Error updating event:', error);
       throw new Error('Failed to update event');
@@ -147,7 +214,9 @@ class EventService {
     try {
       const mutation = gql`
         mutation DeleteEvent($id: ID!) {
-          deleteEvent(where: { id: $id }) { id }
+          updateEvent(where: { id: $id }, data: { isActive: false }) { 
+            id 
+          }
         }
       `;
 
@@ -170,14 +239,33 @@ class EventService {
             type
             location
             description
+            status
+            maxAttendees
+            currentAttendees
+            isActive
+            createdBy
             createdAt
             updatedAt
           }
         }
       `;
 
-      const response = await hygraphClient.request<{ event: EventItem | null }>(query, { id: eventId });
-      return response.event;
+      const response = await hygraphClient.request<{ event: any | null }>(query, { id: eventId });
+      
+      if (!response.event) return null;
+
+      const event = response.event;
+      return {
+        id: event.id,
+        title: event.title,
+        date: event.date.split('T')[0],
+        time: event.time,
+        type: event.type,
+        location: event.location,
+        description: event.description,
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
     } catch (error) {
       console.error('Error getting event:', error);
       throw new Error('Failed to get event');

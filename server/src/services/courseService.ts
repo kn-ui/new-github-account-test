@@ -5,11 +5,7 @@ import { Course, Enrollment, UserRole } from '../types';
 class CourseService {
 
   /**
-   * Creates a new course in Hygraph.
-   * @param courseData The course data from the request body.
-   * @param instructorId The ID of the instructor creating the course.
-   * @param instructorName The display name of the instructor.
-   * @returns The newly created course object.
+   * Creates a new course in Hygraph using proper relations.
    */
   async createCourse(courseData: Partial<Course>, instructorId: string, instructorName: string): Promise<Course> {
     try {
@@ -18,7 +14,7 @@ class CourseService {
           $title: String!
           $description: String!
           $syllabus: String!
-          $instructor: String!
+          $instructorId: ID!
           $instructorName: String!
           $category: String!
           $thumbnail: String
@@ -30,7 +26,7 @@ class CourseService {
             title: $title
             description: $description
             syllabus: $syllabus
-            instructor: $instructor
+            instructor: { connect: { uid: $instructorId } }
             instructorName: $instructorName
             category: $category
             thumbnail: $thumbnail
@@ -42,7 +38,7 @@ class CourseService {
             title
             description
             syllabus
-            instructor
+            instructor { uid displayName }
             instructorName
             category
             thumbnail
@@ -59,7 +55,7 @@ class CourseService {
         title: courseData.title || 'Untitled Course',
         description: courseData.description || '',
         syllabus: courseData.syllabus || '',
-        instructor: instructorId,
+        instructorId: instructorId,
         instructorName,
         category: courseData.category || 'General',
         thumbnail: courseData.thumbnail || null,
@@ -68,8 +64,25 @@ class CourseService {
         isActive: courseData.isActive ?? true,
       };
 
-      const response = await hygraphClient.request<{ createCourse: Course }>(mutation, variables);
-      return response.createCourse;
+      const response = await hygraphClient.request<{ createCourse: any }>(mutation, variables);
+      
+      // Transform response to match our Course interface
+      const course = response.createCourse;
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        syllabus: course.syllabus,
+        instructor: course.instructor?.uid || instructorId,
+        instructorName: course.instructorName,
+        category: course.category,
+        thumbnail: course.thumbnail,
+        duration: course.duration,
+        maxStudents: course.maxStudents,
+        isActive: course.isActive,
+        createdAt: new Date(course.createdAt),
+        updatedAt: new Date(course.updatedAt)
+      } as Course;
     } catch (error) {
       console.error('Error creating course:', error);
       throw new Error('Failed to create course');
@@ -86,7 +99,7 @@ class CourseService {
             title
             description
             syllabus
-            instructor
+            instructor { uid displayName }
             instructorName
             category
             thumbnail
@@ -99,8 +112,26 @@ class CourseService {
         }
       `;
 
-      const response = await hygraphClient.request<{ course: Course | null }>(query, { id: courseId });
-      return response.course;
+      const response = await hygraphClient.request<{ course: any | null }>(query, { id: courseId });
+      
+      if (!response.course) return null;
+
+      const course = response.course;
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        syllabus: course.syllabus,
+        instructor: course.instructor?.uid || '',
+        instructorName: course.instructorName,
+        category: course.category,
+        thumbnail: course.thumbnail,
+        duration: course.duration,
+        maxStudents: course.maxStudents,
+        isActive: course.isActive,
+        createdAt: new Date(course.createdAt),
+        updatedAt: new Date(course.updatedAt)
+      } as Course;
     } catch (error) {
       console.error('Error getting course:', error);
       throw new Error('Failed to get course');
@@ -126,7 +157,7 @@ class CourseService {
       // Build where clause
       const whereConditions: string[] = [];
       if (category) whereConditions.push(`category: "${category}"`);
-      if (instructorId) whereConditions.push(`instructor: "${instructorId}"`);
+      if (instructorId) whereConditions.push(`instructor: { uid: "${instructorId}" }`);
       if (isActive !== undefined) whereConditions.push(`isActive: ${isActive}`);
       
       const whereClause = whereConditions.length > 0 ? `where: { ${whereConditions.join(', ')} }` : '';
@@ -141,7 +172,7 @@ class CourseService {
                 title
                 description
                 syllabus
-                instructor
+                instructor { uid displayName }
                 instructorName
                 category
                 thumbnail
@@ -158,12 +189,30 @@ class CourseService {
 
       const response = await hygraphClient.request<{
         coursesConnection: {
-          edges: { node: Course }[];
+          edges: { node: any }[];
           aggregate: { count: number };
         };
       }>(query, { first: limit, skip });
 
-      const courses = response.coursesConnection.edges.map(edge => edge.node);
+      const courses = response.coursesConnection.edges.map(edge => {
+        const course = edge.node;
+        return {
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          syllabus: course.syllabus,
+          instructor: course.instructor?.uid || '',
+          instructorName: course.instructorName,
+          category: course.category,
+          thumbnail: course.thumbnail,
+          duration: course.duration,
+          maxStudents: course.maxStudents,
+          isActive: course.isActive,
+          createdAt: new Date(course.createdAt),
+          updatedAt: new Date(course.updatedAt)
+        } as Course;
+      });
+      
       const total = response.coursesConnection.aggregate.count;
 
       console.log('getAllCourses - Fetched courses:', courses);
@@ -213,7 +262,7 @@ class CourseService {
                 title
                 description
                 syllabus
-                instructor
+                instructor { uid displayName }
                 instructorName
                 category
                 thumbnail
@@ -230,12 +279,30 @@ class CourseService {
 
       const response = await hygraphClient.request<{
         coursesConnection: {
-          edges: { node: Course }[];
+          edges: { node: any }[];
           aggregate: { count: number };
         };
       }>(query, { searchTerm, first: limit, skip });
 
-      const courses = response.coursesConnection.edges.map(edge => edge.node);
+      const courses = response.coursesConnection.edges.map(edge => {
+        const course = edge.node;
+        return {
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          syllabus: course.syllabus,
+          instructor: course.instructor?.uid || '',
+          instructorName: course.instructorName,
+          category: course.category,
+          thumbnail: course.thumbnail,
+          duration: course.duration,
+          maxStudents: course.maxStudents,
+          isActive: course.isActive,
+          createdAt: new Date(course.createdAt),
+          updatedAt: new Date(course.updatedAt)
+        } as Course;
+      });
+      
       const total = response.coursesConnection.aggregate.count;
 
       return {
@@ -270,7 +337,7 @@ class CourseService {
             title
             description
             syllabus
-            instructor
+            instructor { uid displayName }
             instructorName
             category
             thumbnail
@@ -283,20 +350,35 @@ class CourseService {
         }
       `;
 
-      // Filter out undefined values
+      // Filter out undefined values and prepare data
       const data: Record<string, any> = {};
       Object.entries(updateData).forEach(([key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && key !== 'instructor') {
           data[key] = value;
         }
       });
 
-      const response = await hygraphClient.request<{ updateCourse: Course }>(mutation, {
+      const response = await hygraphClient.request<{ updateCourse: any }>(mutation, {
         id: courseId,
         data
       });
 
-      return response.updateCourse;
+      const updatedCourse = response.updateCourse;
+      return {
+        id: updatedCourse.id,
+        title: updatedCourse.title,
+        description: updatedCourse.description,
+        syllabus: updatedCourse.syllabus,
+        instructor: updatedCourse.instructor?.uid || '',
+        instructorName: updatedCourse.instructorName,
+        category: updatedCourse.category,
+        thumbnail: updatedCourse.thumbnail,
+        duration: updatedCourse.duration,
+        maxStudents: updatedCourse.maxStudents,
+        isActive: updatedCourse.isActive,
+        createdAt: new Date(updatedCourse.createdAt),
+        updatedAt: new Date(updatedCourse.updatedAt)
+      } as Course;
     } catch (error) {
       console.error('Error updating course:', error);
       throw new Error('Failed to update course');
@@ -319,7 +401,7 @@ class CourseService {
     }
   }
 
-  // Enroll student in course
+  // Enroll student in course using proper relations
   async enrollStudent(studentId: string, courseId: string): Promise<Enrollment> {
     try {
       const course = await this.getCourseById(courseId);
@@ -333,8 +415,8 @@ class CourseService {
 
       // Check for existing enrollment
       const existingQuery = gql`
-        query CheckExistingEnrollment($courseId: String!, $studentId: String!) {
-          enrollments(where: { courseId: $courseId, studentId: $studentId }) {
+        query CheckExistingEnrollment($courseId: ID!, $studentId: String!) {
+          enrollments(where: { course: { id: $courseId }, student: { uid: $studentId } }) {
             id
           }
         }
@@ -351,8 +433,8 @@ class CourseService {
 
       // Check capacity (count active enrollments)
       const capacityQuery = gql`
-        query CheckCourseCapacity($courseId: String!) {
-          enrollmentsConnection(where: { courseId: $courseId, status: active }) {
+        query CheckCourseCapacity($courseId: ID!) {
+          enrollmentsConnection(where: { course: { id: $courseId }, status: ACTIVE }) {
             aggregate { count }
           }
         }
@@ -366,24 +448,27 @@ class CourseService {
         throw new Error('Course is full');
       }
 
-      // Create enrollment
+      // Create enrollment using relations
       const mutation = gql`
         mutation CreateEnrollment(
           $studentId: String!
-          $courseId: String!
+          $courseId: ID!
           $progress: Int!
           $status: EnrollmentStatus!
         ) {
           createEnrollment(data: {
-            studentId: $studentId
-            courseId: $courseId
+            student: { connect: { uid: $studentId } }
+            course: { connect: { id: $courseId } }
             progress: $progress
-            completedLessons: []
+            completedLessons: ""
             status: $status
+            enrolledAt: "${new Date().toISOString()}"
+            lastAccessedAt: "${new Date().toISOString()}"
+            isActive: true
           }) {
             id
-            studentId
-            courseId
+            student { uid }
+            course { id }
             enrolledAt
             progress
             completedLessons
@@ -393,14 +478,24 @@ class CourseService {
         }
       `;
 
-      const response = await hygraphClient.request<{ createEnrollment: Enrollment }>(mutation, {
+      const response = await hygraphClient.request<{ createEnrollment: any }>(mutation, {
         studentId,
         courseId,
         progress: 0,
-        status: 'active'
+        status: 'ACTIVE'
       });
 
-      return response.createEnrollment;
+      const enrollment = response.createEnrollment;
+      return {
+        id: enrollment.id,
+        studentId: enrollment.student?.uid || studentId,
+        courseId: enrollment.course?.id || courseId,
+        enrolledAt: new Date(enrollment.enrolledAt),
+        progress: enrollment.progress,
+        completedLessons: enrollment.completedLessons ? enrollment.completedLessons.split(',').filter(Boolean) : [],
+        lastAccessedAt: new Date(enrollment.lastAccessedAt),
+        status: enrollment.status.toLowerCase()
+      } as Enrollment;
     } catch (error) {
       console.error('Error enrolling student:', error);
       throw new Error('Failed to enroll student');
@@ -412,10 +507,10 @@ class CourseService {
     try {
       const query = gql`
         query GetStudentEnrollments($studentId: String!) {
-          enrollments(where: { studentId: $studentId }, orderBy: enrolledAt_DESC) {
+          enrollments(where: { student: { uid: $studentId } }, orderBy: enrolledAt_DESC) {
             id
-            studentId
-            courseId
+            student { uid }
+            course { id }
             enrolledAt
             progress
             completedLessons
@@ -425,8 +520,18 @@ class CourseService {
         }
       `;
 
-      const response = await hygraphClient.request<{ enrollments: Enrollment[] }>(query, { studentId });
-      return response.enrollments;
+      const response = await hygraphClient.request<{ enrollments: any[] }>(query, { studentId });
+      
+      return response.enrollments.map(enrollment => ({
+        id: enrollment.id,
+        studentId: enrollment.student?.uid || studentId,
+        courseId: enrollment.course?.id || '',
+        enrolledAt: new Date(enrollment.enrolledAt),
+        progress: enrollment.progress,
+        completedLessons: enrollment.completedLessons ? enrollment.completedLessons.split(',').filter(Boolean) : [],
+        lastAccessedAt: new Date(enrollment.lastAccessedAt),
+        status: enrollment.status.toLowerCase()
+      } as Enrollment));
     } catch (error) {
       console.error('Error getting student enrollments:', error);
       throw new Error('Failed to get enrollments');
@@ -437,11 +542,11 @@ class CourseService {
   async getCourseEnrollments(courseId: string): Promise<Enrollment[]> {
     try {
       const query = gql`
-        query GetCourseEnrollments($courseId: String!) {
-          enrollments(where: { courseId: $courseId }, orderBy: enrolledAt_DESC) {
+        query GetCourseEnrollments($courseId: ID!) {
+          enrollments(where: { course: { id: $courseId } }, orderBy: enrolledAt_DESC) {
             id
-            studentId
-            courseId
+            student { uid }
+            course { id }
             enrolledAt
             progress
             completedLessons
@@ -451,8 +556,18 @@ class CourseService {
         }
       `;
 
-      const response = await hygraphClient.request<{ enrollments: Enrollment[] }>(query, { courseId });
-      return response.enrollments;
+      const response = await hygraphClient.request<{ enrollments: any[] }>(query, { courseId });
+      
+      return response.enrollments.map(enrollment => ({
+        id: enrollment.id,
+        studentId: enrollment.student?.uid || '',
+        courseId: enrollment.course?.id || courseId,
+        enrolledAt: new Date(enrollment.enrolledAt),
+        progress: enrollment.progress,
+        completedLessons: enrollment.completedLessons ? enrollment.completedLessons.split(',').filter(Boolean) : [],
+        lastAccessedAt: new Date(enrollment.lastAccessedAt),
+        status: enrollment.status.toLowerCase()
+      } as Enrollment));
     } catch (error) {
       console.error('Error getting course enrollments:', error);
       throw new Error('Failed to get course enrollments');
@@ -467,8 +582,8 @@ class CourseService {
         query GetEnrollment($id: ID!) {
           enrollment(where: { id: $id }) {
             id
-            studentId
-            courseId
+            student { uid }
+            course { id }
             enrolledAt
             progress
             completedLessons
@@ -478,7 +593,7 @@ class CourseService {
         }
       `;
 
-      const enrollmentResponse = await hygraphClient.request<{ enrollment: Enrollment | null }>(
+      const enrollmentResponse = await hygraphClient.request<{ enrollment: any | null }>(
         enrollmentQuery, 
         { id: enrollmentId }
       );
@@ -489,7 +604,7 @@ class CourseService {
       }
 
       // Add lesson to completed lessons if not already there
-      const completedLessons = enrollment.completedLessons || [];
+      const completedLessons = enrollment.completedLessons ? enrollment.completedLessons.split(',').filter(Boolean) : [];
       if (!completedLessons.includes(completedLessonId)) {
         completedLessons.push(completedLessonId);
       }
@@ -497,12 +612,12 @@ class CourseService {
       // Calculate progress (simplified for now - would need lesson count from course)
       const totalLessons = 10; // This should come from the course's lesson count
       const progress = Math.min((completedLessons.length / totalLessons) * 100, 100);
-      const status = progress >= 100 ? 'completed' : 'active';
+      const status = progress >= 100 ? 'COMPLETED' : 'ACTIVE';
 
       const mutation = gql`
         mutation UpdateEnrollmentProgress(
           $id: ID!
-          $completedLessons: [String!]!
+          $completedLessons: String!
           $progress: Int!
           $status: EnrollmentStatus!
         ) {
@@ -512,11 +627,12 @@ class CourseService {
               completedLessons: $completedLessons
               progress: $progress
               status: $status
+              lastAccessedAt: "${new Date().toISOString()}"
             }
           ) {
             id
-            studentId
-            courseId
+            student { uid }
+            course { id }
             enrolledAt
             progress
             completedLessons
@@ -526,14 +642,24 @@ class CourseService {
         }
       `;
 
-      const response = await hygraphClient.request<{ updateEnrollment: Enrollment }>(mutation, {
+      const response = await hygraphClient.request<{ updateEnrollment: any }>(mutation, {
         id: enrollmentId,
-        completedLessons,
+        completedLessons: completedLessons.join(','),
         progress: Math.round(progress),
         status
       });
 
-      return response.updateEnrollment;
+      const updatedEnrollment = response.updateEnrollment;
+      return {
+        id: updatedEnrollment.id,
+        studentId: updatedEnrollment.student?.uid || '',
+        courseId: updatedEnrollment.course?.id || '',
+        enrolledAt: new Date(updatedEnrollment.enrolledAt),
+        progress: updatedEnrollment.progress,
+        completedLessons: updatedEnrollment.completedLessons ? updatedEnrollment.completedLessons.split(',').filter(Boolean) : [],
+        lastAccessedAt: new Date(updatedEnrollment.lastAccessedAt),
+        status: updatedEnrollment.status.toLowerCase()
+      } as Enrollment;
     } catch (error) {
       console.error('Error updating enrollment progress:', error);
       throw new Error('Failed to update progress');
@@ -549,19 +675,19 @@ class CourseService {
     completionRate: number;
   }> {
     try {
-      const whereClause = instructorId ? `where: { instructor: "${instructorId}" }` : '';
+      const instructorWhere = instructorId ? `where: { instructor: { uid: "${instructorId}" } }` : '';
 
       const query = gql`
         query GetCourseStats {
-          totalCourses: coursesConnection(${whereClause}) { aggregate { count } }
-          activeCourses: coursesConnection(${whereClause ? whereClause.replace('}', ', isActive: true }') : 'where: { isActive: true }'}) { aggregate { count } }
+          totalCourses: coursesConnection(${instructorWhere}) { aggregate { count } }
+          activeCourses: coursesConnection(${instructorWhere ? instructorWhere.replace('}', ', isActive: true }') : 'where: { isActive: true }'}) { aggregate { count } }
           enrollments: enrollmentsConnection { 
             aggregate { count }
             edges { 
               node { 
-                studentId 
+                student { uid }
                 progress 
-                ${instructorId ? 'course { instructor }' : ''}
+                course { instructor { uid } }
               } 
             }
           }
@@ -575,9 +701,9 @@ class CourseService {
           aggregate: { count: number };
           edges: { 
             node: { 
-              studentId: string; 
+              student: { uid: string };
               progress: number;
-              course?: { instructor: string };
+              course?: { instructor?: { uid: string } };
             } 
           }[];
         };
@@ -590,8 +716,8 @@ class CourseService {
 
       response.enrollments.edges.forEach(({ node: enrollment }) => {
         // Filter by instructor if specified
-        if (!instructorId || (enrollment.course && enrollment.course.instructor === instructorId)) {
-          uniqueStudents.add(enrollment.studentId);
+        if (!instructorId || (enrollment.course?.instructor?.uid === instructorId)) {
+          uniqueStudents.add(enrollment.student.uid);
           if (typeof enrollment.progress === 'number') {
             totalProgress += enrollment.progress;
             progressCount += 1;

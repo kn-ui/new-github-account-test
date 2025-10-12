@@ -16,6 +16,8 @@ import courseRoutes from './routes/courseRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
 import fileRoutes from './routes/fileRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
+import examRoutes from './routes/examRoutes';
 import devRoutes from './routes/devRoutes';
 
 
@@ -53,7 +55,15 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       users: '/api/users',
-      courses: '/api/courses'
+      courses: '/api/courses',
+      assignments: '/api/assignments',
+      exams: '/api/exams',
+      content: '/api/content',
+      files: '/api/files',
+      email: '/api/email'
+    },
+    bulkOperations: {
+      users: '/api/users/bulk/*'
     },
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
@@ -77,6 +87,8 @@ try {
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
   app.use('/api/files', fileRoutes);
+  app.use('/api/assignments', assignmentRoutes);
+  app.use('/api/exams', examRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {
     app.use('/api/dev/seed', devRoutes);
   }

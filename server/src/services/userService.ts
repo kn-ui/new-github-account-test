@@ -296,6 +296,118 @@ class UserService {
       throw new Error('Failed to get user statistics');
     }
   }
+
+  /**
+   * Bulk create users
+   */
+  async bulkCreateUsers(usersData: Array<{
+    uid: string;
+    email: string;
+    displayName: string;
+    role: UserRole;
+    isActive?: boolean;
+  }>): Promise<{ created: number; errors: string[] }> {
+    const results = { created: 0, errors: [] as string[] };
+
+    // Process users in batches to avoid overwhelming Hygraph
+    const batchSize = 10;
+    for (let i = 0; i < usersData.length; i += batchSize) {
+      const batch = usersData.slice(i, i + batchSize);
+      
+      await Promise.allSettled(
+        batch.map(async (userData) => {
+          try {
+            await this.createUser(userData);
+            results.created++;
+          } catch (error) {
+            results.errors.push(`Failed to create user ${userData.email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        })
+      );
+    }
+
+    return results;
+  }
+
+  /**
+   * Bulk update users
+   */
+  async bulkUpdateUsers(updates: Array<{
+    uid: string;
+    data: Partial<User>;
+  }>): Promise<{ updated: number; errors: string[] }> {
+    const results = { updated: 0, errors: [] as string[] };
+
+    // Process updates in batches
+    const batchSize = 10;
+    for (let i = 0; i < updates.length; i += batchSize) {
+      const batch = updates.slice(i, i + batchSize);
+      
+      await Promise.allSettled(
+        batch.map(async (update) => {
+          try {
+            await this.updateUser(update.uid, update.data);
+            results.updated++;
+          } catch (error) {
+            results.errors.push(`Failed to update user ${update.uid}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        })
+      );
+    }
+
+    return results;
+  }
+
+  /**
+   * Bulk delete users (deactivate)
+   */
+  async bulkDeleteUsers(userIds: string[]): Promise<{ deleted: number; errors: string[] }> {
+    const results = { deleted: 0, errors: [] as string[] };
+
+    // Process deletions in batches
+    const batchSize = 10;
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      
+      await Promise.allSettled(
+        batch.map(async (uid) => {
+          try {
+            await this.deactivateUser(uid);
+            results.deleted++;
+          } catch (error) {
+            results.errors.push(`Failed to delete user ${uid}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        })
+      );
+    }
+
+    return results;
+  }
+
+  /**
+   * Bulk activate users
+   */
+  async bulkActivateUsers(userIds: string[]): Promise<{ activated: number; errors: string[] }> {
+    const results = { activated: 0, errors: [] as string[] };
+
+    const batchSize = 10;
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      
+      await Promise.allSettled(
+        batch.map(async (uid) => {
+          try {
+            await this.activateUser(uid);
+            results.activated++;
+          } catch (error) {
+            results.errors.push(`Failed to activate user ${uid}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        })
+      );
+    }
+
+    return results;
+  }
 }
 
 export default new UserService();

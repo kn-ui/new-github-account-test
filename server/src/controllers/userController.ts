@@ -269,6 +269,104 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
       sendServerError(res, 'Failed to get user statistics');
     }
   }
+
+  // Bulk create users (super admin only)
+  async bulkCreateUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { users } = req.body;
+
+      if (!users || !Array.isArray(users)) {
+        sendError(res, 'Users array is required');
+        return;
+      }
+
+      const result = await userService.bulkCreateUsers(users);
+      
+      sendSuccess(res, 'Bulk user creation completed', {
+        created: result.created,
+        total: users.length,
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error('Bulk create users error:', error);
+      sendServerError(res, 'Failed to bulk create users');
+    }
+  }
+
+  // Bulk update users (super admin only)  
+  async bulkUpdateUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { updates } = req.body;
+
+      if (!updates || !Array.isArray(updates)) {
+        sendError(res, 'Updates array is required');
+        return;
+      }
+
+      const result = await userService.bulkUpdateUsers(updates);
+      
+      sendSuccess(res, 'Bulk user update completed', {
+        updated: result.updated,
+        total: updates.length,
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error('Bulk update users error:', error);
+      sendServerError(res, 'Failed to bulk update users');
+    }
+  }
+
+  // Bulk delete users (super admin only)
+  async bulkDeleteUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userIds } = req.body;
+
+      if (!userIds || !Array.isArray(userIds)) {
+        sendError(res, 'User IDs array is required');
+        return;
+      }
+
+      // Prevent admin from deleting themselves
+      if (userIds.includes(req.user!.uid)) {
+        sendError(res, 'Cannot delete your own account');
+        return;
+      }
+
+      const result = await userService.bulkDeleteUsers(userIds);
+      
+      sendSuccess(res, 'Bulk user deletion completed', {
+        deleted: result.deleted,
+        total: userIds.length,
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error('Bulk delete users error:', error);
+      sendServerError(res, 'Failed to bulk delete users');
+    }
+  }
+
+  // Bulk activate users (admin only)
+  async bulkActivateUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userIds } = req.body;
+
+      if (!userIds || !Array.isArray(userIds)) {
+        sendError(res, 'User IDs array is required');
+        return;
+      }
+
+      const result = await userService.bulkActivateUsers(userIds);
+      
+      sendSuccess(res, 'Bulk user activation completed', {
+        activated: result.activated,
+        total: userIds.length,
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error('Bulk activate users error:', error);
+      sendServerError(res, 'Failed to bulk activate users');
+    }
+  }
 }
 
 export default new UserController();

@@ -28,6 +28,12 @@ router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats
 // Admin only routes
 router.get('/', requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
 
+// Bulk operations (super admin only)
+router.post('/bulk/create', requireSuperAdmin, userController.bulkCreateUsers);
+router.post('/bulk/update', requireSuperAdmin, userController.bulkUpdateUsers);
+router.post('/bulk/delete', requireSuperAdmin, userController.bulkDeleteUsers);
+router.post('/bulk/activate', requireAdmin, userController.bulkActivateUsers);
+
 // Parameterized routes last
 
 router.get('/:userId', requireTeacherOrAdmin, userController.getUserById);

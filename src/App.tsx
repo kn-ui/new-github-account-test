@@ -9,7 +9,6 @@ import { ImprovedClerkAuthProvider } from "@/contexts/ImprovedClerkAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
 import AdminTest from "./pages/AdminTest";
 import AdminUserCreationTest from "./pages/AdminUserCreationTest";
@@ -82,7 +81,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/admin-test" element={<AdminTest />} />
             <Route path="/admin-user-test" element={<AdminUserCreationTest />} />

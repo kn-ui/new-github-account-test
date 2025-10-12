@@ -75,11 +75,14 @@ const DashboardPreview = () => {
                 </Button>
               </Link>
             ) : (
-              <Link to="/signup">
-                <Button variant="academic" className="w-full">
-                  Sign Up as Student
+              <div className="text-center">
+                <Button variant="academic" className="w-full" disabled>
+                  Contact Administrator
                 </Button>
-              </Link>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Account creation by admin only
+                </p>
+              </div>
             )}
           </Card>
 
@@ -137,11 +140,14 @@ const DashboardPreview = () => {
                 </Button>
               </Link>
             ) : (
-              <Link to="/signup">
-                <Button variant="success" className="w-full">
-                  Sign Up as Teacher
+              <div className="text-center">
+                <Button variant="success" className="w-full" disabled>
+                  Contact Administrator
                 </Button>
-              </Link>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Account creation by admin only
+                </p>
+              </div>
             )}
           </Card>
 
@@ -193,11 +199,14 @@ const DashboardPreview = () => {
                 </Button>
               </Link>
             ) : (
-              <Link to="/signup">
-                <Button variant="accent" className="w-full">
-                  Sign Up as Admin
+              <div className="text-center">
+                <Button variant="accent" className="w-full" disabled>
+                  Contact Administrator
                 </Button>
-              </Link>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Account creation by admin only
+                </p>
+              </div>
             )}
           </Card>
         </div>

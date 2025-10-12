@@ -145,13 +145,7 @@ export const CustomSignIn: React.FC<CustomSignInProps> = ({
         
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">Don't have an account? </span>
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal"
-            onClick={() => navigate('/signup')}
-          >
-            Contact administrator
-          </Button>
+          <span className="text-blue-600 font-medium">Contact administrator</span>
         </div>
       </CardContent>
     </Card>

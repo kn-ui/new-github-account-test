@@ -333,7 +333,7 @@ export const userService = {
     
     // Get student details
     const studentPromises = studentIds.map(studentId => 
-      userService.getUserById(studentId)
+      this.getUserById(studentId)
     );
     const students = await Promise.all(studentPromises);
     

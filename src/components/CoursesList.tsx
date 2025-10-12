@@ -20,6 +20,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { api } from '@/lib/api';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface CourseWithApproval extends FirestoreCourse {
@@ -52,7 +53,8 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const activeCourses = await courseService.getCourses(1000);
+      const response = await api.getCourses({ page: 1, limit: 1000 });
+      const activeCourses = response.data || [];
       setCourses(activeCourses as CourseWithApproval[]);
     } catch (error) {
       console.error('Error loading courses:', error);

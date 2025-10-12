@@ -242,6 +242,13 @@ class ApiClient {
     });
   }
 
+  async createOrUpdateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
+    return this.request<User>('/api/users/profile', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
   // My enrollments
   async getMyEnrollments(): Promise<ApiResponse> {
     return this.request('/api/courses/student/enrollments');

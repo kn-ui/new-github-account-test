@@ -1,4 +1,3 @@
-import { firestore } from '../config/firebase';
 import { SupportTicket } from '../types';
 
 // Support service deprecated per client request

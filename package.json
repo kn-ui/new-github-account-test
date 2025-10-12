@@ -14,9 +14,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "install:backend": "cd server && npm install",
-    "install:all": "npm install && npm run install:backend",
-    "seed": "tsx src/scripts/runSeedNode.ts",
-    "seed:clear": "tsx src/scripts/clearSeedNode.ts"
+    "install:all": "npm install && npm run install:backend"
   },
   "dependencies": {
     "@clerk/backend": "^2.17.2",

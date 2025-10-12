@@ -22,22 +22,10 @@ import {
   Zap,
   Star
 } from 'lucide-react';
-import { eventService, Timestamp } from '@/lib/firestore';
+import { api } from '@/lib/api';
+import type { Event as EventType } from '@/lib/types';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { useI18n } from '@/contexts/I18nContext';
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: Date | Timestamp;
-  time: string;
-  location: string;
-  type: string;
-  maxAttendees: number;
-  currentAttendees: number;
-  status: string;
-}
 
 interface EventsListProps {
   readOnly?: boolean;
@@ -45,8 +33,8 @@ interface EventsListProps {
 
 export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
   const { t } = useI18n();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -63,7 +51,8 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const fetchedEvents = await eventService.getEvents();
+      const response = await api.getEvents({ page: 1, limit: 100 });
+      const fetchedEvents = response.data || [];
       setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);

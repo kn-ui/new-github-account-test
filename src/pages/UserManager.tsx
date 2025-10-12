@@ -34,7 +34,7 @@ import {
   Award
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
-import { useAuth } from '@/contexts/ClerkAuthContext';
+import { useAuth } from '@/contexts/ImprovedClerkAuthContext';
 import { api } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -151,9 +151,16 @@ const UserManager = () => {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
     setIsCreatingUser(true); // Start loading
     try {
-      // Create user via backend API
+      // Create user via backend API (which handles both Clerk and Firebase)
       const response = await api.post('/users', {
         email: newUser.email,
         displayName: newUser.displayName,
@@ -161,6 +168,7 @@ const UserManager = () => {
       });
       
       if (response.data.success) {
+        alert(`User "${newUser.displayName}" created successfully!`);
         setIsAddUserOpen(false);
         setNewUser({ displayName: '', email: '', role: 'student', password: '' });
         fetchUsers();
@@ -171,7 +179,8 @@ const UserManager = () => {
       // Handle API errors with user-friendly messages
       let errorMessage = 'An error occurred while creating the user.';
       
-      if (error.response?.data?.message?.includes('already in use')) {
+      if (error.response?.data?.message?.includes('already in use') || 
+          error.response?.data?.message?.includes('email_address_taken')) {
         errorMessage = `The email "${newUser.email}" is already registered. Please use a different email address.`;
       } else if (error.response?.data?.message?.includes('invalid email')) {
         errorMessage = 'Please enter a valid email address.';

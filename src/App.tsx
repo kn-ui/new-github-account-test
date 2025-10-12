@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
 import AdminTest from "./pages/AdminTest";
+import AdminUserCreationTest from "./pages/AdminUserCreationTest";
 import Dashboard from "./pages/Dashboard";
 import DashboardWrapper from "./components/DashboardWrapper";
 import CourseDetail from "./pages/CourseDetail";
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/admin-test" element={<AdminTest />} />
+            <Route path="/admin-user-test" element={<AdminUserCreationTest />} />
             <Route path="/about" element={<About />} />
             <Route path="/academic" element={<Academic />} />
             <Route path="/admissions" element={<Admissions />} />

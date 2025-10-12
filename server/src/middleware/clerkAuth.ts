@@ -4,6 +4,20 @@ import { hygraphClient } from '../config/hygraph';
 import { gql } from 'graphql-request';
 import { AuthenticatedRequest, UserRole } from '../types';
 
+// Utility function to mask sensitive data in logs
+function maskToken(token?: string): string {
+  if (!token) return 'MISSING';
+  if (token.length < 12) return `${token.slice(0, 3)}... (len:${token.length})`;
+  return `${token.slice(0, 6)}...${token.slice(-6)} (len:${token.length})`;
+}
+
+// Interface for Clerk user payload attached to request
+interface ClerkUserPayload {
+  uid: string;
+  email?: string;
+  displayName?: string;
+}
+
 // Verify Clerk token and extract user info
 export const authenticateClerkToken = async (
   req: AuthenticatedRequest,
@@ -17,7 +31,8 @@ export const authenticateClerkToken = async (
     if (!token) {
       res.status(401).json({
         success: false,
-        message: 'Access token is missing'
+        message: 'Access token is missing',
+        error: 'token_missing'
       });
       return;
     }
@@ -28,15 +43,50 @@ export const authenticateClerkToken = async (
       console.warn('CLERK_SECRET_KEY not configured - authentication disabled');
       res.status(500).json({
         success: false,
-        message: 'Authentication service not configured'
+        message: 'Authentication service not configured',
+        error: 'auth_not_configured'
       });
       return;
     }
 
-    // Verify the Clerk token
-    const payload = await verifyToken(token, {
-      secretKey: clerkSecretKey
-    });
+    // Verify the Clerk token with proper error handling
+    let payload: any;
+    try {
+      payload = await verifyToken(token, {
+        secretKey: clerkSecretKey
+      });
+    } catch (verifyError: any) {
+      // Distinguish between expired and invalid tokens
+      const errorReason = verifyError.reason || verifyError.message || 'unknown';
+      
+      if (errorReason.includes('expired') || errorReason.includes('exp')) {
+        console.warn(`Token expired for request: ${maskToken(token)}`);
+        res.status(401).json({
+          success: false,
+          message: 'Token has expired',
+          error: 'token_expired'
+        });
+        return;
+      } else {
+        console.warn(`Invalid token for request: ${maskToken(token)}, reason: ${errorReason}`);
+        res.status(403).json({
+          success: false,
+          message: 'Invalid token',
+          error: 'token_invalid'
+        });
+        return;
+      }
+    }
+    
+    // Extract user info from Clerk payload
+    const clerkUser: ClerkUserPayload = {
+      uid: payload.sub as string,
+      email: payload.email as string,
+      displayName: payload.name as string || payload.first_name as string
+    };
+
+    // Attach Clerk user to request for use in services
+    (req as any).clerkUser = clerkUser;
     
     // Get user data from Hygraph (AppUser) using Clerk user ID
     let userRole = UserRole.STUDENT; // default
@@ -52,7 +102,7 @@ export const authenticateClerkToken = async (
           }
         }
       `;
-      const data = await hygraphClient.request<{ appUser: { role?: UserRole } | null }>(query, { uid: payload.sub });
+      const data = await hygraphClient.request<{ appUser: { role?: UserRole } | null }>(query, { uid: clerkUser.uid });
       if (data?.appUser?.role) {
         userRole = data.appUser.role as UserRole;
       }
@@ -60,19 +110,22 @@ export const authenticateClerkToken = async (
       console.warn('Hygraph fetch of user failed, defaulting to student:', e);
     }
 
-    // Attach user info to request
+    // Attach user info to request (legacy format for backward compatibility)
     req.user = {
-      uid: payload.sub as string,
-      email: (payload.email as string) || '',
+      uid: clerkUser.uid,
+      email: clerkUser.email || '',
       role: userRole
     };
 
     next();
-  } catch (error) {
-    console.error('Clerk authentication error:', error);
-    res.status(403).json({
+  } catch (error: any) {
+    // Catch any unexpected errors
+    const errorMessage = error.message || 'Unknown authentication error';
+    console.error('Unexpected Clerk authentication error:', errorMessage);
+    res.status(500).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: 'Authentication service error',
+      error: 'auth_service_error'
     });
   }
 };

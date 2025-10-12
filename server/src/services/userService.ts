@@ -3,23 +3,79 @@ import { hygraphClient, isHygraphConfigured } from '../config/hygraph';
 import { gql } from 'graphql-request';
 import { User, UserRole } from '../types';
 
+// Utility function to mask sensitive data in logs
+function maskToken(token?: string): string {
+  if (!token) return 'MISSING';
+  if (token.length < 12) return `${token.slice(0, 3)}... (len:${token.length})`;
+  return `${token.slice(0, 6)}...${token.slice(-6)} (len:${token.length})`;
+}
+
+// Interface for normalized user data before Hygraph call
+interface NormalizedUserData {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
 class UserService {
+  /**
+   * Normalize and validate user data before sending to Hygraph
+   * This prevents empty required fields and ensures data consistency
+   */
+  private normalizeUserForHygraph(userData: Partial<User>): NormalizedUserData {
+    const { uid, email = '', displayName = '', role = UserRole.STUDENT, isActive = true } = userData;
+    
+    if (!uid) {
+      throw new Error('UID is required to create a user');
+    }
+
+    // Normalize email: trim, lowercase, and handle empty values
+    let normalizedEmail = email?.trim().toLowerCase() || '';
+    
+    // If email is empty or null, create a deterministic fallback
+    // This satisfies Hygraph's required & unique constraints
+    if (!normalizedEmail) {
+      normalizedEmail = `no-email+${uid}@st-raguel.local`;
+      console.warn(`Empty email for user ${uid}, using fallback: ${normalizedEmail}`);
+    }
+
+    // Validate and normalize role
+    let normalizedRole = role;
+    if (!Object.values(UserRole).includes(role as UserRole)) {
+      console.warn(`Invalid role '${role}' for user ${uid}, defaulting to student`);
+      normalizedRole = UserRole.STUDENT;
+    }
+
+    // Ensure displayName is not null/undefined
+    const normalizedDisplayName = displayName?.trim() || '';
+
+    return {
+      uid,
+      email: normalizedEmail,
+      displayName: normalizedDisplayName,
+      role: normalizedRole as UserRole,
+      isActive: Boolean(isActive)
+    };
+  }
+
   // Create or update user in Hygraph
   async createUser(userData: Partial<User>): Promise<User> {
     try {
-      const { uid, email = '', displayName = 'New User', role = UserRole.STUDENT, isActive = true } = userData;
-      if (!uid) throw new Error('UID is required to create a user');
+      // Normalize and validate user data before processing
+      const normalizedData = this.normalizeUserForHygraph(userData);
 
       // Check if Hygraph is configured
       if (!isHygraphConfigured()) {
         console.warn('Hygraph not configured - returning mock user data');
         // Return a mock user object for development without Hygraph
         return {
-          uid,
-          email,
-          displayName,
-          role,
-          isActive,
+          uid: normalizedData.uid,
+          email: normalizedData.email,
+          displayName: normalizedData.displayName,
+          role: normalizedData.role,
+          isActive: normalizedData.isActive,
           createdAt: new Date(),
           updatedAt: new Date()
         } as User;
@@ -58,12 +114,13 @@ class UserService {
         }
       `;
 
+      // Use normalized data for Hygraph request
       const resp = await hygraphClient.request<{ upsertAppUser: any }>(mutation, {
-        uid,
-        email,
-        displayName,
-        role,
-        isActive,
+        uid: normalizedData.uid,
+        email: normalizedData.email,
+        displayName: normalizedData.displayName,
+        role: normalizedData.role,
+        isActive: normalizedData.isActive,
       });
       
       const user = resp.upsertAppUser;
@@ -76,22 +133,144 @@ class UserService {
         createdAt: new Date(user.createdAt),
         updatedAt: new Date(user.updatedAt)
       } as User;
-    } catch (error) {
-      console.error('Error creating user:', error);
+    } catch (error: any) {
+      // Enhanced error handling with proper logging
+      const errorMessage = error.message || 'Unknown error';
+      const errorDetails = error.response?.errors || error.response?.status || errorMessage;
+      
+      console.error('Error creating user:', {
+        error: errorDetails,
+        uid: userData.uid,
+        // Don't log full error stack or sensitive data
+      });
+
       // If Hygraph is not configured, return a mock user for development
       if (error instanceof Error && error.message.includes('endpoint')) {
-        const { uid, email = '', displayName = 'New User', role = UserRole.STUDENT, isActive = true } = userData;
+        const normalizedData = this.normalizeUserForHygraph(userData);
         return {
-          uid: uid || '',
-          email,
-          displayName,
-          role,
-          isActive,
+          uid: normalizedData.uid,
+          email: normalizedData.email,
+          displayName: normalizedData.displayName,
+          role: normalizedData.role,
+          isActive: normalizedData.isActive,
           createdAt: new Date(),
           updatedAt: new Date()
         } as User;
       }
-      throw new Error('Failed to create user');
+
+      // Re-throw with structured error for controller handling
+      const structuredError = new Error('Failed to create user');
+      (structuredError as any).isValidationError = error.response?.status === 400;
+      (structuredError as any).originalError = errorDetails;
+      throw structuredError;
+    }
+  }
+
+  /**
+   * Upsert user in Hygraph (create or update)
+   * This method is idempotent and safe for retries
+   */
+  async upsertUser(userData: Partial<User>): Promise<User> {
+    try {
+      // Normalize and validate user data before processing
+      const normalizedData = this.normalizeUserForHygraph(userData);
+
+      // Check if Hygraph is configured
+      if (!isHygraphConfigured()) {
+        console.warn('Hygraph not configured - returning mock user data');
+        return {
+          uid: normalizedData.uid,
+          email: normalizedData.email,
+          displayName: normalizedData.displayName,
+          role: normalizedData.role,
+          isActive: normalizedData.isActive,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as User;
+      }
+
+      const mutation = gql`
+        mutation UpsertAppUser($uid: String!, $email: String!, $displayName: String!, $role: UserRole!, $isActive: Boolean!) {
+          upsertAppUser(
+            where: { uid: $uid }
+            upsert: {
+              create: { 
+                uid: $uid, 
+                email: $email, 
+                displayName: $displayName, 
+                role: $role, 
+                isActive: $isActive,
+                passwordChanged: false
+              }
+              update: { 
+                email: $email, 
+                displayName: $displayName, 
+                role: $role, 
+                isActive: $isActive 
+              }
+            }
+          ) {
+            uid
+            email
+            displayName
+            role
+            isActive
+            passwordChanged
+            createdAt
+            updatedAt
+          }
+        }
+      `;
+
+      // Use normalized data for Hygraph request
+      const resp = await hygraphClient.request<{ upsertAppUser: any }>(mutation, {
+        uid: normalizedData.uid,
+        email: normalizedData.email,
+        displayName: normalizedData.displayName,
+        role: normalizedData.role,
+        isActive: normalizedData.isActive,
+      });
+      
+      const user = resp.upsertAppUser;
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt)
+      } as User;
+    } catch (error: any) {
+      // Enhanced error handling with proper logging
+      const errorMessage = error.message || 'Unknown error';
+      const errorDetails = error.response?.errors || error.response?.status || errorMessage;
+      
+      console.error('Error upserting user:', {
+        error: errorDetails,
+        uid: userData.uid,
+        // Don't log full error stack or sensitive data
+      });
+
+      // If Hygraph is not configured, return a mock user for development
+      if (error instanceof Error && error.message.includes('endpoint')) {
+        const normalizedData = this.normalizeUserForHygraph(userData);
+        return {
+          uid: normalizedData.uid,
+          email: normalizedData.email,
+          displayName: normalizedData.displayName,
+          role: normalizedData.role,
+          isActive: normalizedData.isActive,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as User;
+      }
+
+      // Re-throw with structured error for controller handling
+      const structuredError = new Error('Failed to upsert user');
+      (structuredError as any).isValidationError = error.response?.status === 400;
+      (structuredError as any).originalError = errorDetails;
+      throw structuredError;
     }
   }
 

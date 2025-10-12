@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { hygraphClient } from '../config/hygraph';
+import { hygraphClient, isHygraphConfigured } from '../config/hygraph';
 import { gql } from 'graphql-request';
 import { User, UserRole } from '../types';
 
@@ -10,9 +10,8 @@ class UserService {
       const { uid, email = '', displayName = 'New User', role = UserRole.STUDENT, isActive = true } = userData;
       if (!uid) throw new Error('UID is required to create a user');
 
-      // Check if Hygraph endpoint is configured
-      const endpoint = process.env.VITE_HYGRAPH_ENDPOINT || process.env.HYGRAPH_ENDPOINT;
-      if (!endpoint) {
+      // Check if Hygraph is configured
+      if (!isHygraphConfigured()) {
         console.warn('Hygraph not configured - returning mock user data');
         // Return a mock user object for development without Hygraph
         return {

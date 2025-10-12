@@ -1,6 +1,6 @@
 // In dev, force same-origin so Vite proxy handles CORS. In prod, use VITE_API_BASE_URL
-const IS_DEV = !!((import.meta as any).env?.DEV);
-const API_BASE_URL = IS_DEV ? '' : (((import.meta as any).env?.VITE_API_BASE_URL as string) || '');
+const IS_DEV = import.meta.env.DEV;
+const API_BASE_URL = IS_DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
 
 // Helper to build full URL
 const buildUrl = (endpoint: string) => {

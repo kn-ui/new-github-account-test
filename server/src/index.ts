@@ -1,6 +1,9 @@
 // Load environment variables first, before any other imports
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+// Load .env from server directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 
 import express from 'express';

@@ -22,9 +22,20 @@ export const authenticateClerkToken = async (
       return;
     }
 
+    // Check if Clerk secret key is configured
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    if (!clerkSecretKey) {
+      console.warn('CLERK_SECRET_KEY not configured - authentication disabled');
+      res.status(500).json({
+        success: false,
+        message: 'Authentication service not configured'
+      });
+      return;
+    }
+
     // Verify the Clerk token
     const payload = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY!
+      secretKey: clerkSecretKey
     });
     
     // Get user data from Hygraph (AppUser) using Clerk user ID

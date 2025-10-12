@@ -17,17 +17,9 @@ import {
   BookOpen,
   Crown
 } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+import { api } from '@/lib/api';
+import type { User as UserType } from '@/lib/types';
 import { useI18n } from '@/contexts/I18nContext';
-
-interface User {
-  id: string;
-  displayName: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt: any;
-}
 
 interface UsersListProps {
   readOnly?: boolean;
@@ -35,8 +27,8 @@ interface UsersListProps {
 
 export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const { t } = useI18n();
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
@@ -53,7 +45,8 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await userService.getUsers(1000);
+      const response = await api.getUsers({ page: 1, limit: 1000 });
+      const usersData = response.data || [];
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);

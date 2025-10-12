@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuthHook, useUser } from '@clerk/clerk-react';
-// Firestore is deprecated; use backend API via Hygraph
-import type { FirestoreUser } from '../lib/firestore';
+// Import from the new types file instead of firestore
+import type { FirestoreUser } from '../lib/types';
 import { api, setAuthToken, removeAuthToken } from '@/lib/api';
 import { toast } from 'sonner';
 

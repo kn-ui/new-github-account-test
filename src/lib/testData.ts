@@ -1,11 +1,11 @@
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from './types';
 
 // Comprehensive test data for all collections
 export const testData = {
   users: [
     {
       id: 'admin-001',
-      uid: 'admin-001', // This will be replaced with actual Firebase Auth UID
+      uid: 'admin-001', // This will be replaced with actual Clerk user ID
       displayName: 'Admin User',
       email: 'admin@straguel.edu',
       role: 'admin',
@@ -15,7 +15,7 @@ export const testData = {
     },
     {
       id: 'teacher-001',
-      uid: 'teacher-001', // This will be replaced with actual Firebase Auth UID
+      uid: 'teacher-001', // This will be replaced with actual Clerk user ID
       displayName: 'Dr. Sarah Wilson',
       email: 'sarah.wilson@straguel.edu',
       role: 'teacher',
@@ -25,7 +25,7 @@ export const testData = {
     },
     {
       id: 'teacher-002',
-      uid: 'teacher-002', // This will be replaced with actual Firebase Auth UID
+      uid: 'teacher-002', // This will be replaced with actual Clerk user ID
       displayName: 'Rev. Michael Thompson',
       email: 'michael.thompson@straguel.edu',
       role: 'teacher',
@@ -35,7 +35,7 @@ export const testData = {
     },
     {
       id: 'teacher-003',
-      uid: 'teacher-003', // This will be replaced with actual Firebase Auth UID
+      uid: 'teacher-003', // This will be replaced with actual Clerk user ID
       displayName: 'Prof. David Chen',
       email: 'david.chen@straguel.edu',
       role: 'teacher',
@@ -45,7 +45,7 @@ export const testData = {
     },
     {
       id: 'student-001',
-      uid: 'student-001', // This will be replaced with actual Firebase Auth UID
+      uid: 'student-001', // This will be replaced with actual Clerk user ID
       displayName: 'John Smith',
       email: 'john.smith@student.straguel.edu',
       role: 'student',
@@ -55,7 +55,7 @@ export const testData = {
     },
     {
       id: 'student-002',
-      uid: 'student-002', // This will be replaced with actual Firebase Auth UID
+      uid: 'student-002', // This will be replaced with actual Clerk user ID
       displayName: 'Mary Johnson',
       email: 'mary.johnson@student.straguel.edu',
       role: 'student',
@@ -65,7 +65,7 @@ export const testData = {
     },
     {
       id: 'student-003',
-      uid: 'student-003', // This will be replaced with actual Firebase Auth UID
+      uid: 'student-003', // This will be replaced with actual Clerk user ID
       displayName: 'David Wilson',
       email: 'david.wilson@student.straguel.edu',
       role: 'student',
@@ -75,7 +75,7 @@ export const testData = {
     },
     {
       id: 'student-004',
-      uid: 'student-004', // This will be replaced with actual Firebase Auth UID
+      uid: 'student-004', // This will be replaced with actual Clerk user ID
       displayName: 'Lisa Chen',
       email: 'lisa.chen@student.straguel.edu',
       role: 'student',
@@ -85,7 +85,7 @@ export const testData = {
     },
     {
       id: 'student-005',
-      uid: 'student-005', // This will be replaced with actual Firebase Auth UID
+      uid: 'student-005', // This will be replaced with actual Clerk user ID
       displayName: 'Robert Brown',
       email: 'robert.brown@student.straguel.edu',
       role: 'student',
@@ -105,7 +105,7 @@ export const testData = {
       maxStudents: 30,
       syllabus: 'Week 1: Introduction to the Bible\nWeek 2: Old Testament Overview\nWeek 3: New Testament Overview\nWeek 4: Biblical Interpretation Methods\nWeek 5: Historical Context\nWeek 6: Literary Analysis\nWeek 7: Theological Themes\nWeek 8: Application and Reflection',
       isActive: true,
-      instructor: 'teacher-001', // This will be replaced with actual Firebase Auth UID
+      instructor: 'teacher-001', // This will be replaced with actual Clerk user ID
       instructorName: 'Dr. Sarah Wilson',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -172,7 +172,7 @@ export const testData = {
     {
       id: 'enrollment-001',
       courseId: 'course-001',
-      studentId: 'student-001', // This will be replaced with actual Firebase Auth UID
+      studentId: 'student-001', // This will be replaced with actual Clerk user ID
       status: 'active',
       progress: 75,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006'],
@@ -182,7 +182,7 @@ export const testData = {
     {
       id: 'enrollment-002',
       courseId: 'course-001',
-      studentId: 'student-002', // This will be replaced with actual Firebase Auth UID
+      studentId: 'student-002', // This will be replaced with actual Clerk user ID
       status: 'active',
       progress: 50,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004'],
@@ -192,7 +192,7 @@ export const testData = {
     {
       id: 'enrollment-003',
       courseId: 'course-002',
-      studentId: 'student-001', // This will be replaced with actual Firebase Auth UID
+      studentId: 'student-001', // This will be replaced with actual Clerk user ID
       status: 'active',
       progress: 30,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],
@@ -202,7 +202,7 @@ export const testData = {
     {
       id: 'enrollment-004',
       courseId: 'course-002',
-      studentId: 'student-003', // This will be replaced with actual Firebase Auth UID
+      studentId: 'student-003', // This will be replaced with actual Clerk user ID
       status: 'completed',
       progress: 100,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003', 'lesson-004', 'lesson-005', 'lesson-006', 'lesson-007', 'lesson-008', 'lesson-009', 'lesson-010'],
@@ -212,7 +212,7 @@ export const testData = {
     {
       id: 'enrollment-005',
       courseId: 'course-003',
-      studentId: 'student-004', // This will be replaced with actual Firebase Auth UID
+      studentId: 'student-004', // This will be replaced with actual Clerk user ID
       status: 'active',
       progress: 25,
       completedLessons: ['lesson-001', 'lesson-002', 'lesson-003'],

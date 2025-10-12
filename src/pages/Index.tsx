@@ -5,15 +5,18 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/contexts/I18nContext";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
+import { Event, Timestamp } from "@/lib/types";
+import { api } from "@/lib/api";
 
 const Index = () => {
-  const [events, setEvents] = useState<FirestoreEvent[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   useEffect(() => {
     (async () => {
       try {
-        const list = await eventService.getAllEvents();
-        setEvents(list);
+        // TODO: Replace with api.getEvents() when events API is implemented
+        // const response = await api.getEvents({ page: 1, limit: 10 });
+        // setEvents(response.data || []);
+        setEvents([]); // Temporary: empty events until API is implemented
       } catch {
         setEvents([]);
       }

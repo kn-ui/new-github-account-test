@@ -4,18 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { courseService, FirestoreCourse } from '@/lib/firestore';
+import { api } from '@/lib/api';
+import type { Course } from '@/lib/types';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [pendingCourses, setPendingCourses] = useState<FirestoreCourse[]>([]);
+  const [pendingCourses, setPendingCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPending = async () => {
     try {
       setLoading(true);
-      const list = await courseService.getPendingCourses(5);
-      setPendingCourses(list);
+      // Since the migration, we'll load all courses and filter inactive ones as "pending"
+      const response = await api.getCourses({ page: 1, limit: 10 });
+      const inactiveCourses = response.data?.filter(course => !course.isActive) || [];
+      setPendingCourses(inactiveCourses);
     } catch (e) {
       toast.error('Failed to load pending courses');
     } finally {
@@ -29,7 +32,7 @@ export default function AdminDashboard() {
 
   const approveCourse = async (id: string) => {
     try {
-      await courseService.updateCourse(id, { isActive: true });
+      await api.updateCourse(id, { isActive: true });
       toast.success('Course approved');
       loadPending();
     } catch {
@@ -39,7 +42,7 @@ export default function AdminDashboard() {
 
   const rejectCourse = async (id: string) => {
     try {
-      await courseService.updateCourse(id, { isActive: false });
+      await api.updateCourse(id, { isActive: false });
       toast.success('Course rejected');
       loadPending();
     } catch {

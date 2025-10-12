@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Download, FileText, BarChart3, Users, BookOpen, GraduationCap } from 'lucide-react';
-import { analyticsService, userService, courseService, enrollmentService } from '@/lib/firestore';
+import { api } from '@/lib/api';
 
 type ReportType = 'user-list' | 'enrollment-records' | 'course-analytics' | 'system-overview';
 type ExportFormat = 'csv' | 'pdf';
@@ -63,28 +63,29 @@ export function Reports() {
 
       switch (selectedReport) {
         case 'user-list':
-          data = await userService.getUsers(1000); // Get all users
+          const usersResponse = await api.getUsers({ page: 1, limit: 1000 });
+          data = usersResponse.data || [];
           filename = `user-list-${new Date().toISOString().split('T')[0]}`;
           break;
 
         case 'enrollment-records':
-          const enrollments = await enrollmentService.getAllEnrollments();
-          data = enrollments.map(enrollment => ({
+          const enrollmentsResponse = await api.getMyEnrollments();
+          data = Array.isArray(enrollmentsResponse.data) ? enrollmentsResponse.data.map((enrollment: any) => ({
             id: enrollment.id,
             courseId: enrollment.courseId,
             courseTitle: enrollment.course?.title || 'Unknown Course',
             studentId: enrollment.studentId,
             status: enrollment.status,
             progress: enrollment.progress,
-            enrolledAt: enrollment.enrolledAt.toDate().toISOString(),
-            lastAccessedAt: enrollment.lastAccessedAt.toDate().toISOString(),
-          }));
+            enrolledAt: enrollment.enrolledAt ? new Date(enrollment.enrolledAt).toISOString() : 'Unknown',
+            lastAccessedAt: enrollment.lastAccessedAt ? new Date(enrollment.lastAccessedAt).toISOString() : 'Unknown',
+          })) : [];
           filename = `enrollment-records-${new Date().toISOString().split('T')[0]}`;
           break;
 
         case 'course-analytics':
-          const courses = await courseService.getCourses(1000);
-          data = courses.map(course => ({
+          const coursesResponse = await api.getCourses({ page: 1, limit: 1000 });
+          data = (coursesResponse.data || []).map((course: any) => ({
             id: course.id,
             title: course.title,
             instructor: course.instructorName,
@@ -92,19 +93,20 @@ export function Reports() {
             duration: course.duration,
             maxStudents: course.maxStudents,
             isActive: course.isActive,
-            createdAt: course.createdAt.toDate().toISOString(),
+            createdAt: course.createdAt ? new Date(course.createdAt).toISOString() : 'Unknown',
           }));
           filename = `course-analytics-${new Date().toISOString().split('T')[0]}`;
           break;
 
         case 'system-overview':
-          const stats = await analyticsService.getAdminStats();
+          const statsResponse = await api.getAdminUserStats();
+          const stats = statsResponse.data || {};
           data = [
-            { metric: 'Total Users', value: stats.totalUsers },
-            { metric: 'Total Students', value: stats.totalStudents },
-            { metric: 'Active Courses', value: stats.activeCourses },
-            { metric: 'Completion Rate', value: `${stats.completionRate}%` },
-            { metric: 'System Health', value: `${stats.systemHealth}%` },
+            { metric: 'Total Users', value: stats.totalUsers || 0 },
+            { metric: 'Total Students', value: stats.totalStudents || 0 },
+            { metric: 'Active Courses', value: stats.activeCourses || 0 },
+            { metric: 'Completion Rate', value: `${stats.completionRate || 0}%` },
+            { metric: 'System Health', value: `${stats.systemHealth || 'N/A'}%` },
           ];
           filename = `system-overview-${new Date().toISOString().split('T')[0]}`;
           break;

@@ -138,12 +138,19 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        // Don't log authentication errors for every request
+        if (response.status !== 401 && response.status !== 403) {
+          console.error('API request failed:', data.message || `HTTP error! status: ${response.status}`);
+        }
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Only log non-auth errors
+      if (error instanceof Error && !error.message.includes('Access token is missing') && !error.message.includes('401') && !error.message.includes('403')) {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }

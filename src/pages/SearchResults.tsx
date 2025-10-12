@@ -40,7 +40,7 @@ export default function SearchResults() {
           const [allUsers, allCourses, allEvents] = await Promise.all([
             userService.getUsers(1000),
             courseService.getAllCourses(1000),
-            eventService.getEvents(1000)
+            eventService.getEvents(100)
           ]);
           
           // Filter by search query
@@ -75,7 +75,7 @@ export default function SearchResults() {
               courseService.getCoursesByInstructor(currentUser.uid),
               assignmentService.getAssignmentsByTeacher(currentUser.uid),
               courseMaterialService.getMaterialsByTeacher(currentUser.uid),
-              eventService.getEvents(1000)
+              eventService.getEvents(100)
             ]);
             
             // Filter teacher's own courses

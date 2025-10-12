@@ -132,6 +132,10 @@ export const announcementService = {
     // This would need a new API endpoint
     return [];
   },
+  async getAllAnnouncements(limitCount = 100) {
+    // For now, return mock data until API endpoint is available
+    return [];
+  },
   async createAnnouncement(announcementData: any) {
     // This would need a new API endpoint
     return 'announcement-id';
@@ -140,7 +144,14 @@ export const announcementService = {
 
 export const eventService = {
   async getEvents(limitCount = 10) {
-    const response = await api.getEvents({ page: 1, limit: limitCount });
+    // Ensure limit doesn't exceed API maximum of 100
+    const safeLimit = Math.min(limitCount, 100);
+    const response = await api.getEvents({ page: 1, limit: safeLimit });
+    return response.data || [];
+  },
+  async getAllEvents() {
+    // Get all events with max limit of 100
+    const response = await api.getEvents({ page: 1, limit: 100 });
     return response.data || [];
   },
   async createEvent(eventData: any) {

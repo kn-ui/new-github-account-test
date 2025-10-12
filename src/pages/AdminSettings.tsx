@@ -42,7 +42,7 @@ export default function AdminSettings() {
           const [users, courses, events] = await Promise.all([
             userService.getUsers(1000),
             courseService.getCourses(1000),
-            eventService.getEvents(1000),
+            eventService.getEvents(100),
           ]);
 
           setStats({

@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
 import LoginHeroAside from '@/components/LoginHeroAside';
-import { ClerkSignIn } from '@/components/auth/ClerkSignIn';
+import { CustomSignIn } from '@/components/auth/CustomSignIn';
 
 import logo from '@/assets/logo.jpg';
 
@@ -30,8 +30,8 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Clerk Sign In Component */}
-            <ClerkSignIn redirectUrl={from} />
+            {/* Custom Sign In Component */}
+            <CustomSignIn redirectUrl={from} />
           </div>
         </div>
       </div>

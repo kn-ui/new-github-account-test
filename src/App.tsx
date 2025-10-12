@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { ClerkAuthProvider } from "@/contexts/ClerkAuthContext";
+import { ImprovedClerkAuthProvider } from "@/contexts/ImprovedClerkAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import VerifyEmail from "./pages/VerifyEmail";
+import AdminTest from "./pages/AdminTest";
 import Dashboard from "./pages/Dashboard";
 import DashboardWrapper from "./components/DashboardWrapper";
 import CourseDetail from "./pages/CourseDetail";
@@ -75,11 +77,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <ClerkAuthProvider>
+        <ImprovedClerkAuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/admin-test" element={<AdminTest />} />
             <Route path="/about" element={<About />} />
             <Route path="/academic" element={<Academic />} />
             <Route path="/admissions" element={<Admissions />} />
@@ -496,7 +500,7 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </ClerkAuthProvider>
+        </ImprovedClerkAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Globe, LogIn, User, LogOut, ChevronDown } from 'lucide-react';
-import { useAuth } from '@/contexts/ClerkAuthContext';
+import { useAuth } from '@/contexts/ImprovedClerkAuthContext';
+import { CustomUserButton } from '@/components/auth/CustomUserButton';
 import { useI18n } from '@/contexts/I18nContext';
 
 import mainLogo from '@/assets/main-logo.png';
@@ -110,15 +111,7 @@ const Header = () => {
                 </Link>
               </>
             ) : (
-              <>
-                <Link to="/dashboard" className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">{userName}</span>
-                </Link>
-                <button onClick={handleLogout} className="text-gray-700 hover:text-gray-900 flex items-center text-sm font-medium">
-                  <LogOut className="w-4 h-4 mr-1" /> {t('auth.logout')}
-                </button>
-              </>
+              <CustomUserButton />
             )}
           </div>
 
@@ -186,9 +179,15 @@ const Header = () => {
                 </Link>
               ))}
               {currentUser && (
-                <button onClick={() => { setIsMenuOpen(false); handleLogout(); }} className="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">
-                  {t('auth.logout')}
-                </button>
+                <div className="px-3 py-2">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <User className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">{userName}</span>
+                  </div>
+                  <button onClick={() => { setIsMenuOpen(false); handleLogout(); }} className="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                    {t('auth.logout')}
+                  </button>
+                </div>
               )}
             </div>
           </div>

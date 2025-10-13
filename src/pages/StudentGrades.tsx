@@ -208,7 +208,11 @@ export default function StudentGrades() {
       const finalGradesPromises = courseIds.map(async (courseId) => {
         try {
           const finalGrade = await gradeService.getGradeByStudentAndCourse(courseId, currentUser!.uid);
-          return finalGrade;
+          // Only show published grades to students
+          if (finalGrade && (finalGrade as any).publishedStatus === true) {
+            return finalGrade;
+          }
+          return null;
         } catch (error) {
           console.error(`Error loading final grade for course ${courseId}:`, error);
           return null;

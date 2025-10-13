@@ -637,6 +637,21 @@ export default function AdminStudentGrades() {
     }
   };
 
+  const publishCourseGrades = async (courseId: string) => {
+    try {
+      // Load all grades for this course and mark as published
+      const all = await gradeService.getGradesByCourse(courseId);
+      await Promise.all(all.map(g => gradeService.updateGrade(g.id, { publishedStatus: true })));
+      // refresh
+      const updated = await loadFinalGrades(courses.map(c => c.id));
+      setFinalGrades(updated);
+      alert('Grades published for this course');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to publish grades');
+    }
+  };
+
   // Access control - only admins and super_admins can access
   if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
     return (
@@ -1149,6 +1164,17 @@ export default function AdminStudentGrades() {
                               >
                                 Grade Ranges
                               </Button>
+                              {/* Publish all grades for this course */}
+                              <Select value="" onValueChange={(v) => publishCourseGrades(v)}>
+                                <SelectTrigger className="w-[220px]">
+                                  <SelectValue placeholder="Publish course grades" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {courses.map(c => (
+                                    <SelectItem key={c.id} value={c.id}>Publish: {c.title}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                           <div className="border-l-4 border-blue-500 pl-6">

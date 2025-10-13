@@ -27,30 +27,39 @@ export class UserController {
       };
       const finalPassword = password || defaultPasswords[role as string] || 'password123';
 
-      // Create user in Clerk via API, ignoring password policies
-      const resp = await fetch('https://api.clerk.com/v1/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        },
-        body: JSON.stringify({
-          email_address: [email],
-          first_name: displayName,
-          password: finalPassword,
-          skip_password_checks: true
-        })
-      });
+      let uid: string;
 
-      if (!resp.ok) {
-        const data = await resp.text();
-        console.error('Clerk create user failed:', data);
-        sendServerError(res, 'Failed to create user in auth provider');
-        return;
+      // Development mode: Skip Clerk and generate a mock UID
+      console.log('🔍 Controller check - NODE_ENV:', process.env.NODE_ENV, 'CLERK_SECRET_KEY:', !!process.env.CLERK_SECRET_KEY);
+      if (process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY) {
+        console.log('🔓 Development mode: Creating user without Clerk');
+        uid = `dev-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      } else {
+        // Create user in Clerk via API, ignoring password policies
+        const resp = await fetch('https://api.clerk.com/v1/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+          },
+          body: JSON.stringify({
+            email_address: [email],
+            first_name: displayName,
+            password: finalPassword,
+            skip_password_checks: true
+          })
+        });
+
+        if (!resp.ok) {
+          const data = await resp.text();
+          console.error('Clerk create user failed:', data);
+          sendServerError(res, 'Failed to create user in auth provider');
+          return;
+        }
+
+        const created = await resp.json() as any;
+        uid = created.id as string;
       }
-
-      const created = await resp.json();
-      const uid = created.id as string;
 
       // Step 2: Create user in Firestore
       const newUser = await userService.createUser({

@@ -118,7 +118,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate('/'); // Navigate to Home page (Index.tsx)
   };
 
   const isActiveRoute = (href: string) => {

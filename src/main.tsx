@@ -8,7 +8,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
 const clerkPublishableKey = (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY as string;
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/login">
+  <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/">
     <I18nProvider>
       <App />
     </I18nProvider>

@@ -15,7 +15,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, userProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
@@ -33,7 +33,9 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      
+      // Navigate to dashboard - the Dashboard component will handle role-based routing
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     } finally {

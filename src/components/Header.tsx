@@ -19,7 +19,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate('/'); // Navigate to Home page (Index.tsx)
     } catch (error) {
       console.error('Logout error:', error);
     }

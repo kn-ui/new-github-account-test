@@ -127,7 +127,20 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      // Gracefully handle empty or non-JSON responses
+      let data: any = null;
+      const text = await response.text();
+      if (text && text.trim().length > 0) {
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Failed to parse JSON response, raw:', text);
+          throw new Error('Invalid JSON response from server');
+        }
+      } else {
+        // Normalize empty body to a minimal ApiResponse shape
+        data = { success: response.ok, message: response.ok ? 'OK' : 'Request failed' };
+      }
 
       if (!response.ok) {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);

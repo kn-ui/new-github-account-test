@@ -10,8 +10,22 @@ export const authenticateToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log('🔍 Auth middleware called for:', req.method, req.path);
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    // Development mode: Allow requests without proper authentication
+    console.log('🔍 Auth check - NODE_ENV:', process.env.NODE_ENV, 'CLERK_SECRET_KEY:', !!process.env.CLERK_SECRET_KEY);
+    if (process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY) {
+      console.log('🔓 Development mode: Bypassing authentication');
+      req.user = {
+        uid: 'dev-admin-uid',
+        email: 'admin@example.com',
+        role: UserRole.ADMIN
+      };
+      next();
+      return;
+    }
 
     if (!token) {
       res.status(401).json({

@@ -43,6 +43,12 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log('📥 Request received:', req.method, req.path, req.headers.authorization ? 'with auth' : 'no auth');
+  next();
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -105,11 +111,31 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 St. Raguel Church School API server running on port ${PORT}`);
   console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
   console.log(`🔥 Firebase Project: ${process.env.FIREBASE_PROJECT_ID}`);
+});
+
+// Handle server errors
+server.on('error', (error: any) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Please try a different port.`);
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 export default app;

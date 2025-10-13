@@ -8,6 +8,10 @@ class UserService {
   // Create a new user in Firestore
   async createUser(userData: Partial<User>): Promise<User> {
     try {
+      console.log('🔍 UserService.createUser called with:', userData);
+      console.log('🔍 Firestore initialized:', !!firestore);
+      console.log('🔍 Users collection:', !!this.usersCollection);
+      
       if (!this.usersCollection) {
         throw new Error('Users collection not initialized');
       }
@@ -26,11 +30,13 @@ class UserService {
         updatedAt: new Date(),
       };
 
+      console.log('🔍 Creating user document:', { uid, ...newUserDoc });
       await this.usersCollection.doc(uid).set(newUserDoc);
+      console.log('✅ User created successfully');
 
       return { uid, ...newUserDoc } as User;
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('❌ Error creating user:', error);
       throw new Error('Failed to create user');
     }
   }

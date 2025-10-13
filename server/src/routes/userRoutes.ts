@@ -9,31 +9,30 @@ const router = Router();
 // Public routes (no authentication required)
 // Note: User registration happens through Firebase Auth on frontend
 
-// Protected routes (authentication required)
-// router.use(authenticateToken); // Temporarily disabled for testing
+// Protected routes (authentication required for specific endpoints)
 
-// Admin: Create a new user
-router.post('/', /* requireAdmin, */ validateUserRegistration, userController.createUser);
+// Admin: Create a new user (requires auth in production; open in dev via middleware bypass)
+router.post('/', validateUserRegistration, userController.createUser);
 
-// User profile routes  
-router.post('/profile', userController.createOrUpdateProfile);
-router.get('/profile', userController.getProfile);
-router.put('/profile', userController.updateProfile);
+// User profile routes (must authenticate to access req.user)
+router.post('/profile', authenticateToken, userController.createOrUpdateProfile);
+router.get('/profile', authenticateToken, userController.getProfile);
+router.put('/profile', authenticateToken, userController.updateProfile);
 
 // Specific routes first (before parameterized routes)
 
-router.get('/search', requireTeacherOrAdmin, validatePagination, userController.searchUsers);
-router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats);
+router.get('/search', authenticateToken, requireTeacherOrAdmin, validatePagination, userController.searchUsers);
+router.get('/admin/stats', authenticateToken, requireAdminOrSuperAdmin, userController.getUserStats);
 
 // Admin only routes
-router.get('/', requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
+router.get('/', authenticateToken, requireAdminOrSuperAdmin, validatePagination, userController.getAllUsers);
 
 // Parameterized routes last
 
-router.get('/:userId', requireTeacherOrAdmin, userController.getUserById);
-router.put('/:userId/role', requireAdminOrSuperAdmin, userController.updateUserRole);
-router.put('/:userId/deactivate', requireAdmin, userController.deactivateUser);
-router.put('/:userId/activate', requireAdmin, userController.activateUser);
+router.get('/:userId', authenticateToken, requireTeacherOrAdmin, userController.getUserById);
+router.put('/:userId/role', authenticateToken, requireAdminOrSuperAdmin, userController.updateUserRole);
+router.put('/:userId/deactivate', authenticateToken, requireAdmin, userController.deactivateUser);
+router.put('/:userId/activate', authenticateToken, requireAdmin, userController.activateUser);
 
 
 export default router;

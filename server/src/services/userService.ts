@@ -22,6 +22,8 @@ class UserService {
       }
 
       const newUserDoc = {
+        // Persist uid field for client queries that filter by uid
+        uid,
         email: data.email || '',
         displayName: data.displayName || 'New User',
         role: data.role || UserRole.STUDENT,

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Download, FileText, BarChart3, Users, BookOpen, GraduationCap } from 'lucide-react';
-import { analyticsService, userService, courseService, enrollmentService } from '@/lib/firestore';
+import { analyticsService, userService, courseService, enrollmentService, gradeService } from '@/lib/firestore';
 
 interface ReportGeneratorProps {
   onReportGenerated: (message: string) => void;
 }
 
-type ReportType = 'user-list' | 'enrollment-records' | 'course-analytics' | 'system-overview';
+type ReportType = 'user-list' | 'enrollment-records' | 'course-analytics' | 'system-overview' | 'course-grades';
 type ExportFormat = 'csv' | 'pdf';
 
 export default function ReportGenerator({ onReportGenerated }: ReportGeneratorProps) {
@@ -18,6 +18,16 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     endDate: '',
   });
   const [calendarMode, setCalendarMode] = useState<'ethiopian' | 'gregorian'>('ethiopian');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [availableCourses, setAvailableCourses] = useState<{ id: string; title: string }[]>([]);
+
+  React.useEffect(() => {
+    const load = async () => {
+      const courses = await courseService.getAllCourses(1000);
+      setAvailableCourses(courses.map(c => ({ id: c.id, title: c.title })));
+    };
+    load();
+  }, []);
 
   const reportTypes = [
     {
@@ -40,6 +50,13 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
       description: 'Course performance and completion statistics',
       icon: BookOpen,
       color: 'purple',
+    },
+    {
+      id: 'course-grades' as ReportType,
+      name: 'Course Grades',
+      description: 'All final grades for a selected course',
+      icon: GraduationCap,
+      color: 'green',
     },
     {
       id: 'system-overview' as ReportType,
@@ -125,6 +142,23 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             { metric: 'System Health', value: `${stats.systemHealth}%` },
           ];
           filename = `system-overview-${new Date().toISOString().split('T')[0]}`;
+          break;
+        case 'course-grades':
+          if (!selectedCourseId) {
+            alert('Please select a course');
+            setIsGenerating(false);
+            return;
+          }
+          const grades = await gradeService.getGradesByCourse(selectedCourseId);
+          data = grades.map(g => ({
+            studentId: g.studentId,
+            finalGrade: g.finalGrade,
+            letterGrade: g.letterGrade,
+            gradePoints: g.gradePoints,
+            calculatedAt: g.calculatedAt.toDate().toISOString(),
+            method: g.calculationMethod
+          }));
+          filename = `course-${selectedCourseId}-grades-${new Date().toISOString().split('T')[0]}`;
           break;
       }
 
@@ -230,6 +264,23 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             })}
           </div>
         </div>
+
+        {/* Course selector for Course Grades */}
+        {selectedReport === 'course-grades' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Select Course</label>
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">-- Choose a course --</option>
+              {availableCourses.map(c => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Export Format Selection */}
         <div>

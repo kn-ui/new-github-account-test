@@ -213,6 +213,7 @@ export interface FirestoreGrade {
   calculationMethod: 'weighted_average' | 'simple_average' | 'manual';
   assignmentGrades?: { assignmentId: string; grade: number; weight: number }[];
   notes?: string;
+  publishedStatus?: boolean;
 }
 
 export interface FirestoreEditRequest {

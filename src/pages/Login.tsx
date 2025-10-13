@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, LogIn, BookOpen, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 import LoginHeroAside from '@/components/LoginHeroAside';
 
 import logo from '@/assets/logo.jpg';
@@ -19,8 +20,16 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
+  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
   
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // If already signed in, redirect away from login
+  useEffect(() => {
+    if (clerkLoaded && isSignedIn) {
+      navigate(from, { replace: true });
+    }
+  }, [clerkLoaded, isSignedIn, from, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

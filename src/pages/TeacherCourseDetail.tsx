@@ -687,27 +687,7 @@ export default function TeacherCourseDetail() {
                     </Select>
                   </div>
                   <div className="flex items-center gap-2">
-                    {gradeViewMode === 'final' && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => {
-                            setSelectedStudentForGrade(null);
-                            setGradeCalculationDialogOpen(true);
-                          }}
-                        >
-                          Calculate Grades
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setGradeRangesDialogOpen(true)}
-                        >
-                          Grade Ranges
-                        </Button>
-                      </>
-                    )}
+                    {/* Final grade calculation is now handled by admins in AdminStudentGrades */}
                     <Button variant="outline" size="sm" onClick={() => {
                       if (gradeViewMode === 'final') {
                         // export CSV for final grades

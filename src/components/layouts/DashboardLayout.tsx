@@ -74,6 +74,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           ...baseItems,
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
+          { label: 'Attendance', href: '/dashboard/attendance-admin', icon: ClipboardList },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
           { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },
@@ -84,6 +85,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           ...baseItems,
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
+          { label: 'Manage Admin', href: '/dashboard/manage-admins', icon: Users },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
         ];
@@ -95,6 +97,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.assignments'), href: '/dashboard/assignments', icon: FileText },
           { label: t('nav.submissions'), href: '/dashboard/submissions', icon: ClipboardList },
           { label: t('nav.grades'), href: '/dashboard/teacher-grades', icon: Award },
+          { label: 'Attendance', href: '/dashboard/attendance', icon: ClipboardList },
           { label: t('nav.analytics'), href: '/dashboard/teacher-analytics', icon: BarChart3 },
           { label: t('nav.announcements'), href: '/dashboard/announcements', icon: Bell },
           { label: t('nav.materials'), href: '/dashboard/materials', icon: FolderOpen },

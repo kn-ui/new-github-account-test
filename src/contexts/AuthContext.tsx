@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Clerk hooks
   const clerkAuth = useClerkAuth();
-  const { user } = useUser();
+  const { user, isLoaded: userLoaded } = useUser();
   const { signIn, isLoaded: signInLoaded } = useSignIn();
   const { signOut: clerkSignOut } = useClerk();
 
@@ -154,6 +154,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const sync = async () => {
       try {
+        if (!userLoaded) {
+          return; // wait until Clerk user is loaded to avoid flicker/loops
+        }
         if (user) {
           const shaped = {
             uid: user.id,
@@ -188,12 +191,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           removeAuthToken();
         }
       } finally {
-        setLoading(false);
+        // Only stop loading once Clerk user state has resolved
+        if (userLoaded) setLoading(false);
       }
     };
     sync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, userLoaded]);
 
   const value = {
     currentUser,

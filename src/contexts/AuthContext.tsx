@@ -1,24 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  User as FirebaseUser,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  UserCredential,
-  createUserWithEmailAndPassword
-} from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { userService, FirestoreUser } from '../lib/firestore';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useAuth as useClerkAuth, useUser, useSignIn, useClerk } from '@clerk/clerk-react';
 
 interface AuthContextType {
-  currentUser: FirebaseUser | null;
+  currentUser: any | null;
   userProfile: FirestoreUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<UserCredential>;
-  signup: (email: string, password: string, displayName: string, role?: string) => Promise<UserCredential>;
+  login: (email: string, password: string) => Promise<any>;
+  signup: (email: string, password: string, displayName: string, role?: string) => Promise<any>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<FirestoreUser>) => Promise<void>;
   createUser: (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string) => Promise<string>;
@@ -39,43 +31,53 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Login function
-  const login = async (email: string, password: string): Promise<UserCredential> => {
+  // Clerk hooks
+  const clerkAuth = useClerkAuth();
+  const { user } = useUser();
+  const { signIn, isLoaded: signInLoaded } = useSignIn();
+  const { signOut: clerkSignOut } = useClerk();
+
+  // Login function (Clerk)
+  const login = async (email: string, password: string): Promise<any> => {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Fetch user profile from Firestore
-      try {
-        let profile = await userService.getUserById(result.user.uid);
-        
-        // If not found by UID, try to find by email (for seeded users)
-        if (!profile && result.user.email) {
-          profile = await userService.getUserByEmail(result.user.email);
-        }
-        
-        if (profile) {
-          setUserProfile(profile);
-        } else {
-          console.log('Profile not found, user may need to complete setup');
-        }
-      } catch (error) {
-        console.log('Profile not found, user may need to complete setup');
+      if (!signInLoaded || !signIn) throw new Error('Auth not ready');
+      const res = await signIn.create({ identifier: email, password });
+      if (res.status === 'complete') {
+        await clerkAuth.setActive?.({ session: res.createdSessionId });
+      } else {
+        throw new Error('Additional steps required to sign in');
       }
-      
-      // Persist a short-lived ID token for backend requests in this session
+
+      // Persist Clerk session token for backend API
       try {
-        const token = await result.user.getIdToken();
-        setAuthToken(token);
-      } catch (error) {
-      console.warn('Failed to update user profile:', error);
-    }
+        const token = await clerkAuth.getToken?.();
+        if (token) setAuthToken(token);
+      } catch (err) {
+        console.warn('Failed to fetch Clerk token', err);
+      }
+
+      // Ensure Firestore profile exists (sync on login)
+      try {
+        const uid = res.createdUserId || res.userId || clerkAuth.userId;
+        let profile: FirestoreUser | null = uid ? await userService.getUserById(uid as string) : null;
+        if (!profile) {
+          // Fallback by email
+          profile = await userService.getUserByEmail(email);
+        }
+        if (!profile && uid) {
+          // Create minimal profile via backend to keep server-side invariants
+          await api.createUserProfile({ displayName: email.split('@')[0], role: 'student' });
+          profile = await userService.getUserById(uid as string);
+        }
+        if (profile) setUserProfile(profile);
+      } catch {}
 
       toast.success('Successfully logged in!');
-      return result;
+      return res;
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
       throw error;
@@ -88,37 +90,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     password: string, 
     displayName: string,
     role: string = 'student'
-  ): Promise<UserCredential> => {
+  ): Promise<any> => {
     // Public signup is disabled - only admins can create users
     throw new Error('Public signup is disabled. Please contact an administrator to create your account.');
   };
 
-  // Create user function - for admin use only
+  // Create user function - for admin use only (delegates to backend/Clerk)
   const createUser = async (userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>, password?: string): Promise<string> => {
     try {
-      // Set default password based on role if not provided
-      const finalPassword = password || (() => {
-        const defaultPasswords = {
-          student: 'student123',
-          teacher: 'teacher123',
-          admin: 'admin123',
-          super_admin: 'superadmin123'
-        };
-        return defaultPasswords[userData.role as keyof typeof defaultPasswords] || 'password123';
-      })();
-      
-      // Create Firebase Auth user first
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, finalPassword);
-      
-      // Create Firestore user profile
-      const userId = await userService.createUser({
-        ...userData,
-        uid: userCredential.user.uid,
-        passwordChanged: false // New users must change their password
+      const res = await api.createUser({
+        email: userData.email,
+        displayName: userData.displayName,
+        role: userData.role,
+        ...(password ? { password } : {})
       });
-      
-      toast.success(`User created successfully! Default password: ${finalPassword}`);
-      return userId;
+      toast.success('User created successfully');
+      // Return uid when available
+      return (res.data as any)?.uid || userData.email;
     } catch (error: any) {
       toast.error('Failed to create user: ' + error.message);
       throw error;
@@ -128,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Logout function
   const logout = async (): Promise<void> => {
     try {
-      await signOut(auth);
+      await clerkSignOut();
       removeAuthToken();
       setUserProfile(null);
       toast.success('Successfully logged out!');
@@ -159,47 +147,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Listen for auth state changes
+  // Sync Clerk auth state to our context
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Check if we should suppress auth redirects (e.g., during admin user creation)
-      const suppressRedirect = sessionStorage.getItem('suppressAuthRedirect');
-      
-      if (suppressRedirect) {
-        console.log('Auth state change suppressed during user creation');
-        return;
-      }
-      
-      setCurrentUser(user);
-      
-      if (user) {
-        try {
-          // First try to get user profile by UID
-          let profile = await userService.getUserById(user.uid);
-          
-          // If not found by UID, try to find by email (for seeded users)
-          if (!profile && user.email) {
-            profile = await userService.getUserByEmail(user.email);
-          }
-          
-          if (profile) {
-            setUserProfile(profile);
-          } else {
-            console.log('Profile not found for user:', user.uid, 'or email:', user.email);
-          }
-        } catch (error) {
-          console.log('Error fetching profile for user:', user.uid, error);
-        }
-      } else {
-        setUserProfile(null);
-        removeAuthToken();
-      }
-      
-      setLoading(false);
-    });
+    const suppressRedirect = sessionStorage.getItem('suppressAuthRedirect');
+    if (suppressRedirect) return;
 
-    return unsubscribe;
-  }, []);
+    const sync = async () => {
+      try {
+        if (user) {
+          const shaped = {
+            uid: user.id,
+            email: user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress,
+          };
+          setCurrentUser(shaped);
+
+          // Ensure API token is present
+          try {
+            const token = await clerkAuth.getToken?.();
+            if (token) setAuthToken(token);
+          } catch {}
+
+          // Load profile (by uid, then email)
+          try {
+            let profile = await userService.getUserById(user.id);
+            if (!profile && shaped.email) {
+              profile = await userService.getUserByEmail(shaped.email);
+            }
+            if (!profile) {
+              // Create minimal profile via backend
+              await api.createUserProfile({ displayName: user.fullName || shaped.email || 'New User' });
+              profile = await userService.getUserById(user.id);
+            }
+            if (profile) setUserProfile(profile);
+          } catch (err) {
+            console.warn('Failed to load user profile', err);
+          }
+        } else {
+          setCurrentUser(null);
+          setUserProfile(null);
+          removeAuthToken();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    sync();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const value = {
     currentUser,

@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { secondaryAuth } from '@/lib/firebaseSecondary';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { userService } from '@/lib/firestore';
+import { api } from '@/lib/api';
 
 interface CSVUser {
   displayName: string;
@@ -130,17 +128,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     setTotalUsers(preview.length);
     
     try {
-      // SOLUTION: Use secondary Firebase auth for bulk user creation
-      // 
-      // Same solution as single user creation - use secondaryAuth to prevent
-      // the main app's authentication state from being affected during bulk
-      // user creation, avoiding unwanted redirects.
-      
-      // Set a flag to suppress auth redirects during bulk user creation
-      sessionStorage.setItem('suppressAuthRedirect', 'true');
-      
       const uploadErrors: string[] = []; // Renamed to avoid conflict with state
-      
       for (let i = 0; i < preview.length; i++) {
         const user = preview[i];
         
@@ -150,34 +138,11 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         console.log(`Creating user ${i + 1}/${totalUsers}: ${user.email}`);
         
         try {
-          // Set default password based on role
-          const defaultPasswords = {
-            student: 'student123',
-            teacher: 'teacher123',
-            admin: 'admin123',
-            super_admin: 'superadmin123'
-          };
-          const password = defaultPasswords[user.role] || 'password123';
-          
-          // Use secondary auth to create user - this prevents the main app from being affected
-          const userCredential = await createUserWithEmailAndPassword(
-            secondaryAuth, 
-            user.email, 
-            password
-          );
-          
-          // Create Firestore user profile using the UID from secondary auth
-          await userService.createUser({
-            displayName: user.displayName,
+          await api.createUser({
             email: user.email,
-            role: user.role,
-            isActive: true,
-            uid: userCredential.user.uid,
-            passwordChanged: false // New users must change their password
+            displayName: user.displayName,
+            role: user.role
           });
-          
-          // Immediately sign out from secondary auth to clean up
-          await signOut(secondaryAuth);
           
           setSuccessCount(prev => prev + 1);
           console.log(`Successfully created user: ${user.email}`);
@@ -202,9 +167,6 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
         }
       }
 
-      // Clear the suppress flag
-      sessionStorage.removeItem('suppressAuthRedirect');
-      
       // Reset progress
       setCurrentProgress(0);
       

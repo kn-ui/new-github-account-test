@@ -39,8 +39,9 @@ import {
 } from '@/components/ui/dialog';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Hygraph upload via backend
 import { truncateTitle, truncateText } from '@/lib/utils';
+import { getAuthToken } from '@/lib/api';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -114,11 +115,14 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
-          const storage = getStorage();
-          const path = `assignments/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-          const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, fileObj, { contentType: fileObj.type || undefined });
-          const url = await getDownloadURL(storageRef);
+          const form = new FormData();
+          form.append('file', fileObj);
+          form.append('folder', `assignments/${formData.courseId}`);
+          const token = getAuthToken();
+          const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          const url = data?.data?.url || data?.url;
           attachments.push({ type: 'file', url, title: fileObj.name });
         } catch (err) {
           console.error('Attachment upload failed', err);

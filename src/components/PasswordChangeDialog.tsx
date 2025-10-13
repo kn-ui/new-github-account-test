@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Eye, EyeOff } from 'lucide-react';
-import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { useClerk } from '@clerk/clerk-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ interface PasswordChangeDialogProps {
 export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open, onOpenChange, showCancelButton = true }) => {
   const { t } = useI18n();
   const { currentUser, userProfile, updateUserProfile } = useAuth();
+  const { user } = useClerk();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,12 +55,8 @@ export const PasswordChangeDialog: React.FC<PasswordChangeDialogProps> = ({ open
     try {
       setLoading(true);
       
-      // Re-authenticate user
-      const credential = EmailAuthProvider.credential(currentUser.email!, currentPassword);
-      await reauthenticateWithCredential(currentUser, credential);
-      
-      // Update password
-      await updatePassword(currentUser, newPassword);
+      // Update password via Clerk
+      await user?.updatePassword({ currentPassword, newPassword });
 
       // Update profile to reflect password change
       if (userProfile && !userProfile.passwordChanged) {

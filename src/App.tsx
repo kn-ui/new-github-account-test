@@ -51,6 +51,9 @@ import TeacherCourses from "./pages/TeacherCourses";
 import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import StudentCourses from "./pages/StudentCourses";
 import TeacherGrades from "./pages/TeacherGrades";
+import TeacherAttendance from "./pages/TeacherAttendance";
+import AdminAttendance from "./pages/AdminAttendance";
+import ManageAdmins from "./pages/ManageAdmins";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
 import StudentGrades from "./pages/StudentGrades";
 import StudentExams from "./pages/StudentExams";
@@ -466,6 +469,36 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <TeacherAnalytics />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/attendance" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherAttendance />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/attendance-admin" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminAttendance />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/manage-admins" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <ManageAdmins />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

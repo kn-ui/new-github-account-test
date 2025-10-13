@@ -84,7 +84,7 @@ const UserManager = () => {
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
+    role: 'student' as 'student' | 'teacher',
     password: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
@@ -319,8 +319,6 @@ const UserManager = () => {
                         <SelectContent>
                           <SelectItem value="student">{t('users.roles.student')}</SelectItem>
                           <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                          <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

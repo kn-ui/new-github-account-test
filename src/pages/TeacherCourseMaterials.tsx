@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Hygraph upload via backend
+import { api, getAuthToken } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -126,11 +127,15 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        const storage = getStorage();
-        const path = `materials/${formData.courseId}/${Date.now()}_${fileObj.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, fileObj);
-        uploadedUrl = await getDownloadURL(storageRef);
+        // Send to backend Hygraph upload endpoint
+        const form = new FormData();
+        form.append('file', fileObj);
+        form.append('folder', `materials/${formData.courseId}`);
+        const token = getAuthToken();
+        const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        uploadedUrl = data?.data?.url || data?.url;
       }
 
       const materialData: any = {

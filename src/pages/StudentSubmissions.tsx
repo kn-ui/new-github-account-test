@@ -550,8 +550,10 @@ export default function StudentSubmissions() {
                             </p>
                             <p className="text-xs text-gray-500">Attachment {index + 1}</p>
                           </div>
-                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300">
-                            <Eye className="h-4 w-4" />
+                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
+                            <a href={attachment} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4" />
+                            </a>
                           </Button>
                         </div>
                       ))}

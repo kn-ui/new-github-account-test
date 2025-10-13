@@ -1,4 +1,6 @@
-import { Response } from 'express';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Request, Response } from 'express';
+import fetch from 'node-fetch';
 import { AuthenticatedRequest } from '../types';
 import blogService from '../services/blogService';
 import eventService from '../services/eventService';
@@ -7,6 +9,52 @@ import { sendPaginatedResponse, sendServerError, sendSuccess, sendCreated, sendE
 import nodemailer from 'nodemailer';
 
 export class ContentController {
+  async upload(req: Request, res: Response): Promise<void> {
+    try {
+      const file = (req as any).file as Express.Multer.File;
+      if (!file) {
+        res.status(400).json({ success: false, message: 'No file uploaded' });
+        return;
+      }
+
+      const endpoint = process.env.HYGRAPH_ENDPOINT as string;
+      const token = process.env.HYGRAPH_TOKEN as string;
+      if (!endpoint || !token) {
+        res.status(500).json({ success: false, message: 'Hygraph not configured' });
+        return;
+      }
+
+      // Hygraph Asset Upload (direct upload API)
+      const uploadResp = await fetch(`${endpoint}/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: (() => {
+          const form = new (require('form-data'))();
+          form.append('fileUpload', file.buffer, {
+            filename: file.originalname,
+            contentType: file.mimetype
+          });
+          return form;
+        })()
+      } as any);
+
+      if (!uploadResp.ok) {
+        const text = await uploadResp.text();
+        console.error('Hygraph upload failed:', text);
+        res.status(500).json({ success: false, message: 'Upload to Hygraph failed' });
+        return;
+      }
+
+      const data = await uploadResp.json();
+      // Respond with the asset URL
+      res.status(200).json({ success: true, data });
+    } catch (error) {
+      console.error('Upload error:', error);
+      res.status(500).json({ success: false, message: 'Upload failed' });
+    }
+  }
   async listBlog(req: AuthenticatedRequest, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;

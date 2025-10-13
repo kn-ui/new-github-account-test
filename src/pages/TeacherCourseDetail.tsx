@@ -45,6 +45,7 @@ import {
   Download,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getAuthToken } from '@/lib/api';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -65,6 +66,7 @@ export default function TeacherCourseDetail() {
   const [materialForm, setMaterialForm] = useState<{ title: string; description: string; type: 'document' | 'video' | 'link' | 'other'; fileUrl: string; externalLink: string; }>(
     { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
   );
+  const [materialFile, setMaterialFile] = useState<File | null>(null);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
@@ -1093,8 +1095,10 @@ export default function TeacherCourseDetail() {
               </Select>
             </div>
             {materialForm.type === 'document' && (
-              <div>
-                <Label htmlFor="m-file">File URL</Label>
+              <div className="space-y-2">
+                <Label htmlFor="m-file-upload">Upload File (PDF/DOC)</Label>
+                <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
+                <div className="text-xs text-gray-500">Or paste a direct URL:</div>
                 <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
               </div>
             )}
@@ -1110,7 +1114,20 @@ export default function TeacherCourseDetail() {
             <Button onClick={async () => {
               try {
                 const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
-                if (materialForm.type === 'document') payload.fileUrl = materialForm.fileUrl || '';
+                if (materialForm.type === 'document') {
+                  let url = materialForm.fileUrl || '';
+                  if (materialFile) {
+                    const form = new FormData();
+                    form.append('file', materialFile);
+                    form.append('folder', `materials/${course.id}`);
+                    const token = getAuthToken();
+                    const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                    if (!res.ok) throw new Error('Upload failed');
+                    const data = await res.json();
+                    url = data?.data?.url || data?.url || url;
+                  }
+                  payload.fileUrl = url;
+                }
                 if (materialForm.type === 'video' || materialForm.type === 'link') payload.externalLink = materialForm.externalLink || '';
                 if (editingMaterial) {
                   await (await import('@/lib/firestore')).courseMaterialService.updateCourseMaterial(editingMaterial.id, payload);
@@ -1123,6 +1140,7 @@ export default function TeacherCourseDetail() {
                 setMaterials(latest);
                 setMaterialDialogOpen(false);
                 setEditingMaterial(null);
+                setMaterialFile(null);
               } catch (e) { toast.error('Failed to save material'); }
             }}>Save</Button>
           </DialogFooter>

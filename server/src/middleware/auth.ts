@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { auth, firestore } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { AuthenticatedRequest, UserRole } from '../types';
+import fetch from 'node-fetch';
 
 // Verify Firebase token and extract user info
 export const authenticateToken = async (
@@ -20,11 +21,28 @@ export const authenticateToken = async (
       return;
     }
 
-    // Verify the Firebase token for all other cases
-    const decodedToken = await auth.verifyIdToken(token);
-    
+    // Verify the Clerk token
+    const clerkEndpoint = `https://api.clerk.com/v1/tokens/verify`;
+    const verifyResp = await fetch(clerkEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`
+      },
+      body: JSON.stringify({ token })
+    });
+
+    if (!verifyResp.ok) {
+      res.status(403).json({ success: false, message: 'Invalid or expired token' });
+      return;
+    }
+
+    const verifyData: any = await verifyResp.json();
+    const uid: string = verifyData.user_id;
+    const email: string = verifyData.email_address || verifyData.session?.user?.primary_email_address_id || '';
+
 // Get user data from Firestore
-const userDoc = await firestore.collection('users').doc(decodedToken.uid).get();
+const userDoc = await firestore.collection('users').doc(uid).get();
 
 let userData = null;
 let userRole = UserRole.STUDENT; // Default role for new users
@@ -33,15 +51,14 @@ if (userDoc.exists) {
   userData = userDoc.data();
   userRole = userData?.role || UserRole.STUDENT;
 } else {
-  // User exists in Firebase Auth but not in Firestore yet
-  // This is expected during initial profile creation
-  console.log(`User ${decodedToken.uid} not found in Firestore, allowing for profile creation`);
+  // User exists in Clerk but not in Firestore yet
+  console.log(`User ${uid} not found in Firestore, allowing for profile creation`);
 }
 
 // Attach user info to request
 req.user = {
-  uid: decodedToken.uid,
-  email: decodedToken.email || '',
+  uid,
+  email: email || '',
   role: userRole
 };
 

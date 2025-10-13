@@ -5,8 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { userService } from '@/lib/firestore';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ManageAdmins() {
+  const { userProfile } = useAuth();
   const [admins, setAdmins] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ displayName: '', email: '' });
@@ -18,6 +20,17 @@ export default function ManageAdmins() {
   };
 
   useEffect(() => { load(); }, []);
+
+  if (!userProfile || userProfile.role !== 'super_admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Access Denied</div>
+          <div className="text-gray-600">Super admin only</div>
+        </div>
+      </div>
+    );
+  }
 
   const createAdmin = async () => {
     setSaving(true);

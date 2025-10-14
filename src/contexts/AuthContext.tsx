@@ -70,11 +70,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         if (!profile && uid) {
           // Create minimal profile via backend to keep server-side invariants
-          await api.createUserProfile({ displayName: email.split('@')[0], role: 'student' });
-          profile = await userService.getUserById(uid as string);
+          try {
+            await api.createUserProfile({ displayName: email.split('@')[0], role: 'student' });
+            profile = await userService.getUserById(uid as string);
+          } catch (createErr) {
+            console.warn('Failed to create user profile via backend', createErr);
+            // Set a minimal profile to prevent errors
+            profile = {
+              uid: uid as string,
+              email: email,
+              displayName: email.split('@')[0],
+              role: 'student',
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            } as FirestoreUser;
+          }
         }
         if (profile) setUserProfile(profile);
-      } catch {}
+      } catch (err) {
+        console.error('Error loading user profile after login:', err);
+        // Set a minimal profile to prevent errors
+        const uid = res.createdUserId || res.userId || clerkAuth.userId;
+        if (uid) {
+          setUserProfile({
+            uid: uid as string,
+            email: email,
+            displayName: email.split('@')[0],
+            role: 'student',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          } as FirestoreUser);
+        }
+      }
 
       toast.success('Successfully logged in!');
       return res;
@@ -178,12 +207,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
             if (!profile) {
               // Create minimal profile via backend
-              await api.createUserProfile({ displayName: user.fullName || shaped.email || 'New User' });
-              profile = await userService.getUserById(user.id);
+              try {
+                await api.createUserProfile({ displayName: user.fullName || shaped.email || 'New User', role: 'student' });
+                profile = await userService.getUserById(user.id);
+              } catch (createErr) {
+                console.warn('Failed to create user profile via backend', createErr);
+                // Set a minimal profile to prevent errors
+                setUserProfile({
+                  uid: user.id,
+                  email: shaped.email || '',
+                  displayName: user.fullName || shaped.email || 'User',
+                  role: 'student',
+                  isActive: true,
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                } as FirestoreUser);
+              }
             }
             if (profile) setUserProfile(profile);
           } catch (err) {
-            console.warn('Failed to load user profile', err);
+            console.error('Failed to load user profile:', err);
+            // Set a minimal profile to prevent errors
+            setUserProfile({
+              uid: user.id,
+              email: shaped.email || '',
+              displayName: user.fullName || shaped.email || 'User',
+              role: 'student',
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            } as FirestoreUser);
           }
         } else {
           setCurrentUser(null);

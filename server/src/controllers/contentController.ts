@@ -24,34 +24,98 @@ export class ContentController {
         return;
       }
 
-      // Hygraph Asset Upload (direct upload API)
-      const uploadResp = await fetch(`${endpoint}/upload`, {
+      // For Hygraph, we need to use their asset upload endpoint
+      // The endpoint format should be: https://api-<region>.hygraph.com/v2/<projectId>/<environment>/upload
+      // We'll extract the base URL and construct the upload endpoint
+      const baseUrl = endpoint.replace(/\/v2\/.*$/, '');
+      const projectMatch = endpoint.match(/\/v2\/([^/]+)\/([^/]+)/);
+      
+      if (!projectMatch) {
+        console.error('Invalid Hygraph endpoint format');
+        res.status(500).json({ success: false, message: 'Invalid Hygraph configuration' });
+        return;
+      }
+
+      const projectId = projectMatch[1];
+      const environment = projectMatch[2];
+      const uploadUrl = `${baseUrl}/v2/${projectId}/${environment}/upload`;
+
+      // Create form data for the upload
+      const FormData = require('form-data');
+      const form = new FormData();
+      form.append('fileUpload', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype
+      });
+
+      // Upload the file to Hygraph
+      const uploadResp = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
+          ...form.getHeaders(),
           Authorization: `Bearer ${token}`
         },
-        body: (() => {
-          const form = new (require('form-data'))();
-          form.append('fileUpload', file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype
-          });
-          return form;
-        })()
+        body: form
       } as any);
 
       if (!uploadResp.ok) {
         const text = await uploadResp.text();
         console.error('Hygraph upload failed:', text);
+        
+        // Fallback: Return a data URL for small files (less than 100KB)
+        if (file.size < 100000) {
+          const base64 = file.buffer.toString('base64');
+          const dataUrl = `data:${file.mimetype};base64,${base64}`;
+          res.status(200).json({ 
+            success: true, 
+            data: { 
+              url: dataUrl,
+              filename: file.originalname,
+              size: file.size,
+              mimeType: file.mimetype
+            },
+            warning: 'Hygraph upload failed, using data URL fallback'
+          });
+          return;
+        }
+        
         res.status(500).json({ success: false, message: 'Upload to Hygraph failed' });
         return;
       }
 
       const data = await uploadResp.json();
-      // Respond with the asset URL
-      res.status(200).json({ success: true, data });
+      // The response should contain the asset information including the URL
+      res.status(200).json({ 
+        success: true, 
+        data: {
+          url: data.url || data.handle || data.id,
+          filename: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+          ...data
+        }
+      });
     } catch (error) {
       console.error('Upload error:', error);
+      
+      // If Hygraph is not working, provide a fallback for small files
+      const file = (req as any).file as Express.Multer.File;
+      if (file && file.size < 100000) {
+        const base64 = file.buffer.toString('base64');
+        const dataUrl = `data:${file.mimetype};base64,${base64}`;
+        res.status(200).json({ 
+          success: true, 
+          data: { 
+            url: dataUrl,
+            filename: file.originalname,
+            size: file.size,
+            mimeType: file.mimetype
+          },
+          warning: 'Using data URL fallback due to upload error'
+        });
+        return;
+      }
+      
       res.status(500).json({ success: false, message: 'Upload failed' });
     }
   }

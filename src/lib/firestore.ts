@@ -215,6 +215,20 @@ export interface FirestoreGrade {
   notes?: string;
 }
 
+export interface FirestoreAttendanceSheet {
+  id: string;
+  courseId: string;
+  teacherId: string;
+  ethiopianYear: number;
+  ethiopianMonth: number; // 1-13
+  // records[studentId][day] = present: boolean
+  records: Record<string, Record<number, boolean>>;
+  submitted: boolean;
+  submittedAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface FirestoreEditRequest {
   id: string;
   submissionId: string;
@@ -299,6 +313,7 @@ const collections = {
   exams: () => collection(db, 'exams'),
   grades: () => collection(db, 'grades'),
   editRequests: () => collection(db, 'editRequests'),
+  attendance: () => collection(db, 'attendance'),
 };
 
 // User operations
@@ -2225,6 +2240,105 @@ export const gradeService = {
 
     const { letterGrade, gradePoints } = this.calculateLetterGradeAndPoints(finalGrade);
     return { finalGrade: Math.round(finalGrade * 100) / 100, letterGrade, gradePoints };
+  }
+};
+
+// Attendance operations
+export const attendanceService = {
+  async getSheet(courseId: string, teacherId: string, ethiopianYear: number, ethiopianMonth: number): Promise<FirestoreAttendanceSheet | null> {
+    const qy = query(
+      collections.attendance(),
+      where('courseId', '==', courseId),
+      where('teacherId', '==', teacherId),
+      where('ethiopianYear', '==', ethiopianYear),
+      where('ethiopianMonth', '==', ethiopianMonth),
+      limit(1)
+    );
+    const snap = await getDocs(qy);
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as FirestoreAttendanceSheet;
+  },
+
+  async upsertSheet(
+    courseId: string,
+    teacherId: string,
+    ethiopianYear: number,
+    ethiopianMonth: number,
+    partialRecords: Record<string, Record<number, boolean>>
+  ): Promise<string> {
+    // Try to get existing sheet
+    const existing = await this.getSheet(courseId, teacherId, ethiopianYear, ethiopianMonth);
+    const now = Timestamp.now();
+    if (existing) {
+      // Merge records client-side
+      const mergedRecords: Record<string, Record<number, boolean>> = { ...(existing.records || {}) };
+      Object.entries(partialRecords).forEach(([studentId, daysMap]) => {
+        mergedRecords[studentId] = { ...(mergedRecords[studentId] || {}) };
+        Object.entries(daysMap).forEach(([dayStr, present]) => {
+          const day = Number(dayStr);
+          mergedRecords[studentId][day] = !!present;
+        });
+      });
+      const ref = doc(db, 'attendance', existing.id);
+      await updateDoc(ref, { records: mergedRecords, updatedAt: now } as any);
+      return existing.id;
+    } else {
+      const docRef = await addDoc(collections.attendance(), {
+        courseId,
+        teacherId,
+        ethiopianYear,
+        ethiopianMonth,
+        records: partialRecords,
+        submitted: false,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+      return docRef.id;
+    }
+  },
+
+  async submitSheet(courseId: string, teacherId: string, ethiopianYear: number, ethiopianMonth: number): Promise<void> {
+    const sheet = await this.getSheet(courseId, teacherId, ethiopianYear, ethiopianMonth);
+    if (!sheet) throw new Error('Attendance sheet not found');
+    const ref = doc(db, 'attendance', sheet.id);
+    await updateDoc(ref, { submitted: true, submittedAt: Timestamp.now(), updatedAt: Timestamp.now() } as any);
+  },
+
+  async getSubmittedSheets(limitCount = 200): Promise<FirestoreAttendanceSheet[]> {
+    const qy = query(
+      collections.attendance(),
+      where('submitted', '==', true),
+      orderBy('submittedAt', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(qy);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAttendanceSheet));
+  },
+
+  async getSheetsByTeacher(teacherId: string, limitCount = 200): Promise<FirestoreAttendanceSheet[]> {
+    const qy = query(
+      collections.attendance(),
+      where('teacherId', '==', teacherId),
+      orderBy('updatedAt', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(qy);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreAttendanceSheet));
+  },
+};
+
+// Admin activity helpers (derived from grades created by admins)
+export const adminActivityService = {
+  async getGradesCalculatedByUser(userId: string, limitCount = 200): Promise<FirestoreGrade[]> {
+    const qy = query(
+      collections.grades(),
+      where('calculatedBy', '==', userId),
+      orderBy('calculatedAt', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(qy);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGrade));
   }
 };
 

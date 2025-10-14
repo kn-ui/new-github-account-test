@@ -18,6 +18,11 @@ import {
   Crown
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { secondaryAuth } from '@/lib/firebaseSecondary';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface User {
@@ -35,12 +40,16 @@ interface UsersListProps {
 
 export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const { t } = useI18n();
+  const { userProfile } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [addAdminOpen, setAddAdminOpen] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -135,6 +144,14 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
               <Users className="h-6 w-6 text-blue-600" />
             </div>
             {t('users.all')} ({filteredUsers.length})
+            {(userProfile?.role === 'super_admin') && (
+              <button
+                className="ml-auto px-3 py-1 text-sm rounded border bg-white hover:bg-blue-50"
+                onClick={() => setAddAdminOpen(true)}
+              >
+                Add Admin
+              </button>
+            )}
           </CardTitle>
         </CardHeader>
       </Card>
@@ -303,6 +320,58 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Admin Dialog */}
+      <Dialog open={addAdminOpen} onOpenChange={setAddAdminOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Add Admin
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="adminName" className="text-right">Name</Label>
+              <Input id="adminName" className="col-span-3" value={newAdmin.displayName} onChange={(e)=> setNewAdmin({ ...newAdmin, displayName: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="adminEmail" className="text-right">Email</Label>
+              <Input id="adminEmail" type="email" className="col-span-3" value={newAdmin.email} onChange={(e)=> setNewAdmin({ ...newAdmin, email: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setAddAdminOpen(false)}>Cancel</Button>
+            <Button disabled={isCreating} onClick={async ()=>{
+              setIsCreating(true);
+              try {
+                // Create admin account via secondary auth
+                const password = 'admin123';
+                const cred = await createUserWithEmailAndPassword(secondaryAuth, newAdmin.email, password);
+                await userService.createUser({
+                  uid: cred.user.uid,
+                  displayName: newAdmin.displayName,
+                  email: newAdmin.email,
+                  role: 'admin' as any,
+                  isActive: true,
+                  passwordChanged: false,
+                  createdAt: undefined as any, // set by service
+                  updatedAt: undefined as any,
+                } as any);
+                await signOut(secondaryAuth);
+                setAddAdminOpen(false);
+                setNewAdmin({ displayName: '', email: '' });
+                // Refresh list
+                const usersData = await userService.getUsers(1000);
+                setUsers(usersData);
+              } catch (e) {
+                alert('Failed to create admin');
+              } finally {
+                setIsCreating(false);
+              }
+            }}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

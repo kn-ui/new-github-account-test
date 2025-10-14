@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { 
   Award, 
   Search, 
@@ -88,6 +90,26 @@ export default function AdminStudentGrades() {
   const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams'>('courses');
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
+  const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
+  const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
+  const [manualGrade, setManualGrade] = useState<number>(0);
+  const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
+  const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
+  const [gradeRanges, setGradeRanges] = useState({
+    'A+': { min: 97, max: 100, points: 4.0 },
+    'A': { min: 93, max: 96, points: 4.0 },
+    'A-': { min: 90, max: 92, points: 3.7 },
+    'B+': { min: 87, max: 89, points: 3.3 },
+    'B': { min: 83, max: 86, points: 3.0 },
+    'B-': { min: 80, max: 82, points: 2.7 },
+    'C+': { min: 77, max: 79, points: 2.3 },
+    'C': { min: 73, max: 76, points: 2.0 },
+    'C-': { min: 70, max: 72, points: 1.7 },
+    'D+': { min: 67, max: 69, points: 1.3 },
+    'D': { min: 63, max: 66, points: 1.0 },
+    'D-': { min: 60, max: 62, points: 0.7 },
+    'F': { min: 0, max: 59, points: 0.0 }
+  });
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
@@ -399,6 +421,140 @@ export default function AdminStudentGrades() {
     return filtered;
   }, [finalGrades, courses, searchTerm, courseFilter, sortBy]);
 
+  // GPA Calculations (Semester, Yearly, Cumulative)
+  const gpaStats = useMemo(() => {
+    // Helper to get semester (1 for Jan-Jun, 2 for Jul-Dec)
+    const getSemester = (date: Date) => {
+      const m = date.getMonth() + 1;
+      return m <= 6 ? 1 : 2;
+    };
+
+    const byYear: Record<string, { semesters: Record<number, { totalPoints: number; count: number }>; totalPoints: number; count: number }>
+      = {};
+
+    finalGrades.forEach((g) => {
+      const d = g.calculatedAt.toDate();
+      const year = d.getFullYear().toString();
+      const sem = getSemester(d);
+      if (!byYear[year]) {
+        byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
+      }
+      byYear[year].semesters[sem].totalPoints += g.gradePoints;
+      byYear[year].semesters[sem].count += 1;
+      byYear[year].totalPoints += g.gradePoints;
+      byYear[year].count += 1;
+    });
+
+    const byYearGPA: Record<string, { semester1GPA: number; semester2GPA: number; yearlyGPA: number }> = {};
+    let cumulativePoints = 0;
+    let cumulativeCount = 0;
+    Object.entries(byYear).forEach(([year, data]) => {
+      const s1 = data.semesters[1];
+      const s2 = data.semesters[2];
+      const semester1GPA = s1.count > 0 ? Math.round((s1.totalPoints / s1.count) * 100) / 100 : 0;
+      const semester2GPA = s2.count > 0 ? Math.round((s2.totalPoints / s2.count) * 100) / 100 : 0;
+      const yearlyGPA = data.count > 0 ? Math.round((data.totalPoints / data.count) * 100) / 100 : 0;
+      byYearGPA[year] = { semester1GPA, semester2GPA, yearlyGPA };
+      cumulativePoints += data.totalPoints;
+      cumulativeCount += data.count;
+    });
+
+    const cumulativeGPA = cumulativeCount > 0 ? Math.round((cumulativePoints / cumulativeCount) * 100) / 100 : 0;
+    return { byYearGPA, cumulativeGPA };
+  }, [finalGrades]);
+
+  const calculateLetterGradeWithRanges = (finalGrade: number): { letterGrade: string; gradePoints: number } => {
+    for (const [letter, range] of Object.entries(gradeRanges)) {
+      if (finalGrade >= range.min && finalGrade <= range.max) {
+        return { letterGrade: letter, gradePoints: range.points };
+      }
+    }
+    return { letterGrade: 'F', gradePoints: 0.0 };
+  };
+
+  const refreshFinalGrades = async () => {
+    try {
+      const courseIds = courses.map(c => c.id);
+      const updated = await loadFinalGrades(courseIds);
+      setFinalGrades(updated);
+    } catch (e) {
+      console.error('Failed to refresh final grades', e);
+    }
+  };
+
+  const handleCalculateFinalGrade = async () => {
+    if (!student || !selectedCourseForGrade) {
+      toast.error('Select a course');
+      return;
+    }
+    try {
+      let finalGrade: number;
+      let letterGrade: string;
+      let gradePoints: number;
+      let assignmentGrades: { assignmentId: string; grade: number; weight: number }[] = [];
+
+      if (gradeCalculationMethod === 'manual') {
+        if (manualGrade < 0 || manualGrade > 100) {
+          toast.error('Grade must be between 0 and 100');
+          return;
+        }
+        const res = calculateLetterGradeWithRanges(manualGrade);
+        finalGrade = manualGrade;
+        letterGrade = res.letterGrade;
+        gradePoints = res.gradePoints;
+      } else {
+        const courseAssignmentGrades = grades
+          .filter(g => g.courseId === selectedCourseForGrade)
+          .map(g => ({ assignmentId: g.assignmentId, grade: g.grade, weight: 1 }));
+
+        if (courseAssignmentGrades.length === 0) {
+          toast.error('No graded assignments for this course');
+          return;
+        }
+        assignmentGrades = courseAssignmentGrades;
+        const res = await gradeService.calculateFinalGrade(
+          selectedCourseForGrade,
+          student.id!,
+          assignmentGrades,
+          gradeCalculationMethod
+        );
+        finalGrade = res.finalGrade;
+        letterGrade = res.letterGrade;
+        gradePoints = res.gradePoints;
+      }
+
+      const existing = await gradeService.getGradeByStudentAndCourse(selectedCourseForGrade, student.id!);
+      const gradeData = {
+        finalGrade,
+        letterGrade,
+        gradePoints,
+        calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
+        calculationMethod: gradeCalculationMethod as any,
+        ...(assignmentGrades.length > 0 && { assignmentGrades })
+      };
+
+      if (existing) {
+        await gradeService.updateGrade(existing.id, gradeData);
+        toast.success('Final grade updated');
+      } else {
+        await gradeService.createGrade({
+          courseId: selectedCourseForGrade,
+          studentId: student.id!,
+          ...gradeData
+        } as any);
+        toast.success('Final grade calculated and saved');
+      }
+
+      await refreshFinalGrades();
+      setGradeCalculationDialogOpen(false);
+      setSelectedCourseForGrade('');
+      setManualGrade(0);
+    } catch (e) {
+      console.error('Error calculating final grade:', e);
+      toast.error('Failed to calculate final grade');
+    }
+  };
+
   const getGradeColor = (grade: number, maxScore: number) => {
     const percentage = (grade / maxScore) * 100;
     if (percentage >= 90) return 'text-green-600 bg-green-100';
@@ -632,6 +788,39 @@ export default function AdminStudentGrades() {
             </div>
           </div>
         </div>
+
+        {/* GPA and Admin Grade Actions (Courses View) */}
+        {gradeType === 'courses' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="bg-white border-gray-100">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-gray-600">Cumulative GPA</CardTitle></CardHeader>
+              <CardContent><div className="text-3xl font-bold">{gpaStats.cumulativeGPA.toFixed(2)}</div></CardContent>
+            </Card>
+            <Card className="bg-white border-gray-100 lg:col-span-2">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-gray-600">Yearly & Semester GPA</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(gpaStats.byYearGPA)
+                    .sort((a,b) => Number(b[0]) - Number(a[0]))
+                    .map(([year, g]) => (
+                    <div key={year} className="p-3 border rounded-lg">
+                      <div className="text-sm font-semibold text-gray-800">{year}</div>
+                      <div className="mt-1 text-sm text-gray-700">Year GPA: <span className="font-semibold">{g.yearlyGPA.toFixed(2)}</span></div>
+                      <div className="mt-1 text-xs text-gray-600">Sem 1: {g.semester1GPA.toFixed(2)} • Sem 2: {g.semester2GPA.toFixed(2)}</div>
+                    </div>
+                  ))}
+                  {Object.keys(gpaStats.byYearGPA).length === 0 && (
+                    <div className="text-sm text-gray-500">No final grades yet to compute GPA.</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <div className="lg:col-span-3 flex items-center gap-2">
+              <Button size="sm" onClick={() => setGradeCalculationDialogOpen(true)}>Calculate Final Grade</Button>
+              <Button size="sm" variant="outline" onClick={() => setGradeRangesDialogOpen(true)}>Configure Grade Ranges</Button>
+            </div>
+          </div>
+        )}
 
         {/* Course Filter for Assignments and Exams */}
         {(gradeType === 'assignments' || gradeType === 'exams') && (
@@ -971,6 +1160,7 @@ export default function AdminStudentGrades() {
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
+                                    <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -996,6 +1186,15 @@ export default function AdminStudentGrades() {
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 text-sm">
                                           {grade.calculatedAt.toDate().toLocaleDateString()}
+                                        </td>
+                                        <td className="py-3 px-4 text-right">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => { setSelectedCourseForGrade(grade.courseId); setGradeCalculationDialogOpen(true); }}
+                                          >
+                                            Recalculate
+                                          </Button>
                                         </td>
                                       </tr>
                                     );
@@ -1026,5 +1225,85 @@ export default function AdminStudentGrades() {
           </div>
         </div>
     </div>
+    {/* Final Grade Calculation Dialog */}
+    <Dialog open={gradeCalculationDialogOpen} onOpenChange={setGradeCalculationDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Calculate Final Grade</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Course</Label>
+            <Select value={selectedCourseForGrade} onValueChange={setSelectedCourseForGrade}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a course" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Calculation Method</Label>
+            <Select value={gradeCalculationMethod} onValueChange={(v) => setGradeCalculationMethod(v as any)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weighted_average">Weighted Average</SelectItem>
+                <SelectItem value="simple_average">Simple Average</SelectItem>
+                <SelectItem value="manual">Manual Entry</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {gradeCalculationMethod === 'manual' && (
+            <div>
+              <Label htmlFor="manual-grade">Final Grade (0-100)</Label>
+              <Input id="manual-grade" type="number" min={0} max={100} value={manualGrade} onChange={(e) => setManualGrade(Number(e.target.value))} />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setGradeCalculationDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleCalculateFinalGrade}> {gradeCalculationMethod === 'manual' ? 'Save Grade' : 'Calculate Grade'} </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Grade Ranges Dialog */}
+    <Dialog open={gradeRangesDialogOpen} onOpenChange={setGradeRangesDialogOpen}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Configure Letter Grade Ranges</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {Object.entries(gradeRanges).map(([letter, range]) => (
+              <div key={letter} className="flex items-center gap-4 p-3 border rounded-lg">
+                <div className="w-12 text-center font-semibold">{letter}</div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Min:</Label>
+                  <Input type="number" min={0} max={100} value={range.min} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, min: parseInt(e.target.value) || 0 } }))} className="w-20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Max:</Label>
+                  <Input type="number" min={0} max={100} value={range.max} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, max: parseInt(e.target.value) || 0 } }))} className="w-20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Points:</Label>
+                  <Input type="number" step="0.1" min={0} max={4} value={range.points} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, points: parseFloat(e.target.value) || 0 } }))} className="w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setGradeRangesDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => { toast.success('Grade ranges updated'); setGradeRangesDialogOpen(false); }}>Save Ranges</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -149,6 +149,13 @@ const UserManager = () => {
   const handleAddUser = async () => {
     setIsCreatingUser(true); // Start loading
     try {
+      // Enforce role restrictions: Admin can only create teachers and students
+      const creatorRole = userProfile?.role;
+      const allowedForAdmin = ['student','teacher'];
+      if (creatorRole === 'admin' && !allowedForAdmin.includes(newUser.role)) {
+        alert('Admins can only create Teachers and Students');
+        return;
+      }
       // SOLUTION: Use secondary Firebase auth to prevent admin redirects
       // 
       // Problem: When admin creates users with createUserWithEmailAndPassword,
@@ -359,8 +366,10 @@ const UserManager = () => {
                         <SelectContent>
                           <SelectItem value="student">{t('users.roles.student')}</SelectItem>
                           <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                          <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
+                          {userProfile?.role === 'super_admin' && (
+                            <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                          )}
+                          {/* Super admin creation is not exposed here to admins */}
                         </SelectContent>
                       </Select>
                     </div>

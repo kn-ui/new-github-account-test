@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Download, FileText, BarChart3, Users, BookOpen, GraduationCap } from 'lucide-react';
-import { analyticsService, userService, courseService, enrollmentService } from '@/lib/firestore';
+import { analyticsService, userService, courseService, enrollmentService, gradeService } from '@/lib/firestore';
 
 interface ReportGeneratorProps {
   onReportGenerated: (message: string) => void;
 }
 
-type ReportType = 'user-list' | 'enrollment-records' | 'course-analytics' | 'system-overview';
+type ReportType = 'user-list' | 'enrollment-records' | 'course-analytics' | 'system-overview' | 'course-final-grades';
 type ExportFormat = 'csv' | 'pdf';
 
 export default function ReportGenerator({ onReportGenerated }: ReportGeneratorProps) {
@@ -47,6 +47,13 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
       description: 'Comprehensive system statistics and metrics',
       icon: BarChart3,
       color: 'indigo',
+    },
+    {
+      id: 'course-final-grades' as ReportType,
+      name: 'Course Final Grades',
+      description: 'All students\' final grades for a selected course',
+      icon: GraduationCap,
+      color: 'blue',
     },
   ];
 
@@ -125,6 +132,24 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             { metric: 'System Health', value: `${stats.systemHealth}%` },
           ];
           filename = `system-overview-${new Date().toISOString().split('T')[0]}`;
+          break;
+        case 'course-final-grades':
+          // For simplicity, prompt for a course title match; in a full UI we'd add a selector
+          const selected = prompt('Enter exact course title to export final grades:');
+          if (!selected) throw new Error('Course title required');
+          const course = await courseService.getCoursesByTitle(selected);
+          if (!course) throw new Error('Course not found');
+          const grades = await gradeService.getGradesByCourse(course.id);
+          data = grades.map(g => ({
+            studentId: g.studentId,
+            courseId: g.courseId,
+            finalGrade: g.finalGrade,
+            letterGrade: g.letterGrade,
+            gradePoints: g.gradePoints,
+            calculatedAt: g.calculatedAt.toDate().toISOString(),
+            method: g.calculationMethod,
+          }));
+          filename = `course-final-grades-${course.title}-${new Date().toISOString().split('T')[0]}`;
           break;
       }
 

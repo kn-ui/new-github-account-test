@@ -62,6 +62,9 @@ import SearchResults from "./pages/SearchResults";
 import SeedDatabase from "./pages/SeedDatabase";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import AssignmentSubmissions from "./pages/AssignmentSubmissions";
+import TeacherAttendance from "./pages/TeacherAttendance";
+import AdminAttendance from "./pages/AdminAttendance";
+import ManageAdmins from "./pages/ManageAdmins";
 
 // import Catalog from "./pages/Catalog";
 
@@ -102,6 +105,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <CourseDetail />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/manage-admins" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <ManageAdmins />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 
@@ -210,6 +223,16 @@ const App = () => (
               } 
             />
             <Route 
+              path="/dashboard/admin-attendance" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminAttendance />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/dashboard/admin-student-grades/:studentId" 
               element={
                 <ProtectedRoute>
@@ -284,6 +307,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <TeacherCourseMaterials />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/attendance" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <TeacherAttendance />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

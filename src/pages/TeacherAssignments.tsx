@@ -42,6 +42,7 @@ import { useI18n } from '@/contexts/I18nContext';
 // Hygraph upload via backend
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { getAuthToken } from '@/lib/api';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -115,24 +116,17 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
-          const form = new FormData();
-          form.append('file', fileObj);
-          const token = getAuthToken();
-          const res = await fetch('/api/content/upload', { 
-            method: 'POST', 
-            body: form, 
-            headers: token ? { Authorization: `Bearer ${token}` } : {} 
-          });
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Upload failed');
+          const uploadResult = await uploadToHygraph(fileObj);
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Upload failed');
           }
-          const data = await res.json();
-          const url = data?.data?.url || data?.url;
-          if (!url) {
+          if (!uploadResult.url) {
             throw new Error('No URL returned from upload');
           }
-          attachments.push({ type: 'file', url, title: fileObj.name });
+          attachments.push({ type: 'file', url: uploadResult.url, title: fileObj.name });
+          if (uploadResult.warning) {
+            toast.warning(uploadResult.warning);
+          }
         } catch (err) {
           console.error('Attachment upload failed', err);
           toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);

@@ -31,6 +31,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { isHygraphUrl, getFileIcon } from '@/lib/hygraphUpload';
 
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -484,11 +485,18 @@ const CourseDetail = () => {
                   {courseMaterials.length > 0 ? (
                     <div className="space-y-3">
                       {courseMaterials.map((material) => (
-                        <div key={material.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                          <FileText size={16} className="text-blue-600" />
+                        <div key={material.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="text-2xl">
+                            {material.type === 'document' ? getFileIcon(material.title) : 
+                             material.type === 'video' ? '🎥' : 
+                             material.type === 'link' ? '🔗' : '📎'}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-800">{truncateTitle(material.title)}</p>
                             <p className="text-sm text-gray-600">{truncateText(material.description)}</p>
+                            <p className="text-xs text-gray-500 capitalize mt-1">
+                              {material.type} • {material.createdAt.toDate().toLocaleDateString()}
+                            </p>
                           </div>
                           <div className="flex items-center gap-2">
                             <Button 
@@ -508,7 +516,16 @@ const CourseDetail = () => {
                             {material.fileUrl && (
                               <Button variant="outline" size="sm" asChild>
                                 <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                                  Download
+                                  <Download className="h-4 w-4 mr-1" />
+                                  {isHygraphUrl(material.fileUrl) ? 'Download' : 'Open'}
+                                </a>
+                              </Button>
+                            )}
+                            {material.externalLink && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={material.externalLink} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  Visit Link
                                 </a>
                               </Button>
                             )}
@@ -776,8 +793,21 @@ const CourseDetail = () => {
               {/* File/Link Information */}
               {selectedMaterial.fileUrl && (
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">File Information</h3>
-                  <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span className="text-2xl">{getFileIcon(selectedMaterial.title)}</span>
+                    File Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700">Storage:</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        isHygraphUrl(selectedMaterial.fileUrl) 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {isHygraphUrl(selectedMaterial.fileUrl) ? 'Hygraph Storage' : 'External URL'}
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-600">
                       <strong>File URL:</strong> 
                       <a 
@@ -797,7 +827,7 @@ const CourseDetail = () => {
                         className="flex items-center gap-2"
                       >
                         <Download className="h-4 w-4" />
-                        Download File
+                        {isHygraphUrl(selectedMaterial.fileUrl) ? 'Download File' : 'Open File'}
                       </a>
                     </Button>
                   </div>

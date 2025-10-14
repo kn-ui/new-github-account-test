@@ -30,6 +30,7 @@ import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText, truncateInstructions } from '@/lib/utils';
+import { uploadToHygraph, isHygraphUrl, getFileIcon } from '@/lib/hygraphUpload';
 
 interface AssignmentWithStatus extends FirestoreAssignment {
   courseTitle: string;
@@ -240,24 +241,17 @@ export default function StudentAssignments() {
       // Prepare submission data
       let uploadedUrls: string[] = [];
       if (selectedFile) {
-        const form = new FormData();
-        form.append('file', selectedFile);
-        const token = localStorage.getItem('authToken');
-        const res = await fetch('/api/content/upload', { 
-          method: 'POST', 
-          body: form, 
-          headers: token ? { Authorization: `Bearer ${token}` } : {} 
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Upload failed');
+        const uploadResult = await uploadToHygraph(selectedFile);
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || 'Upload failed');
         }
-        const data = await res.json();
-        const url = data?.data?.url || data?.url;
-        if (!url) {
+        if (!uploadResult.url) {
           throw new Error('No URL returned from upload');
         }
-        uploadedUrls = [url];
+        uploadedUrls = [uploadResult.url];
+        if (uploadResult.warning) {
+          toast.warning(uploadResult.warning);
+        }
       }
 
       const submissionData = {
@@ -342,18 +336,30 @@ export default function StudentAssignments() {
                 {Array.isArray((selectedAssignment as any).attachments) && (selectedAssignment as any).attachments.length > 0 && (
                   <div className="mt-6">
                     <h3 className="font-semibold text-gray-800 mb-3">Attachments</h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {((selectedAssignment as any).attachments as Array<{ type: 'file' | 'link'; url: string; title?: string }>).map((att, idx) => (
-                        <a
-                          key={idx}
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          <Download size={14} />
-                          {att.title || (att.type === 'file' ? 'Attachment' : 'Link')} {idx + 1}
-                        </a>
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="text-2xl">
+                            {att.type === 'file' ? getFileIcon(att.title || 'file') : '🔗'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {att.title || (att.type === 'file' ? 'Attachment' : 'Link')} {idx + 1}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {isHygraphUrl(att.url) ? 'Hygraph Storage' : 'External Link'}
+                            </p>
+                          </div>
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                          >
+                            <Download size={14} />
+                            {att.type === 'file' ? 'Download' : 'Open'}
+                          </a>
+                        </div>
                       ))}
                     </div>
                   </div>

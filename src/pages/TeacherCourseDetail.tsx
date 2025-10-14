@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getAuthToken } from '@/lib/api';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -1097,22 +1098,16 @@ export default function TeacherCourseDetail() {
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
                   if (materialFile) {
-                    const form = new FormData();
-                    form.append('file', materialFile);
-                    const token = getAuthToken();
-                    const res = await fetch('/api/content/upload', { 
-                      method: 'POST', 
-                      body: form, 
-                      headers: token ? { Authorization: `Bearer ${token}` } : {} 
-                    });
-                    if (!res.ok) {
-                      const errorData = await res.json();
-                      throw new Error(errorData.message || 'Upload failed');
+                    const uploadResult = await uploadToHygraph(materialFile);
+                    if (!uploadResult.success) {
+                      throw new Error(uploadResult.error || 'Upload failed');
                     }
-                    const data = await res.json();
-                    url = data?.data?.url || data?.url || url;
+                    url = uploadResult.url || '';
                     if (!url) {
                       throw new Error('No URL returned from upload');
+                    }
+                    if (uploadResult.warning) {
+                      toast.warning(uploadResult.warning);
                     }
                   }
                   payload.fileUrl = url;

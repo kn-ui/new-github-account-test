@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { secondaryAuth } from '../lib/firebaseSecondary';
 import { userService, FirestoreUser } from '../lib/firestore';
 import { setAuthToken, removeAuthToken, api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -107,8 +108,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return defaultPasswords[userData.role as keyof typeof defaultPasswords] || 'password123';
       })();
       
-      // Create Firebase Auth user first
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, finalPassword);
+      // Create Firebase Auth user via secondary app to avoid swapping main session
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, userData.email, finalPassword);
       
       // Create Firestore user profile
       const userId = await userService.createUser({
@@ -116,6 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         uid: userCredential.user.uid,
         passwordChanged: false // New users must change their password
       });
+      try { await signOut(secondaryAuth); } catch {}
       
       toast.success(`User created successfully! Default password: ${finalPassword}`);
       return userId;

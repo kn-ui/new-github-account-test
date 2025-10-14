@@ -80,7 +80,13 @@ const Signup = () => {
     {
       value: 'admin',
       label: 'Administrator',
-      description: 'Full system access and management',
+      description: 'System access and management',
+      icon: Shield
+    },
+    {
+      value: 'super_admin',
+      label: 'Super Administrator',
+      description: 'Full system access and admin management',
       icon: Shield
     }
   ];

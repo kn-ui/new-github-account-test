@@ -113,15 +113,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Signup function - DISABLED for public use
+  // Signup function - TEMPORARY enabled for testing
   const signup = async (
     email: string, 
     password: string, 
     displayName: string,
     role: string = 'student'
   ): Promise<any> => {
-    // Public signup is disabled - only admins can create users
-    throw new Error('Public signup is disabled. Please contact an administrator to create your account.');
+    try {
+      // Use the backend API to create user (which will handle both Clerk and Firebase)
+      const res = await api.createUser({
+        email,
+        displayName,
+        role,
+        password
+      });
+      
+      // After successful creation, sign them in
+      if (res.success) {
+        // Small delay to ensure user is created in Clerk
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Now sign them in
+        return await login(email, password);
+      }
+      
+      toast.success('Account created successfully! Please sign in.');
+      return res;
+    } catch (error: any) {
+      // Handle specific errors
+      if (error.response?.status === 400) {
+        if (error.response.data?.message?.includes('already exists')) {
+          throw new Error('An account with this email already exists.');
+        }
+      }
+      toast.error(error.response?.data?.message || error.message || 'Failed to create account');
+      throw error;
+    }
   };
 
   // Create user function - for admin use only (delegates to backend/Clerk)

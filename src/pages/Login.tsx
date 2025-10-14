@@ -43,11 +43,9 @@ const Login = () => {
     try {
       await login(email, password);
       
-      // Small delay to ensure auth state is fully updated
-      setTimeout(() => {
-        // Navigate to dashboard - the Dashboard component will handle role-based routing
-        navigate('/dashboard', { replace: true });
-      }, 100);
+      // Navigate immediately after successful login
+      // The login function already handles the authentication and profile sync
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     } finally {

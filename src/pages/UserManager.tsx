@@ -84,7 +84,7 @@ const UserManager = () => {
   const [newUser, setNewUser] = useState({
     displayName: '',
     email: '',
-    role: 'student' as 'student' | 'teacher',
+    role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
     password: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
@@ -148,11 +148,12 @@ const UserManager = () => {
   const handleAddUser = async () => {
     setIsCreatingUser(true); // Start loading
     try {
-      // Create via backend (Clerk + Firestore sync). Backend assigns default password by role
+      // Create via backend (Clerk + Firestore sync). Backend assigns default password by role if not provided
       await api.createUser({
         email: newUser.email,
         displayName: newUser.displayName,
-        role: newUser.role
+        role: newUser.role,
+        ...(newUser.password ? { password: newUser.password } : {})
       });
       
       setIsAddUserOpen(false);
@@ -319,8 +320,21 @@ const UserManager = () => {
                         <SelectContent>
                           <SelectItem value="student">{t('users.roles.student')}</SelectItem>
                           <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                          <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="password" className="text-right">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        className="col-span-3"
+                        placeholder="Leave blank for default password"
+                      />
                     </div>
                   </div>
                   <DialogFooter>

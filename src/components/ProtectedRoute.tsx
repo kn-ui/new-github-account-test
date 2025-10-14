@@ -28,10 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Redirect to login if no user is authenticated
-  if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  // currentUser is derived from Clerk user; redundant check avoided to reduce flicker
 
   // Show loading while user profile is being fetched
   if (!userProfile) {

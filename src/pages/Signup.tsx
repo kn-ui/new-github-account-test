@@ -56,7 +56,6 @@ const Signup = () => {
     setLoading(true);
     try {
       await signup(formData.email, formData.password, formData.displayName, formData.role);
-      navigate('/dashboard');
     } catch (error) {
       console.error('Signup error:', error);
     } finally {

@@ -115,13 +115,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Signup function - DISABLED for public use
   const signup = async (
-    email: string, 
-    password: string, 
-    displayName: string,
-    role: string = 'student'
+    _email: string, 
+    _password: string, 
+    _displayName: string,
+    _role: string = 'student'
   ): Promise<any> => {
-    // Public signup is disabled - only admins can create users
-    throw new Error('Public signup is disabled. Please contact an administrator to create your account.');
+    // Public signup is disabled - only admins/super admins can create users
+    throw new Error('Signup is disabled. Contact an administrator.');
   };
 
   // Create user function - for admin use only (delegates to backend/Clerk)

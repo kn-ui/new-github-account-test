@@ -29,13 +29,23 @@ export class UserController {
 
       let uid: string;
 
-      // Development mode: Skip Clerk and generate a mock UID
+      // RBAC: only super_admin can create admin/super_admin
+      const requesterRole = req.user?.role;
+      const creatingElevated = role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN;
+      if (creatingElevated && requesterRole !== UserRole.SUPER_ADMIN) {
+        sendError(res, 'Only super admins can create admin or super_admin users');
+        return;
+      }
+
+      // Development mode: Skip Clerk and generate a mock UID when no Clerk secret
       console.log('🔍 Controller check - NODE_ENV:', process.env.NODE_ENV, 'CLERK_SECRET_KEY:', !!process.env.CLERK_SECRET_KEY);
-      if (process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY) {
+      const useMock = process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY;
+
+      if (useMock) {
         console.log('🔓 Development mode: Creating user without Clerk');
         uid = `dev-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       } else {
-        // Create user in Clerk via API, ignoring password policies
+        // Create user in Clerk via API
         const resp = await fetch('https://api.clerk.com/v1/users', {
           method: 'POST',
           headers: {
@@ -46,6 +56,7 @@ export class UserController {
             email_address: [email],
             first_name: displayName,
             password: finalPassword,
+            password_digest: undefined,
             skip_password_checks: true
           })
         });

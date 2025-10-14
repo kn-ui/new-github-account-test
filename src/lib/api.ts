@@ -229,6 +229,25 @@ class ApiClient {
     return this.request<User[]>(`/api/users${query}`);
   }
 
+  async updateUserRole(userId: string, role: User['role']): Promise<ApiResponse<User>> {
+    return this.request<User>(`/api/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async deactivateUser(userId: string): Promise<ApiResponse> {
+    return this.request(`/api/users/${userId}/deactivate`, {
+      method: 'PUT',
+    });
+  }
+
+  async activateUser(userId: string): Promise<ApiResponse> {
+    return this.request(`/api/users/${userId}/activate`, {
+      method: 'PUT',
+    });
+  }
+
   async getUserProfile(): Promise<ApiResponse<User>> {
     return this.request<User>('/api/users/profile');
   }

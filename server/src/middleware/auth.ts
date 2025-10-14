@@ -53,7 +53,19 @@ export const authenticateToken = async (
 
     const verifyData: any = await verifyResp.json();
     const uid: string = verifyData.user_id;
-    const email: string = verifyData.email_address || verifyData.session?.user?.primary_email_address_id || '';
+
+    // Fetch user details from Clerk to get reliable email
+    let email: string = '';
+    try {
+      const userResp = await fetch(`https://api.clerk.com/v1/users/${uid}` , {
+        headers: { 'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}` }
+      });
+      if (userResp.ok) {
+        const userJson: any = await userResp.json();
+        const primaryEmail = (userJson.email_addresses || []).find((e: any) => e.id === userJson.primary_email_address_id);
+        email = primaryEmail?.email_address || primaryEmail?.emailAddress || '';
+      }
+    } catch {}
 
 // Get user data from Firestore
 const userDoc = await firestore.collection('users').doc(uid).get();

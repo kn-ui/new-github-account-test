@@ -6,13 +6,14 @@ import { validateUserRegistration, validatePagination } from '../middleware/vali
 
 const router = Router();
 
-// Public routes (no authentication required)
-// Note: User registration happens through Firebase Auth on frontend
+// Public routes (no public user registration in this system)
 
 // Protected routes (authentication required for specific endpoints)
 
-// Admin: Create a new user (requires auth in production; open in dev via middleware bypass)
-router.post('/', validateUserRegistration, userController.createUser);
+// Admin/Super Admin: Create a new user
+// - Admin can create student/teacher
+// - Super Admin can also create admin/super_admin
+router.post('/', authenticateToken, requireAdminOrSuperAdmin, validateUserRegistration, userController.createUser);
 
 // User profile routes (must authenticate to access req.user)
 router.post('/profile', authenticateToken, userController.createOrUpdateProfile);

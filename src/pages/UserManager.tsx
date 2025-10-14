@@ -112,11 +112,24 @@ const UserManager = () => {
 
   const fetchUsers = async () => {
     try {
-      const fetchedUsers = showArchived 
-        ? await userService.getAllUsersIncludingInactive()
-        : await userService.getUsers();
-      setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers);
+      // Prefer backend API for consistent data and permissions
+      const resp = await api.getUsers({ page: 1, limit: 1000 });
+      const list = (resp.data || []).map(u => ({
+        id: (u as any).uid,
+        displayName: (u as any).displayName,
+        email: (u as any).email,
+        role: (u as any).role,
+        isActive: (u as any).isActive !== false,
+        createdAt: ((): any => {
+          const v = (u as any).createdAt;
+          if (!v) return new Date();
+          return typeof v === 'string' ? new Date(v) : (v instanceof Date ? v : new Date(v));
+        })()
+      } as User));
+
+      const finalList = showArchived ? list : list.filter(u => u.isActive);
+      setUsers(finalList);
+      setFilteredUsers(finalList);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -138,10 +151,19 @@ const UserManager = () => {
     if (!userToDelete) return;
     
     try {
-      await userService.deleteUser(userToDelete.id);
+      await api.deactivateUser(userToDelete.id);
       fetchUsers();
     } catch (error) {
       console.error(t('users.errors.deleteFailed'), error);
+    }
+  };
+
+  const activateUser = async (userId: string) => {
+    try {
+      await api.activateUser(userId);
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to activate user', error);
     }
   };
 
@@ -192,12 +214,13 @@ const UserManager = () => {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     try {
+      // Update role via backend to enforce permissions, then other fields via Firestore
+      await api.updateUserRole(editingUser.id, editingUser.role as any);
       await userService.updateUser(editingUser.id, {
         displayName: editingUser.displayName,
         email: editingUser.email,
-        role: editingUser.role,
         isActive: editingUser.isActive,
-      });
+      } as any);
       setIsEditUserOpen(false);
       setEditingUser(null);
       fetchUsers(); // Refresh the user list
@@ -610,7 +633,16 @@ const UserManager = () => {
                               onClick={() => handleDeleteUser(user.id, user.displayName, user.role)}
                             >
                               <Shield className="h-4 w-4 mr-2" />
-                              {t('users.delete')}
+                              {t('users.deactivate') || 'Deactivate'}
+                            </DropdownMenuItem>
+                          )}
+                          {user.role !== 'super_admin' && !user.isActive && (
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => activateUser(user.id)}
+                            >
+                              <Shield className="h-4 w-4 mr-2" />
+                              {t('users.activate') || 'Activate'}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

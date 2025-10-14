@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { userService } from '@/lib/firestore';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ManageAdmins() {
   const { userProfile } = useAuth();
   const [admins, setAdmins] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ displayName: '', email: '' });
+  const [form, setForm] = useState({ displayName: '', email: '', role: 'admin' as 'admin' | 'super_admin' });
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -35,10 +36,10 @@ export default function ManageAdmins() {
   const createAdmin = async () => {
     setSaving(true);
     try {
-      await api.createUser({ email: form.email, displayName: form.displayName, role: 'admin' as any });
+      await api.createUser({ email: form.email, displayName: form.displayName, role: form.role as any });
       await load();
       setOpen(false);
-      setForm({ displayName: '', email: '' });
+      setForm({ displayName: '', email: '', role: 'admin' });
     } catch (e) { console.error(e); alert('Failed to create admin'); }
     finally { setSaving(false); }
   };
@@ -83,6 +84,18 @@ export default function ManageAdmins() {
             <div>
               <label className="text-sm">Email</label>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-sm">Role</label>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as any })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

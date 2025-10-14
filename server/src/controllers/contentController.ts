@@ -83,7 +83,7 @@ export class ContentController {
         return;
       }
 
-      const data = await uploadResp.json();
+      const data = await uploadResp.json() as any;
       // The response should contain the asset information including the URL
       res.status(200).json({ 
         success: true, 

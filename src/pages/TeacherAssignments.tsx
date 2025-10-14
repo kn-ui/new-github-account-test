@@ -117,16 +117,27 @@ export default function TeacherAssignments() {
         try {
           const form = new FormData();
           form.append('file', fileObj);
-          form.append('folder', `assignments/${formData.courseId}`);
           const token = getAuthToken();
-          const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
-          if (!res.ok) throw new Error('Upload failed');
+          const res = await fetch('/api/content/upload', { 
+            method: 'POST', 
+            body: form, 
+            headers: token ? { Authorization: `Bearer ${token}` } : {} 
+          });
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Upload failed');
+          }
           const data = await res.json();
           const url = data?.data?.url || data?.url;
+          if (!url) {
+            throw new Error('No URL returned from upload');
+          }
           attachments.push({ type: 'file', url, title: fileObj.name });
         } catch (err) {
           console.error('Attachment upload failed', err);
-          toast.error('Failed to upload attachment');
+          toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          // Don't continue if upload failed
+          return;
         }
       }
       if (formData.linkUrl) attachments.push({ type: 'link', url: formData.linkUrl, title: formData.linkTitle || undefined });

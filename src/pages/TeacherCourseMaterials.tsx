@@ -130,12 +130,21 @@ export default function TeacherCourseMaterials() {
         // Send to backend Hygraph upload endpoint
         const form = new FormData();
         form.append('file', fileObj);
-        form.append('folder', `materials/${formData.courseId}`);
         const token = getAuthToken();
-        const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
-        if (!res.ok) throw new Error('Upload failed');
+        const res = await fetch('/api/content/upload', { 
+          method: 'POST', 
+          body: form, 
+          headers: token ? { Authorization: `Bearer ${token}` } : {} 
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Upload failed');
+        }
         const data = await res.json();
         uploadedUrl = data?.data?.url || data?.url;
+        if (!uploadedUrl) {
+          throw new Error('No URL returned from upload');
+        }
       }
 
       const materialData: any = {

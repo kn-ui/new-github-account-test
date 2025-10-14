@@ -26,10 +26,10 @@ const Login = () => {
 
   // If already signed in, redirect away from login
   useEffect(() => {
-    if (clerkLoaded && isSignedIn) {
+    if (clerkLoaded && isSignedIn && userProfile) {
       navigate(from, { replace: true });
     }
-  }, [clerkLoaded, isSignedIn, from, navigate]);
+  }, [clerkLoaded, isSignedIn, userProfile, from, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +43,11 @@ const Login = () => {
     try {
       await login(email, password);
       
-      // Navigate to dashboard - the Dashboard component will handle role-based routing
-      navigate('/dashboard', { replace: true });
+      // Small delay to ensure auth state is fully updated
+      setTimeout(() => {
+        // Navigate to dashboard - the Dashboard component will handle role-based routing
+        navigate('/dashboard', { replace: true });
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
     } finally {

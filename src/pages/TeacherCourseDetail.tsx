@@ -1099,12 +1099,21 @@ export default function TeacherCourseDetail() {
                   if (materialFile) {
                     const form = new FormData();
                     form.append('file', materialFile);
-                    form.append('folder', `materials/${course.id}`);
                     const token = getAuthToken();
-                    const res = await fetch('/api/content/upload', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
-                    if (!res.ok) throw new Error('Upload failed');
+                    const res = await fetch('/api/content/upload', { 
+                      method: 'POST', 
+                      body: form, 
+                      headers: token ? { Authorization: `Bearer ${token}` } : {} 
+                    });
+                    if (!res.ok) {
+                      const errorData = await res.json();
+                      throw new Error(errorData.message || 'Upload failed');
+                    }
                     const data = await res.json();
                     url = data?.data?.url || data?.url || url;
+                    if (!url) {
+                      throw new Error('No URL returned from upload');
+                    }
                   }
                   payload.fileUrl = url;
                 }

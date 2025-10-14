@@ -7,6 +7,7 @@ import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 // Hygraph upload via backend
 import { api, getAuthToken } from '@/lib/api';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -127,23 +128,16 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        // Send to backend Hygraph upload endpoint
-        const form = new FormData();
-        form.append('file', fileObj);
-        const token = getAuthToken();
-        const res = await fetch('/api/content/upload', { 
-          method: 'POST', 
-          body: form, 
-          headers: token ? { Authorization: `Bearer ${token}` } : {} 
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Upload failed');
+        const uploadResult = await uploadToHygraph(fileObj);
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || 'Upload failed');
         }
-        const data = await res.json();
-        uploadedUrl = data?.data?.url || data?.url;
+        uploadedUrl = uploadResult.url;
         if (!uploadedUrl) {
           throw new Error('No URL returned from upload');
+        }
+        if (uploadResult.warning) {
+          toast.warning(uploadResult.warning);
         }
       }
 

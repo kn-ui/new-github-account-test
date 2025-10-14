@@ -40,6 +40,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
+import { isHygraphUrl, getFileIcon } from '@/lib/hygraphUpload';
 
 interface SubmissionWithDetails {
   id: string;
@@ -541,18 +542,21 @@ export default function StudentSubmissions() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {selectedSubmissionDetail.attachments.map((attachment, index) => (
                         <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <FileText className="h-5 w-5 text-blue-600" />
+                          <div className="text-2xl">
+                            {getFileIcon(attachment)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
-                              {attachment}
+                              {attachment.split('/').pop() || `Attachment ${index + 1}`}
                             </p>
-                            <p className="text-xs text-gray-500">Attachment {index + 1}</p>
+                            <p className="text-xs text-gray-500">
+                              {isHygraphUrl(attachment) ? 'Hygraph Storage' : 'External File'} • Attachment {index + 1}
+                            </p>
                           </div>
                           <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
                             <a href={attachment} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4 mr-1" />
+                              {isHygraphUrl(attachment) ? 'Download' : 'Open'}
                             </a>
                           </Button>
                         </div>

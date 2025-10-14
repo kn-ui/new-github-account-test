@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { firestore } from '../config/firebase';
+import { firestore, auth } from '../config/firebase';
 import { User, UserRole } from '../types';
-import fetch from 'node-fetch';
 
 class UserService {
   private usersCollection = firestore?.collection('users');
@@ -9,10 +8,6 @@ class UserService {
   // Create a new user in Firestore
   async createUser(userData: Partial<User>): Promise<User> {
     try {
-      console.log('🔍 UserService.createUser called with:', userData);
-      console.log('🔍 Firestore initialized:', !!firestore);
-      console.log('🔍 Users collection:', !!this.usersCollection);
-      
       if (!this.usersCollection) {
         throw new Error('Users collection not initialized');
       }
@@ -23,8 +18,6 @@ class UserService {
       }
 
       const newUserDoc = {
-        // Persist uid field for client queries that filter by uid
-        uid,
         email: data.email || '',
         displayName: data.displayName || 'New User',
         role: data.role || UserRole.STUDENT,
@@ -33,13 +26,11 @@ class UserService {
         updatedAt: new Date(),
       };
 
-      console.log('🔍 Creating user document:', { uid, ...newUserDoc });
       await this.usersCollection.doc(uid).set(newUserDoc);
-      console.log('✅ User created successfully');
 
       return { uid, ...newUserDoc } as User;
     } catch (error) {
-      console.error('❌ Error creating user:', error);
+      console.error('Error creating user:', error);
       throw new Error('Failed to create user');
     }
   }
@@ -261,21 +252,9 @@ class UserService {
         updatedAt: new Date()
       });
 
-      // Disable the user in Clerk (ban)
-      if (process.env.CLERK_SECRET_KEY) {
-        try {
-          const resp = await fetch(`https://api.clerk.com/v1/users/${uid}/ban`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            }
-          });
-          if (!resp.ok) {
-            console.error('Failed to ban user in Clerk:', await resp.text());
-          }
-        } catch (e) {
-          console.error('Error calling Clerk ban API:', e);
-        }
+      // Optionally disable the user in Firebase Auth
+      if (auth) {
+        await auth.updateUser(uid, { disabled: true });
       }
     } catch (error) {
       console.error('Error deactivating user:', error);
@@ -295,21 +274,9 @@ class UserService {
         updatedAt: new Date()
       });
 
-      // Unban the user in Clerk
-      if (process.env.CLERK_SECRET_KEY) {
-        try {
-          const resp = await fetch(`https://api.clerk.com/v1/users/${uid}/unban`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            }
-          });
-          if (!resp.ok) {
-            console.error('Failed to unban user in Clerk:', await resp.text());
-          }
-        } catch (e) {
-          console.error('Error calling Clerk unban API:', e);
-        }
+      // Re-enable the user in Firebase Auth
+      if (auth) {
+        await auth.updateUser(uid, { disabled: false });
       }
     } catch (error) {
       console.error('Error activating user:', error);

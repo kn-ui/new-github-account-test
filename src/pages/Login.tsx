@@ -4,7 +4,6 @@ import { Mail, Lock, Eye, EyeOff, LogIn, BookOpen, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
-import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 import LoginHeroAside from '@/components/LoginHeroAside';
 
 import logo from '@/assets/logo.jpg';
@@ -16,20 +15,12 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { login, userProfile } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
-  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
   
   const from = location.state?.from?.pathname || '/dashboard';
-
-  // If already signed in, redirect away from login
-  useEffect(() => {
-    if (clerkLoaded && isSignedIn && userProfile) {
-      navigate(from, { replace: true });
-    }
-  }, [clerkLoaded, isSignedIn, userProfile, from, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +33,7 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
-      
-      // Small delay to ensure auth state is fully updated
-      setTimeout(() => {
-        // Navigate to dashboard - the Dashboard component will handle role-based routing
-        navigate('/dashboard', { replace: true });
-      }, 100);
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     } finally {

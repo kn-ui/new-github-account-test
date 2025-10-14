@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import userService from '../services/userService';
 import { auth as adminAuth } from '../config/firebase';
-import fetch from 'node-fetch';
 import {
   sendSuccess,
   sendError,
@@ -18,63 +17,16 @@ export class UserController {
     try {
       const { email, password, displayName, role } = req.body;
 
-      // Default password by role if not provided
-      const defaultPasswords: Record<string, string> = {
-        student: 'student123',
-        teacher: 'teacher123',
-        admin: 'admin123',
-        super_admin: 'superadmin123',
-      };
-      const finalPassword = password || defaultPasswords[role as string] || 'password123';
-
-      let uid: string;
-
-      // RBAC: only super_admin can create admin/super_admin
-      const requesterRole = req.user?.role;
-      const creatingElevated = role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN;
-      if (creatingElevated && requesterRole !== UserRole.SUPER_ADMIN) {
-        sendError(res, 'Only super admins can create admin or super_admin users');
-        return;
-      }
-
-      // Development mode: Skip Clerk and generate a mock UID when no Clerk secret
-      console.log('🔍 Controller check - NODE_ENV:', process.env.NODE_ENV, 'CLERK_SECRET_KEY:', !!process.env.CLERK_SECRET_KEY);
-      const useMock = process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY;
-
-      if (useMock) {
-        console.log('🔓 Development mode: Creating user without Clerk');
-        uid = `dev-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      } else {
-        // Create user in Clerk via API
-        const resp = await fetch('https://api.clerk.com/v1/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-          },
-          body: JSON.stringify({
-            email_address: [email],
-            first_name: displayName,
-            password: finalPassword,
-            password_digest: undefined,
-            skip_password_checks: true
-          })
-        });
-
-        if (!resp.ok) {
-          const data = await resp.text();
-          console.error('Clerk create user failed:', data);
-          sendServerError(res, 'Failed to create user in auth provider');
-          return;
-        }
-
-        const created = await resp.json() as any;
-        uid = created.id as string;
-      }
+      // Step 1: Create user in Firebase Auth
+      const userRecord = await adminAuth.createUser({
+        email,
+        password,
+        displayName,
+      });
 
       // Step 2: Create user in Firestore
       const newUser = await userService.createUser({
-        uid,
+        uid: userRecord.uid,
         email,
         displayName,
         role: role || UserRole.STUDENT,
@@ -83,7 +35,11 @@ export class UserController {
       sendCreated(res, 'User created successfully', newUser);
     } catch (error: any) {
       console.error('Create user error:', error);
-      sendServerError(res, 'Failed to create user');
+      if (error.code === 'auth/email-already-exists') {
+        sendError(res, 'Email already in use', undefined, 409);
+      } else {
+        sendServerError(res, 'Failed to create user');
+      }
     }
   }
 

@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,11 +7,10 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, userProfile, loading } = useAuth();
-  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
   const location = useLocation();
 
-  // Wait for Clerk to finish loading and our context to finish syncing
-  if (!clerkLoaded || loading) {
+  // Show loading while authentication is in progress
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -23,12 +21,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // If Clerk says user is not signed in, redirect to login
-  if (!isSignedIn) {
+  // Redirect to login if no user is authenticated
+  if (!currentUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
-  // currentUser is derived from Clerk user; redundant check avoided to reduce flicker
 
   // Show loading while user profile is being fetched
   if (!userProfile) {

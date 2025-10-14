@@ -1,7 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { firestore } from '../config/firebase';
+import { auth, firestore } from '../config/firebase';
 import { AuthenticatedRequest, UserRole } from '../types';
-import fetch from 'node-fetch';
 
 // Verify Firebase token and extract user info
 export const authenticateToken = async (
@@ -10,22 +9,8 @@ export const authenticateToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log('🔍 Auth middleware called for:', req.method, req.path);
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-    // Development mode: Allow requests without proper authentication
-    console.log('🔍 Auth check - NODE_ENV:', process.env.NODE_ENV, 'CLERK_SECRET_KEY:', !!process.env.CLERK_SECRET_KEY);
-    if (process.env.NODE_ENV === 'development' && !process.env.CLERK_SECRET_KEY) {
-      console.log('🔓 Development mode: Bypassing authentication');
-      req.user = {
-        uid: 'dev-admin-uid',
-        email: 'admin@example.com',
-        role: UserRole.ADMIN
-      };
-      next();
-      return;
-    }
 
     if (!token) {
       res.status(401).json({
@@ -35,40 +20,11 @@ export const authenticateToken = async (
       return;
     }
 
-    // Verify the Clerk token
-    const clerkEndpoint = `https://api.clerk.com/v1/tokens/verify`;
-    const verifyResp = await fetch(clerkEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`
-      },
-      body: JSON.stringify({ token })
-    });
-
-    if (!verifyResp.ok) {
-      res.status(403).json({ success: false, message: 'Invalid or expired token' });
-      return;
-    }
-
-    const verifyData: any = await verifyResp.json();
-    const uid: string = verifyData.user_id;
-
-    // Fetch user details from Clerk to get reliable email
-    let email: string = '';
-    try {
-      const userResp = await fetch(`https://api.clerk.com/v1/users/${uid}` , {
-        headers: { 'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}` }
-      });
-      if (userResp.ok) {
-        const userJson: any = await userResp.json();
-        const primaryEmail = (userJson.email_addresses || []).find((e: any) => e.id === userJson.primary_email_address_id);
-        email = primaryEmail?.email_address || primaryEmail?.emailAddress || '';
-      }
-    } catch {}
-
+    // Verify the Firebase token for all other cases
+    const decodedToken = await auth.verifyIdToken(token);
+    
 // Get user data from Firestore
-const userDoc = await firestore.collection('users').doc(uid).get();
+const userDoc = await firestore.collection('users').doc(decodedToken.uid).get();
 
 let userData = null;
 let userRole = UserRole.STUDENT; // Default role for new users
@@ -77,14 +33,15 @@ if (userDoc.exists) {
   userData = userDoc.data();
   userRole = userData?.role || UserRole.STUDENT;
 } else {
-  // User exists in Clerk but not in Firestore yet
-  console.log(`User ${uid} not found in Firestore, allowing for profile creation`);
+  // User exists in Firebase Auth but not in Firestore yet
+  // This is expected during initial profile creation
+  console.log(`User ${decodedToken.uid} not found in Firestore, allowing for profile creation`);
 }
 
 // Attach user info to request
 req.user = {
-  uid,
-  email: email || '',
+  uid: decodedToken.uid,
+  email: decodedToken.email || '',
   role: userRole
 };
 

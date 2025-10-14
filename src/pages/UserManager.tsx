@@ -125,8 +125,15 @@ const UserManager = () => {
   };
 
   const handleDeleteUser = (userId: string, userName: string, userRole: string) => {
-    if (userRole === 'admin' || userRole === 'super_admin') {
-      alert(t('users.cannotDeleteAdmin'));
+    // Only super_admin can delete admin/super_admin users
+    if (userProfile?.role !== 'super_admin' && (userRole === 'admin' || userRole === 'super_admin')) {
+      alert('Only super administrators can delete admin users.');
+      return;
+    }
+    
+    // Prevent deleting yourself
+    if (userId === userProfile?.uid) {
+      alert('You cannot delete your own account.');
       return;
     }
     
@@ -157,6 +164,7 @@ const UserManager = () => {
       });
       
       setIsAddUserOpen(false);
+      // Reset to student role by default
       setNewUser({ displayName: '', email: '', role: 'student', password: '' });
       fetchUsers();
     } catch (error: any) {
@@ -186,6 +194,11 @@ const UserManager = () => {
   };
 
   const handleEditClick = (user: User) => {
+    // Check permissions: only super_admin can edit admin/super_admin users
+    if (userProfile?.role !== 'super_admin' && (user.role === 'admin' || user.role === 'super_admin')) {
+      alert('You do not have permission to edit admin users.');
+      return;
+    }
     setEditingUser(user);
     setIsEditUserOpen(true);
   };
@@ -284,7 +297,16 @@ const UserManager = () => {
                   </div>
                 </div>
                 <DialogDescription>
-                  {mode==='single' ? t('users.singleDescription') : t('users.bulkDescription')}
+                  {mode==='single' ? (
+                    <>
+                      {t('users.singleDescription')}
+                      {userProfile?.role === 'admin' && (
+                        <span className="block text-xs mt-1 text-amber-600">
+                          Note: As an admin, you can only add students and teachers.
+                        </span>
+                      )}
+                    </>
+                  ) : t('users.bulkDescription')}
                 </DialogDescription>
               </DialogHeader>
               {mode==='single' ? (
@@ -318,10 +340,19 @@ const UserManager = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="student">{t('users.roles.student')}</SelectItem>
-                          <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                          <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
+                          {userProfile?.role === 'super_admin' ? (
+                            <>
+                              <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                              <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                              <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                              <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                              <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -406,10 +437,19 @@ const UserManager = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="student">{t('users.roles.student')}</SelectItem>
-                        <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                        <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                        <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
+                        {userProfile?.role === 'super_admin' ? (
+                          <>
+                            <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                            <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                            <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                            <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                            <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -602,10 +642,13 @@ const UserManager = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(user)}>
-                            <User className="h-4 w-4 mr-2" />
-                            {t('admin.recentUsers.edit')}
-                          </DropdownMenuItem>
+                          {/* Edit button - disabled for admin/super_admin if current user is not super_admin */}
+                          {(userProfile?.role === 'super_admin' || (user.role !== 'admin' && user.role !== 'super_admin')) && (
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(user)}>
+                              <User className="h-4 w-4 mr-2" />
+                              {t('admin.recentUsers.edit')}
+                            </DropdownMenuItem>
+                          )}
                           {user.role === 'student' && (
                             <DropdownMenuItem 
                               className="cursor-pointer"
@@ -618,7 +661,9 @@ const UserManager = () => {
                               View Grades
                             </DropdownMenuItem>
                           )}
-                          {user.role !== 'super_admin' && user.isActive && (
+                          {/* Delete button - only show if user has permission and not deleting self */}
+                          {user.isActive && user.id !== userProfile?.uid && 
+                           (userProfile?.role === 'super_admin' || (user.role !== 'admin' && user.role !== 'super_admin')) && (
                             <DropdownMenuItem 
                               className="text-red-600 cursor-pointer"
                               onClick={() => handleDeleteUser(user.id, user.displayName, user.role)}

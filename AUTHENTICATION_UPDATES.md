@@ -19,16 +19,30 @@ The authentication system has been updated to properly sync users between Clerk 
   - Automatically signs in users after successful account creation
   - Provides proper error handling for duplicate accounts
 
-### 3. Added Support for All User Roles
+### 3. Added Support for All User Roles with Permission-Based Access
 **Files:** `src/pages/UserManager.tsx`, `src/pages/Signup.tsx`
 - **Roles Supported:**
   - `student` - Access to courses and learning materials
   - `teacher` - Can create and manage courses
   - `admin` - System administration capabilities
   - `super_admin` - Full system access including admin management
-- **Changes:**
-  - Updated role selection dropdowns in both UserManager and Signup pages
-  - Added password field to UserManager for custom passwords
+  
+- **Role-Based Permissions in UserManager:**
+  - **Admin users can:**
+    - Add/edit/delete students and teachers only
+    - Cannot modify admin or super_admin users
+    - Cannot create admin or super_admin accounts
+  
+  - **Super Admin users can:**
+    - Add/edit/delete ALL user types (students, teachers, admins, super_admins)
+    - Full control over user management
+    - Only role that can create other admins and super_admins
+  
+- **Security Features:**
+  - Users cannot delete their own accounts
+  - Role options in dropdown menus are filtered based on current user's role
+  - Edit/Delete buttons are disabled for unauthorized actions
+  - Password field added to UserManager for custom passwords
   - Default passwords are assigned by role if not specified
 
 ### 4. User Sync Between Clerk and Firebase

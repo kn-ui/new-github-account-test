@@ -34,7 +34,7 @@ class HygraphService {
     }
 
     try {
-      // Step 1: Create asset entry in Hygraph
+      // Step 1: Create asset entry in Hygraph and request POST upload data (new API)
       const createAssetMutation = `
         mutation CreateAssetEntry($fileName: String!, $mimeType: String!) {
           createAsset(data: { fileName: $fileName, mimeType: $mimeType }) {
@@ -45,8 +45,13 @@ class HygraphService {
             size
             upload {
               status
-              requestPostURL
-              requestHeaders
+              expiresAt
+              requestPostData {
+                url
+                headers
+                fields
+              }
+              error { code message }
             }
           }
         }
@@ -75,17 +80,26 @@ class HygraphService {
       }
 
       const { id, url, upload } = createAssetData.data.createAsset;
-      const { requestPostURL, requestHeaders } = upload;
+      const postData = upload?.requestPostData;
 
-      if (!requestPostURL) {
+      if (!postData?.url) {
         throw new Error('No upload URL received from Hygraph');
       }
 
-      // Step 2: Upload file to the pre-signed URL
-      const uploadResponse = await fetch(requestPostURL, {
-        method: 'PUT',
-        headers: requestHeaders,
-        body: file.buffer,
+      // Step 2: Upload file using POST with form fields (S3 pre-signed POST)
+      const form = new (FormData as any)();
+      const fields = postData.fields || {};
+      Object.keys(fields).forEach((k) => form.append(k, fields[k]));
+      // Important: "file" field must be last for S3
+      form.append('file', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      } as any);
+
+      const uploadResponse = await fetch(postData.url, {
+        method: 'POST',
+        // do not set Content-Type manually; form-data sets correct boundary
+        body: form as any,
       });
 
       if (!uploadResponse.ok) {

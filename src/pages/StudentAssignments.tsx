@@ -238,6 +238,28 @@ export default function StudentAssignments() {
 
     try {
       // Prepare submission data
+      let uploadedUrls: string[] = [];
+      if (selectedFile) {
+        const form = new FormData();
+        form.append('file', selectedFile);
+        const token = localStorage.getItem('authToken');
+        const res = await fetch('/api/content/upload', { 
+          method: 'POST', 
+          body: form, 
+          headers: token ? { Authorization: `Bearer ${token}` } : {} 
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Upload failed');
+        }
+        const data = await res.json();
+        const url = data?.data?.url || data?.url;
+        if (!url) {
+          throw new Error('No URL returned from upload');
+        }
+        uploadedUrls = [url];
+      }
+
       const submissionData = {
         assignmentId: selectedAssignment.id,
         assignmentTitle: selectedAssignment.title,
@@ -248,7 +270,7 @@ export default function StudentAssignments() {
         studentName: userProfile.displayName || 'Unknown Student',
         studentEmail: userProfile.email || currentUser.email || '',
         content: submissionContent,
-        attachments: selectedFile ? [selectedFile.name] : [], // For now, just store filename
+        attachments: uploadedUrls,
         status: 'submitted' as const,
         submittedAt: new Date(),
         isActive: true,
@@ -314,6 +336,26 @@ export default function StudentAssignments() {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-gray-800">Instructions:</h3>
                     <p className="text-gray-700 leading-relaxed">{selectedAssignment.instructions}</p>
+                  </div>
+                )}
+
+                {Array.isArray((selectedAssignment as any).attachments) && (selectedAssignment as any).attachments.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-gray-800 mb-3">Attachments</h3>
+                    <div className="space-y-2">
+                      {((selectedAssignment as any).attachments as Array<{ type: 'file' | 'link'; url: string; title?: string }>).map((att, idx) => (
+                        <a
+                          key={idx}
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          <Download size={14} />
+                          {att.title || (att.type === 'file' ? 'Attachment' : 'Link')} {idx + 1}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

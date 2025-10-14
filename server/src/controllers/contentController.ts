@@ -1,4 +1,8 @@
-import { Response } from 'express';
+/* eslint-disable no-irregular-whitespace */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Request, Response } from 'express';
+import fetch from 'node-fetch';
+import FormData from 'form-data';
 import { AuthenticatedRequest } from '../types';
 import blogService from '../services/blogService';
 import eventService from '../services/eventService';
@@ -7,116 +11,244 @@ import { sendPaginatedResponse, sendServerError, sendSuccess, sendCreated, sendE
 import nodemailer from 'nodemailer';
 
 export class ContentController {
-  async listBlog(req: AuthenticatedRequest, res: Response) {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = (req.query.q as string) || undefined;
-      const category = (req.query.category as string) || undefined;
-      const result = await blogService.getPosts(page, limit, search, category);
-      sendPaginatedResponse(res, 'Blog posts retrieved', result.posts, page, limit, result.total);
-    } catch (e) {
-      sendServerError(res, 'Failed to get blog posts');
-    }
-  }
+  async upload(req: Request, res: Response): Promise<void> {
+    try {
+      const file = (req as any).file as Express.Multer.File;
+      if (!file) {
+        res.status(400).json({ success: false, message: 'No file uploaded' });
+        return;
+      }
 
-  async listEvents(req: AuthenticatedRequest, res: Response) {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const type = (req.query.type as string) || undefined;
-      const month = (req.query.month as string) || undefined;
-      const result = await eventService.getEvents(page, limit, type, month);
-      sendPaginatedResponse(res, 'Events retrieved', result.events, page, limit, result.total);
-    } catch (e) {
-      sendServerError(res, 'Failed to get events');
-    }
-  }
+      const endpoint = process.env.HYGRAPH_ENDPOINT as string;
+      const token = process.env.HYGRAPH_TOKEN as string;
+      if (!endpoint || !token) {
+        res.status(500).json({ success: false, message: 'Hygraph not configured' });
+        return;
+      }
 
-  async listThreads(req: AuthenticatedRequest, res: Response) {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const category = (req.query.category as string) || undefined;
-      const result = await forumService.listThreads(page, limit, category);
-      sendPaginatedResponse(res, 'Threads retrieved', result.threads, page, limit, result.total);
-    } catch (e) {
-      sendServerError(res, 'Failed to get threads');
-    }
-  }
+      // GraphQL mutation to create an asset and get a pre-signed URL
+      const createAssetMutation = `
+        mutation CreateAssetEntry($fileName: String!, $mimeType: String!) {
+          createAsset(data: { fileName: $fileName, mimeType: $mimeType }) {
+            id
+            fileName
+            url
+            upload {
+              status
+              requestPostURL
+              requestHeaders
+            }
+          }
+        }
+      `;
 
-  async listPosts(req: AuthenticatedRequest, res: Response) {
-    try {
-      const { threadId } = req.params;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const result = await forumService.listPosts(threadId, page, limit);
-      sendPaginatedResponse(res, 'Posts retrieved', result.posts, page, limit, result.total);
-    } catch (e) {
-      sendServerError(res, 'Failed to get posts');
-    }
-  }
+      const createAssetResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: createAssetMutation,
+          variables: {
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+          },
+        }),
+      });
 
-  async createThread(req: AuthenticatedRequest, res: Response) {
-    try {
-      const { title, category } = req.body;
-      if (!title || !category) return sendError(res, 'Missing fields');
-      const createdBy = req.user!.uid;
-      const createdByName = req.user!.email || 'User';
-      const th = await forumService.createThread({ title, category, createdBy, createdByName });
-      sendCreated(res, 'Thread created', th);
-    } catch (e) {
-      sendServerError(res, 'Failed to create thread');
-    }
-  }
+      const createAssetData = await createAssetResponse.json() as any;
 
-  async createPost(req: AuthenticatedRequest, res: Response) {
-    try {
-      const { threadId } = req.params;
-      const { body } = req.body;
-      if (!threadId || !body) return sendError(res, 'Missing fields');
-      const createdBy = req.user!.uid;
-      const createdByName = req.user!.email || 'User';
-      const post = await forumService.createPost({ threadId, body, createdBy, createdByName });
-      sendCreated(res, 'Post created', post);
-    } catch (e) {
-      sendServerError(res, 'Failed to create post');
-    }
-  }
+      if (!createAssetResponse.ok || createAssetData.errors) {
+        console.error('Hygraph create asset failed:', createAssetData.errors || createAssetResponse.statusText);
+        // Fallback: Return a data URL for small files (less than 100KB)
+        if (file.size < 100000) {
+          const base64 = file.buffer.toString('base64');
+          const dataUrl = `data:${file.mimetype};base64,${base64}`;
+          res.status(200).json({
+            success: true,
+            data: {
+              url: dataUrl,
+              filename: file.originalname,
+              size: file.size,
+              mimeType: file.mimetype
+            },
+            warning: 'Hygraph asset creation failed, using data URL fallback'
+          });
+          return;
+        }
+        res.status(500).json({ success: false, message: 'Hygraph asset creation failed' });
+        return;
+      }
 
-  // Support ticket endpoints removed per client request
+      const { id, url, upload } = createAssetData.data.createAsset;
+      const { requestPostURL, requestHeaders } = upload;
 
-  async sendContactEmail(req: AuthenticatedRequest, res: Response) {
-    try {
-      const { name, email, subject, message } = req.body as any;
-      if (!name || !email || !subject || !message) return sendError(res, 'Missing fields');
+      if (!requestPostURL) {
+        console.error('Hygraph did not return a requestPostURL for asset:', id);
+        res.status(500).json({ success: false, message: 'Failed to get Hygraph upload URL' });
+        return;
+      }
 
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: Boolean(process.env.SMTP_SECURE === 'true'),
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        } : undefined,
-      });
+      // Upload the file to the pre-signed URL
+      const uploadFileResponse = await fetch(requestPostURL, {
+        method: 'PUT',
+        headers: requestHeaders, // Use the provided requestHeaders
+        body: file.buffer,
+      });
 
-      const to = process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER;
-      if (!to) return sendError(res, 'Email not configured');
+      if (!uploadFileResponse.ok) {
+        const text = await uploadFileResponse.text();
+        console.error('Hygraph file upload to pre-signed URL failed:', text);
+        res.status(500).json({ success: false, message: 'Failed to upload file to Hygraph' });
+        return;
+      }
 
-      await transporter.sendMail({
-        from: process.env.CONTACT_FROM_EMAIL || email,
-        to,
-        subject: `[Contact] ${subject}`,
-        text: `From: ${name} <${email}>\n\n${message}`,
-      });
+      // After successful upload, the asset should be processed by Hygraph.
+      // The 'url' field from createAsset should be the final URL.
+      res.status(200).json({
+        success: true,
+        data: {
+          url: url, // Use the final URL from the createAsset response
+          filename: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+          id: id,
+        },
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      
+      const file = (req as any).file as Express.Multer.File;
+      if (file && file.size < 100000) {
+        const base64 = file.buffer.toString('base64');
+        const dataUrl = `data:${file.mimetype};base64,${base64}`;
+        res.status(200).json({ 
+          success: true, 
+          data: { 
+            url: dataUrl,
+            filename: file.originalname,
+            size: file.size,
+            mimeType: file.mimetype
+          },
+          warning: 'Using data URL fallback due to an unexpected upload error'
+        });
+        return;
+      }
+      
+      res.status(500).json({ success: false, message: 'An unexpected error occurred during upload' });
+    }
+  }
+  async listBlog(req: AuthenticatedRequest, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.q as string) || undefined;
+      const category = (req.query.category as string) || undefined;
+      const result = await blogService.getPosts(page, limit, search, category);
+      sendPaginatedResponse(res, 'Blog posts retrieved', result.posts, page, limit, result.total);
+    } catch (e) {
+      sendServerError(res, 'Failed to get blog posts');
+    }
+  }
 
-      sendSuccess(res, 'Message sent');
-    } catch (e) {
-      console.error(e);
-      sendServerError(res, 'Failed to send message');
-    }
-  }
+  async listEvents(req: AuthenticatedRequest, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const type = (req.query.type as string) || undefined;
+      const month = (req.query.month as string) || undefined;
+      const result = await eventService.getEvents(page, limit, type, month);
+      sendPaginatedResponse(res, 'Events retrieved', result.events, page, limit, result.total);
+    } catch (e) {
+      sendServerError(res, 'Failed to get events');
+    }
+  }
+
+  async listThreads(req: AuthenticatedRequest, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const category = (req.query.category as string) || undefined;
+      const result = await forumService.listThreads(page, limit, category);
+      sendPaginatedResponse(res, 'Threads retrieved', result.threads, page, limit, result.total);
+    } catch (e) {
+      sendServerError(res, 'Failed to get threads');
+    }
+  }
+
+  async listPosts(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { threadId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const result = await forumService.listPosts(threadId, page, limit);
+      sendPaginatedResponse(res, 'Posts retrieved', result.posts, page, limit, result.total);
+    } catch (e) {
+      sendServerError(res, 'Failed to get posts');
+    }
+  }
+
+  async createThread(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { title, category } = req.body;
+      if (!title || !category) return sendError(res, 'Missing fields');
+      const createdBy = req.user!.uid;
+      const createdByName = req.user!.email || 'User';
+      const th = await forumService.createThread({ title, category, createdBy, createdByName });
+      sendCreated(res, 'Thread created', th);
+    } catch (e) {
+      sendServerError(res, 'Failed to create thread');
+    }
+  }
+
+  async createPost(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { threadId } = req.params;
+      const { body } = req.body;
+      if (!threadId || !body) return sendError(res, 'Missing fields');
+      const createdBy = req.user!.uid;
+      const createdByName = req.user!.email || 'User';
+      const post = await forumService.createPost({ threadId, body, createdBy, createdByName });
+      sendCreated(res, 'Post created', post);
+    } catch (e) {
+      sendServerError(res, 'Failed to create post');
+    }
+  }
+
+  // Support ticket endpoints removed per client request
+
+  async sendContactEmail(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { name, email, subject, message } = req.body as any;
+      if (!name || !email || !subject || !message) return sendError(res, 'Missing fields');
+
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: Boolean(process.env.SMTP_SECURE === 'true'),
+        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        } : undefined,
+      });
+
+      const to = process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER;
+      if (!to) return sendError(res, 'Email not configured');
+
+      await transporter.sendMail({
+        from: process.env.CONTACT_FROM_EMAIL || email,
+        to,
+        subject: `[Contact] ${subject}`,
+        text: `From: ${name} <${email}>\n\n${message}`,
+      });
+
+      sendSuccess(res, 'Message sent');
+    } catch (e) {
+      console.error(e);
+      sendServerError(res, 'Failed to send message');
+    }
+  }
 }
 
 export default new ContentController();

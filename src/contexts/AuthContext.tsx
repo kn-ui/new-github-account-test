@@ -48,6 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const res = await signIn.create({ identifier: email, password });
       if (res.status === 'complete') {
         await clerkAuth.setActive?.({ session: res.createdSessionId });
+        console.log('Clerk session activated successfully');
       } else {
         throw new Error('Additional steps required to sign in');
       }
@@ -56,6 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = await clerkAuth.getToken?.();
         if (token) setAuthToken(token);
+        console.log('Auth token set for API calls');
       } catch (err) {
         console.warn('Failed to fetch Clerk token', err);
       }
@@ -73,12 +75,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await api.createUserProfile({ displayName: email.split('@')[0], role: 'student' });
           profile = await userService.getUserById(uid as string);
         }
-        if (profile) setUserProfile(profile);
-      } catch {}
+        if (profile) {
+          setUserProfile(profile);
+          console.log('User profile loaded:', profile);
+        }
+      } catch (err) {
+        console.warn('Failed to load user profile:', err);
+      }
 
       toast.success('Successfully logged in!');
       return res;
     } catch (error: any) {
+      console.error('Login error in AuthContext:', error);
       toast.error(error.message || 'Login failed');
       throw error;
     }

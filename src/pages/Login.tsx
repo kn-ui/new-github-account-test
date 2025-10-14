@@ -26,10 +26,19 @@ const Login = () => {
 
   // If already signed in, redirect away from login
   useEffect(() => {
-    if (clerkLoaded && isSignedIn) {
+    if (clerkLoaded && isSignedIn && !loading) {
+      console.log('User already signed in, redirecting to:', from);
       navigate(from, { replace: true });
     }
-  }, [clerkLoaded, isSignedIn, from, navigate]);
+  }, [clerkLoaded, isSignedIn, from, navigate, loading]);
+
+  // Additional effect to handle post-login redirect
+  useEffect(() => {
+    if (clerkLoaded && isSignedIn && userProfile && !loading) {
+      console.log('User authenticated with profile, redirecting to:', from);
+      navigate(from, { replace: true });
+    }
+  }, [clerkLoaded, isSignedIn, userProfile, from, navigate, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,10 +50,17 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await login(email, password);
+      console.log('Attempting login for:', email);
+      const result = await login(email, password);
+      console.log('Login result:', result);
       
-      // Navigate to dashboard - the Dashboard component will handle role-based routing
-      navigate('/dashboard', { replace: true });
+      // If login was successful, navigate immediately
+      if (result && result.status === 'complete') {
+        console.log('Login successful, navigating to dashboard');
+        navigate('/dashboard', { replace: true });
+      } else {
+        console.log('Login result status:', result?.status);
+      }
     } catch (error) {
       console.error('Login error:', error);
     } finally {

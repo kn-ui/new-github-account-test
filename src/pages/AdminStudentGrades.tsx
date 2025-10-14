@@ -1224,9 +1224,9 @@ export default function AdminStudentGrades() {
             )}
           </div>
         </div>
-    </div>
-    {/* Final Grade Calculation Dialog */}
-    <Dialog open={gradeCalculationDialogOpen} onOpenChange={setGradeCalculationDialogOpen}>
+
+        {/* Final Grade Calculation Dialog */}
+        <Dialog open={gradeCalculationDialogOpen} onOpenChange={setGradeCalculationDialogOpen}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Calculate Final Grade</DialogTitle>
@@ -1305,5 +1305,6 @@ export default function AdminStudentGrades() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </div>
   );
 }

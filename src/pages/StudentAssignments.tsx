@@ -30,6 +30,7 @@ import { toast } from 'sonner';
   import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText, truncateInstructions } from '@/lib/utils';
+import { uploadToHygraph, openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 
 interface AssignmentWithStatus extends FirestoreAssignment {
   courseTitle: string;
@@ -240,24 +241,22 @@ export default function StudentAssignments() {
       // Prepare submission data
       let uploadedUrls: string[] = [];
       if (selectedFile) {
-        const form = new FormData();
-        form.append('file', selectedFile);
-        const token = localStorage.getItem('authToken');
-        const res = await fetch('/api/content/upload', { 
-          method: 'POST', 
-          body: form, 
-          headers: token ? { Authorization: `Bearer ${token}` } : {} 
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Upload failed');
+        try {
+          const token = localStorage.getItem('authToken');
+          const uploadResult = await uploadToHygraph(selectedFile, token || undefined);
+          if (uploadResult.success && uploadResult.data) {
+            uploadedUrls = [uploadResult.data.url];
+            if (uploadResult.warning) {
+              toast.warning(uploadResult.warning);
+            }
+          } else {
+            throw new Error(uploadResult.message || 'Upload failed');
+          }
+        } catch (error) {
+          console.error('File upload error:', error);
+          toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          return;
         }
-        const data = await res.json();
-        const url = data?.data?.url || data?.url;
-        if (!url) {
-          throw new Error('No URL returned from upload');
-        }
-        uploadedUrls = [url];
       }
 
       const submissionData = {
@@ -344,16 +343,14 @@ export default function StudentAssignments() {
                     <h3 className="font-semibold text-gray-800 mb-3">Attachments</h3>
                     <div className="space-y-2">
                       {((selectedAssignment as any).attachments as Array<{ type: 'file' | 'link'; url: string; title?: string }>).map((att, idx) => (
-                        <a
+                        <button
                           key={idx}
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          onClick={() => att.type === 'file' ? openHygraphFile(att.url) : window.open(att.url, '_blank')}
                           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
                         >
                           <Download size={14} />
                           {att.title || (att.type === 'file' ? 'Attachment' : 'Link')} {idx + 1}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -394,7 +391,7 @@ export default function StudentAssignments() {
                         id="file-upload"
                         className="hidden"
                         onChange={handleFileSelect}
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
                       />
                       <label
                         htmlFor="file-upload"
@@ -404,10 +401,14 @@ export default function StudentAssignments() {
                       </label>
                       
                       {selectedFile && (
-                        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            Selected: {selectedFile.name}
-                          </p>
+                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getFileTypeIcon(selectedFile.type)}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-blue-900 truncate">{selectedFile.name}</p>
+                              <p className="text-xs text-blue-600">{formatFileSize(selectedFile.size)}</p>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

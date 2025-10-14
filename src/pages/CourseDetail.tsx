@@ -31,6 +31,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -506,10 +507,9 @@ const CourseDetail = () => {
                               View Details
                             </Button>
                             {material.fileUrl && (
-                              <Button variant="outline" size="sm" asChild>
-                                <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                                  Download
-                                </a>
+                              <Button variant="outline" size="sm" onClick={() => openHygraphFile(material.fileUrl)}>
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
                               </Button>
                             )}
                           </div>
@@ -789,16 +789,9 @@ const CourseDetail = () => {
                         {selectedMaterial.fileUrl}
                       </a>
                     </p>
-                    <Button asChild className="mt-2">
-                      <a 
-                        href={selectedMaterial.fileUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download File
-                      </a>
+                    <Button onClick={() => openHygraphFile(selectedMaterial.fileUrl)} className="mt-2">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download File
                     </Button>
                   </div>
                 </div>

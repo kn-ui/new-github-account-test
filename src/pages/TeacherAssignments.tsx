@@ -42,6 +42,7 @@ import { useI18n } from '@/contexts/I18nContext';
 // Hygraph upload via backend
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { getAuthToken } from '@/lib/api';
+import { uploadToHygraph, openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 
 export default function TeacherAssignments() {
   const { t } = useI18n();
@@ -115,24 +116,20 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
-          const form = new FormData();
-          form.append('file', fileObj);
           const token = getAuthToken();
-          const res = await fetch('/api/content/upload', { 
-            method: 'POST', 
-            body: form, 
-            headers: token ? { Authorization: `Bearer ${token}` } : {} 
-          });
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Upload failed');
+          const uploadResult = await uploadToHygraph(fileObj, token);
+          if (uploadResult.success && uploadResult.data) {
+            attachments.push({ 
+              type: 'file', 
+              url: uploadResult.data.url, 
+              title: fileObj.name 
+            });
+            if (uploadResult.warning) {
+              toast.warning(uploadResult.warning);
+            }
+          } else {
+            throw new Error(uploadResult.message || 'Upload failed');
           }
-          const data = await res.json();
-          const url = data?.data?.url || data?.url;
-          if (!url) {
-            throw new Error('No URL returned from upload');
-          }
-          attachments.push({ type: 'file', url, title: fileObj.name });
         } catch (err) {
           console.error('Attachment upload failed', err);
           toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -491,7 +488,18 @@ export default function TeacherAssignments() {
               </div>
               <div>
                 <Label htmlFor="file">{t('teacher.assignments.attachment') || 'Attachment (optional)'}</Label>
-                <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                <Input id="file" type="file" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                {fileObj && (
+                  <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getFileTypeIcon(fileObj.type)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-900 truncate">{fileObj.name}</p>
+                        <p className="text-xs text-blue-600">{formatFileSize(fileObj.size)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

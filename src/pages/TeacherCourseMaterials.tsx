@@ -7,6 +7,7 @@ import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 // Hygraph upload via backend
 import { api, getAuthToken } from '@/lib/api';
+import { uploadToHygraph, openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -127,23 +128,21 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
-        // Send to backend Hygraph upload endpoint
-        const form = new FormData();
-        form.append('file', fileObj);
-        const token = getAuthToken();
-        const res = await fetch('/api/content/upload', { 
-          method: 'POST', 
-          body: form, 
-          headers: token ? { Authorization: `Bearer ${token}` } : {} 
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Upload failed');
-        }
-        const data = await res.json();
-        uploadedUrl = data?.data?.url || data?.url;
-        if (!uploadedUrl) {
-          throw new Error('No URL returned from upload');
+        try {
+          const token = getAuthToken();
+          const uploadResult = await uploadToHygraph(fileObj, token);
+          if (uploadResult.success && uploadResult.data) {
+            uploadedUrl = uploadResult.data.url;
+            if (uploadResult.warning) {
+              toast.warning(uploadResult.warning);
+            }
+          } else {
+            throw new Error(uploadResult.message || 'Upload failed');
+          }
+        } catch (error) {
+          console.error('File upload error:', error);
+          toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          return;
         }
       }
 
@@ -439,15 +438,13 @@ export default function TeacherCourseMaterials() {
                     {(material.fileUrl || material.externalLink) && (
                       <div className="space-y-2 mb-4">
                         {material.fileUrl && (
-                          <a 
-                            href={material.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
+                          <button 
+                            onClick={() => openHygraphFile(material.fileUrl)}
                             className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                           >
                             <FileText className="h-3 w-3" />
                             View Document
-                          </a>
+                          </button>
                         )}
                         {material.externalLink && (
                           <a 
@@ -523,15 +520,13 @@ export default function TeacherCourseMaterials() {
                       </div>
                       {material.fileUrl && (
                         <div className="mt-2">
-                          <a 
-                            href={material.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
+                          <button 
+                            onClick={() => openHygraphFile(material.fileUrl)}
                             className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                           >
                             <FileText className="h-3 w-3" />
                             View Document
-                          </a>
+                          </button>
                         </div>
                       )}
                       {material.externalLink && (
@@ -668,7 +663,18 @@ export default function TeacherCourseMaterials() {
             {formData.type === 'document' && (
               <div>
                 <Label htmlFor="file">Upload File (PDF/Doc)</Label>
-                <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                <Input id="file" type="file" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                {fileObj && (
+                  <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getFileTypeIcon(fileObj.type)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-900 truncate">{fileObj.name}</p>
+                        <p className="text-xs text-blue-600">{formatFileSize(fileObj.size)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
                 <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
               </div>

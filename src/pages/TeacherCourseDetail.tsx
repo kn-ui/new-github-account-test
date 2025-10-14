@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getAuthToken } from '@/lib/api';
+import { uploadToHygraph, openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -471,8 +472,9 @@ export default function TeacherCourseDetail() {
                           </div>
                           <div className="flex items-center gap-2">
                             {m.fileUrl && (
-                              <Button variant="outline" size="sm" asChild>
-                                <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">View</a>
+                              <Button variant="outline" size="sm" onClick={() => openHygraphFile(m.fileUrl)}>
+                                <Eye className="h-4 w-4 mr-1" />
+                                View
                               </Button>
                             )}
                             {m.externalLink && (
@@ -1077,7 +1079,18 @@ export default function TeacherCourseDetail() {
             {materialForm.type === 'document' && (
               <div className="space-y-2">
                 <Label htmlFor="m-file-upload">Upload File (PDF/DOC)</Label>
-                <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
+                <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
+                {materialFile && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getFileTypeIcon(materialFile.type)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-900 truncate">{materialFile.name}</p>
+                        <p className="text-xs text-blue-600">{formatFileSize(materialFile.size)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="text-xs text-gray-500">Or paste a direct URL:</div>
                 <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
               </div>
@@ -1097,22 +1110,21 @@ export default function TeacherCourseDetail() {
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
                   if (materialFile) {
-                    const form = new FormData();
-                    form.append('file', materialFile);
-                    const token = getAuthToken();
-                    const res = await fetch('/api/content/upload', { 
-                      method: 'POST', 
-                      body: form, 
-                      headers: token ? { Authorization: `Bearer ${token}` } : {} 
-                    });
-                    if (!res.ok) {
-                      const errorData = await res.json();
-                      throw new Error(errorData.message || 'Upload failed');
-                    }
-                    const data = await res.json();
-                    url = data?.data?.url || data?.url || url;
-                    if (!url) {
-                      throw new Error('No URL returned from upload');
+                    try {
+                      const token = getAuthToken();
+                      const uploadResult = await uploadToHygraph(materialFile, token);
+                      if (uploadResult.success && uploadResult.data) {
+                        url = uploadResult.data.url;
+                        if (uploadResult.warning) {
+                          toast.warning(uploadResult.warning);
+                        }
+                      } else {
+                        throw new Error(uploadResult.message || 'Upload failed');
+                      }
+                    } catch (error) {
+                      console.error('File upload error:', error);
+                      toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      return;
                     }
                   }
                   payload.fileUrl = url;

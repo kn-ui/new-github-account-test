@@ -40,6 +40,7 @@ import {
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
+import { openHygraphFile, getFileTypeIcon, formatFileSize } from '@/lib/hygraph';
 
 interface SubmissionWithDetails {
   id: string;
@@ -550,10 +551,8 @@ export default function StudentSubmissions() {
                             </p>
                             <p className="text-xs text-gray-500">Attachment {index + 1}</p>
                           </div>
-                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
-                            <a href={attachment} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-4 w-4" />
-                            </a>
+                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" onClick={() => openHygraphFile(attachment)}>
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}

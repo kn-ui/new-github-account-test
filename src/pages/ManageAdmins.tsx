@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminActivityService, userService, FirestoreGrade, FirestoreUser } from '@/lib/firestore';
+import { adminActivityService, adminActionService, userService, FirestoreGrade, FirestoreUser, FirestoreAdminAction } from '@/lib/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -10,9 +10,9 @@ export default function ManageAdmins() {
   const { userProfile } = useAuth();
   const [admins, setAdmins] = useState<FirestoreUser[]>([]);
   const [selectedAdmin, setSelectedAdmin] = useState<FirestoreUser | null>(null);
-  const [activity, setActivity] = useState<FirestoreGrade[]>([]);
-  const [addOpen, setAddOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '' });
+  const [activity, setActivity] = useState<FirestoreAdminAction[]>([]);
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!userProfile || userProfile.role !== 'super_admin') return;
@@ -23,7 +23,7 @@ export default function ManageAdmins() {
   }, [userProfile]);
 
   const loadActivity = async (uid: string) => {
-    const list = await adminActivityService.getGradesCalculatedByUser(uid, 200);
+    const list = await adminActionService.getActions({ userId: uid, limitCount: 300 });
     setActivity(list);
   };
 
@@ -41,7 +41,6 @@ export default function ManageAdmins() {
           <CardContent>
             <div className="flex justify-between mb-4">
               <div className="text-sm text-gray-600">Total Admins: {admins.length}</div>
-              <Button onClick={() => setAddOpen(true)}>Add Admin</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {admins.map(a => (
@@ -58,11 +57,30 @@ export default function ManageAdmins() {
 
             {selectedAdmin && (
               <div className="mt-6">
-                <div className="font-semibold text-gray-800 mb-2">Activity for {selectedAdmin.displayName}</div>
+                <div className="font-semibold text-gray-800 mb-3">Activity for {selectedAdmin.displayName}</div>
+                <div className="flex items-center gap-3 mb-3">
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="Search details..." value={searchTerm} onChange={(e)=> setSearchTerm(e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={actionFilter} onChange={(e)=> setActionFilter(e.target.value)}>
+                    <option value="all">All actions</option>
+                    <option value="user.">User</option>
+                    <option value="course.">Course</option>
+                    <option value="event.">Event</option>
+                    <option value="announcement.">Announcement</option>
+                    <option value="grade.">Grade</option>
+                  </select>
+                </div>
                 <div className="space-y-2">
-                  {activity.map(g => (
-                    <div key={g.id} className="p-2 border rounded text-sm bg-white">
-                      Calculated grade for course {g.courseId} on {g.calculatedAt.toDate().toLocaleString()} (student {g.studentId})
+                  {activity
+                    .filter(a => actionFilter==='all' || a.action.startsWith(actionFilter))
+                    .filter(a => !searchTerm || JSON.stringify(a.details || {}).toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map(a => (
+                    <div key={a.id} className="p-2 border rounded text-sm bg-white">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium text-gray-800">{a.action}</div>
+                        <div className="text-xs text-gray-500">{a.createdAt.toDate().toLocaleString()}</div>
+                      </div>
+                      <div className="text-xs text-gray-600">Target: {a.targetType}{a.targetId ? ` (${a.targetId})` : ''}</div>
+                      {a.details && <pre className="text-[11px] text-gray-600 mt-1 overflow-x-auto">{JSON.stringify(a.details, null, 2)}</pre>}
                     </div>
                   ))}
                   {activity.length === 0 && <div className="text-sm text-gray-500">No activity found.</div>}
@@ -72,26 +90,6 @@ export default function ManageAdmins() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Admin</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Full name" value={newAdmin.displayName} onChange={(e)=> setNewAdmin({ ...newAdmin, displayName: e.target.value })} />
-            <Input placeholder="Email" type="email" value={newAdmin.email} onChange={(e)=> setNewAdmin({ ...newAdmin, email: e.target.value })} />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={()=> setAddOpen(false)}>Cancel</Button>
-            <Button onClick={async ()=>{
-              // For now, just navigate admins to Users page to create; or create minimal record if needed
-              // In this simplified flow, Super Admin should use Users page to create with Admin role
-              window.location.href = '/dashboard/users';
-            }}>Go to Users to Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

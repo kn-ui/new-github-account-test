@@ -55,6 +55,7 @@ export default function StudentAssignments() {
   const [detailAssignment, setDetailAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithStatus | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [submissionContent, setSubmissionContent] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [assignmentResources, setAssignmentResources] = useState<any[]>([]);
@@ -241,6 +242,7 @@ export default function StudentAssignments() {
       // Prepare submission data
       let uploadedUrls: string[] = [];
       if (selectedFile) {
+        setIsUploading(true);
         const uploadResult = await uploadToHygraph(selectedFile);
         if (!uploadResult.success) {
           throw new Error(uploadResult.error || 'Upload failed');
@@ -295,6 +297,9 @@ export default function StudentAssignments() {
     } catch (error) {
       console.error('Error submitting assignment:', error);
       toast.error('Failed to submit assignment');
+    }
+    finally {
+      setIsUploading(false);
     }
   };
 
@@ -411,8 +416,9 @@ export default function StudentAssignments() {
                       
                       {selectedFile && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            Selected: {selectedFile.name}
+                          <p className="text-sm text-blue-800 flex items-center gap-2">
+                            <span>Selected: {selectedFile.name}</span>
+                            {isUploading && <span className="text-xs">Uploading…</span>}
                           </p>
                         </div>
                       )}
@@ -421,9 +427,10 @@ export default function StudentAssignments() {
                   
                   <button 
                     onClick={handleSubmitAssignment}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    disabled={isUploading}
                   >
-                    Submit Assignment
+                    {isUploading ? 'Uploading…' : 'Submit Assignment'}
                   </button>
                 </div>
               )}

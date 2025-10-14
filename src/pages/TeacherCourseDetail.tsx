@@ -68,6 +68,7 @@ export default function TeacherCourseDetail() {
     { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
   );
   const [materialFile, setMaterialFile] = useState<File | null>(null);
+  const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
@@ -948,6 +949,9 @@ export default function TeacherCourseDetail() {
               <div className="space-y-2">
                 <Label htmlFor="m-file-upload">Upload File (PDF/DOC)</Label>
                 <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
+                {materialFile && isUploadingMaterial && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {materialFile.name}…</div>
+                )}
                 <div className="text-xs text-gray-500">Or paste a direct URL:</div>
                 <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
               </div>
@@ -967,6 +971,7 @@ export default function TeacherCourseDetail() {
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
                   if (materialFile) {
+                    setIsUploadingMaterial(true);
                     const uploadResult = await uploadToHygraph(materialFile);
                     if (!uploadResult.success) {
                       throw new Error(uploadResult.error || 'Upload failed');
@@ -995,6 +1000,7 @@ export default function TeacherCourseDetail() {
                 setEditingMaterial(null);
                 setMaterialFile(null);
               } catch (e) { toast.error('Failed to save material'); }
+              finally { setIsUploadingMaterial(false); }
             }}>Save</Button>
           </DialogFooter>
         </DialogContent>

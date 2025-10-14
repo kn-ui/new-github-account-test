@@ -69,6 +69,7 @@ export default function TeacherAssignments() {
     linkUrl: ''
   });
   const [fileObj, setFileObj] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
 
@@ -116,6 +117,7 @@ export default function TeacherAssignments() {
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
       if (fileObj) {
         try {
+          setIsUploading(true);
           const uploadResult = await uploadToHygraph(fileObj);
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || 'Upload failed');
@@ -162,6 +164,9 @@ export default function TeacherAssignments() {
     } catch (error) {
       console.error('Error saving assignment:', error);
       toast.error('Failed to save assignment');
+    }
+    finally {
+      setIsUploading(false);
     }
   };
 
@@ -513,8 +518,8 @@ export default function TeacherAssignments() {
             </div>
 
             <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1">
-                {editingAssignment ? t('teacher.assignments.update') || 'Update Assignment' : t('teacher.assignments.create') || 'Create Assignment'}
+              <Button type="submit" className="flex-1" disabled={isUploading}>
+                {isUploading ? 'Uploading…' : (editingAssignment ? (t('teacher.assignments.update') || 'Update Assignment') : (t('teacher.assignments.create') || 'Create Assignment'))}
               </Button>
               <Button 
                 type="button" 

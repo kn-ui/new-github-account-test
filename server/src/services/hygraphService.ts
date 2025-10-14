@@ -1,5 +1,8 @@
 import fetch from 'node-fetch';
-import FormData from 'form-data';
+import { Readable } from 'node:stream';
+import { fileFromBuffer, FormData as FormDataNode } from 'formdata-node';
+import { FormDataEncoder } from 'form-data-encoder';
+import { Readable as ReadableStream } from 'stream';
 
 export interface HygraphAsset {
   id: string;
@@ -37,7 +40,7 @@ class HygraphService {
       // Step 1: Create asset entry in Hygraph and request POST upload data (new API)
       const createAssetMutation = `
         mutation CreateAssetEntry($fileName: String!, $mimeType: String!) {
-          createAsset(data: { fileName: $fileName, mimeType: $mimeType }) {
+          createAsset(data: { fileName: $fileName, mimeType: $mimeType, stage: DRAFT }) {
             id
             fileName
             url
@@ -87,19 +90,19 @@ class HygraphService {
       }
 
       // Step 2: Upload file using POST with form fields (S3 pre-signed POST)
-      const form = new (FormData as any)();
+      // Build a spec-compliant multipart form using formdata-node + encoder
+      const form = new FormDataNode();
       const fields = postData.fields || {};
       Object.keys(fields).forEach((k) => form.append(k, fields[k]));
-      // Important: "file" field must be last for S3
-      form.append('file', file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype,
-      } as any);
+      const filePart = await fileFromBuffer(file.buffer, file.originalname, { type: file.mimetype });
+      form.append('file', filePart);
 
+      const encoder = new FormDataEncoder(form);
+      const readable = ReadableStream.from(encoder);
       const uploadResponse = await fetch(postData.url, {
         method: 'POST',
-        // do not set Content-Type manually; form-data sets correct boundary
-        body: form as any,
+        headers: encoder.headers as any,
+        body: readable as any,
       });
 
       if (!uploadResponse.ok) {
@@ -108,10 +111,26 @@ class HygraphService {
         throw new Error(`Failed to upload file: ${uploadResponse.statusText}`);
       }
 
-      // Step 3: Wait a moment for Hygraph to process the file
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 3: Try to publish as soon as possible (ignore errors if still processing)
+      const publishMutation = `
+        mutation PublishAsset($id: ID!) {
+          publishAsset(where: { id: $id }, to: PUBLISHED) { id }
+        }
+      `;
+      try {
+        await fetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ query: publishMutation, variables: { id } }),
+        });
+      } catch (e) {
+        // Ignore; will retry after polling
+      }
 
-      // Step 4: Get the final asset details
+      // Step 4: Poll for asset to be ready, then ensure it's published
       const getAssetQuery = `
         query GetAsset($id: ID!) {
           asset(where: { id: $id }) {
@@ -120,41 +139,70 @@ class HygraphService {
             url
             mimeType
             size
+            stage
           }
         }
       `;
 
-      const assetResponse = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.token}`,
-        },
-        body: JSON.stringify({
-          query: getAssetQuery,
-          variables: { id },
-        }),
-      });
-
-      const assetData = await assetResponse.json() as any;
-
-      if (!assetResponse.ok || assetData.errors) {
-        console.warn('Could not fetch final asset details, using initial URL');
-        return {
-          success: true,
-          asset: {
-            id,
-            fileName: file.originalname,
-            url: url,
-            mimeType: file.mimetype,
-            size: file.size,
+      const maxAttempts = 12; // ~8-10s total with backoff
+      let attempt = 0;
+      let lastAsset: any = null;
+      let delayMs = 500;
+      while (attempt < maxAttempts) {
+        const assetResponse = await fetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
           },
-        };
+          body: JSON.stringify({
+            query: getAssetQuery,
+            variables: { id },
+          }),
+        });
+        const assetData = await assetResponse.json() as any;
+        if (assetResponse.ok && !assetData.errors && assetData.data?.asset) {
+          lastAsset = assetData.data.asset;
+          // Consider ready when URL exists and size is available
+          if (lastAsset.url && typeof lastAsset.size === 'number' && lastAsset.size >= 0) {
+            break;
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        delayMs = Math.min(Math.round(delayMs * 1.5), 3000);
+        attempt += 1;
       }
 
+      // Ensure publish after processing
+      try {
+        await fetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ query: publishMutation, variables: { id } }),
+        });
+      } catch (e) {
+        // Non-fatal; asset direct URL will still work
+      }
+
+      // Use the most recent asset data if available, else fallback to initial create response
+      if (lastAsset) {
+        return {
+          success: true,
+          asset: lastAsset,
+        };
+      }
       return {
         success: true,
-        asset: assetData.data.asset,
+        asset: {
+          id,
+          fileName: file.originalname,
+          url: url,
+          mimeType: file.mimetype,
+          size: file.size,
+        },
       };
     } catch (error) {
       console.error('Hygraph upload error:', error);

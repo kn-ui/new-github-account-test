@@ -77,6 +77,7 @@ export default function TeacherCourseMaterials() {
     externalLink: ''
   });
   const [fileObj, setFileObj] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -128,6 +129,7 @@ export default function TeacherCourseMaterials() {
     try {
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
+        setIsUploading(true);
         const uploadResult = await uploadToHygraph(fileObj);
         if (!uploadResult.success) {
           throw new Error(uploadResult.error || 'Upload failed');
@@ -172,6 +174,9 @@ export default function TeacherCourseMaterials() {
     } catch (error) {
       console.error('Error saving material:', error);
       toast.error('Failed to save material');
+    }
+    finally {
+      setIsUploading(false);
     }
   };
 
@@ -663,6 +668,9 @@ export default function TeacherCourseMaterials() {
               <div>
                 <Label htmlFor="file">Upload File (PDF/Doc)</Label>
                 <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                {fileObj && isUploading && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {fileObj.name}…</div>
+                )}
                 <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
                 <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
               </div>
@@ -683,8 +691,8 @@ export default function TeacherCourseMaterials() {
             )}
 
             <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1">
-                {editingMaterial ? 'Update Material' : 'Add Material'}
+              <Button type="submit" className="flex-1" disabled={isUploading}>
+                {isUploading ? 'Uploading…' : (editingMaterial ? 'Update Material' : 'Add Material')}
               </Button>
               <Button 
                 type="button" 

@@ -1,4 +1,6 @@
-import { Response } from 'express';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Request, Response } from 'express';
+import fetch from 'node-fetch';
 import { AuthenticatedRequest } from '../types';
 import blogService from '../services/blogService';
 import eventService from '../services/eventService';
@@ -7,6 +9,116 @@ import { sendPaginatedResponse, sendServerError, sendSuccess, sendCreated, sendE
 import nodemailer from 'nodemailer';
 
 export class ContentController {
+  async upload(req: Request, res: Response): Promise<void> {
+    try {
+      const file = (req as any).file as Express.Multer.File;
+      if (!file) {
+        res.status(400).json({ success: false, message: 'No file uploaded' });
+        return;
+      }
+
+      const endpoint = process.env.HYGRAPH_ENDPOINT as string;
+      const token = process.env.HYGRAPH_TOKEN as string;
+      if (!endpoint || !token) {
+        res.status(500).json({ success: false, message: 'Hygraph not configured' });
+        return;
+      }
+
+      // For Hygraph, we need to use their asset upload endpoint
+      // The endpoint format should be: https://api-<region>.hygraph.com/v2/<projectId>/<environment>/upload
+      // We'll extract the base URL and construct the upload endpoint
+      const baseUrl = endpoint.replace(/\/v2\/.*$/, '');
+      const projectMatch = endpoint.match(/\/v2\/([^/]+)\/([^/]+)/);
+      
+      if (!projectMatch) {
+        console.error('Invalid Hygraph endpoint format');
+        res.status(500).json({ success: false, message: 'Invalid Hygraph configuration' });
+        return;
+      }
+
+      const projectId = projectMatch[1];
+      const environment = projectMatch[2];
+      const uploadUrl = `${baseUrl}/v2/${projectId}/${environment}/upload`;
+
+      // Create form data for the upload
+      const FormData = require('form-data');
+      const form = new FormData();
+      form.append('fileUpload', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype
+      });
+
+      // Upload the file to Hygraph
+      const uploadResp = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${token}`
+        },
+        body: form
+      } as any);
+
+      if (!uploadResp.ok) {
+        const text = await uploadResp.text();
+        console.error('Hygraph upload failed:', text);
+        
+        // Fallback: Return a data URL for small files (less than 100KB)
+        if (file.size < 100000) {
+          const base64 = file.buffer.toString('base64');
+          const dataUrl = `data:${file.mimetype};base64,${base64}`;
+          res.status(200).json({ 
+            success: true, 
+            data: { 
+              url: dataUrl,
+              filename: file.originalname,
+              size: file.size,
+              mimeType: file.mimetype
+            },
+            warning: 'Hygraph upload failed, using data URL fallback'
+          });
+          return;
+        }
+        
+        res.status(500).json({ success: false, message: 'Upload to Hygraph failed' });
+        return;
+      }
+
+      const data = await uploadResp.json();
+      // The response should contain the asset information including the URL
+      res.status(200).json({ 
+        success: true, 
+        data: {
+          url: data.url || data.handle || data.id,
+          filename: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+          ...data
+        }
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      
+      // If Hygraph is not working, provide a fallback for small files
+      const file = (req as any).file as Express.Multer.File;
+      if (file && file.size < 100000) {
+        const base64 = file.buffer.toString('base64');
+        const dataUrl = `data:${file.mimetype};base64,${base64}`;
+        res.status(200).json({ 
+          success: true, 
+          data: { 
+            url: dataUrl,
+            filename: file.originalname,
+            size: file.size,
+            mimeType: file.mimetype
+          },
+          warning: 'Using data URL fallback due to upload error'
+        });
+        return;
+      }
+      
+      res.status(500).json({ success: false, message: 'Upload failed' });
+    }
+  }
   async listBlog(req: AuthenticatedRequest, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;

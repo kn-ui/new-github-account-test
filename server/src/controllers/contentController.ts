@@ -60,13 +60,14 @@ export class ContentController {
         return;
       }
 
-      // For larger files, return error if Hygraph fails
+      // For larger files, return error if Hygraph fails (ensure JSON body)
       res.status(500).json({ 
         success: false, 
         message: 'File upload failed. Please try again or contact support.' 
       });
     } catch (error) {
       console.error('Upload error:', error);
+      // Always send JSON to avoid client JSON.parse issues
       res.status(500).json({ 
         success: false, 
         message: 'An unexpected error occurred during upload' 

@@ -23,27 +23,64 @@ export async function uploadToHygraph(file: File): Promise<UploadResult> {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
+    const contentType = response.headers.get('content-type') || '';
+
+    // Handle non-OK responses robustly, without assuming JSON body
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Upload failed');
+      let message = `Upload failed (${response.status} ${response.statusText})`;
+      if (contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          message = (errorData && (errorData.message || errorData.error)) || message;
+        } catch {
+          // Fall back to text below
+        }
+      }
+
+      if (!contentType || !contentType.includes('application/json')) {
+        try {
+          const text = await response.text();
+          if (text) {
+            try {
+              const parsed = JSON.parse(text);
+              message = (parsed && (parsed.message || parsed.error)) || message;
+            } catch {
+              message = text.slice(0, 300);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      throw new Error(message);
     }
 
-    const data = await response.json();
-    
-    if (data.success) {
-      return {
-        success: true,
-        url: data.data.url,
-        filename: data.data.filename,
-        size: data.data.size,
-        mimeType: data.data.mimeType,
-        id: data.data.id,
-        warning: data.warning
-      };
+    // OK response: expect JSON; guard against empty/non-JSON
+    if (contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.success) {
+        return {
+          success: true,
+          url: data.data.url,
+          filename: data.data.filename,
+          size: data.data.size,
+          mimeType: data.data.mimeType,
+          id: data.data.id,
+          warning: data.warning
+        };
+      } else {
+        return {
+          success: false,
+          error: data.message || 'Upload failed'
+        };
+      }
     } else {
+      const text = await response.text().catch(() => '');
+      const snippet = text ? text.slice(0, 300) : '';
       return {
         success: false,
-        error: data.message || 'Upload failed'
+        error: snippet ? `Unexpected response from server: ${snippet}` : 'Unexpected empty response from server'
       };
     }
   } catch (error) {

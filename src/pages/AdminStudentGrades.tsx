@@ -134,9 +134,10 @@ export default function AdminStudentGrades() {
       }
       setStudent(studentData);
 
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
+      // Dedupe course IDs to avoid duplicate entries and duplicate React keys
+      const uniqueCourseIds = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
       
-      if (courseIds.length === 0) {
+      if (uniqueCourseIds.length === 0) {
         setGrades([]);
         setFinalGrades([]);
         setCourses([]);
@@ -146,19 +147,21 @@ export default function AdminStudentGrades() {
 
       // Fetch all course details at once and cache them
       const coursesData = await Promise.all(
-        courseIds.map(id => courseService.getCourseById(id))
+        uniqueCourseIds.map(id => courseService.getCourseById(id))
       );
-      const validCourses = coursesData.filter(c => c !== null);
-      setCourses(validCourses);
+      const validCourses = coursesData.filter(c => c !== null) as any[];
+      // Ensure uniqueness by ID in case the service returns duplicates
+      const uniqueCourses = Array.from(new Map(validCourses.map((c: any) => [c.id, c])).values());
+      setCourses(uniqueCourses);
 
       // Create course lookup map for faster access
-      const courseMap = new Map(validCourses.map(course => [course.id, course]));
+      const courseMap = new Map((validCourses as any[]).map(course => [course.id, course]));
 
       // Load all data in parallel: assignments, exams, and final grades
       const [assignmentsData, examsData, finalGradesData] = await Promise.all([
-        loadAssignmentGrades(courseIds, courseMap),
-        loadExamGrades(courseIds, courseMap),
-        loadFinalGrades(courseIds)
+        loadAssignmentGrades(uniqueCourseIds, courseMap),
+        loadExamGrades(uniqueCourseIds, courseMap),
+        loadFinalGrades(uniqueCourseIds)
       ]);
 
       setGrades(assignmentsData);

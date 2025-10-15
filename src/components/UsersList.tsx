@@ -24,6 +24,8 @@ import { Label } from '@/components/ui/label';
 import { secondaryAuth } from '@/lib/firebaseSecondary';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useI18n } from '@/contexts/I18nContext';
+import { Trash2, Edit } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface User {
   id: string;
@@ -50,6 +52,13 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const [addAdminOpen, setAddAdminOpen] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '' });
   const [isCreating, setIsCreating] = useState(false);
+  const [editAdminOpen, setEditAdminOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<User | null>(null);
+  const [editAdmin, setEditAdmin] = useState({ displayName: '', email: '', role: 'admin' });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -114,6 +123,66 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
 
   const getInitials = (name: string) => {
     return name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+  };
+
+  const handleEditAdmin = (user: User) => {
+    setEditingAdmin(user);
+    setEditAdmin({
+      displayName: user.displayName,
+      email: user.email,
+      role: user.role
+    });
+    setEditAdminOpen(true);
+  };
+
+  const handleDeleteAdmin = (user: User) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
+  };
+
+  const updateAdmin = async () => {
+    if (!editingAdmin) return;
+    
+    setIsUpdating(true);
+    try {
+      await userService.updateUser(editingAdmin.id, {
+        displayName: editAdmin.displayName,
+        email: editAdmin.email,
+        role: editAdmin.role as any
+      });
+      
+      setEditAdminOpen(false);
+      setEditingAdmin(null);
+      setEditAdmin({ displayName: '', email: '', role: 'admin' });
+      
+      // Refresh user list
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating admin:', error);
+      alert('Failed to update admin');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const deleteAdmin = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await userService.deleteUser(userToDelete.id);
+      
+      setDeleteConfirmOpen(false);
+      setUserToDelete(null);
+      
+      // Refresh user list
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting admin:', error);
+      alert('Failed to delete admin');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -267,6 +336,30 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                   <div className="mt-3 text-xs text-gray-500">
                     Joined: {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
                   </div>
+                  
+                  {/* Admin Actions - only show for super_admin on admin users */}
+                  {userProfile?.role === 'super_admin' && user.role === 'admin' && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditAdmin(user)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-3 w-3" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteAdmin(user)}
+                        className="flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -372,6 +465,67 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Edit Admin Dialog */}
+      <Dialog open={editAdminOpen} onOpenChange={setEditAdminOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Admin</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editAdminName" className="text-right">Name</Label>
+              <Input 
+                id="editAdminName" 
+                className="col-span-3" 
+                value={editAdmin.displayName} 
+                onChange={(e) => setEditAdmin({ ...editAdmin, displayName: e.target.value })} 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editAdminEmail" className="text-right">Email</Label>
+              <Input 
+                id="editAdminEmail" 
+                type="email" 
+                className="col-span-3" 
+                value={editAdmin.email} 
+                onChange={(e) => setEditAdmin({ ...editAdmin, email: e.target.value })} 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editAdminRole" className="text-right">Role</Label>
+              <Select value={editAdmin.role} onValueChange={(value) => setEditAdmin({ ...editAdmin, role: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditAdminOpen(false)}>Cancel</Button>
+            <Button disabled={isUpdating} onClick={updateAdmin}>
+              {isUpdating ? 'Updating...' : 'Update'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete Admin"
+        description={`Are you sure you want to delete "${userToDelete?.displayName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={deleteAdmin}
+        disabled={isDeleting}
+      />
     </div>
   );
 };

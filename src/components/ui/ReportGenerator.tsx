@@ -134,22 +134,36 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
           filename = `system-overview-${new Date().toISOString().split('T')[0]}`;
           break;
         case 'course-final-grades':
-          // For simplicity, prompt for a course title match; in a full UI we'd add a selector
-          const selected = prompt('Enter exact course title to export final grades:');
-          if (!selected) throw new Error('Course title required');
-          const course = await courseService.getCoursesByTitle(selected);
-          if (!course) throw new Error('Course not found');
-          const grades = await gradeService.getGradesByCourse(course.id);
+          // Show course selection dropdown
+          const allCourses = await courseService.getCourses(1000);
+          const selectedCourseId = await this.showCourseSelectionDialog(allCourses);
+          if (!selectedCourseId) throw new Error('No course selected');
+          
+          const selectedCourse = allCourses.find(c => c.id === selectedCourseId);
+          if (!selectedCourse) throw new Error('Course not found');
+          
+          const grades = await gradeService.getGradesByCourse(selectedCourse.id);
+          
+          // Get student names for each grade
+          const studentIds = grades.map(g => g.studentId);
+          const studentPromises = studentIds.map(async (studentId) => {
+            const student = await userService.getUserById(studentId);
+            return { id: studentId, name: student?.displayName || 'Unknown Student' };
+          });
+          const students = await Promise.all(studentPromises);
+          const studentNameMap = Object.fromEntries(students.map(s => [s.id, s.name]));
+          
           data = grades.map(g => ({
+            studentName: studentNameMap[g.studentId] || 'Unknown Student',
             studentId: g.studentId,
-            courseId: g.courseId,
+            courseTitle: selectedCourse.title,
             finalGrade: g.finalGrade,
             letterGrade: g.letterGrade,
             gradePoints: g.gradePoints,
             calculatedAt: g.calculatedAt.toDate().toISOString(),
             method: g.calculationMethod,
           }));
-          filename = `course-final-grades-${course.title}-${new Date().toISOString().split('T')[0]}`;
+          filename = `course-final-grades-${selectedCourse.title.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}`;
           break;
       }
 
@@ -210,6 +224,33 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     // const doc = new jsPDF();
     // ... PDF generation logic
     // doc.save(`${filename}.pdf`);
+  };
+
+  const showCourseSelectionDialog = (courses: any[]): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const courseOptions = courses.map(course => 
+        `${course.id}|${course.title} (${course.instructorName})`
+      ).join('\n');
+      
+      const selected = prompt(
+        `Select a course by entering its number:\n\n${courses.map((course, index) => 
+          `${index + 1}. ${course.title} (${course.instructorName})`
+        ).join('\n')}`
+      );
+      
+      if (!selected) {
+        resolve(null);
+        return;
+      }
+      
+      const courseIndex = parseInt(selected) - 1;
+      if (courseIndex >= 0 && courseIndex < courses.length) {
+        resolve(courses[courseIndex].id);
+      } else {
+        alert('Invalid selection. Please try again.');
+        resolve(null);
+      }
+    });
   };
 
   return (

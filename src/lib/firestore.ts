@@ -215,6 +215,19 @@ export interface FirestoreGrade {
   notes?: string;
 }
 
+export interface FirestoreOtherGrade {
+  id: string;
+  courseId: string;
+  studentId: string;
+  teacherId: string;
+  grade: number;
+  reason: string;
+  notes?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  isActive: boolean;
+}
+
 export interface FirestoreAttendanceSheet {
   id: string;
   courseId: string;
@@ -312,6 +325,7 @@ const collections = {
   courseMaterials: () => collection(db, 'courseMaterials'),
   exams: () => collection(db, 'exams'),
   grades: () => collection(db, 'grades'),
+  otherGrades: () => collection(db, 'other_grades'),
   editRequests: () => collection(db, 'editRequests'),
   attendance: () => collection(db, 'attendance'),
 };
@@ -2339,6 +2353,68 @@ export const adminActivityService = {
     );
     const snap = await getDocs(qy);
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGrade));
+  }
+};
+
+// Other Grades operations
+export const otherGradesService = {
+  async getOtherGradesByCourse(courseId: string): Promise<FirestoreOtherGrade[]> {
+    const q = query(
+      collections.otherGrades(),
+      where('courseId', '==', courseId),
+      where('isActive', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreOtherGrade));
+  },
+
+  async getOtherGradesByStudent(courseId: string, studentId: string): Promise<FirestoreOtherGrade[]> {
+    const q = query(
+      collections.otherGrades(),
+      where('courseId', '==', courseId),
+      where('studentId', '==', studentId),
+      where('isActive', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreOtherGrade));
+  },
+
+  async createOtherGrade(gradeData: Omit<FirestoreOtherGrade, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collections.otherGrades(), {
+      ...gradeData,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  },
+
+  async updateOtherGrade(gradeId: string, updates: Partial<Omit<FirestoreOtherGrade, 'id' | 'createdAt'>>): Promise<void> {
+    const docRef = doc(db, 'other_grades', gradeId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  async deleteOtherGrade(gradeId: string): Promise<void> {
+    const docRef = doc(db, 'other_grades', gradeId);
+    await updateDoc(docRef, {
+      isActive: false,
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async getOtherGradeById(gradeId: string): Promise<FirestoreOtherGrade | null> {
+    const docRef = doc(db, 'other_grades', gradeId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().isActive) {
+      return { id: docSnap.id, ...docSnap.data() } as FirestoreOtherGrade;
+    }
+    return null;
   }
 };
 

@@ -588,6 +588,7 @@ export const courseService = {
       createdAt: now,
       updatedAt: now,
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.create', targetType: 'course', targetId: docRef.id, details: { title: courseData.title } }); } catch {}
     return docRef.id;
   },
 
@@ -597,6 +598,7 @@ export const courseService = {
       ...updates,
       updatedAt: Timestamp.now(),
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.update', targetType: 'course', targetId: courseId, details: updates }); } catch {}
   },
 
   async deleteCourse(courseId: string): Promise<void> {
@@ -605,6 +607,7 @@ export const courseService = {
       isActive: false,
       updatedAt: Timestamp.now()
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.delete', targetType: 'course', targetId: courseId }); } catch {}
     
     // Clear student data cache for all enrolled students
     const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
@@ -1000,6 +1003,7 @@ export const announcementService = {
       ...announcementData,
       createdAt: now,
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.create', targetType: 'announcement', targetId: docRef.id, details: { courseId: announcementData.courseId, title: announcementData.title } }); } catch {}
     return docRef.id;
   },
 
@@ -1072,11 +1076,13 @@ export const announcementService = {
   async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {
     const docRef = doc(db, 'announcements', announcementId);
     await updateDoc(docRef, updates as any);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.update', targetType: 'announcement', targetId: announcementId, details: updates }); } catch {}
   },
 
   async deleteAnnouncement(announcementId: string): Promise<void> {
     const docRef = doc(db, 'announcements', announcementId);
     await deleteDoc(docRef);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.delete', targetType: 'announcement', targetId: announcementId }); } catch {}
   },
 };
 
@@ -1506,12 +1512,14 @@ export const eventService = {
 
   async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
     const docRef = await addDoc(collections.events(), eventData);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.create', targetType: 'event', targetId: docRef.id, details: { title: eventData.title } }); } catch {}
     return docRef.id;
   },
 
   async updateEvent(eventId: string, updates: Partial<FirestoreEvent>): Promise<void> {
     const docRef = doc(db, 'events', eventId);
     await updateDoc(docRef, updates as any);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.update', targetType: 'event', targetId: eventId, details: updates }); } catch {}
   },
 
   async deleteEvent(eventId: string): Promise<void> {
@@ -1519,6 +1527,7 @@ export const eventService = {
     await updateDoc(docRef, {
       isActive: false
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.delete', targetType: 'event', targetId: eventId }); } catch {}
   },
 };
 

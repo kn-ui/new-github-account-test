@@ -96,6 +96,8 @@ export default function AdminStudentGrades() {
   const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
   const [gradeRanges, setGradeRanges] = useState<any>({});
   const [isPublishing, setIsPublishing] = useState(false);
+  const [gradeCalculationMethod, setGradeCalculationMethod] = useState<string>('weighted_average');
+  const [manualGrade, setManualGrade] = useState<number>(0);
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
@@ -1406,10 +1408,23 @@ export default function AdminStudentGrades() {
               </SelectContent>
             </Select>
           </div>
+          {gradeCalculationMethod === 'manual' && (
+            <div>
+              <Label>Manual Grade</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={manualGrade}
+                onChange={(e) => setManualGrade(Number(e.target.value))}
+                placeholder="Enter grade (0-100)"
+              />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setGradeCalculationDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleAutoCalculateAndSave}>Calculate & Save</Button>
+          <Button onClick={handleCalculateFinalGrade}>Calculate & Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -103,59 +103,58 @@ export default function AdminAttendance() {
           </CardContent>
         </Card>
       </div>
-    </div>
 
-    {/* Details Dialog */}
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Attendance Details</DialogTitle>
-        </DialogHeader>
-        {selectedSheet ? (
-          <div className="overflow-x-auto">
-            <div className="mb-3 text-sm text-gray-600">
-              <div>Course: <span className="font-medium">{courseMap[selectedSheet.courseId]?.title || selectedSheet.courseId}</span></div>
-              <div>Teacher: <span className="font-medium">{teacherMap[selectedSheet.teacherId]?.displayName || selectedSheet.teacherId}</span></div>
-              <div>Month: <span className="font-medium">{selectedSheet.ethiopianYear}/{selectedSheet.ethiopianMonth}</span></div>
-            </div>
-            <table className="min-w-full border">
-              <thead>
-                <tr>
-                  <th className="border px-2 py-1 text-left text-xs">Student</th>
-                  {Array.from({ length: maxDay }, (_, i) => i + 1).map(day => (
-                    <th key={day} className="border px-1 py-1 text-center text-xs">{day}</th>
-                  ))}
-                  <th className="border px-2 py-1 text-center text-xs">Present</th>
-                  <th className="border px-2 py-1 text-center text-xs">Absent</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(selectedSheet.records || {}).map(studentId => {
-                  const daysMap = selectedSheet.records[studentId] || {};
-                  const presentCount = Object.values(daysMap).filter(Boolean).length;
-                  const absentCount = Object.values(daysMap).filter(v => !v).length;
-                  return (
-                    <tr key={studentId}>
-                      <td className="border px-2 py-1 text-xs whitespace-nowrap max-w-[220px] overflow-hidden text-ellipsis">
-                        {studentMap[studentId]?.displayName || studentId}
-                      </td>
-                      {Array.from({ length: maxDay }, (_, i) => i + 1).map(day => (
-                        <td key={day} className={`border px-1 py-1 text-center text-xs ${daysMap[day] === true ? 'bg-green-50' : daysMap[day] === false ? 'bg-red-50' : ''}`}>
-                          {daysMap[day] === true ? '✓' : daysMap[day] === false ? '×' : ''}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Attendance Details</DialogTitle>
+          </DialogHeader>
+          {selectedSheet ? (
+            <div className="overflow-x-auto">
+              <div className="mb-3 text-sm text-gray-600">
+                <div>Course: <span className="font-medium">{courseMap[selectedSheet.courseId]?.title || selectedSheet.courseId}</span></div>
+                <div>Teacher: <span className="font-medium">{teacherMap[selectedSheet.teacherId]?.displayName || selectedSheet.teacherId}</span></div>
+                <div>Month: <span className="font-medium">{selectedSheet.ethiopianYear}/{selectedSheet.ethiopianMonth}</span></div>
+              </div>
+              <table className="min-w-full border">
+                <thead>
+                  <tr>
+                    <th className="border px-2 py-1 text-left text-xs">Student</th>
+                    {Array.from({ length: maxDay }, (_, i) => i + 1).map(day => (
+                      <th key={day} className="border px-1 py-1 text-center text-xs">{day}</th>
+                    ))}
+                    <th className="border px-2 py-1 text-center text-xs">Present</th>
+                    <th className="border px-2 py-1 text-center text-xs">Absent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(selectedSheet.records || {}).map(studentId => {
+                    const daysMap = selectedSheet.records[studentId] || {};
+                    const presentCount = Object.values(daysMap).filter(Boolean).length;
+                    const absentCount = Object.values(daysMap).filter(v => !v).length;
+                    return (
+                      <tr key={studentId}>
+                        <td className="border px-2 py-1 text-xs whitespace-nowrap max-w-[220px] overflow-hidden text-ellipsis">
+                          {studentMap[studentId]?.displayName || studentId}
                         </td>
-                      ))}
-                      <td className="border px-2 py-1 text-center text-xs">{presentCount}</td>
-                      <td className="border px-2 py-1 text-center text-xs">{absentCount}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-500">No data</div>
-        )}
-      </DialogContent>
-    </Dialog>
+                        {Array.from({ length: maxDay }, (_, i) => i + 1).map(day => (
+                          <td key={day} className={`border px-1 py-1 text-center text-xs ${daysMap[day] === true ? 'bg-green-50' : daysMap[day] === false ? 'bg-red-50' : ''}`}>
+                            {daysMap[day] === true ? '✓' : daysMap[day] === false ? '×' : ''}
+                          </td>
+                        ))}
+                        <td className="border px-2 py-1 text-center text-xs">{presentCount}</td>
+                        <td className="border px-2 py-1 text-center text-xs">{absentCount}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">No data</div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

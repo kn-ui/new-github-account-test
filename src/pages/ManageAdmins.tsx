@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Activity, Calendar, Target, User, FileText, Trash2 } from 'lucide-react';
 
 export default function ManageAdmins() {
   const { userProfile } = useAuth();
@@ -73,16 +75,36 @@ export default function ManageAdmins() {
                   {activity
                     .filter(a => actionFilter==='all' || a.action.startsWith(actionFilter))
                     .filter(a => !searchTerm || JSON.stringify(a.details || {}).toLowerCase().includes(searchTerm.toLowerCase()))
-                    .map(a => (
-                    <div key={a.id} className="p-2 border rounded text-sm bg-white">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium text-gray-800">{a.action}</div>
-                        <div className="text-xs text-gray-500">{a.createdAt.toDate().toLocaleString()}</div>
-                      </div>
-                      <div className="text-xs text-gray-600">Target: {a.targetType}{a.targetId ? ` (${a.targetId})` : ''}</div>
-                      {a.details && <pre className="text-[11px] text-gray-600 mt-1 overflow-x-auto">{JSON.stringify(a.details, null, 2)}</pre>}
-                    </div>
-                  ))}
+                    .map(a => {
+                      const [section, action] = a.action.split('.') as [string, string];
+                      const icon = section === 'user' ? <User className="h-4 w-4 text-blue-600" />
+                                   : section === 'course' ? <FileText className="h-4 w-4 text-green-600" />
+                                   : section === 'event' ? <Calendar className="h-4 w-4 text-orange-600" />
+                                   : section === 'grade' ? <Target className="h-4 w-4 text-purple-600" />
+                                   : <Activity className="h-4 w-4 text-gray-600" />;
+                      const title = `${section.charAt(0).toUpperCase() + section.slice(1)} ${action}`;
+                      const summary = a.details && typeof a.details === 'object' ? Object.entries(a.details).slice(0,3).map(([k,v]) => `${k}: ${String(v)}`).join(' • ') : '';
+                      return (
+                        <div key={a.id} className="p-3 border rounded bg-white">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {icon}
+                              <div className="font-medium text-gray-800">{title}</div>
+                              <Badge variant="outline" className="capitalize">{a.targetType}</Badge>
+                              {a.targetId && <div className="text-xs text-gray-500 truncate max-w-[220px]">ID: {a.targetId}</div>}
+                            </div>
+                            <div className="text-xs text-gray-500">{a.createdAt.toDate().toLocaleString()}</div>
+                          </div>
+                          {summary && <div className="text-xs text-gray-600 mt-1">{summary}</div>}
+                          {a.details && (
+                            <details className="mt-2">
+                              <summary className="text-xs text-blue-700 cursor-pointer">View details JSON</summary>
+                              <pre className="text-[11px] text-gray-700 mt-1 overflow-x-auto bg-gray-50 p-2 rounded">{JSON.stringify(a.details, null, 2)}</pre>
+                            </details>
+                          )}
+                        </div>
+                      );
+                    })}
                   {activity.length === 0 && <div className="text-sm text-gray-500">No activity found.</div>}
                 </div>
               </div>

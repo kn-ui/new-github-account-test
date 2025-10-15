@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, userService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, userService, settingsService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,25 +92,10 @@ export default function AdminStudentGrades() {
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
   const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
-  const [gradeCalculationMethod, setGradeCalculationMethod] = useState<'weighted_average' | 'simple_average' | 'manual'>('weighted_average');
-  const [manualGrade, setManualGrade] = useState<number>(0);
   const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
   const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
-  const [gradeRanges, setGradeRanges] = useState({
-    'A+': { min: 97, max: 100, points: 4.0 },
-    'A': { min: 93, max: 96, points: 4.0 },
-    'A-': { min: 90, max: 92, points: 3.7 },
-    'B+': { min: 87, max: 89, points: 3.3 },
-    'B': { min: 83, max: 86, points: 3.0 },
-    'B-': { min: 80, max: 82, points: 2.7 },
-    'C+': { min: 77, max: 79, points: 2.3 },
-    'C': { min: 73, max: 76, points: 2.0 },
-    'C-': { min: 70, max: 72, points: 1.7 },
-    'D+': { min: 67, max: 69, points: 1.3 },
-    'D': { min: 63, max: 66, points: 1.0 },
-    'D-': { min: 60, max: 62, points: 0.7 },
-    'F': { min: 0, max: 59, points: 0.0 }
-  });
+  const [gradeRanges, setGradeRanges] = useState<any>({});
+  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
@@ -176,6 +161,10 @@ export default function AdminStudentGrades() {
       setFinalGrades(finalGradesData);
       // Keep only this student's other grades for clarity
       setOtherGrades(otherGradesData.filter(g => g.studentId === studentId));
+      try {
+        const ranges = await settingsService.getGradeRanges();
+        setGradeRanges(ranges);
+      } catch {}
 
     } catch (error) {
       console.error('Error loading student data:', error);
@@ -567,6 +556,54 @@ export default function AdminStudentGrades() {
     }
   };
 
+  const handleAutoCalculateAndSave = async () => {
+    if (!student || !selectedCourseForGrade) {
+      toast.error('Select a course');
+      return;
+    }
+    try {
+      const assignmentPoints = grades.filter(g => g.courseId === selectedCourseForGrade).reduce((s, g) => s + g.grade, 0);
+      const assignmentMax = grades.filter(g => g.courseId === selectedCourseForGrade).reduce((s, g) => s + g.maxScore, 0);
+      const examPoints = examGrades.filter(g => g.courseId === selectedCourseForGrade).reduce((s, g) => s + g.grade, 0);
+      const examMax = examGrades.filter(g => g.courseId === selectedCourseForGrade).reduce((s, g) => s + g.maxScore, 0);
+      const otherPoints = otherGrades.filter(g => g.courseId === selectedCourseForGrade && g.studentId === student!.id).reduce((s, g) => s + (g.points || 0), 0);
+
+      let finalNumeric = 0;
+      const totalMax = assignmentMax + examMax;
+      if (totalMax > 0) finalNumeric = Math.round(((assignmentPoints + examPoints) / totalMax) * 100);
+      finalNumeric = Math.min(100, finalNumeric + Math.max(0, otherPoints));
+
+      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalNumeric);
+      const existing = await gradeService.getGradeByStudentAndCourse(selectedCourseForGrade, student.id!);
+      const gradeData = {
+        finalGrade: finalNumeric,
+        letterGrade,
+        gradePoints,
+        calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
+        calculationMethod: 'automatic_sum' as any,
+        assignmentsTotal: assignmentPoints,
+        assignmentsMax: assignmentMax,
+        examsTotal: examPoints,
+        examsMax: examMax,
+        otherTotal: otherPoints,
+      } as any;
+
+      if (existing) {
+        await gradeService.updateGrade(existing.id, gradeData);
+        toast.success('Final grade updated');
+      } else {
+        await gradeService.createGrade({ courseId: selectedCourseForGrade, studentId: student.id!, ...gradeData } as any);
+        toast.success('Final grade calculated and saved');
+      }
+      await refreshFinalGrades();
+      setGradeCalculationDialogOpen(false);
+      setSelectedCourseForGrade('');
+    } catch (e) {
+      console.error('Error auto calculating final grade:', e);
+      toast.error('Failed to calculate final grade');
+    }
+  };
+
   const getGradeColor = (grade: number, maxScore: number) => {
     const percentage = (grade / maxScore) * 100;
     if (percentage >= 90) return 'text-green-600 bg-green-100';
@@ -804,6 +841,19 @@ export default function AdminStudentGrades() {
               >
                 Other Grades
               </Button>
+            </div>
+            {/* Publish controls */}
+            <div className="ml-auto flex items-center gap-2">
+              <Label>Publish Final Grades:</Label>
+              <Select value={selectedCourseForGrade} onValueChange={setSelectedCourseForGrade}>
+                <SelectTrigger className="w-64"><SelectValue placeholder="Select course" /></SelectTrigger>
+                <SelectContent>
+                  {courses.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button disabled={!selectedCourseForGrade || isPublishing} onClick={async ()=>{ if (!selectedCourseForGrade) return; setIsPublishing(true); try { await gradeService.publishCourseGrades(selectedCourseForGrade); toast.success('Grades published'); await refreshFinalGrades(); } catch { toast.error('Failed to publish'); } finally { setIsPublishing(false);} }}>Publish</Button>
             </div>
           </div>
         </div>
@@ -1356,16 +1406,10 @@ export default function AdminStudentGrades() {
               </SelectContent>
             </Select>
           </div>
-          {gradeCalculationMethod === 'manual' && (
-            <div>
-              <Label htmlFor="manual-grade">Final Grade (0-100)</Label>
-              <Input id="manual-grade" type="number" min={0} max={100} value={manualGrade} onChange={(e) => setManualGrade(Number(e.target.value))} />
-            </div>
-          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setGradeCalculationDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCalculateFinalGrade}> {gradeCalculationMethod === 'manual' ? 'Save Grade' : 'Calculate Grade'} </Button>
+          <Button onClick={handleAutoCalculateAndSave}>Calculate & Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1399,7 +1443,7 @@ export default function AdminStudentGrades() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setGradeRangesDialogOpen(false)}>Cancel</Button>
-          <Button onClick={() => { toast.success('Grade ranges updated'); setGradeRangesDialogOpen(false); }}>Save Ranges</Button>
+          <Button onClick={async () => { try { await settingsService.setGradeRanges(gradeRanges); toast.success('Grade ranges updated'); } catch { toast.error('Failed to save grade ranges'); } finally { setGradeRangesDialogOpen(false); } }}>Save Ranges</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

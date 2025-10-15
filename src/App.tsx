@@ -64,6 +64,7 @@ import SubmissionDetail from "./pages/SubmissionDetail";
 import AssignmentSubmissions from "./pages/AssignmentSubmissions";
 import TeacherAttendance from "./pages/TeacherAttendance";
 import AdminAttendance from "./pages/AdminAttendance";
+import AdminAttendanceDetails from "./pages/AdminAttendanceDetails";
 import ManageAdmins from "./pages/ManageAdmins";
 
 // import Catalog from "./pages/Catalog";
@@ -228,6 +229,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminAttendance />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-attendance/:sheetId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminAttendanceDetails />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

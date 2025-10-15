@@ -32,6 +32,11 @@ export interface FirestoreUser {
   role: 'student' | 'teacher' | 'admin' | 'super_admin';
   isActive: boolean;
   passwordChanged?: boolean;
+  // Student identity/metadata (optional; only for role === 'student')
+  deliveryMethod?: string; // Online, Regular, Distance, Apostolic, Missionary, or custom
+  studentGroup?: string;   // Children, Youth, Adolescent, Elders, Academic Students, or custom
+  programType?: string;    // Extension, Apostolic, Preaching, In Different Class, Weekend, Apostolic Missionary, Practical and technical, or custom
+  classSection?: string;   // e.g., "A", "B1" (free text or from presets)
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -210,7 +215,7 @@ export interface FirestoreGrade {
   gradePoints: number;
   calculatedAt: Timestamp;
   calculatedBy: string;
-  calculationMethod: 'weighted_average' | 'simple_average' | 'manual';
+  calculationMethod: 'weighted_average' | 'simple_average' | 'manual' | 'automatic_sum';
   assignmentGrades?: { assignmentId: string; grade: number; weight: number }[];
   notes?: string;
   // New fields for publication and breakdown
@@ -2292,6 +2297,76 @@ export const gradeService = {
   }
 };
 
+// Student metadata options for presets in user creation (admin-managed)
+export interface StudentMetaOptions {
+  deliveryMethods: string[];
+  studentGroups: string[];
+  programTypes: string[];
+  classSections: string[];
+}
+
+export const studentMetaService = {
+  // Stored at settings/student_meta document for simplicity
+  async getOptions(): Promise<StudentMetaOptions> {
+    const ref = doc(db, 'settings', 'student_meta');
+    const snap = await getDoc(ref);
+    const defaults: StudentMetaOptions = {
+      deliveryMethods: ['Online', 'Regular', 'Distance', 'Apostolic', 'Missionary'],
+      studentGroups: ['Children', 'Youth', 'Adolescent', 'Elders', 'Academic Students'],
+      programTypes: ['Extension', 'Apostolic', 'Preaching', 'In Different Class', 'Weekend', 'Apostolic Missionary', 'Practical and technical'],
+      classSections: ['A', 'B', 'C'],
+    };
+    if (!snap.exists()) return defaults;
+    const data = snap.data() as Partial<StudentMetaOptions> | undefined;
+    return {
+      deliveryMethods: (data?.deliveryMethods && Array.isArray(data.deliveryMethods) ? data.deliveryMethods : defaults.deliveryMethods).slice().sort(),
+      studentGroups: (data?.studentGroups && Array.isArray(data.studentGroups) ? data.studentGroups : defaults.studentGroups).slice().sort(),
+      programTypes: (data?.programTypes && Array.isArray(data.programTypes) ? data.programTypes : defaults.programTypes).slice().sort(),
+      classSections: (data?.classSections && Array.isArray(data.classSections) ? data.classSections : defaults.classSections).slice().sort(),
+    };
+  },
+  async addOption(kind: keyof StudentMetaOptions, value: string): Promise<void> {
+    const ref = doc(db, 'settings', 'student_meta');
+    const snap = await getDoc(ref);
+    const current = (snap.exists() ? (snap.data() as any) : {}) as Partial<StudentMetaOptions>;
+    const arr = Array.from(new Set([...(current[kind] || []), value].filter(v => typeof v === 'string' && v.trim().length > 0)));
+    await setDoc(ref, { ...current, [kind]: arr }, { merge: true } as any);
+  }
+};
+
+// Settings service for grade ranges configuration (admin-managed)
+export interface GradeRangeConfig { min: number; max: number; points: number; }
+export type GradeRangesConfig = Record<string, GradeRangeConfig>;
+
+export const settingsService = {
+  async getGradeRanges(): Promise<GradeRangesConfig> {
+    const ref = doc(db, 'settings', 'grades');
+    const snap = await getDoc(ref);
+    const defaults: GradeRangesConfig = {
+      'A+': { min: 97, max: 100, points: 4.0 },
+      'A': { min: 93, max: 96, points: 4.0 },
+      'A-': { min: 90, max: 92, points: 3.7 },
+      'B+': { min: 87, max: 89, points: 3.3 },
+      'B': { min: 83, max: 86, points: 3.0 },
+      'B-': { min: 80, max: 82, points: 2.7 },
+      'C+': { min: 77, max: 79, points: 2.3 },
+      'C': { min: 73, max: 76, points: 2.0 },
+      'C-': { min: 70, max: 72, points: 1.7 },
+      'D+': { min: 67, max: 69, points: 1.3 },
+      'D': { min: 63, max: 66, points: 1.0 },
+      'D-': { min: 60, max: 62, points: 0.7 },
+      'F': { min: 0, max: 59, points: 0.0 },
+    };
+    if (!snap.exists()) return defaults;
+    const data = snap.data() as any;
+    return { ...defaults, ...(data?.gradeRanges || {}) } as GradeRangesConfig;
+  },
+  async setGradeRanges(gradeRanges: GradeRangesConfig): Promise<void> {
+    const ref = doc(db, 'settings', 'grades');
+    await setDoc(ref, { gradeRanges }, { merge: true } as any);
+  }
+};
+
 // Attendance operations
 export const attendanceService = {
   async getSheet(courseId: string, teacherId: string, ethiopianYear: number, ethiopianMonth: number): Promise<FirestoreAttendanceSheet | null> {
@@ -2307,6 +2382,12 @@ export const attendanceService = {
     if (snap.empty) return null;
     const d = snap.docs[0];
     return { id: d.id, ...d.data() } as FirestoreAttendanceSheet;
+  },
+  async getSheetById(sheetId: string): Promise<FirestoreAttendanceSheet | null> {
+    const ref = doc(db, 'attendance', sheetId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as FirestoreAttendanceSheet;
   },
 
   async upsertSheet(

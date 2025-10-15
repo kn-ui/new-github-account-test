@@ -11,6 +11,7 @@ import {
   examService,
   examAttemptService,
   gradeService,
+  otherGradeService,
   FirestoreCourse,
   FirestoreEnrollment,
   FirestoreAssignment,
@@ -18,6 +19,7 @@ import {
   FirestoreSubmission,
   FirestoreExam,
   FirestoreGrade,
+  FirestoreOtherGrade,
   studentDataService,
 } from '@/lib/firestore';
 import DashboardHero from '@/components/DashboardHero';
@@ -68,6 +70,7 @@ export default function TeacherCourseDetail() {
     { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
   );
   const [materialFile, setMaterialFile] = useState<File | null>(null);
+  const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
@@ -123,6 +126,10 @@ export default function TeacherCourseDetail() {
         setMaterials(mats);
         setExams(exs);
         setFinalGrades(grades);
+        try {
+          const others = await otherGradeService.getByCourse(courseId);
+          setOtherGrades(others);
+        } catch {}
         
         // Check lock status for all exams
         exs.forEach(exam => {
@@ -197,7 +204,12 @@ export default function TeacherCourseDetail() {
   const examsCount = exams.length;
   const [finalGrades, setFinalGrades] = useState<FirestoreGrade[]>([]);
   const [examGrades, setExamGrades] = useState<any[]>([]);
-  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
+  const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams' | 'others'>('assignments');
+  const [otherGradeDialogOpen, setOtherGradeDialogOpen] = useState(false);
+  const [otherGradeTargetStudentId, setOtherGradeTargetStudentId] = useState<string | null>(null);
+  const [otherGradeEditing, setOtherGradeEditing] = useState<FirestoreOtherGrade | null>(null);
+  const [otherGradeForm, setOtherGradeForm] = useState<{ reason: string; points: number }>({ reason: '', points: 0 });
   const averageGrade = useMemo(() => {
     if (finalGrades.length === 0) return 0;
     const sum = finalGrades.reduce((acc, g) => acc + g.finalGrade, 0);
@@ -368,6 +380,55 @@ export default function TeacherCourseDetail() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : gradeViewMode === 'others' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">Add and manage other grades per student.</div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left px-4 py-2">Student</th>
+                            <th className="text-left px-4 py-2">Entries</th>
+                            <th className="text-right px-4 py-2">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {enrollments.map((en) => {
+                            const studentName = studentNames[en.studentId] || en.studentId;
+                            const entries = otherGrades.filter(g => g.studentId === en.studentId);
+                            return (
+                              <tr key={en.id}>
+                                <td className="px-4 py-2 font-medium">{studentName}</td>
+                                <td className="px-4 py-2">
+                                  {entries.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {entries.map(e => (
+                                        <div key={e.id} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
+                                          <div className="text-xs text-gray-700 truncate mr-2">{e.reason}</div>
+                                          <div className="text-xs font-semibold text-gray-900 mr-2">+{e.points}</div>
+                                          <div className="flex items-center gap-1">
+                                            <Button size="sm" variant="outline" onClick={()=>{ setOtherGradeEditing(e); setOtherGradeForm({ reason: e.reason, points: e.points }); setOtherGradeDialogOpen(true); }}>Edit</Button>
+                                            <Button size="sm" variant="destructive" onClick={async ()=>{ try { await otherGradeService.delete(e.id); setOtherGrades(prev => prev.filter(x => x.id !== e.id)); } catch {} }}>Delete</Button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-500">No entries</div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <Button size="sm" onClick={()=>{ setOtherGradeTargetStudentId(en.studentId); setOtherGradeEditing(null); setOtherGradeForm({ reason: '', points: 0 }); setOtherGradeDialogOpen(true); }}>Add Grade</Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-gray-500 text-sm">No resources yet.</div>
@@ -555,6 +616,7 @@ export default function TeacherCourseDetail() {
                         <SelectItem value="assignments">Assignment Grades</SelectItem>
                         <SelectItem value="exams">Exam Grades</SelectItem>
                         <SelectItem value="final">Final Grades</SelectItem>
+                        <SelectItem value="others">Other Grades</SelectItem>
                       </SelectContent>
                     </Select>
                     <span className="text-sm text-gray-600">Sort:</span>
@@ -948,6 +1010,9 @@ export default function TeacherCourseDetail() {
               <div className="space-y-2">
                 <Label htmlFor="m-file-upload">Upload File (PDF/DOC)</Label>
                 <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
+                {materialFile && isUploadingMaterial && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {materialFile.name}…</div>
+                )}
                 <div className="text-xs text-gray-500">Or paste a direct URL:</div>
                 <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
               </div>
@@ -967,6 +1032,7 @@ export default function TeacherCourseDetail() {
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
                   if (materialFile) {
+                    setIsUploadingMaterial(true);
                     const uploadResult = await uploadToHygraph(materialFile);
                     if (!uploadResult.success) {
                       throw new Error(uploadResult.error || 'Upload failed');
@@ -995,6 +1061,7 @@ export default function TeacherCourseDetail() {
                 setEditingMaterial(null);
                 setMaterialFile(null);
               } catch (e) { toast.error('Failed to save material'); }
+              finally { setIsUploadingMaterial(false); }
             }}>Save</Button>
           </DialogFooter>
         </DialogContent>
@@ -1204,6 +1271,44 @@ export default function TeacherCourseDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+  {/* Other Grade Dialog */}
+  <Dialog open={otherGradeDialogOpen} onOpenChange={setOtherGradeDialogOpen}>
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle>{otherGradeEditing ? 'Edit Other Grade' : 'Add Other Grade'}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="og-reason">Reason</Label>
+          <Input id="og-reason" value={otherGradeForm.reason} onChange={(e)=> setOtherGradeForm(prev => ({ ...prev, reason: e.target.value }))} placeholder="Bonus / Attendance / Discipline / Custom" />
+        </div>
+        <div>
+          <Label htmlFor="og-points">Points</Label>
+          <Input id="og-points" type="number" value={otherGradeForm.points} onChange={(e)=> setOtherGradeForm(prev => ({ ...prev, points: Number(e.target.value) }))} />
+          <div className="text-xs text-gray-500 mt-1">Additive points; final grade will be clamped to 100 in admin view.</div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={()=> setOtherGradeDialogOpen(false)}>Cancel</Button>
+        <Button onClick={async ()=>{
+          if (!course || !otherGradeTargetStudentId) { setOtherGradeDialogOpen(false); return; }
+          try {
+            if (otherGradeEditing) {
+              await otherGradeService.update(otherGradeEditing.id, { reason: otherGradeForm.reason, points: otherGradeForm.points });
+              setOtherGrades(prev => prev.map(g => g.id === otherGradeEditing.id ? { ...g, reason: otherGradeForm.reason, points: otherGradeForm.points } : g));
+            } else {
+              const id = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
+              setOtherGrades(prev => [{ id, courseId: course.id, studentId: otherGradeTargetStudentId, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points, createdAt: ({} as any), updatedAt: ({} as any) }, ...prev]);
+            }
+            setOtherGradeDialogOpen(false);
+          } catch {
+            toast.error('Failed to save other grade');
+          }
+        }}>{otherGradeEditing ? 'Save' : 'Add'}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
       {/* Final grade calculation controls removed; handled by admins */}
     </div>

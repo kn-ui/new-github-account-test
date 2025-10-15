@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, userService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt } from '@/lib/firestore';
+import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, userService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,7 +87,8 @@ export default function AdminStudentGrades() {
   const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({
     '2025': true,
   });
-  const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams'>('courses');
+  const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams' | 'others'>('courses');
+  const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
   const [gradeCalculationDialogOpen, setGradeCalculationDialogOpen] = useState(false);
@@ -134,9 +135,10 @@ export default function AdminStudentGrades() {
       }
       setStudent(studentData);
 
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
+      // Dedupe course IDs to avoid duplicate entries and duplicate React keys
+      const uniqueCourseIds = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
       
-      if (courseIds.length === 0) {
+      if (uniqueCourseIds.length === 0) {
         setGrades([]);
         setFinalGrades([]);
         setCourses([]);
@@ -146,24 +148,34 @@ export default function AdminStudentGrades() {
 
       // Fetch all course details at once and cache them
       const coursesData = await Promise.all(
-        courseIds.map(id => courseService.getCourseById(id))
+        uniqueCourseIds.map(id => courseService.getCourseById(id))
       );
-      const validCourses = coursesData.filter(c => c !== null);
-      setCourses(validCourses);
+      const validCourses = coursesData.filter(c => c !== null) as any[];
+      // Ensure uniqueness by ID in case the service returns duplicates
+      const uniqueCourses = Array.from(new Map(validCourses.map((c: any) => [c.id, c])).values());
+      setCourses(uniqueCourses);
 
       // Create course lookup map for faster access
-      const courseMap = new Map(validCourses.map(course => [course.id, course]));
+      const courseMap = new Map((validCourses as any[]).map(course => [course.id, course]));
 
-      // Load all data in parallel: assignments, exams, and final grades
-      const [assignmentsData, examsData, finalGradesData] = await Promise.all([
-        loadAssignmentGrades(courseIds, courseMap),
-        loadExamGrades(courseIds, courseMap),
-        loadFinalGrades(courseIds)
+      // Load all data in parallel: assignments, exams, other grades, and final grades
+      const [assignmentsData, examsData, finalGradesData, otherGradesData] = await Promise.all([
+        loadAssignmentGrades(uniqueCourseIds, courseMap),
+        loadExamGrades(uniqueCourseIds, courseMap),
+        loadFinalGrades(uniqueCourseIds),
+        (async () => {
+          try {
+            const list = await Promise.all(uniqueCourseIds.map(cid => otherGradeService.getByCourse(cid)));
+            return list.flat();
+          } catch { return []; }
+        })()
       ]);
 
       setGrades(assignmentsData);
       setExamGrades(examsData);
       setFinalGrades(finalGradesData);
+      // Keep only this student's other grades for clarity
+      setOtherGrades(otherGradesData.filter(g => g.studentId === studentId));
 
     } catch (error) {
       console.error('Error loading student data:', error);
@@ -785,6 +797,13 @@ export default function AdminStudentGrades() {
               >
                 Exams
               </Button>
+              <Button
+                variant={gradeType === 'others' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGradeType('others')}
+              >
+                Other Grades
+              </Button>
             </div>
           </div>
         </div>
@@ -1120,6 +1139,85 @@ export default function AdminStudentGrades() {
                   <p className="text-gray-400">Exam grades will appear here once they're graded by instructors.</p>
                 </div>
               )
+            ) : gradeType === 'others' ? (
+              // Other Grades view
+              <div className="space-y-6">
+                {['2025', '2024', '2023', '2022', '2021'].map((year) => {
+                  const yearOthers = otherGrades.filter(g => (g as any).createdAt?.toDate ? (g as any).createdAt.toDate().getFullYear().toString() === year : true);
+                  // Group by course
+                  const courseGroups = yearOthers.reduce((acc: any, og) => {
+                    if (!acc[og.courseId]) acc[og.courseId] = [] as FirestoreOtherGrade[];
+                    acc[og.courseId].push(og);
+                    return acc;
+                  }, {} as Record<string, FirestoreOtherGrade[]>);
+                  return (
+                    <div key={year} className="border-b border-gray-200 last:border-b-0">
+                      <button
+                        onClick={() => toggleYear(year)}
+                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expandedYears[year] ? (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronRight size={20} className="text-gray-400" />
+                          )}
+                          <span className="font-semibold text-gray-900">{year}</span>
+                        </div>
+                      </button>
+
+                      {expandedYears[year] && yearOthers.length > 0 && (
+                        <div className="pl-8 pb-4 space-y-6">
+                          <div className="border-l-4 border-blue-500 pl-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
+                            {Object.entries(courseGroups).map(([courseId, entries]) => {
+                              const course = courses.find(c => c.id === courseId);
+                              return (
+                                <div key={courseId} className="mb-6">
+                                  <div className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3 border border-gray-200">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-gray-800">{course?.title || courseId}</span>
+                                      <span className="text-sm text-gray-500">({entries.length} entries)</span>
+                                    </div>
+                                  </div>
+                                  <div className="ml-6 mt-3">
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full">
+                                        <thead>
+                                          <tr className="border-b border-gray-200">
+                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {entries.map((og) => (
+                                            <tr key={og.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                              <td className="py-3 px-4 text-gray-800 truncate max-w-[260px]">{og.reason}</td>
+                                              <td className="py-3 px-4 text-center text-gray-900 font-semibold">+{og.points}</td>
+                                              <td className="py-3 px-4 text-center text-gray-600">{(og as any).createdAt?.toDate ? (og as any).createdAt.toDate().toLocaleDateString() : ''}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {expandedYears[year] && yearOthers.length === 0 && (
+                        <div className="pl-8 pb-4">
+                          <p className="text-gray-500 italic">No other grades available for this year</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               // Final Course Grades View - Grouped by Year
               filteredAndSortedFinalGrades.length > 0 ? (

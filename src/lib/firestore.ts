@@ -19,7 +19,7 @@ import {
   QuerySnapshot,
   DocumentData
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 
 export { Timestamp };
 
@@ -213,6 +213,15 @@ export interface FirestoreGrade {
   calculationMethod: 'weighted_average' | 'simple_average' | 'manual';
   assignmentGrades?: { assignmentId: string; grade: number; weight: number }[];
   notes?: string;
+  // New fields for publication and breakdown
+  isPublished?: boolean;
+  publishedAt?: Timestamp;
+  // Optional breakdown totals used for recomputation/debugging
+  assignmentsTotal?: number;
+  assignmentsMax?: number;
+  examsTotal?: number;
+  examsMax?: number;
+  otherTotal?: number; // sum of other grade points
 }
 
 export interface FirestoreAttendanceSheet {
@@ -225,6 +234,18 @@ export interface FirestoreAttendanceSheet {
   records: Record<string, Record<number, boolean>>;
   submitted: boolean;
   submittedAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Additional grade type for miscellaneous points (bonus/attendance/discipline/etc.)
+export interface FirestoreOtherGrade {
+  id: string;
+  courseId: string;
+  studentId: string;
+  teacherId: string;
+  reason: string;
+  points: number; // 0..100 additive points; admins will clamp overall grade to <= 100
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -314,6 +335,8 @@ const collections = {
   grades: () => collection(db, 'grades'),
   editRequests: () => collection(db, 'editRequests'),
   attendance: () => collection(db, 'attendance'),
+  otherGrades: () => collection(db, 'other_grades'),
+  adminActions: () => collection(db, 'admin_actions'),
 };
 
 // User operations
@@ -419,6 +442,7 @@ export const userService = {
       createdAt: now,
       updatedAt: now,
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'user.create', targetType: 'user', targetId: userData.uid, details: { email: userData.email, role: userData.role } }); } catch {}
     return userData.uid;
   },
 
@@ -428,6 +452,7 @@ export const userService = {
       ...updates,
       updatedAt: Timestamp.now(),
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'user.update', targetType: 'user', targetId: uid, details: updates }); } catch {}
   },
 
   async deleteUser(userId: string): Promise<void> {
@@ -436,6 +461,7 @@ export const userService = {
       isActive: false,
       updatedAt: Timestamp.now()
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'user.delete', targetType: 'user', targetId: userId }); } catch {}
   },
 
   async getInactiveUsers(limitCount?: number): Promise<FirestoreUser[]> {
@@ -562,6 +588,7 @@ export const courseService = {
       createdAt: now,
       updatedAt: now,
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.create', targetType: 'course', targetId: docRef.id, details: { title: courseData.title } }); } catch {}
     return docRef.id;
   },
 
@@ -571,6 +598,7 @@ export const courseService = {
       ...updates,
       updatedAt: Timestamp.now(),
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.update', targetType: 'course', targetId: courseId, details: updates }); } catch {}
   },
 
   async deleteCourse(courseId: string): Promise<void> {
@@ -579,6 +607,7 @@ export const courseService = {
       isActive: false,
       updatedAt: Timestamp.now()
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.delete', targetType: 'course', targetId: courseId }); } catch {}
     
     // Clear student data cache for all enrolled students
     const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
@@ -974,6 +1003,7 @@ export const announcementService = {
       ...announcementData,
       createdAt: now,
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.create', targetType: 'announcement', targetId: docRef.id, details: { courseId: announcementData.courseId, title: announcementData.title } }); } catch {}
     return docRef.id;
   },
 
@@ -1046,11 +1076,13 @@ export const announcementService = {
   async updateAnnouncement(announcementId: string, updates: Partial<FirestoreAnnouncement>): Promise<void> {
     const docRef = doc(db, 'announcements', announcementId);
     await updateDoc(docRef, updates as any);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.update', targetType: 'announcement', targetId: announcementId, details: updates }); } catch {}
   },
 
   async deleteAnnouncement(announcementId: string): Promise<void> {
     const docRef = doc(db, 'announcements', announcementId);
     await deleteDoc(docRef);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.delete', targetType: 'announcement', targetId: announcementId }); } catch {}
   },
 };
 
@@ -1480,12 +1512,14 @@ export const eventService = {
 
   async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
     const docRef = await addDoc(collections.events(), eventData);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.create', targetType: 'event', targetId: docRef.id, details: { title: eventData.title } }); } catch {}
     return docRef.id;
   },
 
   async updateEvent(eventId: string, updates: Partial<FirestoreEvent>): Promise<void> {
     const docRef = doc(db, 'events', eventId);
     await updateDoc(docRef, updates as any);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.update', targetType: 'event', targetId: eventId, details: updates }); } catch {}
   },
 
   async deleteEvent(eventId: string): Promise<void> {
@@ -1493,6 +1527,7 @@ export const eventService = {
     await updateDoc(docRef, {
       isActive: false
     });
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.delete', targetType: 'event', targetId: eventId }); } catch {}
   },
 };
 
@@ -2178,6 +2213,7 @@ export const gradeService = {
     const docRef = await addDoc(collections.grades(), {
       ...gradeData,
       calculatedAt: now,
+      isPublished: gradeData.isPublished ?? false,
     });
     return docRef.id;
   },
@@ -2240,6 +2276,19 @@ export const gradeService = {
 
     const { letterGrade, gradePoints } = this.calculateLetterGradeAndPoints(finalGrade);
     return { finalGrade: Math.round(finalGrade * 100) / 100, letterGrade, gradePoints };
+  },
+
+  async publishCourseGrades(courseId: string): Promise<void> {
+    // Fetch all grades for the course, then batch update isPublished
+    const qy = query(collections.grades(), where('courseId', '==', courseId));
+    const snap = await getDocs(qy);
+    const batch = writeBatch(db);
+    const now = Timestamp.now();
+    snap.docs.forEach(d => {
+      const ref = doc(db, 'grades', d.id);
+      batch.update(ref, { isPublished: true, publishedAt: now } as any);
+    });
+    await batch.commit();
   }
 };
 
@@ -2339,6 +2388,71 @@ export const adminActivityService = {
     );
     const snap = await getDocs(qy);
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGrade));
+  }
+};
+
+// Admin actions audit trail
+export interface FirestoreAdminAction {
+  id: string;
+  userId: string; // actor (admin/super_admin)
+  action: 'user.create' | 'user.update' | 'user.delete' | 'course.create' | 'course.update' | 'course.delete' | 'event.create' | 'event.update' | 'event.delete' | 'announcement.create' | 'announcement.update' | 'announcement.delete' | 'grade.publish' | 'grade.recompute' | string;
+  targetType: 'user' | 'course' | 'event' | 'announcement' | 'grade' | string;
+  targetId?: string;
+  details?: any;
+  createdAt: Timestamp;
+}
+
+export const adminActionService = {
+  async log(entry: Omit<FirestoreAdminAction, 'id' | 'createdAt'>): Promise<string> {
+    const docRef = await addDoc(collection(db, 'admin_actions'), {
+      ...entry,
+      createdAt: Timestamp.now(),
+    } as any);
+    return docRef.id;
+  },
+  async getActions(params: { userId?: string; actionPrefix?: string; limitCount?: number; since?: Date }): Promise<FirestoreAdminAction[]> {
+    const col = collection(db, 'admin_actions');
+    const conditions: any[] = [];
+    if (params.userId) conditions.push(where('userId', '==', params.userId));
+    // We cannot do startsWith in Firestore; fetch all then filter client-side for actionPrefix
+    const qy = query(col, orderBy('createdAt', 'desc'), limit(params.limitCount || 200));
+    const snap = await getDocs(qy);
+    let list = snap.docs.map(d => ({ id: d.id, ...d.data() } as any as FirestoreAdminAction));
+    if (params.actionPrefix) list = list.filter(a => a.action.startsWith(params.actionPrefix!));
+    if (params.userId) list = list.filter(a => a.userId === params.userId);
+    if (params.since) list = list.filter(a => a.createdAt.toDate() >= params.since!);
+    return list;
+  }
+};
+
+// Other Grades operations (bonus/attendance/discipline/custom)
+export const otherGradeService = {
+  async add(other: Omit<FirestoreOtherGrade, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const now = Timestamp.now();
+    const ref = await addDoc(collections.otherGrades(), { ...other, createdAt: now, updatedAt: now } as any);
+    // Audit
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'grade.other.create', targetType: 'grade', targetId: ref.id, details: { courseId: other.courseId, studentId: other.studentId } }); } catch {}
+    return ref.id;
+  },
+  async update(id: string, updates: Partial<FirestoreOtherGrade>): Promise<void> {
+    const ref = doc(db, 'other_grades', id);
+    await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() } as any);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'grade.other.update', targetType: 'grade', targetId: id, details: updates }); } catch {}
+  },
+  async delete(id: string): Promise<void> {
+    const ref = doc(db, 'other_grades', id);
+    await deleteDoc(ref);
+    try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'grade.other.delete', targetType: 'grade', targetId: id }); } catch {}
+  },
+  async getByCourse(courseId: string): Promise<FirestoreOtherGrade[]> {
+    const qy = query(collections.otherGrades(), where('courseId', '==', courseId), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(qy);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreOtherGrade));
+  },
+  async getByStudentInCourse(courseId: string, studentId: string): Promise<FirestoreOtherGrade[]> {
+    const qy = query(collections.otherGrades(), where('courseId', '==', courseId), where('studentId', '==', studentId), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(qy);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreOtherGrade));
   }
 };
 

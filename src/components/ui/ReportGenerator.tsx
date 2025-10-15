@@ -18,6 +18,18 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
     endDate: '',
   });
   const [calendarMode, setCalendarMode] = useState<'ethiopian' | 'gregorian'>('ethiopian');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [allCourses, setAllCourses] = useState<{ id: string; title: string }[]>([]);
+
+  React.useEffect(() => {
+    // Preload courses for dropdown
+    (async () => {
+      try {
+        const list = await courseService.getAllCourses(1000);
+        setAllCourses(list.map(c => ({ id: c.id, title: c.title })));
+      } catch {}
+    })();
+  }, []);
 
   const reportTypes = [
     {
@@ -134,15 +146,16 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
           filename = `system-overview-${new Date().toISOString().split('T')[0]}`;
           break;
         case 'course-final-grades':
-          // For simplicity, prompt for a course title match; in a full UI we'd add a selector
-          const selected = prompt('Enter exact course title to export final grades:');
-          if (!selected) throw new Error('Course title required');
-          const course = await courseService.getCoursesByTitle(selected);
+          if (!selectedCourseId) throw new Error('Please select a course');
+          const course = await courseService.getCourseById(selectedCourseId);
           if (!course) throw new Error('Course not found');
           const grades = await gradeService.getGradesByCourse(course.id);
+          // Fetch student names for display
+          const studentIds = Array.from(new Set(grades.map(g => g.studentId)));
+          const studentMap = await userService.getUsersByIds(studentIds);
           data = grades.map(g => ({
-            studentId: g.studentId,
-            courseId: g.courseId,
+            student: studentMap[g.studentId]?.displayName || g.studentId,
+            course: course.title,
             finalGrade: g.finalGrade,
             letterGrade: g.letterGrade,
             gradePoints: g.gradePoints,
@@ -255,6 +268,23 @@ export default function ReportGenerator({ onReportGenerated }: ReportGeneratorPr
             })}
           </div>
         </div>
+
+        {/* Course selector for Course Final Grades */}
+        {selectedReport === 'course-final-grades' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Select Course</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={selectedCourseId}
+              onChange={(e)=> setSelectedCourseId(e.target.value)}
+            >
+              <option value="">-- Choose a course --</option>
+              {allCourses.map(c => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Export Format Selection */}
         <div>

@@ -188,7 +188,8 @@ const CourseDetail = () => {
         // Load final grade for this course
         try {
           const finalGradeData = await gradeService.getGradeByStudentAndCourse(courseId, currentUser.uid);
-          setFinalGrade(finalGradeData);
+          // Hide if not published
+          setFinalGrade((finalGradeData as any)?.isPublished === false ? null : finalGradeData);
           console.log('Loaded final grade:', finalGradeData);
         } catch (error) {
           console.error('Error loading final grade:', error);

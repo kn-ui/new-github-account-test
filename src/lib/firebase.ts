@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence, initializeAuth, indexedDBLocalPersistence } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, initializeFirestore, persistentLocalCache, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 
 // Use env vars; do not ship real keys in code. The fallbacks are non-functional placeholders.
 const firebaseConfig = {
@@ -17,10 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
+// Prefer IndexedDB persistence to reduce network calls on web
 export const auth = getAuth(app);
 setPersistence(auth, browserSessionPersistence);
 
-// Initialize Cloud Firestore and get a reference to the service
+// Initialize Cloud Firestore with local persistent cache to minimize reads
 export const db = getFirestore(app);
 
 // Connect to emulators in development

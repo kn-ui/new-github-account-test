@@ -1,3 +1,4 @@
+
 import fetch, { RequestInit, Response } from 'node-fetch';
 import FormData from 'form-data';
 
@@ -61,6 +62,7 @@ class HygraphService {
     try {
       // Step 1: Create asset entry in Hygraph and request POST upload data.
       const createAssetMutation = `
+
         mutation CreateAssetEntry($fileName: String!) {
           createAsset(data: { fileName: $fileName }) {
             id
@@ -117,6 +119,7 @@ class HygraphService {
       }
 
       // Step 2: Upload file using POST with form fields (S3 pre-signed POST)
+
       const form = new (FormData as any)();
       
       // Map the GraphQL response fields to the required S3 POST form field names.
@@ -146,6 +149,7 @@ class HygraphService {
       const uploadResponse = await this.safeFetch(s3UploadUrl, {
         method: 'POST',
         body: form as any,
+
       });
 
       if (!uploadResponse.ok) {
@@ -154,10 +158,12 @@ class HygraphService {
         throw new Error(`Failed to upload file: ${uploadResponse.statusText}. Response body: ${errorText.substring(0, 200)}`);
       }
 
+
       console.log(`File uploaded successfully to: ${s3UploadUrl}`);
       
       
       // Step 3: Poll for the final asset details (Wait for Hygraph internal processing to complete)
+
       const getAssetQuery = `
         query GetAsset($id: ID!) {
           asset(where: { id: $id }) {
@@ -170,6 +176,7 @@ class HygraphService {
           }
         }
       `;
+
 
       let assetData = null;
       // *** Aggressively increased retries to 40 for a maximum wait of 200 seconds (3 minutes 20 seconds) ***
@@ -261,6 +268,7 @@ class HygraphService {
             mimeType: file.mimetype,
             size: file.size,
           },
+
       };
 
     } catch (error) {

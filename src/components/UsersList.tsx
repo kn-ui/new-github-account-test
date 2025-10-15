@@ -50,6 +50,9 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const [addAdminOpen, setAddAdminOpen] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '' });
   const [isCreating, setIsCreating] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -269,6 +272,22 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                   </div>
                 </div>
               </div>
+              {/* Admin actions for super_admin */}
+              {userProfile?.role === 'super_admin' && user.role === 'admin' && (
+                <div className="mt-4 flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { setEditUser(user); setEditOpen(true); }}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={async ()=>{
+                    if (!confirm(`Deactivate admin ${user.displayName}?`)) return;
+                    try {
+                      await userService.updateUser(user.id, { isActive: false });
+                      const usersData = await userService.getUsers(1000);
+                      setUsers(usersData);
+                    } catch (e) {
+                      alert('Failed to deactivate admin');
+                    }
+                  }}>Deactivate</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -369,6 +388,46 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                 setIsCreating(false);
               }
             }}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Admin Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Edit Admin
+            </DialogTitle>
+          </DialogHeader>
+          {editUser && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editName" className="text-right">Name</Label>
+                <Input id="editName" className="col-span-3" value={editUser.displayName} onChange={(e)=> setEditUser({ ...editUser, displayName: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmail" className="text-right">Email</Label>
+                <Input id="editEmail" type="email" className="col-span-3" value={editUser.email} onChange={(e)=> setEditUser({ ...editUser, email: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setEditOpen(false)}>Cancel</Button>
+            <Button disabled={isSaving || !editUser} onClick={async ()=>{
+              if (!editUser) return;
+              setIsSaving(true);
+              try {
+                await userService.updateUser(editUser.id, { displayName: editUser.displayName, email: editUser.email });
+                setEditOpen(false);
+                const usersData = await userService.getUsers(1000);
+                setUsers(usersData);
+              } catch (e) {
+                alert('Failed to save changes');
+              } finally {
+                setIsSaving(false);
+              }
+            }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

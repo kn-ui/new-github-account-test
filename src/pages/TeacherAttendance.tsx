@@ -14,6 +14,7 @@ export default function TeacherAttendance() {
   const [courses, setCourses] = useState<FirestoreCourse[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [enrollments, setEnrollments] = useState<FirestoreEnrollment[]>([]);
+  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [ethiopianYear, setEthiopianYear] = useState<number>(() => toEthiopianDate(new Date()).year);
   const [ethiopianMonth, setEthiopianMonth] = useState<number>(() => toEthiopianDate(new Date()).month);
   const [records, setRecords] = useState<Record<string, Record<number, boolean>>>({});
@@ -32,6 +33,18 @@ export default function TeacherAttendance() {
     (async () => {
       const ens = await enrollmentService.getEnrollmentsByCourse(selectedCourseId);
       setEnrollments(ens);
+      // Resolve student names for display
+      try {
+        const ids = Array.from(new Set(ens.map(e => e.studentId)));
+        const map: Record<string, string> = {};
+        await Promise.all(ids.map(async (id) => {
+          try {
+            const u = await (await import('@/lib/firestore')).userService.getUserById(id);
+            if (u?.displayName) map[id] = u.displayName;
+          } catch {}
+        }));
+        setStudentNames(map);
+      } catch {}
       const sheet = await attendanceService.getSheet(
         selectedCourseId,
         userProfile!.id || (userProfile as any)!.uid || '',
@@ -47,6 +60,8 @@ export default function TeacherAttendance() {
   }
 
   const daysInMonth = getEthiopianDaysInMonth(ethiopianYear, ethiopianMonth);
+  const todayEthiopian = toEthiopianDate(new Date());
+  const isCurrentMonth = todayEthiopian.year === ethiopianYear && todayEthiopian.month === ethiopianMonth;
   const sortedEnrollments = useMemo(() => enrollments.slice().sort((a,b)=> (a.studentId||'').localeCompare(b.studentId||'')), [enrollments]);
 
   const toggleCell = (studentId: string, day: number) => {
@@ -112,8 +127,12 @@ export default function TeacherAttendance() {
                   </SelectContent>
                 </Select>
               </div>
-              <Input type="number" className="w-28" value={ethiopianYear} onChange={(e)=> setEthiopianYear(parseInt(e.target.value)||ethiopianYear)} />
-              <Input type="number" className="w-20" value={ethiopianMonth} onChange={(e)=> setEthiopianMonth(parseInt(e.target.value)||ethiopianMonth)} />
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <span>Ethiopian:</span>
+                <Input type="number" className="w-28" value={ethiopianYear} onChange={(e)=> setEthiopianYear(parseInt(e.target.value)||ethiopianYear)} />
+                <Input type="number" className="w-20" value={ethiopianMonth} onChange={(e)=> setEthiopianMonth(parseInt(e.target.value)||ethiopianMonth)} />
+                <span className="ml-2 text-xs text-gray-500">Today: {todayEthiopian.year}/{todayEthiopian.month}/{todayEthiopian.day}</span>
+              </div>
               <Button onClick={saveDraft} disabled={loading || !selectedCourseId} variant="outline">Save Draft</Button>
               <Button onClick={submit} disabled={loading || !selectedCourseId}>Submit to Admin</Button>
             </div>
@@ -134,13 +153,15 @@ export default function TeacherAttendance() {
                     {sortedEnrollments.map((en, idx) => (
                       <tr key={en.id} className="border-t">
                         <td className="px-2 py-1">{idx + 1}</td>
-                        <td className="px-2 py-1">{en.studentId}</td>
+                        <td className="px-2 py-1">{studentNames[en.studentId] || en.studentId}</td>
                         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
-                          <td key={d} className="px-1 py-1 text-center">
+                          <td key={d} className={`px-1 py-1 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-50' : ''}`}>
                             <button
                               className={`w-6 h-6 rounded border ${records[en.studentId]?.[d] ? 'bg-green-500 border-green-600' : 'bg-white'}`}
-                              onClick={() => toggleCell(en.studentId, d)}
+                              onClick={() => { if (!isCurrentMonth || d !== todayEthiopian.day) return; toggleCell(en.studentId, d); }}
                               aria-label={`Toggle ${en.studentId} day ${d}`}
+                              disabled={!isCurrentMonth || d !== todayEthiopian.day}
+                              title={!isCurrentMonth || d !== todayEthiopian.day ? 'Only current date is selectable' : 'Mark present/absent'}
                             />
                           </td>
                         ))}

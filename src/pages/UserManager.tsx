@@ -33,7 +33,7 @@ import {
   Eye,
   Award
 } from 'lucide-react';
-import { userService } from '@/lib/firestore';
+import { userService, studentMetaService } from '@/lib/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { secondaryAuth } from '@/lib/firebaseSecondary';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -86,10 +86,16 @@ const UserManager = () => {
     displayName: '',
     email: '',
     role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
-    password: ''
+    password: '',
+    deliveryMethod: '',
+    studentGroup: '',
+    programType: '',
+    classSection: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
+  const [studentMeta, setStudentMeta] = useState<{ deliveryMethods: string[]; studentGroups: string[]; programTypes: string[]; classSections: string[] }>({ deliveryMethods: [], studentGroups: [], programTypes: [], classSections: [] });
+  const [customMetaInputs, setCustomMetaInputs] = useState<{ deliveryMethod: string; studentGroup: string; programType: string; classSection: string }>({ deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
 
   // Calculate stats
   const totalUsers = users.length;
@@ -100,6 +106,42 @@ const UserManager = () => {
   useEffect(() => {
     fetchUsers();
   }, [showArchived]);
+
+  // Load student metadata presets when the add-user dialog opens
+  useEffect(() => {
+    if (isAddUserOpen) {
+      (async () => {
+        try {
+          const opts = await studentMetaService.getOptions();
+          setStudentMeta(opts);
+        } catch (e) {
+          console.error('Failed to load student meta options', e);
+        }
+      })();
+    }
+  }, [isAddUserOpen]);
+
+  const addCustomMeta = async (kind: 'deliveryMethods' | 'studentGroups' | 'programTypes' | 'classSections') => {
+    const mapKeyToInput: Record<typeof kind, keyof typeof customMetaInputs> = {
+      deliveryMethods: 'deliveryMethod',
+      studentGroups: 'studentGroup',
+      programTypes: 'programType',
+      classSections: 'classSection',
+    };
+    const inputKey = mapKeyToInput[kind];
+    const value = customMetaInputs[inputKey].trim();
+    if (!value) return;
+    try {
+      await studentMetaService.addOption(kind as any, value);
+      const updated = await studentMetaService.getOptions();
+      setStudentMeta(updated);
+      setNewUser(prev => ({ ...prev, [inputKey]: value }));
+      setCustomMetaInputs(prev => ({ ...prev, [inputKey]: '' }));
+    } catch (e) {
+      console.error('Failed to add option', e);
+      alert('Failed to add option');
+    }
+  };
 
   useEffect(() => {
     const filtered = users.filter(user =>
@@ -190,7 +232,13 @@ const UserManager = () => {
         role: newUser.role,
         isActive: true,
         uid: userCredential.user.uid,
-        passwordChanged: false // New users must change their password
+        passwordChanged: false, // New users must change their password
+        ...(newUser.role === 'student' ? {
+          deliveryMethod: newUser.deliveryMethod || undefined,
+          studentGroup: newUser.studentGroup || undefined,
+          programType: newUser.programType || undefined,
+          classSection: newUser.classSection || undefined,
+        } : {})
       });
       
       // Immediately sign out from secondary auth to clean up
@@ -200,7 +248,7 @@ const UserManager = () => {
       sessionStorage.removeItem('suppressAuthRedirect');
       
       setIsAddUserOpen(false);
-      setNewUser({ displayName: '', email: '', role: 'student', password: '' });
+      setNewUser({ displayName: '', email: '', role: 'student', password: '', deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
       fetchUsers();
     } catch (error: any) {
       // Clear the suppress flag on error
@@ -373,6 +421,71 @@ const UserManager = () => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {newUser.role === 'student' && (
+                      <>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label className="text-right">Delivery Method</Label>
+                          <div className="col-span-3 flex items-center gap-2">
+                            <Select value={newUser.deliveryMethod} onValueChange={(v)=> setNewUser(prev=>({...prev, deliveryMethod: v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectContent>
+                                {studentMeta.deliveryMethods.map(dm => (
+                                  <SelectItem key={dm} value={dm}>{dm}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input placeholder="Add new" value={customMetaInputs.deliveryMethod} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, deliveryMethod: e.target.value}))} className="w-40" />
+                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('deliveryMethods')}>Add</Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label className="text-right">Student Group</Label>
+                          <div className="col-span-3 flex items-center gap-2">
+                            <Select value={newUser.studentGroup} onValueChange={(v)=> setNewUser(prev=>({...prev, studentGroup: v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectContent>
+                                {studentMeta.studentGroups.map(sg => (
+                                  <SelectItem key={sg} value={sg}>{sg}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input placeholder="Add new" value={customMetaInputs.studentGroup} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, studentGroup: e.target.value}))} className="w-40" />
+                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('studentGroups')}>Add</Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label className="text-right">Program Type</Label>
+                          <div className="col-span-3 flex items-center gap-2">
+                            <Select value={newUser.programType} onValueChange={(v)=> setNewUser(prev=>({...prev, programType: v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectContent>
+                                {studentMeta.programTypes.map(pt => (
+                                  <SelectItem key={pt} value={pt}>{pt}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input placeholder="Add new" value={customMetaInputs.programType} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, programType: e.target.value}))} className="w-40" />
+                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('programTypes')}>Add</Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label className="text-right">Class Section</Label>
+                          <div className="col-span-3 flex items-center gap-2">
+                            <Select value={newUser.classSection} onValueChange={(v)=> setNewUser(prev=>({...prev, classSection: v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectContent>
+                                {studentMeta.classSections.map(cs => (
+                                  <SelectItem key={cs} value={cs}>{cs}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input placeholder="Add new" value={customMetaInputs.classSection} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, classSection: e.target.value}))} className="w-40" />
+                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('classSections')}>Add</Button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <DialogFooter>
                     <Button 

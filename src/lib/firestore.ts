@@ -2411,7 +2411,11 @@ export const attendanceService = {
         });
       });
       const ref = doc(db, 'attendance', existing.id);
-      await updateDoc(ref, { records: mergedRecords, updatedAt: now } as any);
+      await updateDoc(ref, { 
+        records: mergedRecords, 
+        updatedAt: now,
+        submitted: false // Ensure it's marked as draft when saving
+      } as any);
       return existing.id;
     } else {
       const docRef = await addDoc(collections.attendance(), {

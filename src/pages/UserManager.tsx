@@ -63,6 +63,10 @@ interface User {
   role: string;
   isActive: boolean;
   createdAt: any; // Timestamp from Firestore
+  deliveryMethod?: string;
+  studentGroup?: string;
+  programType?: string;
+  classSection?: string;
 }
 
 const UserManager = () => {
@@ -287,12 +291,22 @@ const UserManager = () => {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     try {
-      await userService.updateUser(editingUser.id, {
+      const updateData: any = {
         displayName: editingUser.displayName,
         email: editingUser.email,
         role: editingUser.role,
         isActive: editingUser.isActive,
-      });
+      };
+      
+      // Add student-specific fields if the user is a student
+      if (editingUser.role === 'student') {
+        updateData.deliveryMethod = editingUser.deliveryMethod;
+        updateData.studentGroup = editingUser.studentGroup;
+        updateData.programType = editingUser.programType;
+        updateData.classSection = editingUser.classSection;
+      }
+      
+      await userService.updateUser(editingUser.id, updateData);
       setIsEditUserOpen(false);
       setEditingUser(null);
       fetchUsers(); // Refresh the user list
@@ -575,6 +589,57 @@ const UserManager = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  {editingUser.role === 'student' && (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="editDeliveryMethod" className="text-right">Delivery Method</Label>
+                        <Select value={editingUser.deliveryMethod || ''} onValueChange={(value) => setEditingUser({...editingUser, deliveryMethod: value})}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select delivery method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="online">Online</SelectItem>
+                            <SelectItem value="offline">Offline</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="editStudentGroup" className="text-right">Student Group</Label>
+                        <Input
+                          id="editStudentGroup"
+                          value={editingUser.studentGroup || ''}
+                          onChange={(e) => setEditingUser({...editingUser, studentGroup: e.target.value})}
+                          className="col-span-3"
+                          placeholder="Enter student group"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="editProgramType" className="text-right">Program Type</Label>
+                        <Select value={editingUser.programType || ''} onValueChange={(value) => setEditingUser({...editingUser, programType: value})}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select program type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="undergraduate">Undergraduate</SelectItem>
+                            <SelectItem value="graduate">Graduate</SelectItem>
+                            <SelectItem value="postgraduate">Postgraduate</SelectItem>
+                            <SelectItem value="certificate">Certificate</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="editClassSection" className="text-right">Class Section</Label>
+                        <Input
+                          id="editClassSection"
+                          value={editingUser.classSection || ''}
+                          onChange={(e) => setEditingUser({...editingUser, classSection: e.target.value})}
+                          className="col-span-3"
+                          placeholder="Enter class section"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               <DialogFooter>

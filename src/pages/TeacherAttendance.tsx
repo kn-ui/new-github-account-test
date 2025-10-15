@@ -145,7 +145,7 @@ export default function TeacherAttendance() {
                       <th className="px-2 py-2 text-left">No</th>
                       <th className="px-2 py-2 text-left">Student</th>
                       {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
-                        <th key={d} className="px-2 py-2 text-center">{d}</th>
+                        <th key={d} className={`px-2 py-2 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-100 border-2 border-yellow-400 font-bold' : ''}`}>{d}</th>
                       ))}
                     </tr>
                   </thead>
@@ -155,9 +155,9 @@ export default function TeacherAttendance() {
                         <td className="px-2 py-1">{idx + 1}</td>
                         <td className="px-2 py-1">{studentNames[en.studentId] || en.studentId}</td>
                         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
-                          <td key={d} className={`px-1 py-1 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-50' : ''}`}>
+                          <td key={d} className={`px-1 py-1 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-100 border-2 border-yellow-400' : ''}`}>
                             <button
-                              className={`w-6 h-6 rounded border ${records[en.studentId]?.[d] ? 'bg-green-500 border-green-600' : 'bg-white'}`}
+                              className={`w-6 h-6 rounded border ${records[en.studentId]?.[d] ? 'bg-green-500 border-green-600' : 'bg-white'} ${isCurrentMonth && d === todayEthiopian.day ? 'ring-2 ring-yellow-400' : ''}`}
                               onClick={() => { if (!isCurrentMonth || d !== todayEthiopian.day) return; toggleCell(en.studentId, d); }}
                               aria-label={`Toggle ${en.studentId} day ${d}`}
                               disabled={!isCurrentMonth || d !== todayEthiopian.day}

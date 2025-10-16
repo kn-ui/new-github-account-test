@@ -15,10 +15,12 @@ export default function TeacherAttendance() {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [enrollments, setEnrollments] = useState<FirestoreEnrollment[]>([]);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
+  const [studentSections, setStudentSections] = useState<Record<string, string>>({});
   const [ethiopianYear, setEthiopianYear] = useState<number>(() => toEthiopianDate(new Date()).year);
   const [ethiopianMonth, setEthiopianMonth] = useState<number>(() => toEthiopianDate(new Date()).month);
   const [records, setRecords] = useState<Record<string, Record<number, boolean>>>({});
   const [loading, setLoading] = useState(false);
+  const [sectionFilter, setSectionFilter] = useState<string>('all');
 
   useEffect(() => {
     if (!userProfile || userProfile.role !== 'teacher') return;
@@ -33,17 +35,20 @@ export default function TeacherAttendance() {
     (async () => {
       const ens = await enrollmentService.getEnrollmentsByCourse(selectedCourseId);
       setEnrollments(ens);
-      // Resolve student names for display
+      // Resolve student names and sections for display
       try {
         const ids = Array.from(new Set(ens.map(e => e.studentId)));
-        const map: Record<string, string> = {};
+        const nameMap: Record<string, string> = {};
+        const sectionMap: Record<string, string> = {};
         await Promise.all(ids.map(async (id) => {
           try {
             const u = await (await import('@/lib/firestore')).userService.getUserById(id);
-            if (u?.displayName) map[id] = u.displayName;
+            if (u?.displayName) nameMap[id] = u.displayName;
+            if (u?.classSection) sectionMap[id] = u.classSection;
           } catch {}
         }));
-        setStudentNames(map);
+        setStudentNames(nameMap);
+        setStudentSections(sectionMap);
       } catch {}
       const sheet = await attendanceService.getSheet(
         selectedCourseId,
@@ -63,6 +68,18 @@ export default function TeacherAttendance() {
   const todayEthiopian = toEthiopianDate(new Date());
   const isCurrentMonth = todayEthiopian.year === ethiopianYear && todayEthiopian.month === ethiopianMonth;
   const sortedEnrollments = useMemo(() => enrollments.slice().sort((a,b)=> (a.studentId||'').localeCompare(b.studentId||'')), [enrollments]);
+  const sectionOptions = useMemo(() => {
+    const unique = new Set<string>();
+    sortedEnrollments.forEach(en => {
+      const sec = studentSections[en.studentId];
+      if (sec) unique.add(sec);
+    });
+    return Array.from(unique).sort((a,b)=> a.localeCompare(b));
+  }, [sortedEnrollments, studentSections]);
+  const filteredEnrollments = useMemo(() => {
+    if (sectionFilter === 'all') return sortedEnrollments;
+    return sortedEnrollments.filter(en => (studentSections[en.studentId] || '') === sectionFilter);
+  }, [sortedEnrollments, sectionFilter, studentSections]);
 
   const toggleCell = (studentId: string, day: number) => {
     setRecords(prev => {
@@ -133,8 +150,19 @@ export default function TeacherAttendance() {
                 <Input type="number" className="w-20" value={ethiopianMonth} onChange={(e)=> setEthiopianMonth(parseInt(e.target.value)||ethiopianMonth)} />
                 <span className="ml-2 text-xs text-gray-500">Today: {todayEthiopian.year}/{todayEthiopian.month}/{todayEthiopian.day}</span>
               </div>
-              <Button onClick={saveDraft} disabled={loading || !selectedCourseId} variant="outline">Save Draft</Button>
               <Button onClick={submit} disabled={loading || !selectedCourseId}>Submit to Admin</Button>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm text-gray-700">Section:</span>
+                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                  <SelectTrigger className="w-40"><SelectValue placeholder="All Sections" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sections</SelectItem>
+                    {sectionOptions.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {selectedCourseId && (
@@ -144,16 +172,18 @@ export default function TeacherAttendance() {
                     <tr>
                       <th className="px-2 py-2 text-left">No</th>
                       <th className="px-2 py-2 text-left">Student</th>
+                      <th className="px-2 py-2 text-left">Section</th>
                       {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                         <th key={d} className={`px-2 py-2 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-100 border-2 border-yellow-400 font-bold' : ''}`}>{d}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedEnrollments.map((en, idx) => (
+                    {filteredEnrollments.map((en, idx) => (
                       <tr key={en.id} className="border-t">
                         <td className="px-2 py-1">{idx + 1}</td>
                         <td className="px-2 py-1">{studentNames[en.studentId] || en.studentId}</td>
+                        <td className="px-2 py-1">{studentSections[en.studentId] || '-'}</td>
                         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                           <td key={d} className={`px-1 py-1 text-center ${isCurrentMonth && d === todayEthiopian.day ? 'bg-yellow-100 border-2 border-yellow-400' : ''}`}>
                             <button

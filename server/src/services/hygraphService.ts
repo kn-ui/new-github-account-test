@@ -35,9 +35,9 @@ class HygraphService {
   private async safeFetch(url: string, options: RequestInit, retries: number = 3): Promise<Response> {
     for (let i = 0; i < retries; i++) {
       try {
-        // Add timeout to prevent hanging requests
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
         
         const response = await fetch(url, {
           ...options,
@@ -87,10 +87,10 @@ class HygraphService {
       console.warn(`Warning: File has potentially problematic MIME type: ${file.mimetype}`);
     }
 
-    // Add overall timeout for the entire upload process (2 minutes)
-    const uploadTimeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Upload process timed out after 2 minutes')), 120000);
-    });
+    // Add overall timeout for the entire upload process (90 seconds)
+    const uploadTimeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Upload process timed out after 90 seconds')), 90000);
+    });
 
     try {
       return await Promise.race([
@@ -225,11 +225,11 @@ class HygraphService {
 
       const encoder = new FormDataEncoder(form);
 
-      // Add specific timeout for S3 upload
-      const uploadController = new AbortController();
-      const uploadTimeout = setTimeout(() => {
-        uploadController.abort();
-      }, 30000); // 30 second timeout
+      // Add specific timeout for S3 upload
+      const uploadController = new AbortController();
+      const uploadTimeout = setTimeout(() => {
+        uploadController.abort();
+      }, 20000); // 20 second timeout
 
       const uploadResponse = await fetch(s3UploadUrl, {
         method: 'POST',
@@ -330,12 +330,12 @@ class HygraphService {
 
       // Step 4: Poll for the final asset details (Wait for Hygraph internal processing to complete)
 
-      let assetData = null;
-      // --- FIX START: Adaptive Polling ---
-      // Use a more adaptive polling strategy.
-      const maxRetries = 25; // Increased retries for very large files
-      let delayMs = 500; // Start with a shorter delay
-      // --- FIX END ---
+      let assetData = null;
+      // --- FIX START: Optimized Polling ---
+      // Use a faster polling strategy for better user experience
+      const maxRetries = 15; // Reduced retries for faster response
+      let delayMs = 200; // Start with a very short delay
+      // --- FIX END ---
 
       for (let i = 0; i < maxRetries; i++) {
         await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -396,50 +396,74 @@ class HygraphService {
         }
       }
       
-      // Step 5: Publish the Asset (Only if the asset is complete)
-      if (assetData) {
-        // --- FIX START: Immediate Publishing ---
-        // Publish the asset now that it's processed.
-        const publishMutation = `
-          mutation PublishAsset($id: ID!) {
-            publishAsset(where: { id: $id }, to: PUBLISHED) {
-              id
-              stage
-            }
-          }
-        `;
-        try {
-          console.log(`Publishing asset ${assetData.id}...`);
-          const publishResponse = await this.safeFetch(this.endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${this.token}`,
-            },
-            body: JSON.stringify({
-              query: publishMutation,
-              variables: { id: assetData.id },
-            }),
-          });
-      
-          const publishData = await publishResponse.json() as any;
-      
-          if (publishResponse.ok && !publishData.errors) {
-            console.log(`Asset ${assetData.id} published successfully.`);
-            // Update the asset stage in the returned data
-            assetData.stage = 'PUBLISHED';
-          } else {
-            // Don't throw an error, but log it as a warning.
-            // The asset is uploaded, just not published.
-            console.warn(`Failed to publish asset ${assetData.id}:`, publishData.errors || 'Unknown error');
-          }
-        } catch (publishError) {
-          console.warn(`An error occurred during asset publishing: ${publishError}`);
-        }
-        // --- FIX END ---
-      
-        return { success: true, asset: assetData };
-      }
+      // Step 5: Publish the Asset (Only if the asset is complete)
+      if (assetData) {
+        // --- FIX START: Immediate Publishing ---
+        // Publish the asset now that it's processed.
+        const publishMutation = `
+          mutation PublishAsset($id: ID!) {
+            publishAsset(where: { id: $id }, to: PUBLISHED) {
+              id
+              stage
+            }
+          }
+        `;
+        try {
+          console.log(`Publishing asset ${assetData.id}...`);
+          const publishResponse = await this.safeFetch(this.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({
+              query: publishMutation,
+              variables: { id: assetData.id },
+            }),
+          });
+      
+          const publishData = await publishResponse.json() as any;
+      
+          if (publishResponse.ok && !publishData.errors) {
+            console.log(`Asset ${assetData.id} published successfully.`);
+            // Update the asset stage in the returned data
+            assetData.stage = 'PUBLISHED';
+          } else {
+            // Retry publishing once more before giving up
+            console.warn(`First publish attempt failed, retrying...`);
+            try {
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+              const retryPublishResponse = await this.safeFetch(this.endpoint, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${this.token}`,
+                },
+                body: JSON.stringify({
+                  query: publishMutation,
+                  variables: { id: assetData.id },
+                }),
+              });
+              
+              const retryPublishData = await retryPublishResponse.json() as any;
+              
+              if (retryPublishResponse.ok && !retryPublishData.errors) {
+                console.log(`Asset ${assetData.id} published successfully on retry.`);
+                assetData.stage = 'PUBLISHED';
+              } else {
+                console.warn(`Failed to publish asset ${assetData.id} after retry:`, retryPublishData.errors || 'Unknown error');
+              }
+            } catch (retryError) {
+              console.warn(`Retry publish attempt failed: ${retryError}`);
+            }
+          }
+        } catch (publishError) {
+          console.warn(`An error occurred during asset publishing: ${publishError}`);
+        }
+        // --- FIX END ---
+      
+        return { success: true, asset: assetData };
+      }
 
 
       // If polling fails after all retries, try to get the latest asset data
@@ -461,35 +485,107 @@ class HygraphService {
         const finalData = await finalAssetResponse.json() as any;
         const finalAsset = finalData?.data?.asset;
         
-        if (finalAsset && finalAsset.url) {
-          console.log('Using latest asset data as fallback');
-          if (file.size === 34816) {
-            console.log('DEBUG 34KB: Using fallback asset data:', JSON.stringify(finalAsset, null, 2));
-          }
-          return {
-            success: true,
-            asset: finalAsset,
-          };
-        }
+        if (finalAsset && finalAsset.url) {
+          console.log('Using latest asset data as fallback');
+          if (file.size === 34816) {
+            console.log('DEBUG 34KB: Using fallback asset data:', JSON.stringify(finalAsset, null, 2));
+          }
+          
+          // Try to publish the fallback asset if it's not already published
+          if (finalAsset.stage !== 'PUBLISHED') {
+            const publishMutation = `
+              mutation PublishAsset($id: ID!) {
+                publishAsset(where: { id: $id }, to: PUBLISHED) {
+                  id
+                  stage
+                }
+              }
+            `;
+            try {
+              console.log(`Publishing fallback asset ${finalAsset.id}...`);
+              const publishResponse = await this.safeFetch(this.endpoint, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${this.token}`,
+                },
+                body: JSON.stringify({
+                  query: publishMutation,
+                  variables: { id: finalAsset.id },
+                }),
+              });
+          
+              const publishData = await publishResponse.json() as any;
+          
+              if (publishResponse.ok && !publishData.errors) {
+                console.log(`Fallback asset ${finalAsset.id} published successfully.`);
+                finalAsset.stage = 'PUBLISHED';
+              }
+            } catch (publishError) {
+              console.warn(`Failed to publish fallback asset: ${publishError}`);
+            }
+          }
+          
+          return {
+            success: true,
+            asset: finalAsset,
+          };
+        }
       } catch (fallbackError) {
         console.warn('Fallback asset fetch failed:', fallbackError);
       }
 
-      // Last resort: use initial data
-      console.warn('Using initial createAsset data as final fallback. This asset will remain in DRAFT.');
-      if (file.size === 34816) {
-        console.log('DEBUG 34KB: Using initial asset data as final fallback');
-      }
-      return {
-        success: true,
-        asset: {
-          id,
-          fileName: file.originalname,
-          url: url,
-          mimeType: file.mimetype,
-          size: file.size,
-        },
-      };
+      // Last resort: use initial data and try to publish
+      console.warn('Using initial createAsset data as final fallback.');
+      if (file.size === 34816) {
+        console.log('DEBUG 34KB: Using initial asset data as final fallback');
+      }
+      
+      // Try to publish the initial asset
+      const publishMutation = `
+        mutation PublishAsset($id: ID!) {
+          publishAsset(where: { id: $id }, to: PUBLISHED) {
+            id
+            stage
+          }
+        }
+      `;
+      let stage = 'DRAFT';
+      try {
+        console.log(`Publishing initial asset ${id}...`);
+        const publishResponse = await this.safeFetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({
+            query: publishMutation,
+            variables: { id },
+          }),
+        });
+    
+        const publishData = await publishResponse.json() as any;
+    
+        if (publishResponse.ok && !publishData.errors) {
+          console.log(`Initial asset ${id} published successfully.`);
+          stage = 'PUBLISHED';
+        }
+      } catch (publishError) {
+        console.warn(`Failed to publish initial asset: ${publishError}`);
+      }
+      
+      return {
+        success: true,
+        asset: {
+          id,
+          fileName: file.originalname,
+          url: url,
+          mimeType: file.mimetype,
+          size: file.size,
+          stage,
+        },
+      };
   }
   
   // The rest of the methods

@@ -504,18 +504,23 @@ export default function AdminStudentGrades() {
       const otherPoints = courseOtherGrades.reduce((sum, g) => sum + (g.points || 0), 0);
 
       // Calculate final grade: (assignments + exams + other grades) out of 100
-      const totalPoints = assignmentPoints + examPoints + otherPoints;
-      const totalMax = assignmentMax + examMax;
-      
+      // Other grades are treated as bonus points since they don't have max scores
       let finalNumeric = 0;
-      if (totalMax > 0) {
+      
+      if (assignmentMax > 0 || examMax > 0) {
         // Calculate base percentage from assignments and exams
-        const basePercentage = (assignmentPoints + examPoints) / totalMax * 100;
-        // Add other points directly to the percentage
-        finalNumeric = Math.round(Math.min(100, basePercentage + otherPoints));
-      } else {
+        const totalEarnedPoints = assignmentPoints + examPoints;
+        const totalPossiblePoints = assignmentMax + examMax;
+        const basePercentage = totalPossiblePoints > 0 ? (totalEarnedPoints / totalPossiblePoints) * 100 : 0;
+        
+        // Add other grades as bonus points and cap at 100%
+        finalNumeric = Math.round(Math.min(100, Math.max(0, basePercentage + otherPoints)));
+      } else if (otherPoints > 0) {
         // If no assignments or exams, just use other points (clamped to 100)
         finalNumeric = Math.round(Math.min(100, Math.max(0, otherPoints)));
+      } else {
+        // No grades at all
+        finalNumeric = 0;
       }
 
       const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalNumeric);

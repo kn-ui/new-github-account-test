@@ -1292,17 +1292,27 @@ export default function TeacherCourseDetail() {
       <DialogFooter>
         <Button variant="outline" onClick={()=> setOtherGradeDialogOpen(false)}>Cancel</Button>
         <Button onClick={async ()=>{
-          if (!course || !otherGradeTargetStudentId) { setOtherGradeDialogOpen(false); return; }
+          if (!course || (!otherGradeTargetStudentId && !otherGradeEditing)) { 
+            toast.error('Missing required information');
+            setOtherGradeDialogOpen(false); 
+            return; 
+          }
           try {
             if (otherGradeEditing) {
               await otherGradeService.update(otherGradeEditing.id, { reason: otherGradeForm.reason, points: otherGradeForm.points });
               setOtherGrades(prev => prev.map(g => g.id === otherGradeEditing.id ? { ...g, reason: otherGradeForm.reason, points: otherGradeForm.points } : g));
+              toast.success('Other grade updated successfully');
             } else {
-              const id = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
-              setOtherGrades(prev => [{ id, courseId: course.id, studentId: otherGradeTargetStudentId, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points, createdAt: ({} as any), updatedAt: ({} as any) }, ...prev]);
+              const id = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
+              setOtherGrades(prev => [{ id, courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points, createdAt: ({} as any), updatedAt: ({} as any) }, ...prev]);
+              toast.success('Other grade added successfully');
             }
             setOtherGradeDialogOpen(false);
-          } catch {
+            setOtherGradeTargetStudentId(null);
+            setOtherGradeEditing(null);
+            setOtherGradeForm({ reason: '', points: 0 });
+          } catch (error) {
+            console.error('Error saving other grade:', error);
             toast.error('Failed to save other grade');
           }
         }}>{otherGradeEditing ? 'Save' : 'Add'}</Button>

@@ -246,7 +246,11 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
       {/* Users Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredUsers.map((user) => (
-          <Card key={user.id} className="hover:shadow-lg transition-all duration-300 border-gray-200 hover:border-blue-300">
+          <Card key={user.id} className={`hover:shadow-lg transition-all duration-300 ${
+            user.isActive 
+              ? 'border-gray-200 hover:border-blue-300' 
+              : 'border-red-200 bg-red-50 hover:border-red-400'
+          }`}>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 {/* Avatar */}
@@ -294,6 +298,11 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                   {/* Created Date */}
                   <div className="mt-3 text-xs text-gray-500">
                     Joined: {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                    {!user.isActive && (
+                      <div className="mt-1 text-xs text-red-600 font-medium">
+                        ⚠️ This admin is currently deactivated
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -308,8 +317,8 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                       Deactivate
                     </Button>
                   ) : (
-                    <Button size="sm" variant="default" onClick={() => openConfirmDialog('activate', user)}>
-                      Activate
+                    <Button size="sm" variant="default" onClick={() => openConfirmDialog('activate', user)} className="bg-green-600 hover:bg-green-700">
+                      Reactivate
                     </Button>
                   )}
                 </div>

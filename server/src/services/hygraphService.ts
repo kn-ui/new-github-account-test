@@ -1,6 +1,6 @@
 
 import fetch, { RequestInit, Response } from 'node-fetch';
-import FormData from 'form-data';
+import { FormData, Blob } from 'formdata-node';
 
 // Interfaces remain the same
 export interface HygraphAsset {
@@ -232,10 +232,9 @@ class HygraphService {
       });
       
       // Important: "file" field must be last for S3 upload request
-      form.append('file', file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype,
-      });
+      // Create a File-like object from the buffer for formdata-node
+      const fileBlob = new Blob([file.buffer], { type: file.mimetype });
+      form.append('file', fileBlob, file.originalname);
 
       console.log(`Form data prepared with ${s3Fields.length} fields and file: ${file.originalname} (${file.size} bytes)`);
 

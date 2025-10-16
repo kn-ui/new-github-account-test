@@ -381,55 +381,6 @@ export default function TeacherCourseDetail() {
                       </div>
                     ))}
                   </div>
-                ) : gradeViewMode === 'others' ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">Add and manage other grades per student.</div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="text-left px-4 py-2">Student</th>
-                            <th className="text-left px-4 py-2">Entries</th>
-                            <th className="text-right px-4 py-2">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {enrollments.map((en) => {
-                            const studentName = studentNames[en.studentId] || en.studentId;
-                            const entries = otherGrades.filter(g => g.studentId === en.studentId);
-                            return (
-                              <tr key={en.id}>
-                                <td className="px-4 py-2 font-medium">{studentName}</td>
-                                <td className="px-4 py-2">
-                                  {entries.length > 0 ? (
-                                    <div className="space-y-1">
-                                      {entries.map(e => (
-                                        <div key={e.id} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
-                                          <div className="text-xs text-gray-700 truncate mr-2">{e.reason}</div>
-                                          <div className="text-xs font-semibold text-gray-900 mr-2">+{e.points}</div>
-                                          <div className="flex items-center gap-1">
-                                            <Button size="sm" variant="outline" onClick={()=>{ setOtherGradeEditing(e); setOtherGradeForm({ reason: e.reason, points: e.points }); setOtherGradeDialogOpen(true); }}>Edit</Button>
-                                            <Button size="sm" variant="destructive" onClick={async ()=>{ try { await otherGradeService.delete(e.id); setOtherGrades(prev => prev.filter(x => x.id !== e.id)); } catch {} }}>Delete</Button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-xs text-gray-500">No entries</div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-2 text-right">
-                                  <Button size="sm" onClick={()=>{ setOtherGradeTargetStudentId(en.studentId); setOtherGradeEditing(null); setOtherGradeForm({ reason: '', points: 0 }); setOtherGradeDialogOpen(true); }}>Add Grade</Button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
                 ) : (
                   <div className="text-gray-500 text-sm">No resources yet.</div>
                 )}
@@ -868,6 +819,55 @@ export default function TeacherCourseDetail() {
                   ) : (
                     <div className="text-gray-500 text-sm">No final grades calculated yet.</div>
                   )
+                ) : gradeViewMode === 'others' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">Add and manage other grades per student.</div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left px-4 py-2">Student</th>
+                            <th className="text-left px-4 py-2">Entries</th>
+                            <th className="text-right px-4 py-2">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {enrollments.map((en) => {
+                            const studentName = studentNames[en.studentId] || en.studentId;
+                            const entries = otherGrades.filter(g => g.studentId === en.studentId);
+                            return (
+                              <tr key={en.id}>
+                                <td className="px-4 py-2 font-medium">{studentName}</td>
+                                <td className="px-4 py-2">
+                                  {entries.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {entries.map(e => (
+                                        <div key={e.id} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
+                                          <div className="text-xs text-gray-700 truncate mr-2">{e.reason}</div>
+                                          <div className="text-xs font-semibold text-gray-900 mr-2">+{e.points}</div>
+                                          <div className="flex items-center gap-1">
+                                            <Button size="sm" variant="outline" onClick={()=>{ setOtherGradeEditing(e); setOtherGradeForm({ reason: e.reason, points: e.points }); setOtherGradeDialogOpen(true); }}>Edit</Button>
+                                            <Button size="sm" variant="destructive" onClick={async ()=>{ try { await otherGradeService.delete(e.id); setOtherGrades(prev => prev.filter(x => x.id !== e.id)); } catch {} }}>Delete</Button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-500">No entries</div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <Button size="sm" onClick={()=>{ setOtherGradeTargetStudentId(en.studentId); setOtherGradeEditing(null); setOtherGradeForm({ reason: '', points: 0 }); setOtherGradeDialogOpen(true); }}>Add Grade</Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 ) : (
                   submissions.filter(s => s.status === 'graded').length > 0 ? (
                     <div className="overflow-x-auto">

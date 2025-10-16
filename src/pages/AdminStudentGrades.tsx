@@ -503,13 +503,20 @@ export default function AdminStudentGrades() {
       const courseOtherGrades = otherGrades.filter(g => g.courseId === courseId && g.studentId === student.id);
       const otherPoints = courseOtherGrades.reduce((sum, g) => sum + (g.points || 0), 0);
 
-      // Calculate final grade
-      let finalNumeric = 0;
+      // Calculate final grade: (assignments + exams + other grades) out of 100
+      const totalPoints = assignmentPoints + examPoints + otherPoints;
       const totalMax = assignmentMax + examMax;
+      
+      let finalNumeric = 0;
       if (totalMax > 0) {
-        finalNumeric = Math.round(((assignmentPoints + examPoints) / totalMax) * 100);
+        // Calculate base percentage from assignments and exams
+        const basePercentage = (assignmentPoints + examPoints) / totalMax * 100;
+        // Add other points directly to the percentage
+        finalNumeric = Math.round(Math.min(100, basePercentage + otherPoints));
+      } else {
+        // If no assignments or exams, just use other points (clamped to 100)
+        finalNumeric = Math.round(Math.min(100, Math.max(0, otherPoints)));
       }
-      finalNumeric = Math.min(100, finalNumeric + Math.max(0, otherPoints));
 
       const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalNumeric);
 
@@ -1271,7 +1278,8 @@ export default function AdminStudentGrades() {
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
-                                    const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
+                                    // Use the configured grade ranges instead of hardcoded values
+                                    const { letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
@@ -1282,8 +1290,8 @@ export default function AdminStudentGrades() {
                                           </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                          <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
-                                            {letterGrade}
+                                          <Badge variant={letterGrade.startsWith('A') ? 'default' : letterGrade.startsWith('B') ? 'secondary' : letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
+                                            {grade.letterGrade}
                                           </Badge>
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>

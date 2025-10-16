@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import fetch from 'node-fetch';
-import FormData from 'form-data';
 import { AuthenticatedRequest } from '../types';
 import blogService from '../services/blogService';
 import eventService from '../services/eventService';

@@ -630,6 +630,7 @@ const CourseDetail = () => {
                               <th className="text-center px-4 py-2">Letter Grade</th>
                               <th className="text-center px-4 py-2">Grade Points</th>
                               <th className="text-center px-4 py-2">Method</th>
+                              <th className="text-center px-4 py-2">Status</th>
                               <th className="text-center px-4 py-2">Calculated</th>
                             </tr>
                           </thead>
@@ -645,6 +646,11 @@ const CourseDetail = () => {
                               </td>
                               <td className="px-4 py-2 text-center">{finalGrade.gradePoints}</td>
                               <td className="px-4 py-2 text-center capitalize">{finalGrade.calculationMethod.replace('_', ' ')}</td>
+                              <td className="px-4 py-2 text-center">
+                                <Badge variant="default">
+                                  Published
+                                </Badge>
+                              </td>
                               <td className="px-4 py-2 text-center">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</td>
                             </tr>
                           </tbody>

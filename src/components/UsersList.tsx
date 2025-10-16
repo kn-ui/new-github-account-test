@@ -300,7 +300,9 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
               {/* Admin actions for super_admin */}
               {userProfile?.role === 'super_admin' && user.role === 'admin' && (
                 <div className="mt-4 flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { setEditUser(user); setEditOpen(true); }}>Edit</Button>
+                  {user.isActive && (
+                    <Button size="sm" variant="outline" onClick={() => { setEditUser(user); setEditOpen(true); }}>Edit</Button>
+                  )}
                   {user.isActive ? (
                     <Button size="sm" variant="destructive" onClick={() => openConfirmDialog('deactivate', user)}>
                       Deactivate

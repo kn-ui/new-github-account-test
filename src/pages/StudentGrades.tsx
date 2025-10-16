@@ -705,6 +705,7 @@ export default function StudentGrades() {
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
+                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
                                   </tr>
                                 </thead>
@@ -728,6 +729,11 @@ export default function StudentGrades() {
                                         <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
                                         <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
                                           {grade.calculationMethod.replace('_', ' ')}
+                                        </td>
+                                        <td className="py-3 px-4 text-center">
+                                          <Badge variant="default">
+                                            Published
+                                          </Badge>
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 text-sm">
                                           {grade.calculatedAt.toDate().toLocaleDateString()}

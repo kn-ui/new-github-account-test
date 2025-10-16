@@ -1,6 +1,8 @@
 
 import fetch, { RequestInit, Response } from 'node-fetch';
-import FormData from 'form-data';
+import { FormData, File } from 'formdata-node';
+import { FormDataEncoder } from 'form-data-encoder';
+import { Readable } from 'node:stream';
 
 // Interfaces remain the same
 export interface HygraphAsset {
@@ -225,17 +227,14 @@ class HygraphService {
       s3Fields.forEach(field => {
         if (field.value) {
           form.append(field.name, field.value);
-          console.log(`Added form field: ${field.name} = ${field.value.substring(0, 50)}...`);
+          console.log(`Added form field: ${field.name} = ${String(field.value).substring(0, 50)}...`);
         } else {
           console.warn(`Skipping empty form field: ${field.name}`);
         }
       });
       
       // Important: "file" field must be last for S3 upload request
-      form.append('file', file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype,
-      });
+      form.append('file', new File([file.buffer], file.originalname, { type: file.mimetype }));
 
       console.log(`Form data prepared with ${s3Fields.length} fields and file: ${file.originalname} (${file.size} bytes)`);
 
@@ -245,9 +244,12 @@ class HygraphService {
         uploadController.abort();
       }, 30000); // 30 second timeout
 
+      const encoder = new FormDataEncoder(form);
+      const bodyStream = Readable.from(encoder);
       const uploadResponse = await fetch(s3UploadUrl, {
         method: 'POST',
-        body: form,
+        headers: encoder.headers as any,
+        body: bodyStream as any,
         signal: uploadController.signal,
       });
 

@@ -1271,7 +1271,7 @@ export default function AdminStudentGrades() {
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
-                                    const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
+                                    const letterGrade = grade.letterGrade; // Use configured ranges result
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>

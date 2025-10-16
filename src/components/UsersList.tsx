@@ -70,7 +70,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await userService.getUsers(1000);
+      const usersData = await userService.getAllUsersIncludingInactive(1000);
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -404,7 +404,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                 setAddAdminOpen(false);
                 setNewAdmin({ displayName: '', email: '' });
                 // Refresh list
-                const usersData = await userService.getUsers(1000);
+                const usersData = await userService.getAllUsersIncludingInactive(1000);
                 setUsers(usersData);
               } catch (e) {
                 alert('Failed to create admin');
@@ -444,7 +444,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
               try {
                 await userService.updateUser(editUser.id, { displayName: editUser.displayName, email: editUser.email });
                 setEditOpen(false);
-                const usersData = await userService.getUsers(1000);
+                const usersData = await userService.getAllUsersIncludingInactive(1000);
                 setUsers(usersData);
               } catch (e) {
                 alert('Failed to save changes');

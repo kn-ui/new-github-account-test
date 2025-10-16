@@ -658,7 +658,7 @@ const CourseDetail = () => {
                     <div className="text-center py-12 text-gray-500">
                       <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
                       <h3 className="text-lg font-medium mb-2">No Final Grade Yet</h3>
-                      <p className="text-gray-400">Your final grade will appear here once it's calculated by your instructor.</p>
+                      <p className="text-gray-400">Your final grade will appear here once it's published by your instructor.</p>
                     </div>
                   )}
 

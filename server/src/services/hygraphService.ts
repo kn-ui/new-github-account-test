@@ -1,4 +1,3 @@
-
 import fetch, { RequestInit, Response } from 'node-fetch';
 import { FormData, Blob } from 'formdata-node';
 
@@ -289,6 +288,29 @@ class HygraphService {
       }
       
       
+    // --- FIX START: Moved declaration up to avoid TS2448 ---
+    // The query is defined here so it can be used in both the immediate check and the polling loop.
+    const getAssetQuery = `
+      query GetAsset($id: ID!) {
+        asset(where: { id: $id }) {
+          id
+          fileName
+          url
+          mimeType
+          size
+          stage
+          upload {
+            status
+            error {
+              code
+              message
+            }
+          }
+        }
+      }
+    `;
+    // --- FIX END ---
+    
       // Step 3: Check if asset is immediately available (sometimes happens for small files)
       console.log('Checking if asset is immediately available...');
       try {
@@ -317,30 +339,10 @@ class HygraphService {
 
       // Step 4: Poll for the final asset details (Wait for Hygraph internal processing to complete)
 
-      const getAssetQuery = `
-        query GetAsset($id: ID!) {
-          asset(where: { id: $id }) {
-            id
-            fileName
-            url
-            mimeType
-            size
-            stage
-            upload {
-              status
-              error {
-                code
-                message
-              }
-            }
-          }
-        }
-      `;
-
       let assetData = null;
       // Reduced retries and delay for faster response
       const maxRetries = 20; // 20 attempts
-      const delayMs = file.size < 100000 ? 1000 : 2000;  // 1 second for small files, 2 seconds for larger files
+      const delayMs = file.size < 100000 ? 1000 : 2000; 	// 1 second for small files, 2 seconds for larger files
 
       for (let i = 0; i < maxRetries; i++) {
         await new Promise(resolve => setTimeout(resolve, delayMs));

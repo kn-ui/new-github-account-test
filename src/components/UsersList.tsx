@@ -70,7 +70,8 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await userService.getUsers(1000);
+      // Include inactive users so deactivated admins remain visible and can be reactivated
+      const usersData = await userService.getUsersIncludingInactive(1000);
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);

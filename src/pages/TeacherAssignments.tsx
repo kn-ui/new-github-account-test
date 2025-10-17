@@ -412,7 +412,7 @@ export default function TeacherAssignments() {
 
       {/* Create/Edit Assignment Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingAssignment ? t('teacher.assignments.editTitle') || 'Edit Assignment' : t('teacher.assignments.createNew') || 'Create New Assignment'}

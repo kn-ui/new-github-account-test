@@ -1300,11 +1300,15 @@ export default function TeacherCourseDetail() {
           try {
             if (otherGradeEditing) {
               await otherGradeService.update(otherGradeEditing.id, { reason: otherGradeForm.reason, points: otherGradeForm.points });
-              setOtherGrades(prev => prev.map(g => g.id === otherGradeEditing.id ? { ...g, reason: otherGradeForm.reason, points: otherGradeForm.points } : g));
+              // Refresh list from backend to ensure consistency
+              const refreshed = await otherGradeService.getByCourse(course.id);
+              setOtherGrades(refreshed);
               toast.success('Other grade updated successfully');
             } else {
-              const newGrade = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
-              setOtherGrades(prev => [newGrade, ...prev]);
+              const newId = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
+              // Fetch the created record to get server timestamps and ensure ordering
+              const refreshed = await otherGradeService.getByCourse(course.id);
+              setOtherGrades(refreshed);
               toast.success('Other grade added successfully');
             }
             setOtherGradeDialogOpen(false);

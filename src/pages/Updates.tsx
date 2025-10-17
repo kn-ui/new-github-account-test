@@ -11,6 +11,7 @@ import { Heart, Plus, Edit, Trash2 } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
 
 export default function Updates() {
   const { t } = useI18n();
@@ -25,7 +26,9 @@ export default function Updates() {
   const [blogLikes, setBlogLikes] = useState<{ [blogId: string]: { count: number; liked: boolean } }>({});
   const [blogDialogOpen, setBlogDialogOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<FirestoreBlog | null>(null);
-  const [blogForm, setBlogForm] = useState<{ title: string; content: string }>({ title: '', content: '' });
+  const [blogForm, setBlogForm] = useState<{ title: string; content: string; imageUrl?: string }>({ title: '', content: '' });
+  const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState<FirestoreBlog | null>(null);
 
@@ -94,7 +97,7 @@ export default function Updates() {
   const openBlogDialog = (blog?: FirestoreBlog) => {
     if (blog) {
       setEditingBlog(blog);
-      setBlogForm({ title: blog.title, content: blog.content });
+      setBlogForm({ title: blog.title, content: blog.content, imageUrl: (blog as any).imageUrl });
     } else {
       setEditingBlog(null);
       setBlogForm({ title: '', content: '' });
@@ -114,11 +117,23 @@ export default function Updates() {
     }
 
     try {
+      // Optional image upload
+      let imageUrl = blogForm.imageUrl || '';
+      if (blogImageFile) {
+        setIsUploadingImage(true);
+        const uploadResult = await uploadToHygraph(blogImageFile);
+        if (!uploadResult.success || !uploadResult.url) {
+          throw new Error(uploadResult.error || 'Image upload failed');
+        }
+        imageUrl = uploadResult.url;
+      }
+
       if (editingBlog) {
         await blogService.updateBlogPost(editingBlog.id, {
           title: blogForm.title,
           content: blogForm.content,
-        });
+          imageUrl: imageUrl || undefined,
+        } as any);
         toast.success('Blog post updated');
       } else {
         await blogService.createBlogPost({
@@ -126,6 +141,7 @@ export default function Updates() {
           content: blogForm.content,
           authorId: currentUser.uid,
           authorName: userProfile.displayName || userProfile.email || 'Unknown Author',
+          ...(imageUrl ? { imageUrl } : {}),
         });
         toast.success('Blog post created');
       }
@@ -137,10 +153,11 @@ export default function Updates() {
       setBlogDialogOpen(false);
       setEditingBlog(null);
       setBlogForm({ title: '', content: '' });
+      setBlogImageFile(null);
     } catch (error) {
       console.error('Error saving blog:', error);
       toast.error('Failed to save blog post');
-    }
+    } finally { setIsUploadingImage(false); }
   };
 
   const handleBlogDelete = async () => {
@@ -228,6 +245,12 @@ export default function Updates() {
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredBlogs.map(b => (
                   <article key={b.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    {/* Featured image */}
+                    {(b as any).imageUrl && (
+                      <div className="-mt-6 -mx-6 mb-4">
+                        <img src={(b as any).imageUrl} alt="blog cover" className="w-full h-48 object-cover rounded-t-xl" />
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{b.authorName}</span>
@@ -318,7 +341,7 @@ export default function Updates() {
 
       {/* Blog Dialog */}
       <Dialog open={blogDialogOpen} onOpenChange={setBlogDialogOpen}>
-        <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
           </DialogHeader>
@@ -342,12 +365,22 @@ export default function Updates() {
                 rows={10}
               />
             </div>
+              <div>
+                <Label htmlFor="blog-image">Featured Image (optional)</Label>
+                <Input id="blog-image" type="file" accept="image/*" onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)} />
+                {blogImageFile && isUploadingImage && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {blogImageFile.name}…</div>
+                )}
+                {blogForm.imageUrl && !blogImageFile && (
+                  <div className="mt-2 text-xs text-gray-500 break-all">Current image: {blogForm.imageUrl}</div>
+                )}
+              </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBlogDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleBlogSubmit} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleBlogSubmit} className="bg-blue-600 hover:bg-blue-700" disabled={isUploadingImage}>
               {editingBlog ? 'Update' : 'Create'} Blog Post
             </Button>
           </DialogFooter>

@@ -102,6 +102,7 @@ export default function StudentSubmissions() {
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [submissionAttachments, setSubmissionAttachments] = useState<string[]>([]);
+  const [selectedEditFile, setSelectedEditFile] = useState<File | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<SubmissionWithDetails | null>(null);
   const [editRequestOpen, setEditRequestOpen] = useState(false);
@@ -219,10 +220,20 @@ export default function StudentSubmissions() {
     try {
       // Check if we're editing an existing submission (approved edit request)
       if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
+        // If a new file is selected during edit, upload and override attachments
+        let newAttachments = submissionAttachments;
+        if (selectedEditFile) {
+          const { uploadToHygraph } = await import('@/lib/hygraphUpload');
+          const uploadResult = await uploadToHygraph(selectedEditFile);
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error(uploadResult.error || 'Upload failed');
+          }
+          newAttachments = [uploadResult.url];
+        }
         // Update existing submission
         const updateData = {
           content: submissionContent,
-          attachments: submissionAttachments,
+          attachments: newAttachments,
           status: 'submitted' as const,
           updatedAt: new Date()
         };
@@ -272,6 +283,7 @@ export default function StudentSubmissions() {
       setSelectedSubmissionForEdit(null);
       setSubmissionContent('');
       setSubmissionAttachments([]);
+      setSelectedEditFile(null);
       studentDataService.clearStudentCache(currentUser!.uid);
       loadSubmissions();
     } catch (error) {
@@ -854,6 +866,11 @@ export default function StudentSubmissions() {
                     <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <p className="mt-2 text-sm text-gray-600">{t('student.submissions.dialog.attachmentNote')}</p>
+                      <input type="file" id="edit-file-upload" className="hidden" onChange={(e)=> setSelectedEditFile(e.target.files?.[0] || null)} />
+                      <label htmlFor="edit-file-upload" className="inline-flex items-center mt-3 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer">Choose File</label>
+                      {selectedEditFile && (
+                        <div className="mt-2 text-xs text-blue-800">Selected: {selectedEditFile.name}</div>
+                      )}
                     </div>
                   </div>
                 </div>

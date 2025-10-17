@@ -204,6 +204,8 @@ export interface FirestoreBlog {
   authorName: string;
   createdAt: Timestamp;
   likes: number;
+  // Optional featured image for the blog post
+  imageUrl?: string;
 }
 
 export interface FirestoreGrade {
@@ -358,6 +360,19 @@ export const userService = {
     return snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser))
       .filter(user => user.isActive !== false); // Client-side filter for isActive
+  },
+
+  // Returns users including inactive ones (no filtering by isActive)
+  async getUsersIncludingInactive(limitCount?: number): Promise<FirestoreUser[]> {
+    const q = limitCount
+      ? query(
+          collections.users(),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
+        )
+      : query(collections.users(), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 
   async getUserById(uid: string): Promise<FirestoreUser | null> {

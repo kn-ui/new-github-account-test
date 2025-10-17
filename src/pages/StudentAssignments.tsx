@@ -62,8 +62,20 @@ export default function StudentAssignments() {
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
+      try { studentDataService.clearStudentCache(currentUser.uid); } catch {}
       loadAssignments();
     }
+  }, [currentUser?.uid, userProfile?.role]);
+
+  // Refresh assignments after login navigation without full page reload
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && currentUser?.uid && userProfile?.role === 'student') {
+        loadAssignments();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentUser?.uid, userProfile?.role]);
 
   useEffect(() => {
@@ -481,16 +493,6 @@ export default function StudentAssignments() {
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
                 <div className="space-y-3">
-                  {selectedAssignment.instructions && (
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <FileText size={16} className="text-blue-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">Assignment Instructions</p>
-                        <p className="text-xs text-gray-500">{selectedAssignment.instructions}</p>
-                      </div>
-                    </div>
-                  )}
-                  
                   {assignmentResources.length > 0 ? (
                     assignmentResources.map((resource) => (
                       <div key={resource.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

@@ -55,7 +55,8 @@ const CourseDetail = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<FirestoreCourseMaterial | null>(null);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const [finalGrade, setFinalGrade] = useState<FirestoreGrade | null>(null);
-  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams'>('assignments');
+  const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams' | 'others'>('assignments');
+  const [otherGrades, setOtherGrades] = useState<any[]>([]);
   const [courseExams, setCourseExams] = useState<FirestoreExam[]>([]);
   const [examGrades, setExamGrades] = useState<any[]>([]);
 
@@ -142,7 +143,7 @@ const CourseDetail = () => {
           setCourseGrades([]);
         }
         
-        // Load exam grades for this course
+      // Load exam grades for this course
         try {
           const examAttemptsPromises = exams.map(async (exam) => {
             try {
@@ -194,6 +195,15 @@ const CourseDetail = () => {
         } catch (error) {
           console.error('Error loading final grade:', error);
           setFinalGrade(null);
+        }
+
+        // Load other grades for this course
+        try {
+          const list = await (await import('@/lib/firestore')).otherGradeService.getByStudentInCourse(courseId, currentUser.uid);
+          setOtherGrades(list);
+        } catch (error) {
+          console.error('Error loading other grades:', error);
+          setOtherGrades([]);
         }
       }
     } catch (error) {
@@ -561,7 +571,7 @@ const CourseDetail = () => {
                       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                         <div className="flex items-center gap-4">
                           <span className="text-sm font-medium text-gray-700">View Grades:</span>
-                          <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final' | 'exams') => setGradeViewMode(value)}>
+                          <Select value={gradeViewMode} onValueChange={(value: 'assignments' | 'final' | 'exams' | 'others') => setGradeViewMode(value)}>
                             <SelectTrigger className="w-48">
                               <SelectValue />
                             </SelectTrigger>
@@ -569,6 +579,7 @@ const CourseDetail = () => {
                               <SelectItem value="assignments">Assignment Grades</SelectItem>
                               <SelectItem value="exams">Exam Grades</SelectItem>
                               <SelectItem value="final">Final Grade</SelectItem>
+                              <SelectItem value="others">Other Grades</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -759,6 +770,41 @@ const CourseDetail = () => {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {/* Other Grades Table - Only show for other grades view */}
+                  {gradeViewMode === 'others' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Other Grades</h3>
+                      {otherGrades.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="text-left px-4 py-2">Reason</th>
+                                <th className="text-center px-4 py-2">Points</th>
+                                <th className="text-center px-4 py-2">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                              {otherGrades.map((og: any) => (
+                                <tr key={og.id}>
+                                  <td className="px-4 py-2">{og.reason}</td>
+                                  <td className="px-4 py-2 text-center font-semibold">+{og.points}</td>
+                                  <td className="px-4 py-2 text-center text-gray-600">{og.createdAt?.toDate ? og.createdAt.toDate().toLocaleDateString() : ''}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No Other Grades</h3>
+                          <p className="text-gray-400">Other grades will appear here when added by your instructor.</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                     </>
                   )}

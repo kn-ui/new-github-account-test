@@ -490,7 +490,15 @@ export default function TeacherAssignments() {
               </div>
               <div>
                 <Label htmlFor="file">{t('teacher.assignments.attachment') || 'Attachment (optional)'}</Label>
-                <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
+                <div className="flex items-center gap-2">
+                  <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} className="flex-1" />
+                  {fileObj && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">{fileObj.name}</span>
+                      <Button variant="ghost" size="sm" onClick={() => setFileObj(null)}>X</Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

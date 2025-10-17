@@ -1303,8 +1303,8 @@ export default function TeacherCourseDetail() {
               setOtherGrades(prev => prev.map(g => g.id === otherGradeEditing.id ? { ...g, reason: otherGradeForm.reason, points: otherGradeForm.points } : g));
               toast.success('Other grade updated successfully');
             } else {
-              const id = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
-              setOtherGrades(prev => [{ id, courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points, createdAt: ({} as any), updatedAt: ({} as any) }, ...prev]);
+              const newGrade = await otherGradeService.add({ courseId: course.id, studentId: otherGradeTargetStudentId!, teacherId: course.instructor, reason: otherGradeForm.reason, points: otherGradeForm.points });
+              setOtherGrades(prev => [newGrade, ...prev]);
               toast.success('Other grade added successfully');
             }
             setOtherGradeDialogOpen(false);

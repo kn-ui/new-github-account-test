@@ -70,9 +70,10 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Include inactive users so deactivated admins remain visible and can be reactivated
+      // Include inactive users, but only keep inactive admins visible for reactivation
       const usersData = await userService.getUsersIncludingInactive(1000);
-      setUsers(usersData);
+      const visibleUsers = usersData.filter(u => u.isActive !== false || u.role === 'admin');
+      setUsers(visibleUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -299,7 +300,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                   {/* Created Date */}
                   <div className="mt-3 text-xs text-gray-500">
                     Joined: {user.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-                    {!user.isActive && (
+                    {!user.isActive && user.role === 'admin' && (
                       <div className="mt-1 text-xs text-red-600 font-medium">
                         ⚠️ This admin is currently deactivated
                       </div>

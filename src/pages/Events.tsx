@@ -79,8 +79,9 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: undefined as any, currentAttendees: 0, status: 'upcoming' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalEvents = events.length;
   const upcomingEvents = events.filter(e => {
@@ -172,14 +173,14 @@ const EventsPage = () => {
 
   const saveEdit = async () => {
     if (!selectedEvent) return;
-    
-    // Validation for required fields
-    if (!editForm.title || editForm.title.trim().length === 0) {
-      toast.error('Title is required');
-      return;
-    }
-    
+    setIsSubmitting(true);
     try {
+      // Validation for required fields
+      if (!editForm.title || editForm.title.trim().length === 0) {
+        toast.error('Title is required');
+        return;
+      }
+      
       const date = editForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
@@ -197,10 +198,13 @@ const EventsPage = () => {
       fetchEvents();
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const submitCreate = async () => {
+    setIsSubmitting(true);
     try {
       // Validation for required fields
       if (!createForm.title || createForm.title.trim().length === 0) {
@@ -219,16 +223,18 @@ const EventsPage = () => {
         type: createForm.type || 'meeting',
         time: createForm.time || '',
         location: createForm.location || '',
-        maxAttendees: createForm.maxAttendees ?? undefined,
+        maxAttendees: 0,
         currentAttendees: createForm.currentAttendees || 0,
         status: getEventStatus(date),
       });
       // Reset form after successful creation
-      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: undefined as any, currentAttendees: 0, status: 'upcoming' });
+      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming' });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -625,9 +631,12 @@ const EventsPage = () => {
               />
               <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/1,000 characters</p>
             </div>
+
           </div>
           <DialogFooter>
-            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700">{t('events.create')}</Button>
+            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : t('events.create')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -731,7 +740,9 @@ const EventsPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700">{t('common.saveChanges')}</Button>
+            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : t('common.saveChanges')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

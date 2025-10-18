@@ -477,7 +477,13 @@ export default function TeacherAssignments() {
                 <Label htmlFor="dueDate">{t('student.due')} *</Label>
                 <DualDateInput
                   value={formData.dueDate ? new Date(formData.dueDate) : new Date()}
-                  onChange={(d) => setFormData(prev => ({ ...prev, dueDate: d.toISOString().slice(0,10) }))}
+                  onChange={(d) => {
+                    const year = d.getFullYear();
+                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                    const day = d.getDate().toString().padStart(2, '0');
+                    const formattedDate = `${year}-${month}-${day}`;
+                    setFormData(prev => ({ ...prev, dueDate: formattedDate }));
+                  }}
                   defaultMode="ethiopian"
                 />
               </div>

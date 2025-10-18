@@ -230,6 +230,13 @@ const UserManager = () => {
       );
       
       // Create Firestore user profile using the UID from secondary auth
+      const studentData = newUser.role === 'student' ? {
+        ...(newUser.deliveryMethod && { deliveryMethod: newUser.deliveryMethod }),
+        ...(newUser.studentGroup && { studentGroup: newUser.studentGroup }),
+        ...(newUser.programType && { programType: newUser.programType }),
+        ...(newUser.classSection && { classSection: newUser.classSection }),
+      } : {};
+
       await userService.createUser({
         displayName: newUser.displayName,
         email: newUser.email,
@@ -237,12 +244,7 @@ const UserManager = () => {
         isActive: true,
         uid: userCredential.user.uid,
         passwordChanged: false, // New users must change their password
-        ...(newUser.role === 'student' ? {
-          deliveryMethod: newUser.deliveryMethod || undefined,
-          studentGroup: newUser.studentGroup || undefined,
-          programType: newUser.programType || undefined,
-          classSection: newUser.classSection || undefined,
-        } : {})
+        ...studentData
       });
       
       // Immediately sign out from secondary auth to clean up
@@ -300,10 +302,10 @@ const UserManager = () => {
       
       // Add student-specific fields if the user is a student
       if (editingUser.role === 'student') {
-        updateData.deliveryMethod = editingUser.deliveryMethod;
-        updateData.studentGroup = editingUser.studentGroup;
-        updateData.programType = editingUser.programType;
-        updateData.classSection = editingUser.classSection;
+        updateData.deliveryMethod = editingUser.deliveryMethod ?? null;
+        updateData.studentGroup = editingUser.studentGroup ?? null;
+        updateData.programType = editingUser.programType ?? null;
+        updateData.classSection = editingUser.classSection ?? null;
       }
       
       await userService.updateUser(editingUser.id, updateData);

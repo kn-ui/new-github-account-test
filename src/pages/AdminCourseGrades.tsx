@@ -62,10 +62,12 @@ export default function AdminCourseGrades() {
     }
   };
 
-  const computeLetter = (percent: number): { letter: string; points: number } => {
-    for (const [letter, range] of Object.entries(gradeRanges)) {
+  const computeLetter = (points: number, max: number): { letter: string; points: number } => {
+    const percent = max > 0 ? Math.round((points / max) * 100) : 0;
+    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+    for (const [letter, range] of sortedRanges) {
       const r = range as any;
-      if (percent >= r.min && percent <= r.max) {
+      if (percent >= r.min) {
         return { letter, points: r.points };
       }
     }
@@ -101,29 +103,25 @@ export default function AdminCourseGrades() {
     const exams = await examService.getExamsByCourse(courseId);
     // Compute exam totals per student
     const examTotals = new Map<string, { total: number; max: number }>();
-    for (const sid of studentIds) {
-      let t = 0; let m = 0;
-      for (const ex of exams) {
-        try {
-          const attempt = await examAttemptService.getAttemptForStudent(ex.id, sid);
-          if (attempt && attempt.status === 'graded' && attempt.isGraded) {
-            t += attempt.score || 0;
-            m += ex.totalPoints || 0;
-          }
-        } catch {}
-      }
-      examTotals.set(sid, { total: t, max: m });
+    const allAttempts = (await Promise.all(exams.map(ex => examAttemptService.getAttemptsByExam(ex.id)))).flat();
+
+    for (const attempt of allAttempts) {
+        if (studentIds.includes(attempt.studentId) && attempt.status === 'graded' && attempt.isGraded) {
+            const ex = exams.find(e => e.id === attempt.examId);
+            if (ex) {
+                const prev = examTotals.get(attempt.studentId) || { total: 0, max: 0 };
+                examTotals.set(attempt.studentId, { total: prev.total + (attempt.score || 0), max: prev.max + (ex.totalPoints || 0) });
+            }
+        }
     }
 
     // Load other grades by student
     const otherTotals = new Map<string, number>();
-    for (const sid of studentIds) {
-      try {
-        const list = await otherGradeService.getByStudentInCourse(courseId, sid);
-        const sum = list.reduce((s, og) => s + (og.points || 0), 0);
-        otherTotals.set(sid, sum);
-      } catch {
-        otherTotals.set(sid, 0);
+    const allOtherGrades = await otherGradeService.getByCourse(courseId);
+    for (const og of allOtherGrades) {
+      if (studentIds.includes(og.studentId)) {
+        const prev = otherTotals.get(og.studentId) || 0;
+        otherTotals.set(og.studentId, prev + (og.points || 0));
       }
     }
 
@@ -134,18 +132,21 @@ export default function AdminCourseGrades() {
 
     const newRows: StudentRow[] = studentIds.map(sid => {
       const user = studentMap.get(sid);
-      const a = assignmentTotals.get(sid) || { total: 0, max: assignmentsMaxTotal };
+      const a = assignmentTotals.get(sid) || { total: 0, max: 0 };
       const e = examTotals.get(sid) || { total: 0, max: 0 };
       const o = otherTotals.get(sid) || 0;
 
       const points = a.total + e.total + o;
-      const max = (a.max || assignmentsMaxTotal) + e.max;
-      const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
+      const max = a.max + e.max;
+      const percent = max > 0 ? Math.round(((a.total + e.total + o) / max) * 100) : 0;
 
-      // Always compute letter and points from configured grade ranges
-      const comp = computeLetter(percent);
-      const letter = comp.letter;
-      const gradePoints = comp.points;
+      let letter = finalByStudent.get(sid)?.letterGrade || 'F';
+      let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
+      if (!finalByStudent.get(sid)) {
+        const comp = computeLetter(points, max);
+        letter = comp.letter; gradePoints = comp.points;
+      }
+
 
       return {
         studentId: sid,
@@ -173,7 +174,7 @@ export default function AdminCourseGrades() {
     try {
       for (const r of rows) {
         // Recompute letter from percent using ranges
-        const comp = computeLetter(r.percent);
+        const comp = computeLetter(r.finalPoints, r.assignmentsMax + r.examsMax);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,
@@ -264,7 +265,6 @@ export default function AdminCourseGrades() {
                   <th className="text-center py-2 px-3">Exams</th>
                   <th className="text-center py-2 px-3">Other</th>
                   <th className="text-center py-2 px-3">Final Points</th>
-                  <th className="text-center py-2 px-3">Percent</th>
                   <th className="text-center py-2 px-3">Letter</th>
                   <th className="text-center py-2 px-3">Status</th>
                 </tr>
@@ -280,7 +280,6 @@ export default function AdminCourseGrades() {
                     <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
                     <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
                     <td className="py-2 px-3 text-center">{r.finalPoints}</td>
-                    <td className="py-2 px-3 text-center">{r.percent}%</td>
                     <td className="py-2 px-3 text-center">{r.letterGrade}</td>
                     <td className="py-2 px-3 text-center">
                       <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>

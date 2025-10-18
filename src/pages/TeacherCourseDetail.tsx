@@ -788,7 +788,12 @@ export default function TeacherCourseDetail() {
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {finalGrades
+                          {Object.values(finalGrades.reduce((acc, g) => {
+                            if (!acc[g.studentId] || acc[g.studentId].calculatedAt.toDate() < g.calculatedAt.toDate()) {
+                              acc[g.studentId] = g;
+                            }
+                            return acc;
+                          }, {} as Record<string, FirestoreGrade>))
                             .slice()
                             .sort((a,b) => {
                               switch (gradeSort) {
@@ -834,7 +839,7 @@ export default function TeacherCourseDetail() {
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {enrollments.map((en) => {
+                          {Array.from(new Map(enrollments.map(e => [e.studentId, e])).values()).map((en) => {
                             const studentName = studentNames[en.studentId] || en.studentId;
                             const entries = otherGrades.filter(g => g.studentId === en.studentId);
                             return (

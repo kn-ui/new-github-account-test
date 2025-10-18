@@ -64,13 +64,23 @@ export default function AdminCourseGrades() {
 
   const computeLetter = (points: number, max: number): { letter: string; points: number } => {
     const percent = max > 0 ? Math.round((points / max) * 100) : 0;
-    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-    for (const [letter, range] of sortedRanges) {
+
+    for (const [letter, range] of Object.entries(gradeRanges)) {
       const r = range as any;
-      if (percent >= r.min) {
+      if (percent >= r.min && percent <= r.max) {
         return { letter, points: r.points };
       }
     }
+
+    // If no range is found, check if it's because the percentage is over 100
+    if (percent > 100) {
+      const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+      if (sortedRanges.length > 0) {
+        const highestGrade = sortedRanges[0];
+        return { letter: highestGrade[0], points: (highestGrade[1] as any).points };
+      }
+    }
+
     return { letter: 'F', points: 0.0 };
   };
 

@@ -220,14 +220,28 @@ export default function StudentGrades() {
 
       const finalGradesResults = await Promise.all(finalGradesPromises);
       const validFinalGrades = finalGradesResults.filter(grade => grade !== null) as FirestoreGrade[];
-      console.log('Final grades loaded:', validFinalGrades);
-      setFinalGrades(validFinalGrades);
+      const uniqueFinalGrades = Object.values(validFinalGrades.reduce((acc, g) => {
+        if (!acc[g.courseId] || acc[g.courseId].calculatedAt.toDate() < g.calculatedAt.toDate()) {
+          acc[g.courseId] = g;
+        }
+        return acc;
+      }, {} as Record<string, FirestoreGrade>));
+      console.log('Final grades loaded:', uniqueFinalGrades);
+      setFinalGrades(uniqueFinalGrades);
 
       // Load "other" grades for this student across courses
       try {
         const otherPromises = courseIds.map((cid) => otherGradeService.getByStudentInCourse(cid, currentUser!.uid));
         const otherArrays = await Promise.all(otherPromises);
-        setOtherGrades(otherArrays.flat());
+        const allOtherGrades = otherArrays.flat();
+        const uniqueOtherGrades = Object.values(allOtherGrades.reduce((acc, og) => {
+          const key = `${og.courseId}-${og.reason}`;
+          if (!acc[key] || acc[key].createdAt.toDate() < og.createdAt.toDate()) {
+            acc[key] = og;
+          }
+          return acc;
+        }, {} as Record<string, FirestoreOtherGrade>));
+        setOtherGrades(uniqueOtherGrades);
       } catch (e) {
         console.error('Error loading other grades:', e);
         setOtherGrades([]);

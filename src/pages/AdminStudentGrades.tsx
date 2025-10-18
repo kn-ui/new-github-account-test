@@ -473,9 +473,11 @@ export default function AdminStudentGrades() {
   }, [finalGrades]);
 
   const calculateLetterGradeWithRanges = (finalGrade: number): { letterGrade: string; gradePoints: number } => {
-    for (const [letter, range] of Object.entries(gradeRanges)) {
-      if (finalGrade >= range.min && finalGrade <= range.max) {
-        return { letterGrade: letter, gradePoints: range.points };
+    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+    for (const [letter, range] of sortedRanges) {
+      const r = range as any;
+      if (finalGrade >= r.min) {
+        return { letterGrade: letter, gradePoints: r.points };
       }
     }
     return { letterGrade: 'F', gradePoints: 0.0 };
@@ -514,7 +516,7 @@ export default function AdminStudentGrades() {
       const totalPossiblePoints = assignmentMax + examMax;
       let finalGradeInPercentage = 0;
       if (totalPossiblePoints > 0) {
-        finalGradeInPercentage = Math.round(((assignmentPoints + examPoints) / totalPossiblePoints) * 100);
+        finalGradeInPercentage = Math.round(((assignmentPoints + examPoints + otherPoints) / totalPossiblePoints) * 100);
       }
 
       const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalGradeInPercentage);

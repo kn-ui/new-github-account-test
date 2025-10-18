@@ -320,33 +320,9 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                   )}
                 </div>
 
-                {/* Progress Bar (for attendees) */}
-                {event.maxAttendees && event.maxAttendees > 0 && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Attendance</span>
-                      <span>{Math.round((event.currentAttendees || 0) / event.maxAttendees * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${Math.min((event.currentAttendees || 0) / event.maxAttendees * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Attendance percentage removed by request */}
 
-                {/* Action Button */}
-                <div className="pt-2 border-t border-gray-100">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full group-hover:bg-purple-50 group-hover:border-purple-300 group-hover:text-purple-700 transition-colors"
-                  >
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    View Event
-                  </Button>
-                </div>
+                {/* View Event button removed by request */}
               </div>
             </CardContent>
           </Card>

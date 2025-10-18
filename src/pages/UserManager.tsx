@@ -442,7 +442,7 @@ const UserManager = () => {
                           <Label className="text-right">Delivery Method</Label>
                           <div className="col-span-3 flex items-center gap-2">
                             <Select value={newUser.deliveryMethod} onValueChange={(v)=> setNewUser(prev=>({...prev, deliveryMethod: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
                               <SelectContent>
                                 {studentMeta.deliveryMethods.map(dm => (
                                   <SelectItem key={dm} value={dm}>{dm}</SelectItem>
@@ -457,7 +457,7 @@ const UserManager = () => {
                           <Label className="text-right">Student Group</Label>
                           <div className="col-span-3 flex items-center gap-2">
                             <Select value={newUser.studentGroup} onValueChange={(v)=> setNewUser(prev=>({...prev, studentGroup: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
                               <SelectContent>
                                 {studentMeta.studentGroups.map(sg => (
                                   <SelectItem key={sg} value={sg}>{sg}</SelectItem>
@@ -472,7 +472,7 @@ const UserManager = () => {
                           <Label className="text-right">Program Type</Label>
                           <div className="col-span-3 flex items-center gap-2">
                             <Select value={newUser.programType} onValueChange={(v)=> setNewUser(prev=>({...prev, programType: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
                               <SelectContent>
                                 {studentMeta.programTypes.map(pt => (
                                   <SelectItem key={pt} value={pt}>{pt}</SelectItem>
@@ -487,7 +487,7 @@ const UserManager = () => {
                           <Label className="text-right">Class Section</Label>
                           <div className="col-span-3 flex items-center gap-2">
                             <Select value={newUser.classSection} onValueChange={(v)=> setNewUser(prev=>({...prev, classSection: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Select or add" /></SelectTrigger>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
                               <SelectContent>
                                 {studentMeta.classSections.map(cs => (
                                   <SelectItem key={cs} value={cs}>{cs}</SelectItem>
@@ -595,7 +595,7 @@ const UserManager = () => {
                         <Label htmlFor="editDeliveryMethod" className="text-right">Delivery Method</Label>
                         <Select value={editingUser.deliveryMethod || ''} onValueChange={(value) => setEditingUser({...editingUser, deliveryMethod: value})}>
                           <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select delivery method" />
+                            <SelectValue placeholder="Optional: select delivery method" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="online">Online</SelectItem>
@@ -611,14 +611,14 @@ const UserManager = () => {
                           value={editingUser.studentGroup || ''}
                           onChange={(e) => setEditingUser({...editingUser, studentGroup: e.target.value})}
                           className="col-span-3"
-                          placeholder="Enter student group"
+                          placeholder="Optional"
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="editProgramType" className="text-right">Program Type</Label>
                         <Select value={editingUser.programType || ''} onValueChange={(value) => setEditingUser({...editingUser, programType: value})}>
                           <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select program type" />
+                            <SelectValue placeholder="Optional: select program type" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="undergraduate">Undergraduate</SelectItem>
@@ -635,7 +635,7 @@ const UserManager = () => {
                           value={editingUser.classSection || ''}
                           onChange={(e) => setEditingUser({...editingUser, classSection: e.target.value})}
                           className="col-span-3"
-                          placeholder="Enter class section"
+                          placeholder="Optional"
                         />
                       </div>
                     </>

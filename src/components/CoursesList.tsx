@@ -39,7 +39,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [instructorFilter, setInstructorFilter] = useState('all');
 
   useEffect(() => {
     loadCourses();
@@ -47,7 +47,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
 
   useEffect(() => {
     filterCourses();
-  }, [courses, searchTerm, categoryFilter, statusFilter]);
+  }, [courses, searchTerm, categoryFilter, instructorFilter]);
 
   const loadCourses = async () => {
     try {
@@ -67,11 +67,9 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
                            course.instructorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            course.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && course.isActive) ||
-                           (statusFilter === 'inactive' && !course.isActive);
+      const matchesInstructor = instructorFilter === 'all' || (course.instructorName === instructorFilter);
       
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory && matchesInstructor;
     });
 
     if (!showAll) {
@@ -107,6 +105,11 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
   const getUniqueCategories = () => {
     const categories = courses.map(course => course.category).filter(Boolean);
     return [...new Set(categories)];
+  };
+
+  const getUniqueInstructors = () => {
+    const names = courses.map(c => c.instructorName).filter(Boolean);
+    return [...new Set(names)];
   };
 
   if (loading) {
@@ -183,17 +186,18 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
               </Select>
             </div>
 
-            {/* Status Filter */}
+            {/* Instructor Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Filter by Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <label className="text-sm font-medium text-gray-700">Filter by Instructor</label>
+              <Select value={instructorFilter} onValueChange={setInstructorFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
+                  <SelectValue placeholder="All Instructors" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">All Instructors</SelectItem>
+                  {getUniqueInstructors().map(name => (
+                    <SelectItem key={name} value={name!}>{name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -277,17 +281,7 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
                   </Badge>
                 </div>
 
-                {/* Action Button */}
-                <div className="pt-2 border-t border-gray-100">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full group-hover:bg-green-50 group-hover:border-green-300 group-hover:text-green-700 transition-colors"
-                  >
-                    <GraduationCap className="h-4 w-4 mr-2" />
-                    View Course
-                  </Button>
-                </div>
+                {/* Action Button removed by request */}
               </div>
             </CardContent>
           </Card>

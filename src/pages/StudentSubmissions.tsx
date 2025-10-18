@@ -103,6 +103,7 @@ export default function StudentSubmissions() {
   const [submissionContent, setSubmissionContent] = useState('');
   const [submissionAttachments, setSubmissionAttachments] = useState<string[]>([]);
   const [selectedEditFile, setSelectedEditFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<SubmissionWithDetails | null>(null);
   const [editRequestOpen, setEditRequestOpen] = useState(false);
@@ -200,6 +201,7 @@ export default function StudentSubmissions() {
   };
 
   const handleSubmitSubmission = async () => {
+    if (isSubmitting) return; // prevent double submits
     if (!selectedAssignment || !submissionContent.trim()) {
       toast.error(t('student.submissions.missingContent'));
       return;
@@ -218,6 +220,7 @@ export default function StudentSubmissions() {
 
 
     try {
+      setIsSubmitting(true);
       // Check if we're editing an existing submission (approved edit request)
       if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
         // If a new file is selected during edit, upload and override attachments
@@ -289,6 +292,8 @@ export default function StudentSubmissions() {
     } catch (error) {
       console.error('Error submitting assignment:', error);
       toast.error(t('student.submissions.submitError'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -882,12 +887,13 @@ export default function StudentSubmissions() {
                 </Button>
                 <Button 
                   onClick={handleSubmitSubmission} 
-                  disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
+                  disabled={isSubmitting || !submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
                 >
-                  {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
-                    ? 'Update Submission' 
-                    : t('student.submissions.dialog.submit')
-                  }
+                  {isSubmitting
+                    ? (selectedEditFile ? 'Uploading...' : (selectedSubmissionForEdit && selectedSubmissionForEdit.id ? 'Updating...' : 'Submitting...'))
+                    : (selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                      ? 'Update Submission' 
+                      : t('student.submissions.dialog.submit'))}
                 </Button>
               </DialogFooter>
             </DialogContent>

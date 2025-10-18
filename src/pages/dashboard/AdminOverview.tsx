@@ -127,10 +127,7 @@ const AdminOverview = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2 text-gray-900">{stats.totalUsers}</div>
-              <div className="text-gray-600 text-sm flex items-center gap-1">
-                <Activity className="h-4 w-4" />
-                {t('admin.analytics.realtime')}
-              </div>
+              {/* Real-time data visualization removed by request */}
             </CardContent>
           </Card>
           
@@ -143,10 +140,7 @@ const AdminOverview = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalCourses}</div>
-              <div className="text-gray-600 text-sm flex items-center gap-1">
-                <Target className="h-4 w-4" />
-                {t('admin.quickActions.createCourse')}
-              </div>
+              {/* Create Course (bottom line) removed by request */}
             </CardContent>
           </Card>
           
@@ -159,10 +153,7 @@ const AdminOverview = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">98%</div>
-              <div className="text-gray-600 text-sm flex items-center gap-1">
-                <Activity className="h-4 w-4" />
-                {t('admin.analytics.placeholder')}
-              </div>
+              {/* Analytics Chart Placeholder removed by request */}
             </CardContent>
           </Card>
           
@@ -175,10 +166,7 @@ const AdminOverview = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold mb-2">{stats.totalEvents}</div>
-              <div className="text-gray-600 text-sm flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {t('admin.systemStats.totalEvents')}
-              </div>
+              {/* Total Events (bottom line) removed by request */}
             </CardContent>
           </Card>
         </div>

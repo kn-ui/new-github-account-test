@@ -79,7 +79,7 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: 'meeting', maxAttendees: 50, currentAttendees: 0, status: 'upcoming' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: undefined as any, currentAttendees: 0, status: 'upcoming' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
 
   const totalEvents = events.length;
@@ -219,10 +219,12 @@ const EventsPage = () => {
         type: createForm.type || 'meeting',
         time: createForm.time || '',
         location: createForm.location || '',
-        maxAttendees: createForm.maxAttendees || 50,
+        maxAttendees: createForm.maxAttendees ?? undefined,
         currentAttendees: createForm.currentAttendees || 0,
         status: getEventStatus(date),
       });
+      // Reset form after successful creation
+      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: undefined as any, currentAttendees: 0, status: 'upcoming' });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
@@ -596,7 +598,7 @@ const EventsPage = () => {
                 <Input 
                   value={String(createForm.type || '')} 
                   onChange={(e) => setCreateForm({ ...createForm, type: e.target.value.slice(0, 50) } as any)}
-                  placeholder="e.g., meeting, conference, workshop"
+                  placeholder="meeting"
                   maxLength={50}
                 />
                 <p className="text-xs text-gray-500 mt-1">{(createForm.type || '').length}/50 characters</p>

@@ -266,9 +266,8 @@ export default function AdminSettings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="activity" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="activity">Activity Logs</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="access">Access Control</TabsTrigger>
         </TabsList>
 
@@ -313,44 +312,7 @@ export default function AdminSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5" />
-                <span>System Notifications</span>
-              </CardTitle>
-              <CardDescription>
-                Manage system alerts and notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-3 rounded-lg border ${getNotificationColor(
-                      notification.type
-                    )}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">
-                        {notification.message}
-                      </p>
-                      <span className="text-xs">
-                        {notification.timestamp.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configure Notifications
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Notifications tab removed by request */}
 
         <TabsContent value="access" className="space-y-4">
           <Card>

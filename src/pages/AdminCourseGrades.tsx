@@ -56,7 +56,7 @@ export default function AdminCourseGrades() {
       setGradeRanges(ranges);
       await loadRows();
     } catch (e) {
-      console.error(e);
+      // Error handled silently
     } finally {
       setLoading(false);
     }
@@ -65,19 +65,13 @@ export default function AdminCourseGrades() {
   const computeLetter = (points: number, max: number): { letter: string; points: number } => {
     const percent = max > 0 ? Math.round((points / max) * 100) : 0;
 
-    for (const [letter, range] of Object.entries(gradeRanges)) {
+    // Sort ranges by minimum percentage in descending order to find the best match
+    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+    
+    for (const [letter, range] of sortedRanges) {
       const r = range as any;
-      if (percent >= r.min && percent <= r.max) {
+      if (percent >= r.min) {
         return { letter, points: r.points };
-      }
-    }
-
-    // If no range is found, check if it's because the percentage is over 100
-    if (percent > 100) {
-      const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-      if (sortedRanges.length > 0) {
-        const highestGrade = sortedRanges[0];
-        return { letter: highestGrade[0], points: (highestGrade[1] as any).points };
       }
     }
 
@@ -86,96 +80,123 @@ export default function AdminCourseGrades() {
 
   const loadRows = async () => {
     if (!courseId) return;
-    // Get enrolled students
-    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
-    const studentIds = Array.from(new Set(enrollments.map(e => e.studentId)));
+    
+    try {
+      // Get enrolled students
+      const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+      const studentIds = Array.from(new Set(enrollments.map(e => e.studentId)));
 
-    // Preload users
-    const users = await Promise.all(studentIds.map(id => userService.getUserById(id)));
-    const studentMap = new Map<string, any>();
-    users.forEach(u => { if (u) studentMap.set(u.id, u); });
-
-    // Load assignments and submissions once
-    const assignments = await assignmentService.getAssignmentsByCourse(courseId);
-    const submissionsByAssignment = await Promise.all(assignments.map(a => submissionService.getSubmissionsByAssignment(a.id)));
-
-    // Build assignment totals per student
-    const assignmentTotals = new Map<string, { total: number; max: number }>();
-    const assignmentsMaxTotal = assignments.reduce((sum, a: any) => sum + (a.maxScore || 0), 0);
-    submissionsByAssignment.flat().forEach(sub => {
-      if (sub.status === 'graded' && typeof sub.grade === 'number') {
-        const prev = assignmentTotals.get(sub.studentId) || { total: 0, max: 0 };
-        assignmentTotals.set(sub.studentId, { total: prev.total + sub.grade, max: prev.max + (assignments.find(a => a.id === sub.assignmentId)?.maxScore || 0) });
+      if (studentIds.length === 0) {
+        setRows([]);
+        return;
       }
-    });
 
-    // Load exams for course
-    const exams = await examService.getExamsByCourse(courseId);
-    // Compute exam totals per student
-    const examTotals = new Map<string, { total: number; max: number }>();
-    const allAttempts = (await Promise.all(exams.map(ex => examAttemptService.getAttemptsByExam(ex.id)))).flat();
+      // Load all data in parallel for better performance
+      const [
+        users,
+        assignments,
+        exams,
+        allOtherGrades,
+        finalDocs
+      ] = await Promise.all([
+        Promise.all(studentIds.map(id => userService.getUserById(id))),
+        assignmentService.getAssignmentsByCourse(courseId),
+        examService.getExamsByCourse(courseId),
+        otherGradeService.getByCourse(courseId),
+        Promise.all(studentIds.map(sid => gradeService.getGradeByStudentAndCourse(courseId, sid)))
+      ]);
 
-    for (const attempt of allAttempts) {
-        if (studentIds.includes(attempt.studentId) && attempt.status === 'graded' && attempt.isGraded) {
-            const ex = exams.find(e => e.id === attempt.examId);
-            if (ex) {
-                const prev = examTotals.get(attempt.studentId) || { total: 0, max: 0 };
-                examTotals.set(attempt.studentId, { total: prev.total + (attempt.score || 0), max: prev.max + (ex.totalPoints || 0) });
-            }
+      // Create user map
+      const studentMap = new Map<string, any>();
+      users.forEach(u => { if (u) studentMap.set(u.id, u); });
+
+      // Load submissions and exam attempts in parallel
+      const [submissionsByAssignment, allAttempts] = await Promise.all([
+        Promise.all(assignments.map(a => submissionService.getSubmissionsByAssignment(a.id))),
+        Promise.all(exams.map(ex => examAttemptService.getAttemptsByExam(ex.id)))
+      ]);
+
+      // Build assignment totals per student
+      const assignmentTotals = new Map<string, { total: number; max: number }>();
+      submissionsByAssignment.flat().forEach(sub => {
+        if (sub.status === 'graded' && typeof sub.grade === 'number') {
+          const prev = assignmentTotals.get(sub.studentId) || { total: 0, max: 0 };
+          const assignment = assignments.find(a => a.id === sub.assignmentId);
+          assignmentTotals.set(sub.studentId, { 
+            total: prev.total + sub.grade, 
+            max: prev.max + (assignment?.maxScore || 0) 
+          });
         }
-    }
+      });
 
-    // Load other grades by student
-    const otherTotals = new Map<string, number>();
-    const allOtherGrades = await otherGradeService.getByCourse(courseId);
-    for (const og of allOtherGrades) {
-      if (studentIds.includes(og.studentId)) {
-        const prev = otherTotals.get(og.studentId) || 0;
-        otherTotals.set(og.studentId, prev + (og.points || 0));
-      }
-    }
+      // Compute exam totals per student
+      const examTotals = new Map<string, { total: number; max: number }>();
+      allAttempts.flat().forEach(attempt => {
+        if (studentIds.includes(attempt.studentId) && attempt.status === 'graded' && attempt.isGraded) {
+          const ex = exams.find(e => e.id === attempt.examId);
+          if (ex) {
+            const prev = examTotals.get(attempt.studentId) || { total: 0, max: 0 };
+            examTotals.set(attempt.studentId, { 
+              total: prev.total + (attempt.score || 0), 
+              max: prev.max + (ex.totalPoints || 0) 
+            });
+          }
+        }
+      });
 
-    // Load final grades docs to determine publication status and letter grade if exists
-    const finalDocs = await Promise.all(studentIds.map(sid => gradeService.getGradeByStudentAndCourse(courseId, sid)));
-    const finalByStudent = new Map<string, any>();
-    finalDocs.forEach(doc => { if (doc) finalByStudent.set(doc.studentId, doc); });
+      // Load other grades by student
+      const otherTotals = new Map<string, number>();
+      allOtherGrades.forEach(og => {
+        if (studentIds.includes(og.studentId)) {
+          const prev = otherTotals.get(og.studentId) || 0;
+          otherTotals.set(og.studentId, prev + (og.points || 0));
+        }
+      });
 
-    const newRows: StudentRow[] = studentIds.map(sid => {
-      const user = studentMap.get(sid);
-      const a = assignmentTotals.get(sid) || { total: 0, max: 0 };
-      const e = examTotals.get(sid) || { total: 0, max: 0 };
-      const o = otherTotals.get(sid) || 0;
+      // Create final grades map
+      const finalByStudent = new Map<string, any>();
+      finalDocs.forEach(doc => { if (doc) finalByStudent.set(doc.studentId, doc); });
 
-      const points = a.total + e.total + o;
-      const max = a.max + e.max;
-      const percent = max > 0 ? Math.round(((a.total + e.total + o) / max) * 100) : 0;
+      const newRows: StudentRow[] = studentIds.map(sid => {
+        const user = studentMap.get(sid);
+        const a = assignmentTotals.get(sid) || { total: 0, max: 0 };
+        const e = examTotals.get(sid) || { total: 0, max: 0 };
+        const o = otherTotals.get(sid) || 0;
 
-      let letter = finalByStudent.get(sid)?.letterGrade || 'F';
-      let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
-      if (!finalByStudent.get(sid)) {
+        const points = a.total + e.total + o;
+        const max = a.max + e.max;
+        const percent = max > 0 ? Math.round(((a.total + e.total + o) / max) * 100) : 0;
+
+        let letter = finalByStudent.get(sid)?.letterGrade || 'F';
+        let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
+        
+        // Always recalculate using current grade ranges for consistency
         const comp = computeLetter(points, max);
-        letter = comp.letter; gradePoints = comp.points;
-      }
+        letter = comp.letter; 
+        gradePoints = comp.points;
 
+        return {
+          studentId: sid,
+          name: user?.displayName || 'Unknown Student',
+          email: user?.email || '',
+          assignmentsTotal: Math.round(a.total),
+          assignmentsMax: a.max,
+          examsTotal: Math.round(e.total),
+          examsMax: e.max,
+          otherTotal: Math.round(o),
+          finalPoints: Math.round(points),
+          percent,
+          letterGrade: letter,
+          gradePoints,
+          isPublished: !!finalByStudent.get(sid)?.isPublished,
+        };
+      });
 
-      return {
-        studentId: sid,
-        name: user?.displayName || 'Unknown Student',
-        email: user?.email || '',
-        assignmentsTotal: Math.round(a.total),
-        assignmentsMax: a.max,
-        examsTotal: Math.round(e.total),
-        examsMax: e.max,
-        otherTotal: Math.round(o),
-        finalPoints: Math.round(points),
-        percent,
-        letterGrade: letter,
-        gradePoints,
-        isPublished: !!finalByStudent.get(sid)?.isPublished,
-      };
-    });
-
-    setRows(newRows);
+      setRows(newRows);
+    } catch (error) {
+      console.error('Error loading course grades:', error);
+      setRows([]);
+    }
   };
 
   const recalcAll = async () => {
@@ -209,7 +230,6 @@ export default function AdminCourseGrades() {
       toast.success('Final grades recalculated');
       await loadRows();
     } catch (e) {
-      console.error(e);
       toast.error('Failed to recalculate');
     } finally {
       setRecalcLoading(false);
@@ -223,7 +243,6 @@ export default function AdminCourseGrades() {
       toast.success('Grades published for this course');
       await loadRows();
     } catch (e) {
-      console.error(e);
       toast.error('Failed to publish');
     }
   };

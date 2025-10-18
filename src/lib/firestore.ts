@@ -800,7 +800,6 @@ export const submissionService = {
   },
 
   async createSubmission(submissionData: Omit<FirestoreSubmission, 'id' | 'submittedAt'>): Promise<string> {
-    console.log('Received submission data in createSubmission:', submissionData);
     const now = Timestamp.now();
     const docRef = await addDoc(collections.submissions(), {
       ...submissionData,
@@ -934,8 +933,29 @@ export const blogService = {
   },
 
   async deleteBlogPost(blogId: string): Promise<void> {
-    const docRef = doc(db, 'blogs', blogId);
-    await deleteDoc(docRef);
+    // First get the blog to check for image
+    const blogRef = doc(db, 'blogs', blogId);
+    const blogSnap = await getDoc(blogRef);
+    
+    if (blogSnap.exists()) {
+      const blog = blogSnap.data() as FirestoreBlog;
+      
+      // Delete the document
+      await deleteDoc(blogRef);
+      
+      // Delete associated image from Hygraph
+      if (blog.imageUrl) {
+        try {
+          const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
+          await deleteHygraphAsset(blog.imageUrl);
+        } catch (error) {
+          console.error('Failed to delete blog image:', error);
+        }
+      }
+    } else {
+      // Just delete the document if it exists
+      await deleteDoc(blogRef);
+    }
   },
 };
 
@@ -1136,7 +1156,6 @@ export const assignmentService = {
       return { id: doc.id, ...normalized } as FirestoreAssignment;
     });
     return list
-      .filter(assignment => assignment.isActive !== false) // Client-side filter for isActive
       .sort((a, b) => a.dueDate.toDate().getTime() - b.dueDate.toDate().getTime());
   },
   
@@ -1158,8 +1177,7 @@ export const assignmentService = {
     const docRef = doc(db, 'assignments', assignmentId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const assignment = { id: docSnap.id, ...docSnap.data() } as FirestoreAssignment;
-      return assignment.isActive ? assignment : null;
+      return { id: docSnap.id, ...docSnap.data() } as FirestoreAssignment;
     }
     return null;
   },
@@ -1179,7 +1197,6 @@ export const assignmentService = {
       return { id: doc.id, ...normalized } as FirestoreAssignment;
     });
     return list
-      .filter(assignment => assignment.isActive !== false) // Client-side filter for isActive
       .sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
   },
 
@@ -1196,11 +1213,26 @@ export const assignmentService = {
   },
 
   async deleteAssignment(assignmentId: string): Promise<void> {
+    // First get the assignment to check for attachments
+    const assignment = await this.getAssignmentById(assignmentId);
+    
+    // Delete the document
     const docRef = doc(db, 'assignments', assignmentId);
-    await updateDoc(docRef, {
-      isActive: false,
-      updatedAt: Timestamp.now()
-    });
+    await deleteDoc(docRef);
+    
+    // Delete associated files from Hygraph
+    if (assignment?.attachments) {
+      const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
+      for (const attachment of assignment.attachments) {
+        if (attachment.type === 'file' && attachment.url) {
+          try {
+            await deleteHygraphAsset(attachment.url);
+          } catch (error) {
+            console.error('Failed to delete attachment file:', error);
+          }
+        }
+      }
+    }
   },
 };
 
@@ -1226,8 +1258,7 @@ export const courseMaterialService = {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial))
-      .filter(material => material.isActive !== false); // Client-side filter for isActive
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCourseMaterial));
   },
 
   async updateCourseMaterial(materialId: string, updates: Partial<FirestoreCourseMaterial>): Promise<void> {
@@ -1239,11 +1270,29 @@ export const courseMaterialService = {
   },
 
   async deleteCourseMaterial(materialId: string): Promise<void> {
-    const docRef = doc(db, 'courseMaterials', materialId);
-    await updateDoc(docRef, {
-      isActive: false,
-      updatedAt: Timestamp.now()
-    });
+    // First get the material to check for files
+    const materialRef = doc(db, 'courseMaterials', materialId);
+    const materialSnap = await getDoc(materialRef);
+    
+    if (materialSnap.exists()) {
+      const material = materialSnap.data() as FirestoreCourseMaterial;
+      
+      // Delete the document
+      await deleteDoc(materialRef);
+      
+      // Delete associated file from Hygraph
+      if (material.fileUrl) {
+        try {
+          const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
+          await deleteHygraphAsset(material.fileUrl);
+        } catch (error) {
+          console.error('Failed to delete course material file:', error);
+        }
+      }
+    } else {
+      // Just delete the document if it exists
+      await deleteDoc(materialRef);
+    }
   },
 
   async getMaterialsByTeacher(teacherId: string): Promise<FirestoreCourseMaterial[]> {
@@ -1505,6 +1554,26 @@ export const activityLogService = {
     const recent = snapshot.docs.map(d => d.data()).filter((d: any) => d.createdAt.toDate() >= since);
     return new Set(recent.map((d: any) => d.dateKey)).size;
   },
+  async cleanupOldLogs(): Promise<number> {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const cutoffTimestamp = Timestamp.fromDate(oneWeekAgo);
+    
+    const q = query(
+      collection(db, 'activity_logs'),
+      where('createdAt', '<', cutoffTimestamp)
+    );
+    
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    return snapshot.docs.length;
+  },
 };
 
 // Event operations
@@ -1526,8 +1595,7 @@ export const eventService = {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent))
-      .filter(event => event.isActive !== false); // Filter out soft-deleted events
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));
   },
 
   async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
@@ -1544,9 +1612,7 @@ export const eventService = {
 
   async deleteEvent(eventId: string): Promise<void> {
     const docRef = doc(db, 'events', eventId);
-    await updateDoc(docRef, {
-      isActive: false
-    });
+    await deleteDoc(docRef);
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.delete', targetType: 'event', targetId: eventId }); } catch {}
   },
 };
@@ -2068,13 +2134,11 @@ export const studentDataService = {
     const cacheKey = `assignments_${studentId}`;
     const cached = getCachedData(cacheKey);
     if (cached) {
-      console.log('Using cached assignments data for student:', studentId);
       return cached;
     }
 
     try {
       const enrollments = await this.getEnrollmentsWithCourses(studentId);
-      console.log('Enrollments for student:', studentId, enrollments.map(e => ({ courseId: e.courseId, courseTitle: e.course?.title, isActive: e.course?.isActive })));
       
       const courseIds = enrollments.map(e => e.courseId);
       
@@ -2086,7 +2150,6 @@ export const studentDataService = {
         submissionService.getSubmissionsByStudent(studentId)
       ]);
       
-      console.log('Assignments loaded for student:', studentId, assignments.map(a => ({ id: a.id, title: a.title, courseId: a.courseId })));
 
       // Create a map of submissions by assignment ID
       const submissionMap = new Map();
@@ -2197,10 +2260,8 @@ export const studentDataService = {
   // Clear cache for a specific student (useful when data changes)
   clearStudentCache(studentId: string) {
     const keys = [`dashboard_${studentId}`, `courses_${studentId}`, `assignments_${studentId}`, `submissions_${studentId}`];
-    console.log('Clearing cache for student:', studentId, 'keys:', keys);
     keys.forEach(key => {
-      const deleted = studentDataCache.delete(key);
-      console.log(`Cache key ${key} deleted:`, deleted);
+      studentDataCache.delete(key);
     });
   }
 };

@@ -89,7 +89,32 @@ export class ContentController {
       });
     }
   }
-  async listBlog(req: AuthenticatedRequest, res: Response) {
+
+  async deleteAsset(req: Request, res: Response): Promise<void> {
+    try {
+      const { assetId } = req.body;
+      if (!assetId) {
+        res.status(400).json({ success: false, message: 'Asset ID is required' });
+        return;
+      }
+
+      const result = await hygraphService.deleteAsset(assetId);
+      
+      if (result) {
+        res.status(200).json({ success: true, message: 'Asset deleted successfully' });
+      } else {
+        res.status(404).json({ success: false, message: 'Asset not found or could not be deleted' });
+      }
+    } catch (error) {
+      console.error('Delete asset error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'An error occurred while deleting the asset' 
+      });
+    }
+  }
+
+  async listBlog(req: AuthenticatedRequest, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;

@@ -119,14 +119,23 @@ class ApiClient {
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
+      credentials: 'same-origin',
       ...options,
     };
 
     try {
       const response = await fetch(url, config);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response format');
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {
@@ -135,8 +144,8 @@ class ApiClient {
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      // Don't log sensitive information
+      throw error instanceof Error ? error : new Error('Request failed');
     }
   }
 

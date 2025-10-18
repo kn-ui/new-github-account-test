@@ -93,7 +93,7 @@ export default function StudentAssignments() {
   useEffect(() => {
     // Load resources when assignment is selected
     if (selectedAssignment) {
-      loadAssignmentResources(selectedAssignment.courseId);
+      loadAssignmentResources(selectedAssignment.id, selectedAssignment.courseId);
     }
   }, [selectedAssignment]);
 
@@ -103,18 +103,31 @@ export default function StudentAssignments() {
     setSelectedFile(null);
   }, [selectedAssignment]);
 
-  const loadAssignmentResources = async (courseId: string) => {
+  const loadAssignmentResources = async (assignmentId: string, courseId: string) => {
     try {
-      // For now, we'll show course materials related to assignments
-      // In a real system, you might have assignment-specific resources
+      // Prefer assignment-specific attachments first; otherwise fall back to course materials tagged for this assignment
+      const attachments = (selectedAssignment as any)?.attachments as Array<{ type: 'file' | 'link'; url: string; title?: string }> | undefined;
+      if (attachments && attachments.length > 0) {
+        setAssignmentResources(attachments.map((att, idx) => ({
+          id: `${assignmentId}-${idx}`,
+          title: att.title || (att.type === 'file' ? 'Attachment' : 'Link'),
+          description: '',
+          type: att.type === 'file' ? 'document' : 'link',
+          fileUrl: att.type === 'file' ? att.url : undefined,
+          externalLink: att.type === 'link' ? att.url : undefined,
+        })));
+        return;
+      }
+
+      // Fallback: fetch course materials and filter by explicit assignmentId tag if present
       const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
-      // Filter materials that might be related to assignments (you can customize this logic)
-      const assignmentRelated = materials.filter(material => 
-        material.title.toLowerCase().includes('assignment') ||
-        material.description.toLowerCase().includes('assignment') ||
-        material.type === 'document'
-      );
-      setAssignmentResources(assignmentRelated);
+      const related = materials.filter((material: any) => {
+        // Optional tagging support: material.assignmentId or material.tags includes assignmentId
+        if (material.assignmentId && material.assignmentId === assignmentId) return true;
+        if (Array.isArray(material.tags) && material.tags.includes(assignmentId)) return true;
+        return false;
+      });
+      setAssignmentResources(related);
     } catch (error) {
       console.error('Error loading assignment resources:', error);
       setAssignmentResources([]);

@@ -4,11 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, userService, settingsService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { 
   Award, 
@@ -93,7 +91,6 @@ export default function AdminStudentGrades() {
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
   const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
-  const [gradeRangesDialogOpen, setGradeRangesDialogOpen] = useState(false);
   const [gradeRanges, setGradeRanges] = useState<any>({});
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -813,19 +810,7 @@ export default function AdminStudentGrades() {
                 Other Grades
               </Button>
             </div>
-            {/* Publish controls */}
-            <div className="ml-auto flex items-center gap-2">
-              <Label>Publish Final Grades:</Label>
-              <Select value={selectedCourseForGrade} onValueChange={setSelectedCourseForGrade}>
-                <SelectTrigger className="w-64"><SelectValue placeholder="Select course" /></SelectTrigger>
-                <SelectContent>
-                  {courses.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button disabled={!selectedCourseForGrade || isPublishing} onClick={async ()=>{ if (!selectedCourseForGrade) return; setIsPublishing(true); try { await gradeService.publishCourseGrades(selectedCourseForGrade); toast.success('Grades published for this course'); await refreshFinalGrades(); } catch { toast.error('Failed to publish'); } finally { setIsPublishing(false);} }}>Publish Course</Button>
-            </div>
+            {/* Publish controls removed per requirements */}
           </div>
         </div>
 
@@ -855,9 +840,7 @@ export default function AdminStudentGrades() {
                 </div>
               </CardContent>
             </Card>
-            <div className="lg:col-span-3 flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setGradeRangesDialogOpen(true)}>Configure Grade Ranges</Button>
-            </div>
+            {/* Configure Grade Ranges button removed per requirements */}
           </div>
         )}
 
@@ -1352,41 +1335,7 @@ export default function AdminStudentGrades() {
             )}
           </div>
         </div>
-
-
-    {/* Grade Ranges Dialog */}
-    <Dialog open={gradeRangesDialogOpen} onOpenChange={setGradeRangesDialogOpen}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Configure Letter Grade Ranges</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            {Object.entries(gradeRanges).map(([letter, range]) => (
-              <div key={letter} className="flex items-center gap-4 p-3 border rounded-lg">
-                <div className="w-12 text-center font-semibold">{letter}</div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Min:</Label>
-                  <Input type="number" min={0} max={100} value={range.min} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, min: parseInt(e.target.value) || 0 } }))} className="w-20" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Max:</Label>
-                  <Input type="number" min={0} max={100} value={range.max} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, max: parseInt(e.target.value) || 0 } }))} className="w-20" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Points:</Label>
-                  <Input type="number" step="0.1" min={0} max={4} value={range.points} onChange={(e) => setGradeRanges(prev => ({ ...prev, [letter]: { ...prev[letter as keyof typeof prev] as any, points: parseFloat(e.target.value) || 0 } }))} className="w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setGradeRangesDialogOpen(false)}>Cancel</Button>
-          <Button onClick={async () => { try { await settingsService.setGradeRanges(gradeRanges); toast.success('Grade ranges updated'); } catch { toast.error('Failed to save grade ranges'); } finally { setGradeRangesDialogOpen(false); } }}>Save Ranges</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    {/* Grade Ranges configuration dialog removed per requirements */}
     </div>
   );
 }

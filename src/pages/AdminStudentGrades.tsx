@@ -503,25 +503,19 @@ export default function AdminStudentGrades() {
       const courseOtherGrades = otherGrades.filter(g => g.courseId === courseId && g.studentId === student.id);
       const otherPoints = courseOtherGrades.reduce((sum, g) => sum + (g.points || 0), 0);
 
-      // Calculate final grade: (assignments + exams + other grades) out of 100
-      // Other grades are treated as bonus points since they don't have max scores
+      const totalEarnedPoints = assignmentPoints + examPoints + otherPoints;
+      const totalPossiblePoints = assignmentMax + examMax;
+
       let finalNumeric = 0;
-      
-      if (assignmentMax > 0 || examMax > 0) {
-        // Calculate base percentage from assignments and exams
-        const totalEarnedPoints = assignmentPoints + examPoints;
-        const totalPossiblePoints = assignmentMax + examMax;
-        const basePercentage = totalPossiblePoints > 0 ? (totalEarnedPoints / totalPossiblePoints) * 100 : 0;
-        
-        // Add other grades as bonus points and cap at 100%
-        finalNumeric = Math.round(Math.min(100, Math.max(0, basePercentage + otherPoints)));
+      if (totalPossiblePoints > 0) {
+        finalNumeric = (totalEarnedPoints / totalPossiblePoints) * 100;
       } else if (otherPoints > 0) {
-        // If no assignments or exams, just use other points (clamped to 100)
-        finalNumeric = Math.round(Math.min(100, Math.max(0, otherPoints)));
-      } else {
-        // No grades at all
-        finalNumeric = 0;
+        // If no assignments or exams, just use other points. Assume they are out of 100.
+        finalNumeric = otherPoints;
       }
+      
+      // Clamp the final grade between 0 and 100
+      finalNumeric = Math.round(Math.max(0, Math.min(100, finalNumeric)));
 
       const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalNumeric);
 
@@ -546,12 +540,16 @@ export default function AdminStudentGrades() {
 
       if (existing) {
         await gradeService.updateGrade(existing.id, gradeData);
+        toast.success(`Final grade for course has been updated.`);
+        await refreshFinalGrades();
       } else {
         await gradeService.createGrade({
           courseId: courseId,
           studentId: student.id!,
           ...gradeData
         } as any);
+        toast.success(`Final grade for course has been created.`);
+        await refreshFinalGrades();
       }
     } catch (error) {
       console.error(`Error calculating final grade for course ${courseId}:`, error);
@@ -1274,7 +1272,6 @@ export default function AdminStudentGrades() {
                                     <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
@@ -1299,7 +1296,6 @@ export default function AdminStudentGrades() {
                                             {grade.letterGrade}
                                           </Badge>
                                         </td>
-                                        <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
                                         <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
                                           {grade.calculationMethod.replace('_', ' ')}
                                         </td>
@@ -1312,7 +1308,9 @@ export default function AdminStudentGrades() {
                                           {grade.calculatedAt.toDate().toLocaleDateString()}
                                         </td>
                                         <td className="py-3 px-4 text-right">
-                                          <span className="text-sm text-gray-500">Auto-calculated</span>
+                                          <Button variant="outline" size="sm" onClick={() => calculateFinalGradeForCourse(grade.courseId)}>
+                                            Recalculate
+                                          </Button>
                                         </td>
                                       </tr>
                                     );

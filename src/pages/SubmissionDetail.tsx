@@ -235,7 +235,17 @@ export default function SubmissionDetail() {
                         <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {attachment}
+                            {(() => {
+                              try {
+                                const url = new URL(attachment);
+                                const path = url.pathname.split('/').filter(Boolean);
+                                const last = path[path.length - 1] || '';
+                                return decodeURIComponent(last) || `Attachment ${idx + 1}`;
+                              } catch {
+                                const parts = attachment.split('?')[0].split('#')[0].split('/');
+                                return decodeURIComponent(parts[parts.length - 1] || '') || `Attachment ${idx + 1}`;
+                              }
+                            })()}
                           </p>
                           <p className="text-xs text-gray-500">Attachment {idx + 1}</p>
                         </div>

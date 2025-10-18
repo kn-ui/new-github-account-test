@@ -66,6 +66,8 @@ import TeacherAttendance from "./pages/TeacherAttendance";
 import AdminAttendance from "./pages/AdminAttendance";
 import AdminAttendanceDetails from "./pages/AdminAttendanceDetails";
 import ManageAdmins from "./pages/ManageAdmins";
+import AdminGrades from "./pages/AdminGrades";
+import AdminCourseGrades from "./pages/AdminCourseGrades";
 
 // import Catalog from "./pages/Catalog";
 
@@ -229,6 +231,26 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminAttendance />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-grades" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminGrades />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-grades/course/:courseId" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AdminCourseGrades />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

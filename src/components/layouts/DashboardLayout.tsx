@@ -75,6 +75,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: 'Attendance', href: '/dashboard/admin-attendance', icon: ClipboardList },
+          { label: 'Grades', href: '/dashboard/admin-grades', icon: Award },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
           { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },

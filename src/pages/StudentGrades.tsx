@@ -86,7 +86,7 @@ export default function StudentGrades() {
       
       // Get student's enrollments
       const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
-      const courseIds = enrollments.map(enrollment => enrollment.courseId);
+      const courseIds = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
       
       if (courseIds.length === 0) {
         setGrades([]);
@@ -102,13 +102,14 @@ export default function StudentGrades() {
       );
       const validCourses = coursesData.filter(c => c !== null);
       setCourses(validCourses);
+      const courseMap = new Map(validCourses.map((c: any) => [c.id, c]));
 
 
       // Get all assignments for enrolled courses
       const assignmentsPromises = courseIds.map(async (courseId) => {
         try {
           const courseAssignments = await assignmentService.getAssignmentsByCourse(courseId);
-          const course = await courseService.getCourseById(courseId);
+          const course = courseMap.get(courseId);
           return courseAssignments.map(assignment => ({
             ...assignment,
             courseTitle: course?.title || 'Unknown Course',
@@ -159,7 +160,7 @@ export default function StudentGrades() {
       const examGradesPromises = courseIds.map(async (courseId) => {
         try {
           const courseExams = await examService.getExamsByCourse(courseId);
-          const course = await courseService.getCourseById(courseId);
+          const course = courseMap.get(courseId);
           
           const examAttemptsPromises = courseExams.map(async (exam) => {
             try {
@@ -234,13 +235,7 @@ export default function StudentGrades() {
         const otherPromises = courseIds.map((cid) => otherGradeService.getByStudentInCourse(cid, currentUser!.uid));
         const otherArrays = await Promise.all(otherPromises);
         const allOtherGrades = otherArrays.flat();
-        const uniqueOtherGrades = Object.values(allOtherGrades.reduce((acc, og) => {
-          const key = `${og.courseId}-${og.reason}`;
-          if (!acc[key] || acc[key].createdAt.toDate() < og.createdAt.toDate()) {
-            acc[key] = og;
-          }
-          return acc;
-        }, {} as Record<string, FirestoreOtherGrade>));
+        const uniqueOtherGrades = Array.from(new Map(allOtherGrades.map(og => [og.id, og])).values());
         setOtherGrades(uniqueOtherGrades);
       } catch (e) {
         console.error('Error loading other grades:', e);

@@ -472,15 +472,20 @@ export default function AdminStudentGrades() {
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades]);
 
-  const calculateLetterGradeWithRanges = (finalGrade: number): { letterGrade: string; gradePoints: number } => {
+  const calculateLetterGradeWithRanges = (points: number, max: number): { letterGrade: string; gradePoints: number } => {
+    const percent = max > 0 ? Math.round((points / max) * 100) : 0;
+
+    // Sort ranges by minimum percentage in descending order to find the best match
     const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+    
     for (const [letter, range] of sortedRanges) {
       const r = range as any;
-      if (finalGrade >= r.min) {
-        return { letterGrade: letter, gradePoints: r.points };
+      if (percent >= r.min) {
+        return { letter, points: r.points };
       }
     }
-    return { letterGrade: 'F', gradePoints: 0.0 };
+
+    return { letter: 'F', points: 0.0 };
   };
 
   const refreshFinalGrades = async () => {
@@ -514,12 +519,8 @@ export default function AdminStudentGrades() {
       const finalGradeInPoints = assignmentPoints + examPoints + otherPoints;
 
       const totalPossiblePoints = assignmentMax + examMax;
-      let finalGradeInPercentage = 0;
-      if (totalPossiblePoints > 0) {
-        finalGradeInPercentage = Math.round(((assignmentPoints + examPoints + otherPoints) / totalPossiblePoints) * 100);
-      }
 
-      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalGradeInPercentage);
+      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints);
 
       // Check if grade already exists
       const existing = await gradeService.getGradeByStudentAndCourse(courseId, student.id!);
@@ -1272,13 +1273,12 @@ export default function AdminStudentGrades() {
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
-                                    <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
                                     // Use the configured grade ranges instead of hardcoded values
-                                    const { letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade);
+                                    const { letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, grade.assignmentsMax + grade.examsMax);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
@@ -1303,11 +1303,6 @@ export default function AdminStudentGrades() {
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 text-sm">
                                           {grade.calculatedAt.toDate().toLocaleDateString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
-                                          <Button variant="outline" size="sm" onClick={() => calculateFinalGradeForCourse(grade.courseId)}>
-                                            Recalculate
-                                          </Button>
                                         </td>
                                       </tr>
                                     );

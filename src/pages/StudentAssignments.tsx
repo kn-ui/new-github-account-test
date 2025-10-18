@@ -105,29 +105,47 @@ export default function StudentAssignments() {
 
   const loadAssignmentResources = async (assignmentId: string, courseId: string) => {
     try {
-      // Prefer assignment-specific attachments first; otherwise fall back to course materials tagged for this assignment
-      const attachments = (selectedAssignment as any)?.attachments as Array<{ type: 'file' | 'link'; url: string; title?: string }> | undefined;
-      if (attachments && attachments.length > 0) {
-        setAssignmentResources(attachments.map((att, idx) => ({
-          id: `${assignmentId}-${idx}`,
-          title: att.title || (att.type === 'file' ? 'Attachment' : 'Link'),
-          description: '',
+      let resources: any[] = [];
+
+      // First, check for assignment-specific attachments
+      if (selectedAssignment?.attachments && Array.isArray(selectedAssignment.attachments) && selectedAssignment.attachments.length > 0) {
+        resources = selectedAssignment.attachments.map((att: any, idx: number) => ({
+          id: `${assignmentId}-attachment-${idx}`,
+          title: att.title || (att.type === 'file' ? `Attachment ${idx + 1}` : `Link ${idx + 1}`),
+          description: att.description || '',
           type: att.type === 'file' ? 'document' : 'link',
           fileUrl: att.type === 'file' ? att.url : undefined,
           externalLink: att.type === 'link' ? att.url : undefined,
-        })));
-        return;
+        }));
       }
 
-      // Fallback: fetch course materials and filter by explicit assignmentId tag if present
+      // Also fetch course materials that might be related to this assignment
       const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
-      const related = materials.filter((material: any) => {
-        // Optional tagging support: material.assignmentId or material.tags includes assignmentId
+      const relatedMaterials = materials.filter((material: any) => {
+        // Check if material is tagged for this assignment
         if (material.assignmentId && material.assignmentId === assignmentId) return true;
         if (Array.isArray(material.tags) && material.tags.includes(assignmentId)) return true;
+        // Check if assignment title is mentioned in material title or description
+        if (selectedAssignment && (
+          material.title.toLowerCase().includes(selectedAssignment.title.toLowerCase()) ||
+          material.description.toLowerCase().includes(selectedAssignment.title.toLowerCase())
+        )) return true;
         return false;
       });
-      setAssignmentResources(related);
+
+      // Add related course materials to resources
+      const materialResources = relatedMaterials.map((material: any) => ({
+        id: material.id,
+        title: material.title,
+        description: material.description || '',
+        type: material.type,
+        fileUrl: material.fileUrl,
+        externalLink: material.externalLink,
+      }));
+
+      // Combine all resources
+      const allResources = [...resources, ...materialResources];
+      setAssignmentResources(allResources);
     } catch (error) {
       console.error('Error loading assignment resources:', error);
       setAssignmentResources([]);
@@ -299,7 +317,6 @@ export default function StudentAssignments() {
         updatedAt: new Date()
       };
 
-      console.log('Submitting submission data:', submissionData);
 
       // Save to database
       await submissionService.createSubmission(submissionData);

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
+import { toEthiopianDate } from '@/lib/ethiopianCalendar';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface GradeWithDetails {
@@ -426,10 +427,14 @@ export default function AdminStudentGrades() {
 
   // GPA Calculations (Semester, Yearly, Cumulative)
   const gpaStats = useMemo(() => {
-    // Helper to get semester (1 for Jan-Jun, 2 for Jul-Dec)
-    const getSemester = (date: Date) => {
-      const m = date.getMonth() + 1;
-      return m <= 6 ? 1 : 2;
+    // Helper to get semester based on Ethiopian calendar
+    const getSemester = (ethiopianMonth: number) => {
+      if (ethiopianMonth >= 1 && ethiopianMonth <= 5) {
+        return 1; // Semester 1
+      } else if (ethiopianMonth >= 6 && ethiopianMonth <= 12) {
+        return 2; // Semester 2
+      }
+      return null; // Pagume is not in a semester
     };
 
     const byYear: Record<string, { semesters: Record<number, { totalPoints: number; count: number }>; totalPoints: number; count: number }>
@@ -437,15 +442,19 @@ export default function AdminStudentGrades() {
 
     finalGrades.forEach((g) => {
       const d = g.calculatedAt.toDate();
-      const year = d.getFullYear().toString();
-      const sem = getSemester(d);
-      if (!byYear[year]) {
-        byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
+      const ethiopianDate = toEthiopianDate(d);
+      const year = ethiopianDate.year.toString();
+      const sem = getSemester(ethiopianDate.month);
+
+      if (sem) {
+        if (!byYear[year]) {
+          byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
+        }
+        byYear[year].semesters[sem].totalPoints += g.gradePoints;
+        byYear[year].semesters[sem].count += 1;
+        byYear[year].totalPoints += g.gradePoints;
+        byYear[year].count += 1;
       }
-      byYear[year].semesters[sem].totalPoints += g.gradePoints;
-      byYear[year].semesters[sem].count += 1;
-      byYear[year].totalPoints += g.gradePoints;
-      byYear[year].count += 1;
     });
 
     const byYearGPA: Record<string, { semester1GPA: number; semester2GPA: number; yearlyGPA: number }> = {};
@@ -503,27 +512,21 @@ export default function AdminStudentGrades() {
       const courseOtherGrades = otherGrades.filter(g => g.courseId === courseId && g.studentId === student.id);
       const otherPoints = courseOtherGrades.reduce((sum, g) => sum + (g.points || 0), 0);
 
-      const totalEarnedPoints = assignmentPoints + examPoints + otherPoints;
+      const finalGradeInPoints = assignmentPoints + examPoints + otherPoints;
+
       const totalPossiblePoints = assignmentMax + examMax;
-
-      let finalNumeric = 0;
+      let finalGradeInPercentage = 0;
       if (totalPossiblePoints > 0) {
-        finalNumeric = (totalEarnedPoints / totalPossiblePoints) * 100;
-      } else if (otherPoints > 0) {
-        // If no assignments or exams, just use other points. Assume they are out of 100.
-        finalNumeric = otherPoints;
+        finalGradeInPercentage = Math.round(((assignmentPoints + examPoints) / totalPossiblePoints) * 100);
       }
-      
-      // Clamp the final grade between 0 and 100
-      finalNumeric = Math.round(Math.max(0, Math.min(100, finalNumeric)));
 
-      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalNumeric);
+      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalGradeInPercentage);
 
       // Check if grade already exists
       const existing = await gradeService.getGradeByStudentAndCourse(courseId, student.id!);
       
       const gradeData = {
-        finalGrade: finalNumeric,
+        finalGrade: finalGradeInPoints,
         letterGrade,
         gradePoints,
         calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
@@ -889,7 +892,7 @@ export default function AdminStudentGrades() {
                 {gradeType === 'courses' ? 'Average Final Grade' : gradeType === 'exams' ? 'Average Exam Grade' : 'Average Assignment Grade'}
               </span>
             </div>
-            <p className="text-3xl font-bold text-blue-900">{stats.averageGrade}%</p>
+            <p className="text-3xl font-bold text-blue-900">{stats.averageGrade}</p>
           </div>
           
           <div className="bg-green-50 rounded-xl p-6 border border-green-100">
@@ -1216,6 +1219,15 @@ export default function AdminStudentGrades() {
                                             </tr>
                                           ))}
                                         </tbody>
+                                        <tfoot>
+                                          <tr className="bg-gray-50 font-semibold">
+                                            <td className="py-3 px-4 text-gray-800">Total</td>
+                                            <td className="py-3 px-4 text-center">
+                                              +{entries.reduce((sum, og) => sum + (og.points || 0), 0)}
+                                            </td>
+                                            <td></td>
+                                          </tr>
+                                        </tfoot>
                                       </table>
                                     </div>
                                   </div>
@@ -1287,8 +1299,8 @@ export default function AdminStudentGrades() {
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
                                         <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
                                         <td className="py-3 px-4 text-center">
-                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, 100)}`}>
-                                            {grade.finalGrade}%
+                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, grade.assignmentsMax + grade.examsMax)}`}>
+                                            {grade.finalGrade}
                                           </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">

@@ -142,12 +142,10 @@ export default function AdminCourseGrades() {
       const max = (a.max || assignmentsMaxTotal) + e.max;
       const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
 
-      let letter = finalByStudent.get(sid)?.letterGrade || 'F';
-      let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
-      if (!finalByStudent.get(sid)) {
-        const comp = computeLetter(percent);
-        letter = comp.letter; gradePoints = comp.points;
-      }
+      // Always compute letter and points from configured grade ranges
+      const comp = computeLetter(percent);
+      const letter = comp.letter;
+      const gradePoints = comp.points;
 
       return {
         studentId: sid,

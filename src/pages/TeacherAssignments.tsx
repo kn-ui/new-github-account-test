@@ -108,10 +108,20 @@ export default function TeacherAssignments() {
     }
 
     try {
-      const dueDate = new Date(formData.dueDate || new Date().toISOString().slice(0,10));
+      // Parse due date in local time to avoid UTC off-by-one issues when Ethiopian calendar is used
+      const [yearStr, monthStr, dayStr] = (formData.dueDate || new Date().toISOString().slice(0,10)).split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10) - 1; // JS Date months are 0-based
+      const day = parseInt(dayStr, 10);
+      const dueDate = new Date(year, month, day);
       if (formData.dueTime) {
         const [hh, mm] = formData.dueTime.split(':');
-        if (!isNaN(parseInt(hh)) && !isNaN(parseInt(mm))) dueDate.setHours(parseInt(hh), parseInt(mm), 0, 0);
+        const hours = parseInt(hh, 10);
+        const minutes = parseInt(mm, 10);
+        if (!isNaN(hours) && !isNaN(minutes)) dueDate.setHours(hours, minutes, 0, 0);
+      } else {
+        // Set to end of day local time if no time specified
+        dueDate.setHours(23, 59, 59, 999);
       }
 
       const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
@@ -172,12 +182,13 @@ export default function TeacherAssignments() {
 
 
   const handleEdit = (assignment: FirestoreAssignment) => {
-    setEditingAssignment(assignment);
+      setEditingAssignment(assignment);
     setFormData({
       title: assignment.title,
       description: assignment.description,
       courseId: assignment.courseId,
-      dueDate: assignment.dueDate.toDate().toISOString().split('T')[0],
+      // Preserve the calendar-selected local date without unintended TZ shifts
+      dueDate: (() => { const d = assignment.dueDate.toDate(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
       dueTime: '',
       maxScore: assignment.maxScore,
       instructions: assignment.instructions || '',

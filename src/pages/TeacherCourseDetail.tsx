@@ -12,6 +12,7 @@ import {
   examAttemptService,
   gradeService,
   otherGradeService,
+  settingsService,
   FirestoreCourse,
   FirestoreEnrollment,
   FirestoreAssignment,
@@ -22,6 +23,7 @@ import {
   FirestoreOtherGrade,
   studentDataService,
 } from '@/lib/firestore';
+import { calculateLetterGrade } from '@/lib/gradeUtils';
 import DashboardHero from '@/components/DashboardHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +132,11 @@ export default function TeacherCourseDetail() {
           const others = await otherGradeService.getByCourse(courseId);
           setOtherGrades(others);
         } catch {}
+        // Load grade ranges for consistent letter computation
+        try {
+          const ranges = await settingsService.getGradeRanges();
+          setGradeRanges(ranges);
+        } catch {}
         
         // Check lock status for all exams
         exs.forEach(exam => {
@@ -206,6 +213,7 @@ export default function TeacherCourseDetail() {
   const [examGrades, setExamGrades] = useState<any[]>([]);
   const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
   const [gradeViewMode, setGradeViewMode] = useState<'assignments' | 'final' | 'exams' | 'others'>('assignments');
+  const [gradeRanges, setGradeRanges] = useState<any>({});
   const [otherGradeDialogOpen, setOtherGradeDialogOpen] = useState(false);
   const [otherGradeTargetStudentId, setOtherGradeTargetStudentId] = useState<string | null>(null);
   const [otherGradeEditing, setOtherGradeEditing] = useState<FirestoreOtherGrade | null>(null);
@@ -818,20 +826,25 @@ export default function TeacherCourseDetail() {
                                 case 'grade-asc': return a.finalGrade - b.finalGrade;
                               }
                             })
-                            .map(g => (
-                            <tr key={g.id}>
-                              <td className="px-4 py-2">{studentNames[g.studentId] || g.studentId}</td>
-                              <td className="px-4 py-2 font-semibold">{g.finalGrade}</td>
-                              <td className="px-4 py-2">
-                                <Badge variant={g.letterGrade.startsWith('A') ? 'default' : g.letterGrade.startsWith('B') ? 'secondary' : g.letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
-                                  {g.letterGrade}
-                                </Badge>
-                              </td>
-                              <td className="px-4 py-2 capitalize text-xs">{g.calculationMethod.replace('_', ' ')}</td>
-                              <td className="px-4 py-2">{g.calculatedAt.toDate().toLocaleString()}</td>
-                              <td className="px-4 py-2 text-right"></td>
-                            </tr>
-                          ))}
+                            .map(g => {
+                              const totalMax = ((g as any).assignmentsMax || 0) + ((g as any).examsMax || 0);
+                              const comp = calculateLetterGrade(g.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
+                              const letterToShow = comp.letter || g.letterGrade;
+                              return (
+                                <tr key={g.id}>
+                                  <td className="px-4 py-2">{studentNames[g.studentId] || g.studentId}</td>
+                                  <td className="px-4 py-2 font-semibold">{g.finalGrade}</td>
+                                  <td className="px-4 py-2">
+                                    <Badge variant={letterToShow.startsWith('A') ? 'default' : letterToShow.startsWith('B') ? 'secondary' : letterToShow.startsWith('C') ? 'outline' : 'destructive'}>
+                                      {letterToShow}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-2 capitalize text-xs">{g.calculationMethod.replace('_', ' ')}</td>
+                                  <td className="px-4 py-2">{g.calculatedAt.toDate().toLocaleString()}</td>
+                                  <td className="px-4 py-2 text-right"></td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     </div>

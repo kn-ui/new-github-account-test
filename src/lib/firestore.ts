@@ -1151,6 +1151,8 @@ export const assignmentService = {
     const docRef = await addDoc(collections.assignments(), {
       ...assignmentData,
       dueDate: (assignmentData as any).dueDate instanceof Date ? Timestamp.fromDate((assignmentData as any).dueDate) : (assignmentData as any).dueDate,
+      // Ensure new assignments are visible in queries filtering by isActive
+      isActive: (assignmentData as any).isActive ?? true,
       createdAt: now,
       updatedAt: now,
     });

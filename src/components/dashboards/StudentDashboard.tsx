@@ -73,16 +73,22 @@ export default function StudentDashboard() {
               // Silently handle course loading errors
             }
           }));
-          const enriched = topSubs.map((s: any) => {
-            const a = assignmentMap[s.assignmentId] as any;
-            const c = a ? courseMap[a.courseId] : undefined;
-            return {
-              ...s,
-              title: a?.title || 'Assignment',
-              courseTitle: c?.title || 'Course',
-              dueDate: a?.dueDate ? a.dueDate.toDate().toISOString().slice(0, 10) : '—',
-            };
-          });
+          const enriched = topSubs
+            // Hide if assignment no longer exists or was deleted
+            .filter((s: any) => {
+              const a = assignmentMap[s.assignmentId] as any;
+              return Boolean(a && (a.isActive === undefined || a.isActive === true));
+            })
+            .map((s: any) => {
+              const a = assignmentMap[s.assignmentId] as any;
+              const c = a ? courseMap[a.courseId] : undefined;
+              return {
+                ...s,
+                title: a?.title || 'Assignment',
+                courseTitle: c?.title || 'Course',
+                dueDate: a?.dueDate ? a.dueDate.toDate().toISOString().slice(0, 10) : '—',
+              };
+            });
           setUpcomingAssignments(enriched);
 
           // Load announcements filtered for this student

@@ -146,9 +146,10 @@ export default function TeacherAnalytics() {
       const studentPerformancePromises = teacherCourses.map(async (course) => {
         try {
           const enrollments = await enrollmentService.getEnrollmentsByCourse(course.id);
+          const uniqueEnrollments = Array.from(new Map(enrollments.map(e => [e.studentId, e])).values());
           const assignments = await assignmentService.getAssignmentsByCourse(course.id);
           
-          const studentPromises = enrollments.map(async (enrollment) => {
+          const studentPromises = uniqueEnrollments.map(async (enrollment) => {
             try {
               // Get student's submissions for this course
               const studentSubmissions = await submissionService.getSubmissionsByStudent(enrollment.studentId);

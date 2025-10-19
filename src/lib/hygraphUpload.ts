@@ -188,17 +188,9 @@ export function extractHygraphAssetId(url: string): string | null {
   return null;
 }
 
-export async function deleteHygraphAsset(url: string): Promise<boolean> {
+export async function deleteHygraphAssetById(assetId: string): Promise<boolean> {
   try {
-    console.log('Attempting to delete Hygraph asset from URL:', url);
-    
-    const assetId = extractHygraphAssetId(url);
-    if (!assetId) {
-      console.error('Failed to extract asset ID from URL:', url);
-      return false;
-    }
-
-    console.log('Deleting asset with ID:', assetId);
+    console.log('Deleting Hygraph asset by ID:', assetId);
     
     const token = getAuthToken();
     const response = await fetch('/api/content/delete-asset', {
@@ -219,6 +211,23 @@ export async function deleteHygraphAsset(url: string): Promise<boolean> {
     }
     
     return result.success;
+  } catch (error) {
+    console.error('Error deleting Hygraph asset:', error);
+    return false;
+  }
+}
+
+export async function deleteHygraphAsset(url: string): Promise<boolean> {
+  try {
+    console.log('Attempting to delete Hygraph asset from URL:', url);
+    
+    const assetId = extractHygraphAssetId(url);
+    if (!assetId) {
+      console.error('Failed to extract asset ID from URL:', url);
+      return false;
+    }
+
+    return await deleteHygraphAssetById(assetId);
   } catch (error) {
     console.error('Error deleting Hygraph asset:', error);
     return false;

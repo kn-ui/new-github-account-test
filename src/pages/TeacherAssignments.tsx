@@ -127,7 +127,7 @@ export default function TeacherAssignments() {
         dueDate.setHours(23, 59, 59, 999);
       }
 
-      const attachments: { type: 'file' | 'link'; url: string; title?: string }[] = [];
+      const attachments: { type: 'file' | 'link'; url: string; title?: string; assetId?: string }[] = [];
       if (fileObj) {
         try {
           setIsUploading(true);
@@ -138,7 +138,12 @@ export default function TeacherAssignments() {
           if (!uploadResult.url) {
             throw new Error('No URL returned from upload');
           }
-          attachments.push({ type: 'file', url: uploadResult.url, title: fileObj.name });
+          attachments.push({ 
+            type: 'file', 
+            url: uploadResult.url, 
+            title: fileObj.name,
+            ...(uploadResult.id ? { assetId: uploadResult.id } : {})
+          });
           if (uploadResult.warning) {
             toast.warning(uploadResult.warning);
           }

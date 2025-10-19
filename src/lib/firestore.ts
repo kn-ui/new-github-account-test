@@ -94,7 +94,7 @@ export interface FirestoreAssignment {
   maxScore: number;
   instructions?: string;
   teacherId: string;
-  attachments?: { type: 'file' | 'link'; url: string; title?: string }[];
+  attachments?: { type: 'file' | 'link'; url: string; title?: string; assetId?: string }[]; // Added assetId for Hygraph deletion
   createdAt: Timestamp;
   updatedAt: Timestamp;
   isActive: boolean;
@@ -108,6 +108,7 @@ export interface FirestoreCourseMaterial {
   description: string;
   type: 'document' | 'video' | 'link' | 'other';
   fileUrl?: string;
+  fileAssetId?: string; // Hygraph asset ID for deletion
   externalLink?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -206,6 +207,7 @@ export interface FirestoreBlog {
   likes: number;
   // Optional featured image for the blog post
   imageUrl?: string;
+  imageAssetId?: string; // Hygraph asset ID for deletion
 }
 
 export interface FirestoreGrade {
@@ -773,6 +775,7 @@ export const submissionService = {
     const q = query(
       collections.submissions(),
       where('studentId', '==', studentId),
+      where('isActive', '==', true),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -793,6 +796,7 @@ export const submissionService = {
     const q = query(
       collections.submissions(),
       where('courseId', '==', courseId),
+      where('isActive', '==', true),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -833,6 +837,11 @@ export const submissionService = {
       return { id: docSnap.id, ...docSnap.data() } as FirestoreSubmission;
     }
     return null;
+  },
+
+  async deleteSubmission(submissionId: string): Promise<void> {
+    const docRef = doc(db, 'submissions', submissionId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -941,13 +950,14 @@ export const blogService = {
       const blog = blogSnap.data() as FirestoreBlog;
       
       // Delete associated image from Hygraph BEFORE deleting the document
-      if (blog.imageUrl) {
+      if (blog.imageUrl || blog.imageAssetId) {
         try {
           // Use the asset manager for more reliable deletion
-          const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const { deleteDocumentAssets, extractHygraphAssetIds, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const assetIds = extractHygraphAssetIds(blog);
           const urls = extractHygraphUrls(blog);
-          const deletedCount = await deleteDocumentAssets('blog', blogId, urls);
-          if (deletedCount === 0 && urls.length > 0) {
+          const deletedCount = await deleteDocumentAssets('blog', blogId, assetIds, urls);
+          if (deletedCount === 0 && (assetIds.length > 0 || urls.length > 0)) {
             console.error('Failed to delete blog images from Hygraph, but continuing with blog deletion');
           } else if (deletedCount > 0) {
             console.log(`Deleted ${deletedCount} Hygraph asset(s) for blog ${blogId}`);
@@ -1151,6 +1161,7 @@ export const assignmentService = {
     const q = query(
       collections.assignments(),
       where('courseId', '==', courseId),
+      where('isActive', '==', true),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
@@ -1192,7 +1203,8 @@ export const assignmentService = {
   async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
     const q = query(
       collections.assignments(),
-      where('teacherId', '==', teacherId)
+      where('teacherId', '==', teacherId),
+      where('isActive', '==', true)
     );
     const snapshot = await getDocs(q);
     const list = snapshot.docs.map(doc => {
@@ -1227,10 +1239,11 @@ export const assignmentService = {
     if (assignment?.attachments && assignment.attachments.length > 0) {
       try {
         // Use the asset manager for more reliable deletion
-        const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+        const { deleteDocumentAssets, extractHygraphAssetIds, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+        const assetIds = extractHygraphAssetIds(assignment);
         const urls = extractHygraphUrls(assignment);
-        const deletedCount = await deleteDocumentAssets('assignment', assignmentId, urls);
-        if (deletedCount === 0 && urls.length > 0) {
+        const deletedCount = await deleteDocumentAssets('assignment', assignmentId, assetIds, urls);
+        if (deletedCount === 0 && (assetIds.length > 0 || urls.length > 0)) {
           console.error('Failed to delete assignment attachments from Hygraph, but continuing with assignment deletion');
         } else if (deletedCount > 0) {
           console.log(`Deleted ${deletedCount} Hygraph asset(s) for assignment ${assignmentId}`);
@@ -1239,6 +1252,16 @@ export const assignmentService = {
         console.error('Failed to delete attachment files:', error);
         // Continue with assignment deletion even if file deletion fails
       }
+    }
+    
+    // Delete edit requests for this assignment
+    try {
+      const deletedEditRequests = await assignmentEditRequestService.deleteEditRequestsByAssignment(assignmentId);
+      if (deletedEditRequests > 0) {
+        console.log(`Deleted ${deletedEditRequests} edit requests for assignment ${assignmentId}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete edit requests for assignment:', error);
     }
     
     // Delete assignment submissions
@@ -1329,13 +1352,14 @@ export const courseMaterialService = {
       const material = materialSnap.data() as FirestoreCourseMaterial;
       
       // Delete associated file from Hygraph BEFORE deleting the document
-      if (material.fileUrl) {
+      if (material.fileUrl || material.fileAssetId) {
         try {
           // Use the asset manager for more reliable deletion
-          const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const { deleteDocumentAssets, extractHygraphAssetIds, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const assetIds = extractHygraphAssetIds(material);
           const urls = extractHygraphUrls(material);
-          const deletedCount = await deleteDocumentAssets('courseMaterial', materialId, urls);
-          if (deletedCount === 0 && urls.length > 0) {
+          const deletedCount = await deleteDocumentAssets('courseMaterial', materialId, assetIds, urls);
+          if (deletedCount === 0 && (assetIds.length > 0 || urls.length > 0)) {
             console.error('Failed to delete course material files from Hygraph, but continuing with material deletion');
           } else if (deletedCount > 0) {
             console.log(`Deleted ${deletedCount} Hygraph asset(s) for course material ${materialId}`);
@@ -2028,6 +2052,27 @@ export const assignmentEditRequestService = {
       respondedBy,
       respondedAt: Timestamp.now()
     });
+  },
+
+  async getEditRequestsByAssignment(assignmentId: string): Promise<FirestoreEditRequest[]> {
+    const q = query(
+      collections.editRequests(),
+      where('assignmentId', '==', assignmentId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEditRequest));
+  },
+
+  async deleteEditRequestsByAssignment(assignmentId: string): Promise<number> {
+    try {
+      const editRequests = await this.getEditRequestsByAssignment(assignmentId);
+      await Promise.all(editRequests.map(req => this.deleteEditRequest(req.id)));
+      console.log(`Deleted ${editRequests.length} edit requests for assignment ${assignmentId}`);
+      return editRequests.length;
+    } catch (error) {
+      console.error(`Failed to delete edit requests for assignment ${assignmentId}:`, error);
+      return 0;
+    }
   }
 };
 

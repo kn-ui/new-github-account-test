@@ -536,7 +536,8 @@ export default function AdminStudentGrades() {
 
       const totalPossiblePoints = assignmentMax + examMax;
 
-      const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints);
+      // Use default max of 100 if no assignments/exams to avoid division by zero
+      const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints > 0 ? totalPossiblePoints : 100);
 
       // Check if grade already exists
       const existing = await gradeService.getGradeByStudentAndCourse(courseId, student.id!);

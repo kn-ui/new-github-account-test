@@ -173,7 +173,8 @@ export default function AdminCourseGrades() {
         let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
         
         // Always recalculate using current grade ranges for consistency
-        const comp = computeLetter(points, max);
+        // Use default max of 100 if no assignments/exams to avoid division by zero
+        const comp = computeLetter(points, max > 0 ? max : 100);
         letter = comp.letter; 
         gradePoints = comp.points;
 
@@ -207,7 +208,9 @@ export default function AdminCourseGrades() {
     try {
       for (const r of rows) {
         // Recompute letter from percent using ranges
-        const comp = computeLetter(r.finalPoints, r.assignmentsMax + r.examsMax);
+        // Use default max of 100 if no assignments/exams to avoid division by zero
+        const totalMax = r.assignmentsMax + r.examsMax;
+        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,
@@ -300,41 +303,39 @@ export default function AdminCourseGrades() {
                   <th className="text-center py-2 px-3">Status</th>
                 </tr>
               </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="text-gray-500">Loading student grades...</span>
-                      </div>
+              <tbody>{loading ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="text-gray-500">Loading student grades...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-6 text-center text-gray-500">No enrolled students found.</td>
+                </tr>
+              ) : (
+                rows.map(r => (
+                  <tr key={r.studentId} className="border-b hover:bg-gray-50">
+                    <td className="py-2 px-3">
+                      <div className="font-medium text-gray-900">{r.name}</div>
+                      <div className="text-xs text-gray-500">{r.email}</div>
+                    </td>
+                    <td className="py-2 px-3 text-center">{r.assignmentsTotal}/{r.assignmentsMax}</td>
+                    <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
+                    <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
+                    <td className="py-2 px-3 text-center">{r.finalPoints}</td>
+                    <td className="py-2 px-3 text-center font-semibold">{r.letterGrade}</td>
+                    <td className="py-2 px-3 text-center">
+                      <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {r.isPublished ? 'Published' : 'Draft'}
+                      </span>
                     </td>
                   </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-6 text-center text-gray-500">No enrolled students found.</td>
-                  </tr>
-                ) : (
-                  rows.map(r => (
-                    <tr key={r.studentId} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-3">
-                        <div className="font-medium text-gray-900">{r.name}</div>
-                        <div className="text-xs text-gray-500">{r.email}</div>
-                      </td>
-                      <td className="py-2 px-3 text-center">{r.assignmentsTotal}/{r.assignmentsMax}</td>
-                      <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
-                      <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
-                      <td className="py-2 px-3 text-center">{r.finalPoints}</td>
-                      <td className="py-2 px-3 text-center font-semibold">{r.letterGrade}</td>
-                      <td className="py-2 px-3 text-center">
-                        <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {r.isPublished ? 'Published' : 'Draft'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+                ))
+              )}</tbody>
             </table>
           </div>
         </CardContent>

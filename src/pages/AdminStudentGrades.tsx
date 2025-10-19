@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, userService, settingsService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
+import { calculateLetterGrade, calculateGPA } from '@/lib/gradeUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -438,6 +439,9 @@ export default function AdminStudentGrades() {
       = {};
 
     finalGrades.forEach((g) => {
+      // Only include published grades in GPA calculation
+      if (!g.isPublished) return;
+      
       const d = g.calculatedAt.toDate();
       const ethiopianDate = toEthiopianDate(d);
       const year = ethiopianDate.year.toString();
@@ -447,9 +451,11 @@ export default function AdminStudentGrades() {
         if (!byYear[year]) {
           byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
         }
-        byYear[year].semesters[sem].totalPoints += g.gradePoints;
+        // Ensure gradePoints is valid and within range (0-4.0)
+        const points = isNaN(g.gradePoints) ? 0 : Math.min(4.0, Math.max(0, g.gradePoints));
+        byYear[year].semesters[sem].totalPoints += points;
         byYear[year].semesters[sem].count += 1;
-        byYear[year].totalPoints += g.gradePoints;
+        byYear[year].totalPoints += points;
         byYear[year].count += 1;
       }
     });
@@ -460,28 +466,23 @@ export default function AdminStudentGrades() {
     Object.entries(byYear).forEach(([year, data]) => {
       const s1 = data.semesters[1];
       const s2 = data.semesters[2];
-      const semester1GPA = s1.count > 0 ? Math.round((s1.totalPoints / s1.count) * 100) / 100 : 0;
-      const semester2GPA = s2.count > 0 ? Math.round((s2.totalPoints / s2.count) * 100) / 100 : 0;
-      const yearlyGPA = data.count > 0 ? Math.round((data.totalPoints / data.count) * 100) / 100 : 0;
+      // Calculate GPAs with proper rounding and range validation (0-4.0)
+      const semester1GPA = s1.count > 0 ? Math.min(4.0, Math.max(0, Math.round((s1.totalPoints / s1.count) * 100) / 100)) : 0;
+      const semester2GPA = s2.count > 0 ? Math.min(4.0, Math.max(0, Math.round((s2.totalPoints / s2.count) * 100) / 100)) : 0;
+      const yearlyGPA = data.count > 0 ? Math.min(4.0, Math.max(0, Math.round((data.totalPoints / data.count) * 100) / 100)) : 0;
       byYearGPA[year] = { semester1GPA, semester2GPA, yearlyGPA };
       cumulativePoints += data.totalPoints;
       cumulativeCount += data.count;
     });
 
-    const cumulativeGPA = cumulativeCount > 0 ? Math.round((cumulativePoints / cumulativeCount) * 100) / 100 : 0;
+    // Calculate cumulative GPA using shared utility
+    const allGradePoints = finalGrades.filter(g => g.isPublished).map(g => g.gradePoints);
+    const cumulativeGPA = calculateGPA(allGradePoints);
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades]);
 
   const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
-    const percent = max > 0 ? Math.round((points / max) * 100) : 0;
-    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-    for (const [letter, range] of sortedRanges) {
-      const r = range as any;
-      if (percent >= (r.min ?? 0) && percent <= (r.max ?? 100)) {
-        return { letter, points: r.points };
-      }
-    }
-    return { letter: 'F', points: 0.0 };
+    return calculateLetterGrade(points, max, gradeRanges);
   };
 
   const refreshFinalGrades = async () => {

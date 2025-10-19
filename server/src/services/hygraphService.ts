@@ -588,11 +588,48 @@ mutation PublishAsset($id: ID!) {
   
   async deleteAsset(assetId: string): Promise<boolean> {
     if (!this.endpoint || !this.token) {
+      console.error('Hygraph not configured for deletion');
       throw new Error('Hygraph not configured');
     }
 
+    console.log('Attempting to delete asset from Hygraph:', assetId);
+
     try {
-      // FIX: Cleaned up leading whitespace
+      // First, try to unpublish the asset if it's published
+      const unpublishMutation = `
+mutation UnpublishAsset($id: ID!) {
+  unpublishAsset(where: { id: $id }, from: PUBLISHED) {
+    id
+    stage
+  }
+}
+      `;
+
+      try {
+        console.log('Unpublishing asset:', assetId);
+        const unpublishResponse = await this.safeFetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({
+            query: unpublishMutation,
+            variables: { id: assetId },
+          }),
+        });
+        
+        const unpublishData = await unpublishResponse.json() as any;
+        if (unpublishData.errors) {
+          console.warn('Failed to unpublish asset (may already be unpublished):', unpublishData.errors);
+        } else {
+          console.log('Asset unpublished successfully');
+        }
+      } catch (unpublishError) {
+        console.warn('Unpublish attempt failed (continuing with deletion):', unpublishError);
+      }
+
+      // Now delete the asset
       const deleteMutation = `
 mutation DeleteAsset($id: ID!) {
   deleteAsset(where: { id: $id }) {
@@ -601,6 +638,7 @@ mutation DeleteAsset($id: ID!) {
 }
       `;
 
+      console.log('Deleting asset:', assetId);
       const response = await this.safeFetch(this.endpoint, {
         method: 'POST',
         headers: {
@@ -614,7 +652,18 @@ mutation DeleteAsset($id: ID!) {
       });
 
       const data = await response.json() as any;
-      return response.ok && !data.errors;
+      
+      if (data.errors) {
+        console.error('Hygraph deletion errors:', JSON.stringify(data.errors, null, 2));
+        return false;
+      }
+      
+      if (response.ok && !data.errors) {
+        console.log('Asset deleted successfully from Hygraph:', assetId);
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Error deleting asset:', error);
       return false;

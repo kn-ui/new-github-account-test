@@ -139,19 +139,54 @@ export function getFileIcon(filename: string): string {
 }
 
 export function extractHygraphAssetId(url: string): string | null {
-  if (!isHygraphUrl(url)) return null;
+  if (!isHygraphUrl(url)) {
+    console.log('Not a Hygraph URL:', url);
+    return null;
+  }
   
   // Extract asset ID from Hygraph URL
-  // Hygraph URLs typically look like: https://media.graphassets.com/[assetId]/[filename]
-  const match = url.match(/\/([a-zA-Z0-9-_]+)\/[^/]*$/);
-  return match ? match[1] : null;
+  // Hygraph URLs can have different patterns:
+  // 1. https://media.graphassets.com/[assetId]
+  // 2. https://media.graphassets.com/[assetId]/[filename]
+  // 3. https://[region].graphassets.com/[projectId]/[assetId]
+  
+  // Try different patterns
+  let match = url.match(/media\.graphassets\.com\/([a-zA-Z0-9]+)/);
+  if (match) {
+    console.log('Extracted asset ID from pattern 1:', match[1]);
+    return match[1];
+  }
+  
+  // Try pattern with filename
+  match = url.match(/\/([a-zA-Z0-9-_]+)\/[^/]*$/);
+  if (match) {
+    console.log('Extracted asset ID from pattern 2:', match[1]);
+    return match[1];
+  }
+  
+  // Try to extract from any Hygraph URL
+  match = url.match(/\/([a-zA-Z0-9]{20,})/);
+  if (match) {
+    console.log('Extracted asset ID from pattern 3:', match[1]);
+    return match[1];
+  }
+  
+  console.error('Could not extract asset ID from URL:', url);
+  return null;
 }
 
 export async function deleteHygraphAsset(url: string): Promise<boolean> {
   try {
+    console.log('Attempting to delete Hygraph asset from URL:', url);
+    
     const assetId = extractHygraphAssetId(url);
-    if (!assetId) return false;
+    if (!assetId) {
+      console.error('Failed to extract asset ID from URL:', url);
+      return false;
+    }
 
+    console.log('Deleting asset with ID:', assetId);
+    
     const token = getAuthToken();
     const response = await fetch('/api/content/delete-asset', {
       method: 'POST',
@@ -163,6 +198,13 @@ export async function deleteHygraphAsset(url: string): Promise<boolean> {
     });
 
     const result = await response.json();
+    
+    if (result.success) {
+      console.log('Successfully deleted Hygraph asset:', assetId);
+    } else {
+      console.error('Failed to delete Hygraph asset:', result.message || 'Unknown error');
+    }
+    
     return result.success;
   } catch (error) {
     console.error('Error deleting Hygraph asset:', error);

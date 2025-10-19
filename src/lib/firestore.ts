@@ -940,18 +940,26 @@ export const blogService = {
     if (blogSnap.exists()) {
       const blog = blogSnap.data() as FirestoreBlog;
       
-      // Delete the document
-      await deleteDoc(blogRef);
-      
-      // Delete associated image from Hygraph
+      // Delete associated image from Hygraph BEFORE deleting the document
       if (blog.imageUrl) {
         try {
-          const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
-          await deleteHygraphAsset(blog.imageUrl);
+          // Use the asset manager for more reliable deletion
+          const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const urls = extractHygraphUrls(blog);
+          const deletedCount = await deleteDocumentAssets('blog', blogId, urls);
+          if (deletedCount === 0 && urls.length > 0) {
+            console.error('Failed to delete blog images from Hygraph, but continuing with blog deletion');
+          } else if (deletedCount > 0) {
+            console.log(`Deleted ${deletedCount} Hygraph asset(s) for blog ${blogId}`);
+          }
         } catch (error) {
           console.error('Failed to delete blog image:', error);
+          // Continue with blog deletion even if image deletion fails
         }
       }
+      
+      // Delete the document after attempting to delete the image
+      await deleteDoc(blogRef);
     } else {
       // Just delete the document if it exists
       await deleteDoc(blogRef);
@@ -1215,23 +1223,27 @@ export const assignmentService = {
     // First get the assignment to check for attachments
     const assignment = await this.getAssignmentById(assignmentId);
     
-    // Delete the document
-    const docRef = doc(db, 'assignments', assignmentId);
-    await deleteDoc(docRef);
-    
-    // Delete associated files from Hygraph
-    if (assignment?.attachments) {
-      const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
-      for (const attachment of assignment.attachments) {
-        if (attachment.type === 'file' && attachment.url) {
-          try {
-            await deleteHygraphAsset(attachment.url);
-          } catch (error) {
-            console.error('Failed to delete attachment file:', error);
-          }
+    // Delete associated files from Hygraph BEFORE deleting the document
+    if (assignment?.attachments && assignment.attachments.length > 0) {
+      try {
+        // Use the asset manager for more reliable deletion
+        const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+        const urls = extractHygraphUrls(assignment);
+        const deletedCount = await deleteDocumentAssets('assignment', assignmentId, urls);
+        if (deletedCount === 0 && urls.length > 0) {
+          console.error('Failed to delete assignment attachments from Hygraph, but continuing with assignment deletion');
+        } else if (deletedCount > 0) {
+          console.log(`Deleted ${deletedCount} Hygraph asset(s) for assignment ${assignmentId}`);
         }
+      } catch (error) {
+        console.error('Failed to delete attachment files:', error);
+        // Continue with assignment deletion even if file deletion fails
       }
     }
+    
+    // Delete the document after attempting to delete attachments
+    const docRef = doc(db, 'assignments', assignmentId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -1275,18 +1287,26 @@ export const courseMaterialService = {
     if (materialSnap.exists()) {
       const material = materialSnap.data() as FirestoreCourseMaterial;
       
-      // Delete the document
-      await deleteDoc(materialRef);
-      
-      // Delete associated file from Hygraph
+      // Delete associated file from Hygraph BEFORE deleting the document
       if (material.fileUrl) {
         try {
-          const { deleteHygraphAsset } = await import('@/lib/hygraphUpload');
-          await deleteHygraphAsset(material.fileUrl);
+          // Use the asset manager for more reliable deletion
+          const { deleteDocumentAssets, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+          const urls = extractHygraphUrls(material);
+          const deletedCount = await deleteDocumentAssets('courseMaterial', materialId, urls);
+          if (deletedCount === 0 && urls.length > 0) {
+            console.error('Failed to delete course material files from Hygraph, but continuing with material deletion');
+          } else if (deletedCount > 0) {
+            console.log(`Deleted ${deletedCount} Hygraph asset(s) for course material ${materialId}`);
+          }
         } catch (error) {
           console.error('Failed to delete course material file:', error);
+          // Continue with material deletion even if file deletion fails
         }
       }
+      
+      // Delete the document after attempting to delete the file
+      await deleteDoc(materialRef);
     } else {
       // Just delete the document if it exists
       await deleteDoc(materialRef);

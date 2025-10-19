@@ -2011,26 +2011,24 @@ export const studentDataService = {
     if (cached) return cached;
 
     try {
-      // Load all student data in parallel with optimized queries and retry logic
+      // First get enrollments to get course IDs for announcements
+      const enrollments = await retry(() => this.getEnrollmentsWithCourses(studentId));
+      const courseIds = enrollments.map(e => e.courseId);
+      
+      // Load remaining data in parallel with optimized queries and retry logic
       const [
-        enrollments,
         stats,
         announcements,
         certificates
       ] = await Promise.all([
-        // Get enrollments with course data
-        retry(() => this.getEnrollmentsWithCourses(studentId)),
         // Get student stats
         retry(() => analyticsService.getStudentStats(studentId)),
-        // Get announcements (limited to 10 for dashboard)
-        retry(() => announcementService.getAnnouncementsForStudent(studentId, [], 10)),
+        // Get announcements (limited to 10 for dashboard) with proper course IDs
+        retry(() => announcementService.getAnnouncementsForStudent(studentId, courseIds, 10)),
         // Get certificates
         retry(() => certificateService.getCertificatesForUser(studentId)).catch(() => [])
       ]);
 
-      // Get course IDs for additional data
-      const courseIds = enrollments.map(e => e.courseId);
-      
       // Load assignments for all courses in parallel
       const assignments = courseIds.length > 0 
         ? await this.getAssignmentsForCourses(courseIds)
@@ -2067,12 +2065,19 @@ export const studentDataService = {
     const courses = await this.getCoursesByIds(courseIds);
     
     // Merge course data with enrollments and filter out inactive courses
-    return enrollments
+    const enrollmentsWithCourses = enrollments
       .map(enrollment => ({
         ...enrollment,
         course: courses[enrollment.courseId] || null
       }))
       .filter(enrollment => enrollment.course !== null);
+    
+    // Remove duplicates based on courseId (in case of duplicate enrollments)
+    const uniqueEnrollments = enrollmentsWithCourses.filter((enrollment, index, self) => 
+      index === self.findIndex(e => e.courseId === enrollment.courseId)
+    );
+    
+    return uniqueEnrollments;
   },
 
   async getCoursesByIds(courseIds: string[]) {
@@ -2097,7 +2102,14 @@ export const studentDataService = {
     );
     
     const assignmentArrays = await Promise.all(assignmentPromises);
-    return assignmentArrays.flat();
+    const allAssignments = assignmentArrays.flat();
+    
+    // Remove duplicates based on assignment ID
+    const uniqueAssignments = allAssignments.filter((assignment, index, self) => 
+      index === self.findIndex(a => a.id === assignment.id)
+    );
+    
+    return uniqueAssignments;
   },
 
   async getStudentCoursesData(studentId: string) {

@@ -5,6 +5,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { submissionService, assignmentService, courseService, studentDataService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,7 @@ export default function TeacherGrades() {
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
   const [grade, setGrade] = useState<number>(0);
   const [feedback, setFeedback] = useState('');
+  const [isGrading, setIsGrading] = useState(false);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -99,15 +101,16 @@ export default function TeacherGrades() {
       const assignmentsArrays = await Promise.all(assignmentsPromises);
       const allAssignments = assignmentsArrays.flat();
 
-      // Get submissions for all assignments
-      const rows: AssignmentRow[] = [];
-      for (const a of allAssignments) {
-        const subs = await submissionService.getSubmissionsByAssignment(a.id);
+      // Get submissions for all assignments in parallel for performance
+      const subsArrays = await Promise.all(
+        allAssignments.map(a => submissionService.getSubmissionsByAssignment(a.id).then(subs => ({ a, subs })))
+      );
+      const rows: AssignmentRow[] = subsArrays.map(({ a, subs }) => {
         const pending = subs.filter((s: any) => s.status === 'submitted').length;
         const graded = subs.filter((s: any) => s.status === 'graded');
         const avg = graded.length ? (graded.reduce((acc: number, s: any) => acc + (s.grade || 0), 0) / graded.length) : 0;
-        rows.push({ id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 });
-      }
+        return { id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 };
+      });
       setAssignments(rows);
     } catch (error) {
       console.error('Error loading submissions:', error);
@@ -124,6 +127,7 @@ export default function TeacherGrades() {
     }
 
     try {
+      setIsGrading(true);
       await submissionService.updateSubmission(selectedSubmission.id, {
         grade: grade,
         feedback: feedback,
@@ -139,6 +143,8 @@ export default function TeacherGrades() {
     } catch (error) {
       console.error('Error grading submission:', error);
       toast.error('Failed to grade submission');
+    } finally {
+      setIsGrading(false);
     }
   };
 
@@ -472,9 +478,9 @@ export default function TeacherGrades() {
             <Button variant="outline" onClick={() => setGradingDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleGradeSubmission}>
+            <LoadingButton onClick={handleGradeSubmission} loading={isGrading} loadingText={selectedSubmission?.status === 'graded' ? 'Updating…' : 'Grading…'}>
               {selectedSubmission?.status === 'graded' ? 'Update Grade' : 'Grade Submission'}
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function TakeExam() {
-  console.log('TakeExam component rendered');
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
@@ -159,9 +158,6 @@ export default function TakeExam() {
   const now = new Date();
   const start = (exam as any).date?.toDate ? (exam as any).date.toDate() : null;
   const end = start && (exam as any).durationMinutes ? new Date(start.getTime() + (exam as any).durationMinutes * 60000) : null;
-  console.log('now:', now);
-  console.log('start:', start);
-  console.log('end:', end);
   const beforeStart = start ? now < start : false;
   const afterEnd = end ? now > end : false;
   const isSubmitted = attempt && (attempt.status === 'submitted' || attempt.status === 'graded');

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +31,9 @@ export default function AssignmentSubmissions() {
   const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
   const [selectedEditRequest, setSelectedEditRequest] = useState<FirestoreEditRequest | null>(null);
   const [editResponse, setEditResponse] = useState('');
+  const [savingRowId, setSavingRowId] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
+  const [denying, setDenying] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +87,7 @@ export default function AssignmentSubmissions() {
     }
 
     try {
+      setApproving(true);
       await assignmentEditRequestService.approveEditRequest(
         selectedEditRequest.id, 
         editResponse, 
@@ -99,7 +104,7 @@ export default function AssignmentSubmissions() {
     } catch (error) {
       console.error('Error approving edit request:', error);
       toast.error('Failed to approve edit request');
-    }
+    } finally { setApproving(false); }
   };
 
   const denyEditRequest = async () => {
@@ -109,6 +114,7 @@ export default function AssignmentSubmissions() {
     }
 
     try {
+      setDenying(true);
       await assignmentEditRequestService.denyEditRequest(
         selectedEditRequest.id, 
         editResponse, 
@@ -125,7 +131,7 @@ export default function AssignmentSubmissions() {
     } catch (error) {
       console.error('Error denying edit request:', error);
       toast.error('Failed to deny edit request');
-    }
+    } finally { setDenying(false); }
   };
 
   if (!userProfile || userProfile.role !== 'teacher') {
@@ -307,16 +313,19 @@ export default function AssignmentSubmissions() {
                       </div>
                       <div className="col-span-2 flex items-center justify-end gap-2">
                         <Button variant="outline" onClick={() => setGrading(null)}>Cancel</Button>
-                        <Button onClick={async () => {
+                        <LoadingButton onClick={async () => {
+                          setSavingRowId(s.id);
                           const maxScore = assignment?.maxScore || 100;
                           
                           if (grading.grade > maxScore) {
                             toast.error(`Grade cannot exceed the maximum score of ${maxScore}`);
+                            setSavingRowId(null);
                             return;
                           }
                           
                           if (grading.grade < 0) {
                             toast.error('Grade cannot be negative');
+                            setSavingRowId(null);
                             return;
                           }
                           
@@ -328,7 +337,8 @@ export default function AssignmentSubmissions() {
                             setSubmissions(fresh);
                             setGrading(null);
                           } catch { toast.error('Failed to save grade'); }
-                        }}>Save</Button>
+                          finally { setSavingRowId(null); }
+                        }} loading={savingRowId === s.id} loadingText="Saving…">Save</LoadingButton>
                       </div>
                     </div>
                   ) : (
@@ -391,19 +401,23 @@ export default function AssignmentSubmissions() {
             <Button variant="outline" onClick={() => setShowEditRequestDialog(false)}>
               Cancel
             </Button>
-            <Button 
+            <LoadingButton 
               variant="destructive"
               onClick={denyEditRequest}
               disabled={!editResponse.trim()}
+              loading={denying}
+              loadingText="Denying…"
             >
               Deny Request
-            </Button>
-            <Button 
+            </LoadingButton>
+            <LoadingButton 
               onClick={approveEditRequest}
               disabled={!editResponse.trim()}
+              loading={approving}
+              loadingText="Approving…"
             >
               Approve Request
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -474,17 +474,13 @@ export default function AdminStudentGrades() {
 
   const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
     const percent = max > 0 ? Math.round((points / max) * 100) : 0;
-
-    // Sort ranges by minimum percentage in descending order to find the best match
     const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-    
     for (const [letter, range] of sortedRanges) {
       const r = range as any;
-      if (percent >= r.min) {
+      if (percent >= (r.min ?? 0) && percent <= (r.max ?? 100)) {
         return { letter, points: r.points };
       }
     }
-
     return { letter: 'F', points: 0.0 };
   };
 
@@ -1278,7 +1274,7 @@ export default function AdminStudentGrades() {
                                 <tbody>
                                   {yearGrades.map((grade) => {
                                     // Use the configured grade ranges instead of hardcoded values
-                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, grade.assignmentsMax + grade.examsMax);
+                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, (grade.assignmentsMax + grade.examsMax) || 100);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
@@ -1290,7 +1286,7 @@ export default function AdminStudentGrades() {
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                           <Badge variant={letterGrade && letterGrade.startsWith('A') ? 'default' : letterGrade && letterGrade.startsWith('B') ? 'secondary' : letterGrade && letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
-                                            {grade.letterGrade}
+                                            {letterGrade}
                                           </Badge>
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">

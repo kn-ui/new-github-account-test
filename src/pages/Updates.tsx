@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { announcementService, blogService, eventService, FirestoreAnnouncement, FirestoreBlog, FirestoreEvent, Timestamp } from '@/lib/firestore';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,8 +30,10 @@ export default function Updates() {
   const [blogForm, setBlogForm] = useState<{ title: string; content: string; imageUrl?: string }>({ title: '', content: '' });
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [savingBlog, setSavingBlog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState<FirestoreBlog | null>(null);
+  const [deletingBlog, setDeletingBlog] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -117,6 +120,7 @@ export default function Updates() {
     }
 
     try {
+      setSavingBlog(true);
       // Optional image upload
       let imageUrl = blogForm.imageUrl || '';
       if (blogImageFile) {
@@ -157,13 +161,14 @@ export default function Updates() {
     } catch (error) {
       console.error('Error saving blog:', error);
       toast.error('Failed to save blog post');
-    } finally { setIsUploadingImage(false); }
+    } finally { setIsUploadingImage(false); setSavingBlog(false); }
   };
 
   const handleBlogDelete = async () => {
     if (!blogToDelete) return;
     
     try {
+      setDeletingBlog(true);
       await blogService.deleteBlogPost(blogToDelete.id);
       toast.success('Blog post deleted');
       
@@ -176,7 +181,7 @@ export default function Updates() {
     } catch (error) {
       console.error('Error deleting blog:', error);
       toast.error('Failed to delete blog post');
-    }
+    } finally { setDeletingBlog(false); }
   };
 
   return (
@@ -380,9 +385,9 @@ export default function Updates() {
             <Button variant="outline" onClick={() => setBlogDialogOpen(false)}>
               Cancel
             </Button>
-              <Button onClick={handleBlogSubmit} className="bg-blue-600 hover:bg-blue-700" disabled={isUploadingImage}>
+            <LoadingButton onClick={handleBlogSubmit} className="bg-blue-600 hover:bg-blue-700" loading={savingBlog || isUploadingImage} loadingText={editingBlog ? 'Updating…' : 'Creating…'}>
               {editingBlog ? 'Update' : 'Create'} Blog Post
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -400,9 +405,9 @@ export default function Updates() {
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleBlogDelete}>
+            <LoadingButton variant="destructive" onClick={handleBlogDelete} loading={deletingBlog} loadingText="Deleting…">
               Delete
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1133,7 +1133,6 @@ export const assignmentService = {
     const docRef = await addDoc(collections.assignments(), {
       ...assignmentData,
       dueDate: (assignmentData as any).dueDate instanceof Date ? Timestamp.fromDate((assignmentData as any).dueDate) : (assignmentData as any).dueDate,
-      isActive: assignmentData.isActive !== undefined ? assignmentData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -1242,7 +1241,6 @@ export const courseMaterialService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courseMaterials(), {
       ...materialData,
-      isActive: materialData.isActive !== undefined ? materialData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -2328,21 +2326,56 @@ export const gradeService = {
     await deleteDoc(docRef);
   },
 
-  // Helper function to calculate letter grade and grade points
-  calculateLetterGradeAndPoints(finalGrade: number): { letterGrade: string; gradePoints: number } {
-    if (finalGrade >= 97) return { letterGrade: 'A+', gradePoints: 4.0 };
-    if (finalGrade >= 93) return { letterGrade: 'A', gradePoints: 4.0 };
-    if (finalGrade >= 90) return { letterGrade: 'A-', gradePoints: 3.7 };
-    if (finalGrade >= 87) return { letterGrade: 'B+', gradePoints: 3.3 };
-    if (finalGrade >= 83) return { letterGrade: 'B', gradePoints: 3.0 };
-    if (finalGrade >= 80) return { letterGrade: 'B-', gradePoints: 2.7 };
-    if (finalGrade >= 77) return { letterGrade: 'C+', gradePoints: 2.3 };
-    if (finalGrade >= 73) return { letterGrade: 'C', gradePoints: 2.0 };
-    if (finalGrade >= 70) return { letterGrade: 'C-', gradePoints: 1.7 };
-    if (finalGrade >= 67) return { letterGrade: 'D+', gradePoints: 1.3 };
-    if (finalGrade >= 63) return { letterGrade: 'D', gradePoints: 1.0 };
-    if (finalGrade >= 60) return { letterGrade: 'D-', gradePoints: 0.7 };
-    return { letterGrade: 'F', gradePoints: 0.0 };
+  // Helper function to calculate letter grade and grade points using configured ranges
+  async calculateLetterGradeAndPoints(finalGradePercent: number): Promise<{ letterGrade: string; gradePoints: number }> {
+    try {
+      const ranges = await settingsService.getGradeRanges();
+      // Sort by min desc; ensure inclusive [min, max]
+      const sorted = Object.entries(ranges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+      for (const [letter, cfg] of sorted) {
+        const min = (cfg as any).min ?? 0;
+        const max = (cfg as any).max ?? 100;
+        if (finalGradePercent >= min && finalGradePercent <= max) {
+          return { letterGrade: letter, gradePoints: (cfg as any).points ?? 0 };
+        }
+      }
+      return { letterGrade: 'F', gradePoints: 0 };
+    } catch {
+      // Fallback to classic mapping if settings unavailable
+      if (finalGradePercent >= 97) return { letterGrade: 'A+', gradePoints: 4.0 };
+      if (finalGradePercent >= 93) return { letterGrade: 'A', gradePoints: 4.0 };
+      if (finalGradePercent >= 90) return { letterGrade: 'A-', gradePoints: 3.7 };
+      if (finalGradePercent >= 87) return { letterGrade: 'B+', gradePoints: 3.3 };
+      if (finalGradePercent >= 83) return { letterGrade: 'B', gradePoints: 3.0 };
+      if (finalGradePercent >= 80) return { letterGrade: 'B-', gradePoints: 2.7 };
+      if (finalGradePercent >= 77) return { letterGrade: 'C+', gradePoints: 2.3 };
+      if (finalGradePercent >= 73) return { letterGrade: 'C', gradePoints: 2.0 };
+      if (finalGradePercent >= 70) return { letterGrade: 'C-', gradePoints: 1.7 };
+      if (finalGradePercent >= 67) return { letterGrade: 'D+', gradePoints: 1.3 };
+      if (finalGradePercent >= 63) return { letterGrade: 'D', gradePoints: 1.0 };
+      if (finalGradePercent >= 60) return { letterGrade: 'D-', gradePoints: 0.7 };
+      return { letterGrade: 'F', gradePoints: 0.0 };
+    }
+  },
+
+  async calculateLetterFromPoints(
+    achievedPoints: number,
+    maxPoints: number,
+    rangesOverride?: GradeRangesConfig
+  ): Promise<{ letterGrade: string; gradePoints: number }> {
+    const percent = maxPoints > 0 ? Math.round((achievedPoints / maxPoints) * 100) : 0;
+    if (rangesOverride) {
+      const sorted = Object.entries(rangesOverride).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+      for (const [letter, cfg] of sorted) {
+        const min = (cfg as any).min ?? 0;
+        const max = (cfg as any).max ?? 100;
+        if (percent >= min && percent <= max) {
+          return { letterGrade: letter, gradePoints: (cfg as any).points ?? 0 };
+        }
+      }
+      return { letterGrade: 'F', gradePoints: 0 };
+    }
+    return this.calculateLetterGradeAndPoints(percent);
   },
 
   // Calculate final grade based on assignment grades
@@ -2371,8 +2404,10 @@ export const gradeService = {
       finalGrade = assignmentGrades.reduce((sum, ag) => sum + ag.grade, 0) / assignmentGrades.length;
     }
 
-    const { letterGrade, gradePoints } = this.calculateLetterGradeAndPoints(finalGrade);
-    return { finalGrade: Math.round(finalGrade * 100) / 100, letterGrade, gradePoints };
+    // finalGrade here is in percent already (0-100) for assignment average; use directly
+    const rounded = Math.round(finalGrade * 100) / 100;
+    const { letterGrade, gradePoints } = await this.calculateLetterGradeAndPoints(rounded);
+    return { finalGrade: rounded, letterGrade, gradePoints };
   },
 
   async publishCourseGrades(courseId: string): Promise<void> {

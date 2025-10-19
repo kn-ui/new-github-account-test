@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studentDataService, courseMaterialService, submissionService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -126,10 +127,12 @@ export default function StudentAssignments() {
         if (material.assignmentId && material.assignmentId === assignmentId) return true;
         if (Array.isArray(material.tags) && material.tags.includes(assignmentId)) return true;
         // Check if assignment title is mentioned in material title or description
-        if (selectedAssignment && (
-          material.title.toLowerCase().includes(selectedAssignment.title.toLowerCase()) ||
-          material.description.toLowerCase().includes(selectedAssignment.title.toLowerCase())
-        )) return true;
+        if (selectedAssignment) {
+          const title = (material.title || '').toLowerCase();
+          const desc = (material.description || '').toLowerCase();
+          const aTitle = (selectedAssignment.title || '').toLowerCase();
+          if (title.includes(aTitle) || desc.includes(aTitle)) return true;
+        }
         return false;
       });
 
@@ -147,7 +150,6 @@ export default function StudentAssignments() {
       const allResources = [...resources, ...materialResources];
       setAssignmentResources(allResources);
     } catch (error) {
-      console.error('Error loading assignment resources:', error);
       setAssignmentResources([]);
     }
   };
@@ -467,13 +469,15 @@ export default function StudentAssignments() {
                     </div>
                   </div>
                   
-                  <button 
+                  <LoadingButton 
                     onClick={handleSubmitAssignment}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
-                    disabled={isUploading}
+                    className="w-full"
+                    loading={isUploading}
+                    loadingText="Uploading…"
+                    disabled={false}
                   >
-                    {isUploading ? 'Uploading…' : 'Submit Assignment'}
-                  </button>
+                    Submit Assignment
+                  </LoadingButton>
                 </div>
               )}
             </div>

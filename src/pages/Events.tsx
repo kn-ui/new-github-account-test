@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import DualDateInput from '@/components/ui/DualDateInput';
@@ -634,9 +635,9 @@ const EventsPage = () => {
 
           </div>
           <DialogFooter>
-            <Button onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : t('events.create')}
-            </Button>
+            <LoadingButton onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700" loading={isSubmitting} loadingText="Creating…">
+              {t('events.create')}
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -740,9 +741,9 @@ const EventsPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : t('common.saveChanges')}
-            </Button>
+            <LoadingButton onClick={saveEdit} className="bg-purple-600 hover:bg-purple-700" loading={isSubmitting} loadingText="Saving…">
+              {t('common.saveChanges')}
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

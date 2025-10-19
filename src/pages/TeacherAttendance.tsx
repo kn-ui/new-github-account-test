@@ -20,6 +20,7 @@ export default function TeacherAttendance() {
   const [ethiopianYear, setEthiopianYear] = useState<number>(() => toEthiopianDate(new Date()).year);
   const [ethiopianMonth, setEthiopianMonth] = useState<number>(() => toEthiopianDate(new Date()).month);
   const [records, setRecords] = useState<Record<string, Record<number, boolean>>>({});
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -56,7 +57,10 @@ export default function TeacherAttendance() {
         ethiopianYear,
         ethiopianMonth
       );
-      setRecords(sheet?.records || {});
+      const nextRecords = sheet?.records || {};
+      setRecords(nextRecords);
+      // Ensure no default student is auto-selected/checked
+      setSelectedStudentId('');
     })();
   }, [selectedCourseId, ethiopianYear, ethiopianMonth, userProfile]);
 

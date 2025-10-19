@@ -104,7 +104,6 @@ export default function TeacherAnalytics() {
               const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
               return submissions;
             } catch (error) {
-              console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
               return [];
             }
           });
@@ -135,7 +134,6 @@ export default function TeacherAnalytics() {
             gradedSubmissions: gradedSubmissions.length
           };
         } catch (error) {
-          console.error(`Error loading analytics for course ${course.id}:`, error);
           return null;
         }
       });
@@ -185,7 +183,6 @@ export default function TeacherAnalytics() {
                 lastActivity: (enrollment as any).lastAccessedAt?.toDate ? (enrollment as any).lastAccessedAt.toDate() : new Date()
               };
             } catch (error) {
-              console.error(`Error loading student performance for ${enrollment.studentId}:`, error);
               return null;
             }
           });
@@ -193,7 +190,6 @@ export default function TeacherAnalytics() {
           const studentResults = await Promise.all(studentPromises);
           return studentResults.filter(result => result !== null) as StudentPerformance[];
         } catch (error) {
-          console.error(`Error loading student performance for course ${course.id}:`, error);
           return [];
         }
       });
@@ -202,8 +198,6 @@ export default function TeacherAnalytics() {
       const allStudentPerformance = studentPerformanceArrays.flat();
       setStudentPerformance(allStudentPerformance);
 
-    } catch (error) {
-      console.error('Error loading analytics:', error);
     } finally {
       setLoading(false);
     }

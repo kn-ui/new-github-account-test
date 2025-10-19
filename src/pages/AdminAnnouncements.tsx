@@ -5,6 +5,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { announcementService, userService, FirestoreAnnouncement } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -113,6 +114,7 @@ export default function AdminAnnouncements() {
     }
   };
 
+  const [saving, setSaving] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -127,6 +129,7 @@ export default function AdminAnnouncements() {
     }
 
     try {
+      setSaving(true);
       // Build base announcement data
       const base: any = {
         title: formData.title,
@@ -166,6 +169,8 @@ export default function AdminAnnouncements() {
     } catch (error) {
       console.error('Error saving announcement:', error);
       toast.error('Failed to save announcement');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -582,9 +587,9 @@ export default function AdminAnnouncements() {
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <LoadingButton type="submit" className="flex-1" loading={saving} loadingText={editingAnnouncement ? 'Updating…' : 'Creating…'}>
               {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
-            </Button>
+            </LoadingButton>
             <Button 
               type="button" 
               variant="outline" 

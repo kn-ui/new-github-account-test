@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { assignmentService, courseService, FirestoreAssignment } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import DualDateInput from '@/components/ui/DualDateInput';
 import { Label } from '@/components/ui/label';
@@ -70,6 +71,7 @@ export default function TeacherAssignments() {
   });
   const [fileObj, setFileObj] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
 
@@ -108,6 +110,7 @@ export default function TeacherAssignments() {
     }
 
     try {
+      setSaving(true);
       // Parse due date in local time to avoid UTC off-by-one issues when Ethiopian calendar is used
       const [yearStr, monthStr, dayStr] = (formData.dueDate || new Date().toISOString().slice(0,10)).split('-');
       const year = parseInt(yearStr, 10);
@@ -143,6 +146,8 @@ export default function TeacherAssignments() {
           console.error('Attachment upload failed', err);
           toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);
           // Don't continue if upload failed
+          setIsUploading(false);
+          setSaving(false);
           return;
         }
       }
@@ -177,6 +182,7 @@ export default function TeacherAssignments() {
     }
     finally {
       setIsUploading(false);
+      setSaving(false);
     }
   };
 
@@ -543,9 +549,9 @@ export default function TeacherAssignments() {
             </div>
 
             <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1" disabled={isUploading}>
-                {isUploading ? 'Uploading…' : (editingAssignment ? (t('teacher.assignments.update') || 'Update Assignment') : (t('teacher.assignments.create') || 'Create Assignment'))}
-              </Button>
+              <LoadingButton type="submit" className="flex-1" loading={saving || isUploading} loadingText={isUploading ? 'Uploading…' : 'Saving…'}>
+                {editingAssignment ? (t('teacher.assignments.update') || 'Update Assignment') : (t('teacher.assignments.create') || 'Create Assignment')}
+              </LoadingButton>
               <Button 
                 type="button" 
                 variant="outline" 

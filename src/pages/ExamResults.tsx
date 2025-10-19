@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { examService, examAttemptService, userService } from '@/lib/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +38,7 @@ export default function ExamResults() {
   } | null>(null);
   const [manualScore, setManualScore] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [savingGrading, setSavingGrading] = useState(false);
 
   useEffect(() => {
     if (examId && userProfile?.role === 'teacher') {
@@ -156,6 +158,7 @@ export default function ExamResults() {
     if (!selectedAttempt || !gradingData) return;
 
     try {
+      setSavingGrading(true);
       const newManualScores = {
         ...selectedAttempt.manualScores,
         [gradingData.questionId]: manualScore
@@ -195,7 +198,7 @@ export default function ExamResults() {
     } catch (error) {
       console.error('Error saving grading:', error);
       toast.error('Failed to save grading');
-    }
+    } finally { setSavingGrading(false); }
   };
 
   const formatTime = (timestamp: any) => {
@@ -487,9 +490,9 @@ export default function ExamResults() {
               <Button variant="outline" onClick={() => setGradingDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={saveGrading}>
+              <LoadingButton onClick={saveGrading} loading={savingGrading} loadingText="Saving…">
                 Save Grade
-              </Button>
+              </LoadingButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>

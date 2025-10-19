@@ -6,6 +6,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { announcementService, courseService, userService, FirestoreAnnouncement } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -155,6 +156,7 @@ export default function TeacherAnnouncements() {
   };
 
 
+  const [saving, setSaving] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -170,6 +172,7 @@ export default function TeacherAnnouncements() {
     }
 
     try {
+      setSaving(true);
       const isGeneral = formData.isGeneral;
       
       // Build base announcement data
@@ -218,6 +221,8 @@ export default function TeacherAnnouncements() {
     } catch (error) {
       console.error('Error saving announcement:', error);
       toast.error('Failed to save announcement');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -672,9 +677,9 @@ export default function TeacherAnnouncements() {
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <LoadingButton type="submit" className="flex-1" loading={saving} loadingText={editingAnnouncement ? 'Updating…' : 'Creating…'}>
               {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
-            </Button>
+            </LoadingButton>
             <Button 
               type="button" 
               variant="outline" 

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studentDataService, assignmentEditRequestService, assignmentService, courseService, submissionService } from '@/lib/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -241,7 +242,7 @@ export default function StudentSubmissions() {
           updatedAt: new Date()
         };
 
-        console.log('Updating submission:', selectedSubmissionForEdit.id, updateData);
+        // Silent in production
 
         await submissionService.updateSubmission(selectedSubmissionForEdit.id, updateData);
         
@@ -275,7 +276,7 @@ export default function StudentSubmissions() {
           updatedAt: new Date()
         };
 
-        console.log('Creating new submission:', submissionData);
+        // Silent in production
 
         await submissionService.createSubmission(submissionData);
         toast.success(t('student.submissions.submitted'));
@@ -885,16 +886,16 @@ export default function StudentSubmissions() {
                 <Button variant="outline" onClick={() => setShowSubmissionDialog(false)}>
                   {t('common.cancel')}
                 </Button>
-                <Button 
+                <LoadingButton 
                   onClick={handleSubmitSubmission} 
-                  disabled={isSubmitting || !submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
+                  loading={isSubmitting}
+                  loadingText={selectedEditFile ? 'Uploading...' : (selectedSubmissionForEdit && selectedSubmissionForEdit.id ? 'Updating...' : 'Submitting...')}
+                  disabled={!submissionContent.trim() || (selectedAssignment && new Date() > (selectedAssignment.dueDate instanceof Date ? selectedAssignment.dueDate : selectedAssignment.dueDate.toDate()))}
                 >
-                  {isSubmitting
-                    ? (selectedEditFile ? 'Uploading...' : (selectedSubmissionForEdit && selectedSubmissionForEdit.id ? 'Updating...' : 'Submitting...'))
-                    : (selectedSubmissionForEdit && selectedSubmissionForEdit.id 
-                      ? 'Update Submission' 
-                      : t('student.submissions.dialog.submit'))}
-                </Button>
+                  {selectedSubmissionForEdit && selectedSubmissionForEdit.id 
+                    ? 'Update Submission' 
+                    : t('student.submissions.dialog.submit')}
+                </LoadingButton>
               </DialogFooter>
             </DialogContent>
           </Dialog>

@@ -97,10 +97,11 @@ export default function StudentOverview() {
           setAnnouncements(uniqueAnnouncements);
 
           // Log today's activity for attendance (non-blocking)
-          activityLogService.upsertToday(currentUser.uid).catch(console.error);
+          // Log today's activity for attendance silently
+          activityLogService.upsertToday(currentUser.uid).catch(() => {});
         }
       } catch (error) {
-        console.error('Failed to load student dashboard data:', error);
+        // Suppress UI console noise; UI shows skeletons/fallbacks
       } finally {
         setLoading(false);
       }

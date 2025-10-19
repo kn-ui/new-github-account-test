@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
@@ -98,6 +99,7 @@ const UserManager = () => {
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
   const [studentMeta, setStudentMeta] = useState<{ deliveryMethods: string[]; studentGroups: string[]; programTypes: string[]; classSections: string[] }>({ deliveryMethods: [], studentGroups: [], programTypes: [], classSections: [] });
   const [customMetaInputs, setCustomMetaInputs] = useState<{ deliveryMethod: string; studentGroup: string; programType: string; classSection: string }>({ deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
 
@@ -293,6 +295,7 @@ const UserManager = () => {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     try {
+      setIsUpdatingUser(true);
       const updateData: any = {
         displayName: editingUser.displayName,
         email: editingUser.email,
@@ -314,6 +317,8 @@ const UserManager = () => {
       fetchUsers(); // Refresh the user list
     } catch (error) {
       console.error('Error updating user:', error);
+    } finally {
+      setIsUpdatingUser(false);
     }
   };
 
@@ -504,21 +509,15 @@ const UserManager = () => {
                     )}
                   </div>
                   <DialogFooter>
-                    <Button 
+                    <LoadingButton 
                       type="submit" 
                       onClick={handleAddUser} 
-                      disabled={isCreatingUser}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      loading={isCreatingUser}
+                      loadingText="Creating User…"
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
-                      {isCreatingUser ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating User...
-                        </>
-                      ) : (
-                        t('users.create')
-                      )}
-                    </Button>
+                      {t('users.create')}
+                    </LoadingButton>
                   </DialogFooter>
                 </>
               ) : (
@@ -645,9 +644,9 @@ const UserManager = () => {
                 </div>
               )}
               <DialogFooter>
-                <Button type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700">
+                <LoadingButton type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700" loading={isUpdatingUser} loadingText="Saving…">
                   {t('users.saveChanges')}
-                </Button>
+                </LoadingButton>
               </DialogFooter>
             </DialogContent>
           </Dialog>

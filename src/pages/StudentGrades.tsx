@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { submissionService, assignmentService, enrollmentService, courseService, gradeService, examService, examAttemptService, otherGradeService, FirestoreGrade, FirestoreExam, FirestoreExamAttempt, FirestoreOtherGrade } from '@/lib/firestore';
+import { calculateLetterGrade, loadGradeRanges } from '@/lib/gradeUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,10 +74,12 @@ export default function StudentGrades() {
   const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams' | 'others'>('courses');
   const [courses, setCourses] = useState<any[]>([]);
   const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
+  const [gradeRanges, setGradeRanges] = useState<any>(null);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'student') {
       loadGrades();
+      loadGradeRanges().then(setGradeRanges);
     }
   }, [currentUser?.uid, userProfile?.role]);
 
@@ -363,12 +366,8 @@ export default function StudentGrades() {
   };
 
   const getGradeLetter = (grade: number, maxScore: number) => {
-    const percentage = (grade / maxScore) * 100;
-    if (percentage >= 90) return 'A';
-    if (percentage >= 80) return 'B';
-    if (percentage >= 70) return 'C';
-    if (percentage >= 60) return 'D';
-    return 'F';
+    const { letter } = calculateLetterGrade(grade, maxScore, gradeRanges);
+    return letter;
   };
 
   const getUniqueCourses = () => {
@@ -834,7 +833,7 @@ export default function StudentGrades() {
                                   {yearGrades.map((grade) => {
                                     const totalMax = (grade as any).assignmentsMax + (grade as any).examsMax;
                                     const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : 0;
-                                    const letterGrade = (grade as any).letterGrade || (percent >= 90 ? 'A' : percent >= 80 ? 'B' : percent >= 70 ? 'C' : percent >= 60 ? 'D' : 'F');
+                                    const letterGrade = (grade as any).letterGrade || getGradeLetter(grade.finalGrade, totalMax);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>

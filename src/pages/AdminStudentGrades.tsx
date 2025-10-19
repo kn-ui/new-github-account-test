@@ -91,6 +91,7 @@ export default function AdminStudentGrades() {
   const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
+  const [expandedOtherCourses, setExpandedOtherCourses] = useState<{ [key: string]: boolean }>({});
   const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
   const [gradeRanges, setGradeRanges] = useState<any>({});
   const [isPublishing, setIsPublishing] = useState(false);
@@ -581,12 +582,8 @@ export default function AdminStudentGrades() {
   };
 
   const getGradeLetter = (grade: number, maxScore: number) => {
-    const percentage = (grade / maxScore) * 100;
-    if (percentage >= 90) return 'A';
-    if (percentage >= 80) return 'B';
-    if (percentage >= 70) return 'C';
-    if (percentage >= 60) return 'D';
-    return 'F';
+    const { letter } = calculateLetterGrade(grade, maxScore, gradeRanges);
+    return letter;
   };
 
   const toggleYear = (year: string) => {
@@ -1175,22 +1172,37 @@ export default function AdminStudentGrades() {
                             <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
                             {Object.entries(courseGroups).map(([courseId, entries]) => {
                               const course = courses.find(c => c.id === courseId);
+                              const courseKey = `${year}_${courseId}`;
+                              const totalPoints = entries.reduce((sum, e) => sum + (e.points || 0), 0);
+                              
                               return (
                                 <div key={courseId} className="mb-6">
-                                  <div className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3 border border-gray-200">
+                                  <button
+                                    onClick={() => setExpandedOtherCourses(prev => ({ ...prev, [courseKey]: !prev[courseKey] }))}
+                                    className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3 border border-gray-200 hover:bg-gray-50 transition-colors"
+                                  >
                                     <div className="flex items-center gap-2">
+                                      {expandedOtherCourses[courseKey] ? (
+                                        <ChevronDown size={16} className="text-gray-400" />
+                                      ) : (
+                                        <ChevronRight size={16} className="text-gray-400" />
+                                      )}
                                       <span className="font-medium text-gray-800">{course?.title || courseId}</span>
                                       <span className="text-sm text-gray-500">({entries.length} entries)</span>
                                     </div>
-                                  </div>
-                                  <div className="ml-6 mt-3">
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full">
-                                        <thead>
-                                          <tr className="border-b border-gray-200">
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                    <Badge variant="secondary">
+                                      Total: {totalPoints} points
+                                    </Badge>
+                                  </button>
+                                  {expandedOtherCourses[courseKey] && (
+                                    <div className="ml-6 mt-3">
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                          <thead>
+                                            <tr className="border-b border-gray-200">
+                                              <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
+                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
+                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -1214,6 +1226,7 @@ export default function AdminStudentGrades() {
                                       </table>
                                     </div>
                                   </div>
+                                  )}
                                 </div>
                               );
                             })}

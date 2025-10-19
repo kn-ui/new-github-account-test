@@ -1220,7 +1220,7 @@ export const assignmentService = {
   },
 
   async deleteAssignment(assignmentId: string): Promise<void> {
-    // First get the assignment to check for attachments
+    // First get the assignment to check for attachments and course info
     const assignment = await this.getAssignmentById(assignmentId);
     
     // Delete associated files from Hygraph BEFORE deleting the document
@@ -1241,7 +1241,48 @@ export const assignmentService = {
       }
     }
     
-    // Delete the document after attempting to delete attachments
+    // Delete assignment submissions
+    try {
+      const submissions = await submissionService.getSubmissionsByAssignment(assignmentId);
+      await Promise.all(submissions.map(sub => submissionService.deleteSubmission(sub.id)));
+      console.log(`Deleted ${submissions.length} submissions for assignment ${assignmentId}`);
+    } catch (error) {
+      console.error('Failed to delete assignment submissions:', error);
+    }
+    
+    // Remove assignment from grades collection
+    if (assignment?.courseId) {
+      try {
+        // Get all grades for this course
+        const gradesQuery = query(collections.grades(), where('courseId', '==', assignment.courseId));
+        const gradesSnapshot = await getDocs(gradesQuery);
+        
+        // Update each grade document to remove the assignment from assignmentGrades array
+        const updatePromises = gradesSnapshot.docs.map(async (gradeDoc) => {
+          const gradeData = gradeDoc.data() as FirestoreGrade;
+          if (gradeData.assignmentGrades && gradeData.assignmentGrades.length > 0) {
+            const filteredGrades = gradeData.assignmentGrades.filter(
+              ag => ag.assignmentId !== assignmentId
+            );
+            
+            // Only update if there was actually a change
+            if (filteredGrades.length !== gradeData.assignmentGrades.length) {
+              await updateDoc(doc(db, 'grades', gradeDoc.id), {
+                assignmentGrades: filteredGrades,
+                updatedAt: Timestamp.now()
+              });
+            }
+          }
+        });
+        
+        await Promise.all(updatePromises);
+        console.log(`Removed assignment ${assignmentId} from grade records`);
+      } catch (error) {
+        console.error('Failed to remove assignment from grades:', error);
+      }
+    }
+    
+    // Delete the assignment document
     const docRef = doc(db, 'assignments', assignmentId);
     await deleteDoc(docRef);
   },

@@ -666,19 +666,35 @@ export default function TeacherCourseDetail() {
                     <div className="bg-white border rounded p-3">
                       <div className="text-sm font-medium mb-2">Grade distribution</div>
                       {(() => {
-                        const grades = finalGrades.map(g => g.finalGrade);
+                        // Use actual letter grades from the students
                         const dist = { A:0, B:0, C:0, D:0, F:0 } as Record<string, number>;
-                        grades.forEach(g => {
-                          if (g>=90) dist.A++; else if (g>=80) dist.B++; else if (g>=70) dist.C++; else if (g>=60) dist.D++; else dist.F++;
+                        
+                        // Get unique grades per student (latest only)
+                        const uniqueGrades = Object.values(finalGrades.reduce((acc, g) => {
+                          if (!acc[g.studentId] || acc[g.studentId].calculatedAt.toDate() < g.calculatedAt.toDate()) {
+                            acc[g.studentId] = g;
+                          }
+                          return acc;
+                        }, {} as Record<string, FirestoreGrade>));
+                        
+                        // Count actual letter grades
+                        uniqueGrades.forEach(g => {
+                          const letter = g.letterGrade?.[0] || 'F';
+                          if (letter in dist) {
+                            dist[letter]++;
+                          }
                         });
+                        
                         const items = Object.entries(dist);
+                        const totalStudents = uniqueGrades.length;
+                        
                         return (
                           <div className="grid grid-cols-5 gap-2">
                             {items.map(([k,v]) => (
                               <div key={k} className="text-center">
                                 <div className="text-xs text-gray-500 mb-1">{k}</div>
                                 <div className="h-16 bg-blue-100 rounded flex items-end justify-center">
-                                  <div className="w-full bg-blue-500 rounded-b" style={{ height: `${grades.length? (v/grades.length)*100 : 0}%` }} />
+                                  <div className="w-full bg-blue-500 rounded-b" style={{ height: `${totalStudents? (v/totalStudents)*100 : 0}%` }} />
                                 </div>
                                 <div className="text-xs mt-1">{v} students</div>
                               </div>
@@ -781,7 +797,6 @@ export default function TeacherCourseDetail() {
                             <th className="text-left px-4 py-2">Student</th>
                             <th className="text-left px-4 py-2">Final Grade</th>
                             <th className="text-left px-4 py-2">Letter Grade</th>
-                            <th className="text-left px-4 py-2">Grade Points</th>
                             <th className="text-left px-4 py-2">Method</th>
                             <th className="text-left px-4 py-2">Calculated</th>
                             <th className="text-left px-4 py-2"></th>
@@ -812,7 +827,6 @@ export default function TeacherCourseDetail() {
                                   {g.letterGrade}
                                 </Badge>
                               </td>
-                              <td className="px-4 py-2">{g.gradePoints}</td>
                               <td className="px-4 py-2 capitalize text-xs">{g.calculationMethod.replace('_', ' ')}</td>
                               <td className="px-4 py-2">{g.calculatedAt.toDate().toLocaleString()}</td>
                               <td className="px-4 py-2 text-right"></td>

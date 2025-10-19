@@ -93,7 +93,10 @@ export async function uploadToHygraph(file: File): Promise<UploadResult> {
 }
 
 export function isHygraphUrl(url: string): boolean {
-  return url.includes('hygraph.com') || url.includes('hygraph.io');
+  return url.includes('hygraph.com') || 
+         url.includes('hygraph.io') || 
+         url.includes('graphassets.com') ||
+         url.includes('graphcms.com'); // Legacy domain
 }
 
 export function getFileExtension(filename: string): string {
@@ -149,25 +152,35 @@ export function extractHygraphAssetId(url: string): string | null {
   // 1. https://media.graphassets.com/[assetId]
   // 2. https://media.graphassets.com/[assetId]/[filename]
   // 3. https://[region].graphassets.com/[projectId]/[assetId]
+  // 4. https://[region].graphassets.com/[projectId]/[assetId]/[filename]
+  // 5. Similar patterns for hygraph.io and graphcms.com domains
   
-  // Try different patterns
+  // Try pattern 1: media.graphassets.com/[assetId]
   let match = url.match(/media\.graphassets\.com\/([a-zA-Z0-9]+)/);
   if (match) {
-    console.log('Extracted asset ID from pattern 1:', match[1]);
+    console.log('Extracted asset ID from media.graphassets.com pattern:', match[1]);
     return match[1];
   }
   
-  // Try pattern with filename
-  match = url.match(/\/([a-zA-Z0-9-_]+)\/[^/]*$/);
+  // Try pattern for graphassets.com with region: [region].graphassets.com/[projectId]/[assetId]
+  match = url.match(/graphassets\.com\/[^\/]+\/([a-zA-Z0-9]+)(?:\/|$)/);
   if (match) {
-    console.log('Extracted asset ID from pattern 2:', match[1]);
+    console.log('Extracted asset ID from regional graphassets pattern:', match[1]);
     return match[1];
   }
   
-  // Try to extract from any Hygraph URL
-  match = url.match(/\/([a-zA-Z0-9]{20,})/);
+  // Try similar patterns for hygraph.io and graphcms.com
+  match = url.match(/(?:hygraph\.io|graphcms\.com)\/[^\/]+\/([a-zA-Z0-9]+)(?:\/|$)/);
   if (match) {
-    console.log('Extracted asset ID from pattern 3:', match[1]);
+    console.log('Extracted asset ID from hygraph.io/graphcms.com pattern:', match[1]);
+    return match[1];
+  }
+  
+  // Try pattern for any URL ending with /[assetId] or /[assetId]/[filename]
+  // Asset IDs are typically 20+ character alphanumeric strings
+  match = url.match(/\/([a-zA-Z0-9]{20,})(?:\/[^/]*)?$/);
+  if (match) {
+    console.log('Extracted asset ID from generic pattern:', match[1]);
     return match[1];
   }
   

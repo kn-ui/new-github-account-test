@@ -775,6 +775,7 @@ export const submissionService = {
     const q = query(
       collections.submissions(),
       where('studentId', '==', studentId),
+      where('isActive', '==', true),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -795,6 +796,7 @@ export const submissionService = {
     const q = query(
       collections.submissions(),
       where('courseId', '==', courseId),
+      where('isActive', '==', true),
       orderBy('submittedAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -835,6 +837,11 @@ export const submissionService = {
       return { id: docSnap.id, ...docSnap.data() } as FirestoreSubmission;
     }
     return null;
+  },
+
+  async deleteSubmission(submissionId: string): Promise<void> {
+    const docRef = doc(db, 'submissions', submissionId);
+    await deleteDoc(docRef);
   },
 };
 
@@ -1154,6 +1161,7 @@ export const assignmentService = {
     const q = query(
       collections.assignments(),
       where('courseId', '==', courseId),
+      where('isActive', '==', true),
       limit(limitCount)
     );
     const snapshot = await getDocs(q);
@@ -1195,7 +1203,8 @@ export const assignmentService = {
   async getAssignmentsByTeacher(teacherId: string): Promise<FirestoreAssignment[]> {
     const q = query(
       collections.assignments(),
-      where('teacherId', '==', teacherId)
+      where('teacherId', '==', teacherId),
+      where('isActive', '==', true)
     );
     const snapshot = await getDocs(q);
     const list = snapshot.docs.map(doc => {
@@ -1243,6 +1252,16 @@ export const assignmentService = {
         console.error('Failed to delete attachment files:', error);
         // Continue with assignment deletion even if file deletion fails
       }
+    }
+    
+    // Delete edit requests for this assignment
+    try {
+      const deletedEditRequests = await assignmentEditRequestService.deleteEditRequestsByAssignment(assignmentId);
+      if (deletedEditRequests > 0) {
+        console.log(`Deleted ${deletedEditRequests} edit requests for assignment ${assignmentId}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete edit requests for assignment:', error);
     }
     
     // Delete assignment submissions
@@ -2033,6 +2052,27 @@ export const assignmentEditRequestService = {
       respondedBy,
       respondedAt: Timestamp.now()
     });
+  },
+
+  async getEditRequestsByAssignment(assignmentId: string): Promise<FirestoreEditRequest[]> {
+    const q = query(
+      collections.editRequests(),
+      where('assignmentId', '==', assignmentId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEditRequest));
+  },
+
+  async deleteEditRequestsByAssignment(assignmentId: string): Promise<number> {
+    try {
+      const editRequests = await this.getEditRequestsByAssignment(assignmentId);
+      await Promise.all(editRequests.map(req => this.deleteEditRequest(req.id)));
+      console.log(`Deleted ${editRequests.length} edit requests for assignment ${assignmentId}`);
+      return editRequests.length;
+    } catch (error) {
+      console.error(`Failed to delete edit requests for assignment ${assignmentId}:`, error);
+      return 0;
+    }
   }
 };
 

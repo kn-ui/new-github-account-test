@@ -823,17 +823,15 @@ export default function StudentGrades() {
                                     <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade Points</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
                                     <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
                                     const totalMax = (grade as any).assignmentsMax + (grade as any).examsMax;
-                                    const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : 0;
-                                    const letterGrade = (grade as any).letterGrade || getGradeLetter(grade.finalGrade, totalMax);
+                                    // finalGrade is already stored as points, not percentage
+                                    const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : Math.round(grade.finalGrade);
+                                    const letterGrade = (grade as any).letterGrade || getGradeLetter(grade.finalGrade, totalMax > 0 ? totalMax : 100);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
@@ -846,15 +844,6 @@ export default function StudentGrades() {
                                         <td className="py-3 px-4 text-center">
                                           <Badge variant={letterGrade === 'A' ? 'default' : letterGrade === 'B' ? 'secondary' : letterGrade === 'C' ? 'outline' : 'destructive'}>
                                             {letterGrade}
-                                          </Badge>
-                                        </td>
-                                        <td className="py-3 px-4 text-center text-gray-600">{grade.gradePoints}</td>
-                                        <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
-                                          {grade.calculationMethod.replace('_', ' ')}
-                                        </td>
-                                        <td className="py-3 px-4 text-center">
-                                          <Badge variant="default">
-                                            Published
                                           </Badge>
                                         </td>
                                         <td className="py-3 px-4 text-center text-gray-600 text-sm">

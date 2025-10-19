@@ -452,8 +452,19 @@ export default function AdminStudentGrades() {
         if (!byYear[year]) {
           byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
         }
+        
+        // Calculate gradePoints if missing or 0
+        let points = g.gradePoints;
+        if (!points || points === 0) {
+          // Calculate from finalGrade percentage
+          const totalMax = (g.assignmentsMax || 0) + (g.examsMax || 0);
+          const percentage = totalMax > 0 ? (g.finalGrade / totalMax) * 100 : g.finalGrade;
+          const { points: calculatedPoints } = calculateLetterGradeWithRanges(g.finalGrade, totalMax > 0 ? totalMax : 100);
+          points = calculatedPoints;
+        }
+        
         // Ensure gradePoints is valid and within range (0-4.0)
-        const points = isNaN(g.gradePoints) ? 0 : Math.min(4.0, Math.max(0, g.gradePoints));
+        points = isNaN(points) ? 0 : Math.min(4.0, Math.max(0, points));
         byYear[year].semesters[sem].totalPoints += points;
         byYear[year].semesters[sem].count += 1;
         byYear[year].totalPoints += points;

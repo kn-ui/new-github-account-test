@@ -241,7 +241,7 @@ export default function StudentSubmissions() {
           updatedAt: new Date()
         };
 
-        console.log('Updating submission:', selectedSubmissionForEdit.id, updateData);
+        // Silent in production
 
         await submissionService.updateSubmission(selectedSubmissionForEdit.id, updateData);
         
@@ -275,7 +275,7 @@ export default function StudentSubmissions() {
           updatedAt: new Date()
         };
 
-        console.log('Creating new submission:', submissionData);
+        // Silent in production
 
         await submissionService.createSubmission(submissionData);
         toast.success(t('student.submissions.submitted'));

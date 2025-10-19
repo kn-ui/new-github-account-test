@@ -64,7 +64,7 @@ export default function TeacherOverview() {
           
           const validSubmissions = ok.flat().filter((submission: any) => {
             const assignment = assignmentsMap[submission.assignmentId];
-            return assignment !== null && assignment.isActive !== false;
+            return assignment !== null;
           });
           
           const flatSubmissions = validSubmissions
@@ -93,7 +93,7 @@ export default function TeacherOverview() {
           // No longer deriving top students here; replaced with My Courses section
         }
       } catch (error) {
-        console.error('Failed to load teacher dashboard data:', error);
+        // Non-blocking: omit noisy console error in UI layer
       } finally {
         setLoading(false);
       }

@@ -137,9 +137,8 @@ const CourseDetail = () => {
             assignments.some(assign => assign.id === sub.assignmentId)
           );
           setCourseGrades(courseSubmissions);
-          console.log('Loaded course submissions:', courseSubmissions);
         } catch (error) {
-          console.error('Error loading submissions:', error);
+          // Swallow error to avoid console noise; show empty state instead
           setCourseGrades([]);
         }
         
@@ -180,9 +179,8 @@ const CourseDetail = () => {
           const examAttempts = await Promise.all(examAttemptsPromises);
           const validExamGrades = examAttempts.filter(attempt => attempt !== null);
           setExamGrades(validExamGrades);
-          console.log('Loaded exam grades:', validExamGrades);
         } catch (error) {
-          console.error('Error loading exam grades:', error);
+          // Non-blocking: ignore exam grades errors
           setExamGrades([]);
         }
         
@@ -191,9 +189,8 @@ const CourseDetail = () => {
           const finalGradeData = await gradeService.getGradeByStudentAndCourse(courseId, currentUser.uid);
           // Hide if not published
           setFinalGrade((finalGradeData as any)?.isPublished === false ? null : finalGradeData);
-          console.log('Loaded final grade:', finalGradeData);
         } catch (error) {
-          console.error('Error loading final grade:', error);
+          // Ignore final grade errors silently
           setFinalGrade(null);
         }
 
@@ -207,7 +204,7 @@ const CourseDetail = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading course materials:', error);
+      // Ignore materials load error; page will show empty states
     } finally {
       setMaterialsLoading(false);
     }
@@ -228,7 +225,7 @@ const CourseDetail = () => {
       return { message: 'You are enrolled in this course', variant: 'default' as const };
     }
     
-    if (!course.isActive) {
+    if (course.isActive === false) {
       return { message: 'This course is not currently available', variant: 'destructive' as const };
     }
     
@@ -517,7 +514,6 @@ const CourseDetail = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('View Details clicked for material:', material.title);
                                 setSelectedMaterial(material);
                                 setMaterialDialogOpen(true);
                               }}

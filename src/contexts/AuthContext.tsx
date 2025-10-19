@@ -60,10 +60,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (profile) {
           setUserProfile(profile);
         } else {
-          console.log('Profile not found, user may need to complete setup');
+          // Silent in production
         }
       } catch (error) {
-        console.log('Profile not found, user may need to complete setup');
+        // Silent in production
       }
       
       // Persist a short-lived ID token for backend requests in this session
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const token = await result.user.getIdToken();
         setAuthToken(token);
       } catch (error) {
-      console.warn('Failed to update user profile:', error);
+      // Silent in production
     }
 
       toast.success('Successfully logged in!');
@@ -166,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const suppressRedirect = sessionStorage.getItem('suppressAuthRedirect');
       
       if (suppressRedirect) {
-        console.log('Auth state change suppressed during user creation');
+        // Silent in production
         return;
       }
       
@@ -185,10 +185,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (profile) {
             setUserProfile(profile);
           } else {
-            console.log('Profile not found for user:', user.uid, 'or email:', user.email);
+            // Silent in production
           }
         } catch (error) {
-          console.log('Error fetching profile for user:', user.uid, error);
+          // Silent in production
         }
       } else {
         setUserProfile(null);

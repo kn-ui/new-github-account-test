@@ -64,17 +64,13 @@ export default function AdminCourseGrades() {
 
   const computeLetter = (points: number, max: number): { letter: string; points: number } => {
     const percent = max > 0 ? Math.round((points / max) * 100) : 0;
-
-    // Sort ranges by minimum percentage in descending order to find the best match
+    // Use configured ranges with inclusive bounds and max cap
     const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-    
     for (const [letter, range] of sortedRanges) {
       const r = range as any;
-      if (percent >= r.min) {
-        return { letter, points: r.points };
-      }
+      const within = percent >= (r.min ?? 0) && percent <= (r.max ?? 100);
+      if (within) return { letter, points: r.points };
     }
-
     return { letter: 'F', points: 0.0 };
   };
 
@@ -92,13 +88,7 @@ export default function AdminCourseGrades() {
       }
 
       // Load all data in parallel for better performance
-      const [
-        users,
-        assignments,
-        exams,
-        allOtherGrades,
-        finalDocs
-      ] = await Promise.all([
+      const [users, assignments, exams, allOtherGrades, finalDocs] = await Promise.all([
         Promise.all(studentIds.map(id => userService.getUserById(id))),
         assignmentService.getAssignmentsByCourse(courseId),
         examService.getExamsByCourse(courseId),
@@ -194,7 +184,7 @@ export default function AdminCourseGrades() {
 
       setRows(newRows);
     } catch (error) {
-      console.error('Error loading course grades:', error);
+      // Avoid spamming console; show empty state only
       setRows([]);
     }
   };

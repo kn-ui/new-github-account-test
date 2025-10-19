@@ -126,10 +126,12 @@ export default function StudentAssignments() {
         if (material.assignmentId && material.assignmentId === assignmentId) return true;
         if (Array.isArray(material.tags) && material.tags.includes(assignmentId)) return true;
         // Check if assignment title is mentioned in material title or description
-        if (selectedAssignment && (
-          material.title.toLowerCase().includes(selectedAssignment.title.toLowerCase()) ||
-          material.description.toLowerCase().includes(selectedAssignment.title.toLowerCase())
-        )) return true;
+        if (selectedAssignment) {
+          const title = (material.title || '').toLowerCase();
+          const desc = (material.description || '').toLowerCase();
+          const aTitle = (selectedAssignment.title || '').toLowerCase();
+          if (title.includes(aTitle) || desc.includes(aTitle)) return true;
+        }
         return false;
       });
 
@@ -147,7 +149,6 @@ export default function StudentAssignments() {
       const allResources = [...resources, ...materialResources];
       setAssignmentResources(allResources);
     } catch (error) {
-      console.error('Error loading assignment resources:', error);
       setAssignmentResources([]);
     }
   };

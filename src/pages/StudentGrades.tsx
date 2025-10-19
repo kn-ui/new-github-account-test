@@ -124,36 +124,28 @@ export default function StudentGrades() {
       const assignmentsArrays = await Promise.all(assignmentsPromises);
       const allAssignments = assignmentsArrays.flat();
 
-      // Get graded submissions for all assignments
-      const submissionsPromises = allAssignments.map(async (assignment) => {
-        try {
-          const submissions = await submissionService.getSubmissionsByAssignment(assignment.id);
-          const studentSubmissions = submissions.filter(s => 
-            s.studentId === currentUser!.uid && s.status === 'graded' && s.grade !== undefined
-          );
-          
-          return studentSubmissions.map(submission => ({
-            id: submission.id,
-            assignmentId: submission.assignmentId,
-            assignmentTitle: assignment.title,
-            courseId: assignment.courseId,
-            courseTitle: assignment.courseTitle,
-            instructorName: assignment.instructorName,
-            submittedAt: submission.submittedAt.toDate(),
-            gradedAt: (submission as any).gradedAt?.toDate() || submission.submittedAt.toDate(),
-            grade: submission.grade || 0,
-            maxScore: assignment.maxScore,
-            feedback: submission.feedback || '',
-            status: 'graded' as const
-          }));
-        } catch (error) {
-          console.error(`Error loading submissions for assignment ${assignment.id}:`, error);
-          return [];
-        }
-      });
-
-      const submissionsArrays = await Promise.all(submissionsPromises);
-      const allGrades = submissionsArrays.flat();
+      // Get graded submissions for the current student in one request
+      const studentSubmissionsAll = await submissionService.getSubmissionsByStudent(currentUser!.uid);
+      const assignmentById = new Map(allAssignments.map(a => [a.id, a]));
+      const gradedSubmissions = studentSubmissionsAll.filter(s => s.status === 'graded' && s.grade !== undefined);
+      const allGrades = gradedSubmissions.map(submission => {
+        const assignment = assignmentById.get(submission.assignmentId);
+        if (!assignment) return null;
+        return {
+          id: submission.id,
+          assignmentId: submission.assignmentId,
+          assignmentTitle: assignment.title,
+          courseId: assignment.courseId,
+          courseTitle: (assignment as any).courseTitle,
+          instructorName: (assignment as any).instructorName,
+          submittedAt: submission.submittedAt.toDate(),
+          gradedAt: (submission as any).gradedAt?.toDate() || submission.submittedAt.toDate(),
+          grade: submission.grade || 0,
+          maxScore: assignment.maxScore,
+          feedback: submission.feedback || '',
+          status: 'graded' as const
+        } as const;
+      }).filter(Boolean) as any[];
       setGrades(allGrades);
 
       // Load exam grades for enrolled courses
@@ -237,12 +229,12 @@ export default function StudentGrades() {
         const uniqueOtherGrades = Array.from(new Map(allOtherGrades.map(og => [og.id, og])).values());
         setOtherGrades(uniqueOtherGrades);
       } catch (e) {
-        console.error('Error loading other grades:', e);
+        // Silently ignore
         setOtherGrades([]);
       }
 
     } catch (error) {
-      console.error('Error loading grades:', error);
+      // Suppress console noise; UI shows error states via empties
     } finally {
       setLoading(false);
     }

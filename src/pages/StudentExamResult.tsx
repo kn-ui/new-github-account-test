@@ -24,10 +24,7 @@ export default function StudentExamResult() {
         const at = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
         setAttempt(at);
         
-        // Debug logging
-        console.log('Exam data:', examData);
-        console.log('Attempt data:', at);
-        console.log('Attempt answers:', at?.answers);
+        // No console logging in production
       } finally {
         setLoading(false);
       }
@@ -75,16 +72,7 @@ export default function StudentExamResult() {
   const isFullyGraded = attempt.isGraded || (attempt.status === 'graded');
   const hasManualQuestions = exam.questions?.some((q: any) => q.type === 'short') || false;
   
-  // Debug logging
-  console.log('Exam attempt data:', {
-    attempt,
-    autoScore,
-    manualScore,
-    manualScores,
-    total,
-    isFullyGraded,
-    hasManualQuestions
-  });
+  // Remove debug console output
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">

@@ -99,15 +99,16 @@ export default function TeacherGrades() {
       const assignmentsArrays = await Promise.all(assignmentsPromises);
       const allAssignments = assignmentsArrays.flat();
 
-      // Get submissions for all assignments
-      const rows: AssignmentRow[] = [];
-      for (const a of allAssignments) {
-        const subs = await submissionService.getSubmissionsByAssignment(a.id);
+      // Get submissions for all assignments in parallel for performance
+      const subsArrays = await Promise.all(
+        allAssignments.map(a => submissionService.getSubmissionsByAssignment(a.id).then(subs => ({ a, subs })))
+      );
+      const rows: AssignmentRow[] = subsArrays.map(({ a, subs }) => {
         const pending = subs.filter((s: any) => s.status === 'submitted').length;
         const graded = subs.filter((s: any) => s.status === 'graded');
         const avg = graded.length ? (graded.reduce((acc: number, s: any) => acc + (s.grade || 0), 0) / graded.length) : 0;
-        rows.push({ id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 });
-      }
+        return { id: a.id, title: a.title, courseId: a.courseId, courseTitle: (a as any).courseTitle, dueDate: a.dueDate.toDate(), pending, graded: graded.length, avg: Math.round(avg * 10)/10 };
+      });
       setAssignments(rows);
     } catch (error) {
       console.error('Error loading submissions:', error);

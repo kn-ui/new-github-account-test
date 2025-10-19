@@ -1133,7 +1133,6 @@ export const assignmentService = {
     const docRef = await addDoc(collections.assignments(), {
       ...assignmentData,
       dueDate: (assignmentData as any).dueDate instanceof Date ? Timestamp.fromDate((assignmentData as any).dueDate) : (assignmentData as any).dueDate,
-      isActive: assignmentData.isActive !== undefined ? assignmentData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });
@@ -1242,7 +1241,6 @@ export const courseMaterialService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courseMaterials(), {
       ...materialData,
-      isActive: materialData.isActive !== undefined ? materialData.isActive : true,
       createdAt: now,
       updatedAt: now,
     });

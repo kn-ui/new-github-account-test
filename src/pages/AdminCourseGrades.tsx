@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { assignmentService, courseService, enrollmentService, examAttemptService, examService, gradeService, otherGradeService, submissionService, userService, settingsService } from '@/lib/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -263,10 +264,10 @@ export default function AdminCourseGrades() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setRangesOpen(true)}>Configure Grade Ranges</Button>
-          <Button variant="outline" disabled={recalcLoading} onClick={recalcAll}>
+          <LoadingButton variant="outline" loading={recalcLoading} onClick={recalcAll} loadingText="Recalculating…">
             <RefreshCcw className="h-4 w-4 mr-1" /> Recalculate All
-          </Button>
-          <Button onClick={publishAll}>Publish Final Grades</Button>
+          </LoadingButton>
+          <LoadingButton onClick={publishAll} loading={false} loadingText="Publishing…">Publish Final Grades</LoadingButton>
         </div>
       </div>
 

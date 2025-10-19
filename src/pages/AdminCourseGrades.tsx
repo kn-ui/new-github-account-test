@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { assignmentService, courseService, enrollmentService, examAttemptService, examService, gradeService, otherGradeService, submissionService, userService, settingsService } from '@/lib/firestore';
+import { calculateLetterGrade } from '@/lib/gradeUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingButton from '@/components/ui/loading-button';
@@ -49,30 +50,39 @@ export default function AdminCourseGrades() {
   const loadAll = async () => {
     try {
       setLoading(true);
+      // Load course and grade ranges in parallel
       const [c, ranges] = await Promise.all([
         courseService.getCourseById(courseId!),
-        settingsService.getGradeRanges().catch(() => ({})),
+        settingsService.getGradeRanges().catch(() => ({
+          'A+': { min: 97, max: 100, points: 4.0 },
+          'A': { min: 93, max: 96, points: 4.0 },
+          'A-': { min: 90, max: 92, points: 3.7 },
+          'B+': { min: 87, max: 89, points: 3.3 },
+          'B': { min: 83, max: 86, points: 3.0 },
+          'B-': { min: 80, max: 82, points: 2.7 },
+          'C+': { min: 77, max: 79, points: 2.3 },
+          'C': { min: 73, max: 76, points: 2.0 },
+          'C-': { min: 70, max: 72, points: 1.7 },
+          'D+': { min: 67, max: 69, points: 1.3 },
+          'D': { min: 63, max: 66, points: 1.0 },
+          'D-': { min: 60, max: 62, points: 0.7 },
+          'F': { min: 0, max: 59, points: 0.0 },
+        })),
       ]);
       setCourse(c);
       setGradeRanges(ranges);
+      // Load rows after setting course and ranges
       await loadRows();
     } catch (e) {
-      // Error handled silently
+      console.error('Error loading course data:', e);
+      toast.error('Failed to load course data');
     } finally {
       setLoading(false);
     }
   };
 
   const computeLetter = (points: number, max: number): { letter: string; points: number } => {
-    const percent = max > 0 ? Math.round((points / max) * 100) : 0;
-    // Use configured ranges with inclusive bounds and max cap
-    const sortedRanges = Object.entries(gradeRanges).sort(([, a], [, b]) => (b as any).min - (a as any).min);
-    for (const [letter, range] of sortedRanges) {
-      const r = range as any;
-      const within = percent >= (r.min ?? 0) && percent <= (r.max ?? 100);
-      if (within) return { letter, points: r.points };
-    }
-    return { letter: 'F', points: 0.0 };
+    return calculateLetterGrade(points, max, gradeRanges);
   };
 
   const loadRows = async () => {
@@ -156,7 +166,8 @@ export default function AdminCourseGrades() {
 
         const points = a.total + e.total + o;
         const max = a.max + e.max;
-        const percent = max > 0 ? Math.round(((a.total + e.total + o) / max) * 100) : 0;
+        // Percent should be calculated without 'other' points since they're bonus
+        const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
 
         let letter = finalByStudent.get(sid)?.letterGrade || 'F';
         let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
@@ -290,28 +301,38 @@ export default function AdminCourseGrades() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(r => (
-                  <tr key={r.studentId} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-3">
-                      <div className="font-medium text-gray-900">{r.name}</div>
-                      <div className="text-xs text-gray-500">{r.email}</div>
-                    </td>
-                    <td className="py-2 px-3 text-center">{r.assignmentsTotal}/{r.assignmentsMax}</td>
-                    <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
-                    <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
-                    <td className="py-2 px-3 text-center">{r.finalPoints}</td>
-                    <td className="py-2 px-3 text-center">{r.letterGrade}</td>
-                    <td className="py-2 px-3 text-center">
-                      <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                        {r.isPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-gray-500">No enrolled students found.</td>
+                    <td colSpan={7} className="py-8 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="text-gray-500">Loading student grades...</span>
+                      </div>
+                    </td>
                   </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-gray-500">No enrolled students found.</td>
+                  </tr>
+                ) : (
+                  rows.map(r => (
+                    <tr key={r.studentId} className="border-b hover:bg-gray-50">
+                      <td className="py-2 px-3">
+                        <div className="font-medium text-gray-900">{r.name}</div>
+                        <div className="text-xs text-gray-500">{r.email}</div>
+                      </td>
+                      <td className="py-2 px-3 text-center">{r.assignmentsTotal}/{r.assignmentsMax}</td>
+                      <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
+                      <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
+                      <td className="py-2 px-3 text-center">{r.finalPoints}</td>
+                      <td className="py-2 px-3 text-center font-semibold">{r.letterGrade}</td>
+                      <td className="py-2 px-3 text-center">
+                        <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {r.isPublished ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

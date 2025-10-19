@@ -424,6 +424,10 @@ export default function AdminStudentGrades() {
     return filtered;
   }, [finalGrades, courses, searchTerm, courseFilter, sortBy]);
 
+  const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
+    return calculateLetterGrade(points, max, gradeRanges);
+  };
+
   // GPA Calculations (Semester, Yearly, Cumulative)
   const gpaStats = useMemo(() => {
     // Helper to get semester based on Ethiopian calendar
@@ -492,10 +496,6 @@ export default function AdminStudentGrades() {
     const cumulativeGPA = calculateGPA(allGradePoints);
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades]);
-
-  const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
-    return calculateLetterGrade(points, max, gradeRanges);
-  };
 
   const refreshFinalGrades = async () => {
     try {

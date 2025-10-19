@@ -123,6 +123,7 @@ export default function Updates() {
       setSavingBlog(true);
       // Optional image upload
       let imageUrl = blogForm.imageUrl || '';
+      let imageAssetId: string | undefined = undefined;
       if (blogImageFile) {
         setIsUploadingImage(true);
         const uploadResult = await uploadToHygraph(blogImageFile);
@@ -130,6 +131,7 @@ export default function Updates() {
           throw new Error(uploadResult.error || 'Image upload failed');
         }
         imageUrl = uploadResult.url;
+        imageAssetId = uploadResult.id;
       }
 
       if (editingBlog) {
@@ -137,6 +139,7 @@ export default function Updates() {
           title: blogForm.title,
           content: blogForm.content,
           imageUrl: imageUrl || undefined,
+          ...(imageAssetId ? { imageAssetId } : {}),
         } as any);
         toast.success('Blog post updated');
       } else {
@@ -146,6 +149,7 @@ export default function Updates() {
           authorId: currentUser.uid,
           authorName: userProfile.displayName || userProfile.email || 'Unknown Author',
           ...(imageUrl ? { imageUrl } : {}),
+          ...(imageAssetId ? { imageAssetId } : {}),
         });
         toast.success('Blog post created');
       }

@@ -1063,6 +1063,7 @@ export default function TeacherCourseDetail() {
                 const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
+                  let assetId: string | undefined = undefined;
                   if (materialFile) {
                     setIsUploadingMaterial(true);
                     const uploadResult = await uploadToHygraph(materialFile);
@@ -1070,6 +1071,7 @@ export default function TeacherCourseDetail() {
                       throw new Error(uploadResult.error || 'Upload failed');
                     }
                     url = uploadResult.url || '';
+                    assetId = uploadResult.id;
                     if (!url) {
                       throw new Error('No URL returned from upload');
                     }
@@ -1078,6 +1080,9 @@ export default function TeacherCourseDetail() {
                     }
                   }
                   payload.fileUrl = url;
+                  if (assetId) {
+                    payload.fileAssetId = assetId;
+                  }
                 }
                 if (materialForm.type === 'video' || materialForm.type === 'link') payload.externalLink = materialForm.externalLink || '';
                 if (editingMaterial) {

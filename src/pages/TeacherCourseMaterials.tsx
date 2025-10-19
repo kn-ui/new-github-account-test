@@ -131,6 +131,7 @@ export default function TeacherCourseMaterials() {
     try {
       setSaving(true);
       let uploadedUrl: string | undefined = undefined;
+      let uploadedAssetId: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
         setIsUploading(true);
         const uploadResult = await uploadToHygraph(fileObj);
@@ -138,6 +139,7 @@ export default function TeacherCourseMaterials() {
           throw new Error(uploadResult.error || 'Upload failed');
         }
         uploadedUrl = uploadResult.url;
+        uploadedAssetId = uploadResult.id;
         if (!uploadedUrl) {
           throw new Error('No URL returned from upload');
         }
@@ -154,6 +156,9 @@ export default function TeacherCourseMaterials() {
       };
       if (formData.type === 'document') {
         materialData.fileUrl = uploadedUrl || formData.fileUrl || '';
+        if (uploadedAssetId) {
+          materialData.fileAssetId = uploadedAssetId;
+        }
       }
       if (formData.type === 'link' || formData.type === 'video') {
         materialData.externalLink = formData.externalLink || '';
@@ -162,6 +167,7 @@ export default function TeacherCourseMaterials() {
       if (editingMaterial) {
         const updates: any = { title: materialData.title, description: materialData.description, courseId: materialData.courseId, type: materialData.type };
         if (materialData.fileUrl !== undefined) updates.fileUrl = materialData.fileUrl;
+        if (materialData.fileAssetId !== undefined) updates.fileAssetId = materialData.fileAssetId;
         if (materialData.externalLink !== undefined) updates.externalLink = materialData.externalLink;
         await courseMaterialService.updateCourseMaterial(editingMaterial.id, updates);
         toast.success('Material updated successfully');

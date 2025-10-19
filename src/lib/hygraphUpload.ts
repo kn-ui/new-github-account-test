@@ -137,3 +137,35 @@ export function getFileIcon(filename: string): string {
       return '📎';
   }
 }
+
+export function extractHygraphAssetId(url: string): string | null {
+  if (!isHygraphUrl(url)) return null;
+  
+  // Extract asset ID from Hygraph URL
+  // Hygraph URLs typically look like: https://media.graphassets.com/[assetId]/[filename]
+  const match = url.match(/\/([a-zA-Z0-9-_]+)\/[^/]*$/);
+  return match ? match[1] : null;
+}
+
+export async function deleteHygraphAsset(url: string): Promise<boolean> {
+  try {
+    const assetId = extractHygraphAssetId(url);
+    if (!assetId) return false;
+
+    const token = getAuthToken();
+    const response = await fetch('/api/content/delete-asset', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ assetId })
+    });
+
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Error deleting Hygraph asset:', error);
+    return false;
+  }
+}

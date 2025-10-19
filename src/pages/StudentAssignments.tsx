@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { studentDataService, courseMaterialService, submissionService, FirestoreAssignment } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -468,13 +469,15 @@ export default function StudentAssignments() {
                     </div>
                   </div>
                   
-                  <button 
+                  <LoadingButton 
                     onClick={handleSubmitAssignment}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
-                    disabled={isUploading}
+                    className="w-full"
+                    loading={isUploading}
+                    loadingText="Uploading…"
+                    disabled={false}
                   >
-                    {isUploading ? 'Uploading…' : 'Submit Assignment'}
-                  </button>
+                    Submit Assignment
+                  </LoadingButton>
                 </div>
               )}
             </div>

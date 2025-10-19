@@ -474,6 +474,7 @@ const CourseDetail = () => {
                               variant="outline" 
                               size="sm"
                               onClick={() => navigate(`/dashboard/student-assignments?assignmentId=${assignment.id}`)}
+                              disabled={false}
                             >
                               View Assignment
                             </Button>

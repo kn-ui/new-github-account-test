@@ -5,6 +5,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { truncateTitle, truncateText } from '@/lib/utils';
 import { submissionService, assignmentService, courseService, studentDataService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,7 @@ export default function TeacherGrades() {
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
   const [grade, setGrade] = useState<number>(0);
   const [feedback, setFeedback] = useState('');
+  const [isGrading, setIsGrading] = useState(false);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -125,6 +127,7 @@ export default function TeacherGrades() {
     }
 
     try {
+      setIsGrading(true);
       await submissionService.updateSubmission(selectedSubmission.id, {
         grade: grade,
         feedback: feedback,
@@ -140,6 +143,8 @@ export default function TeacherGrades() {
     } catch (error) {
       console.error('Error grading submission:', error);
       toast.error('Failed to grade submission');
+    } finally {
+      setIsGrading(false);
     }
   };
 
@@ -473,9 +478,9 @@ export default function TeacherGrades() {
             <Button variant="outline" onClick={() => setGradingDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleGradeSubmission}>
+            <LoadingButton onClick={handleGradeSubmission} loading={isGrading} loadingText={selectedSubmission?.status === 'graded' ? 'Updating…' : 'Grading…'}>
               {selectedSubmission?.status === 'graded' ? 'Update Grade' : 'Grade Submission'}
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

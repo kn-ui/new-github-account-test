@@ -227,7 +227,6 @@ export default function StudentGrades() {
         }
         return acc;
       }, {} as Record<string, FirestoreGrade>));
-      console.log('Final grades loaded:', uniqueFinalGrades);
       setFinalGrades(uniqueFinalGrades);
 
       // Load "other" grades for this student across courses
@@ -394,7 +393,6 @@ export default function StudentGrades() {
   const getStats = () => {
     if (gradeType === 'courses') {
       // Stats for final course grades
-      console.log('Calculating stats for courses, finalGrades:', finalGrades);
       if (finalGrades.length === 0) {
         return { averageGrade: 0, totalCourses: 0, highestGrade: 0, lowestGrade: 0 };
       }

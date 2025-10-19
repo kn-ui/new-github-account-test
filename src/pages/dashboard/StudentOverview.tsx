@@ -43,7 +43,7 @@ export default function StudentOverview() {
           
           setStats(data.stats);
 
-          // Normalize enrollments for display
+          // Normalize enrollments for display and ensure uniqueness
           const normalized = data.enrollments
             .filter((enrollment: any) => enrollment.course)
             .map((enrollment: any) => ({
@@ -54,9 +54,14 @@ export default function StudentOverview() {
               nextLesson: 'Next lesson',
               dueDate: undefined,
             }));
-          setEnrolledCourses(normalized);
+          
+          // Remove duplicates based on course ID
+          const uniqueCourses = normalized.filter((course, index, self) => 
+            index === self.findIndex(c => c.id === course.id)
+          );
+          setEnrolledCourses(uniqueCourses);
 
-          // Process assignments
+          // Process assignments and ensure uniqueness
           const upcoming = data.assignments
             .filter((a: any) => {
               const dueDate = a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate();
@@ -67,20 +72,29 @@ export default function StudentOverview() {
               const bDate = b.dueDate instanceof Date ? b.dueDate : b.dueDate.toDate();
               return aDate.getTime() - bDate.getTime();
             })
-            .slice(0, 5)
             .map((a: any) => ({
               ...a,
               courseTitle: data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course',
               dueDate: (a.dueDate instanceof Date ? a.dueDate : a.dueDate.toDate()).toLocaleDateString()
             }));
-          setUpcomingAssignments(upcoming);
           
-          // Process announcements
+          // Remove duplicates based on assignment ID and take only first 5
+          const uniqueUpcoming = upcoming.filter((assignment, index, self) => 
+            index === self.findIndex(a => a.id === assignment.id)
+          ).slice(0, 5);
+          setUpcomingAssignments(uniqueUpcoming);
+          
+          // Process announcements and ensure uniqueness
           const withCourseTitles = data.announcements.map((a: any) => ({
             ...a,
             courseTitle: a.courseId ? (data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course') : t('forum.categories.all')
           }));
-          setAnnouncements(withCourseTitles);
+          
+          // Remove duplicates based on announcement ID
+          const uniqueAnnouncements = withCourseTitles.filter((announcement, index, self) => 
+            index === self.findIndex(a => a.id === announcement.id)
+          );
+          setAnnouncements(uniqueAnnouncements);
 
           // Log today's activity for attendance (non-blocking)
           activityLogService.upsertToday(currentUser.uid).catch(console.error);
@@ -198,8 +212,8 @@ export default function StudentOverview() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.myCourses.title')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {enrolledCourses.slice(0, 4).map((course) => (
-                  <div key={course.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
+                {enrolledCourses.slice(0, 4).map((course, index) => (
+                  <div key={`course-${course.id}-${index}`} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
                     <Link to={`/dashboard/course/${course.id}`} className="block">
                       <div className="flex items-center justify-between mb-4">
                         <div className="min-w-0 flex-1">
@@ -243,8 +257,8 @@ export default function StudentOverview() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.upcomingAssignments.title')}</h2>
               <div className="space-y-2">
-                {upcomingAssignments.slice(0, 3).map((assignment) => (
-                  <div key={assignment.id} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
+                {upcomingAssignments.slice(0, 3).map((assignment, index) => (
+                  <div key={`assignment-${assignment.id}-${index}`} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
                     // Navigate to assignments page and trigger detail view
                     window.location.href = `/dashboard/student-assignments?assignmentId=${assignment.id}`;
                   }}>
@@ -277,8 +291,8 @@ export default function StudentOverview() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.announcements.title')}</h2>
               <div className="space-y-2">
-                {announcements.slice(0, 3).map((announcement) => (
-                  <div key={announcement.id} className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50`}>
+                {announcements.slice(0, 3).map((announcement, index) => (
+                  <div key={`announcement-${announcement.id}-${index}`} className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50`}>
                     <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                     <Bell size={16} className="text-blue-600" />
                     <div className="flex-1 min-w-0">

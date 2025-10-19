@@ -58,7 +58,6 @@ const StudentCourses = React.memo(() => {
       const courses = await studentDataService.getStudentCoursesData(currentUser!.uid);
       setEnrolledCourses(courses);
     } catch (error) {
-      console.error('Error loading enrolled courses:', error);
       toast.error(t('errors.loadCourses') || 'Failed to load enrolled courses');
     } finally {
       setLoading(false);
@@ -181,8 +180,8 @@ const StudentCourses = React.memo(() => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('courses.allCategories')}</SelectItem>
-                  {Array.from(new Set(enrolledCourses.map(course => course.category))).map(category => (
-                    <SelectItem key={category} value={category}>
+                  {Array.from(new Set(enrolledCourses.map(course => course.category))).map((category, index) => (
+                    <SelectItem key={`category-${category}-${index}`} value={category}>
                       {category}
                     </SelectItem>
                   ))}
@@ -246,8 +245,8 @@ const StudentCourses = React.memo(() => {
 
         {/* Courses Display */}
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid gap-6'}>
-          {filteredAndSortedCourses.map(course => (
-            <div key={course.id} className={`bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow ${viewMode === 'grid' ? 'p-4' : 'p-6'}`}>
+          {filteredAndSortedCourses.map((course, index) => (
+            <div key={`student-course-${course.id}-${index}`} className={`bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow ${viewMode === 'grid' ? 'p-4' : 'p-6'}`}>
               {viewMode === 'grid' ? (
                 // Grid View
                 <div className="space-y-4">

@@ -38,17 +38,12 @@ export default function StudentDashboard() {
         setLoading(true);
         
         if (currentUser?.uid) {
-          console.log('👤 Loading dashboard for currentUser:', currentUser.uid);
-          
           // Load student stats
           const studentStats = await analyticsService.getStudentStats(currentUser.uid);
-          console.log('📊 Student stats:', studentStats);
           setStats(studentStats);
 
           // Load enrollments with course data
-          console.log('🔄 Loading enrollments for student:', currentUser.uid);
           const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
-          console.log('📚 Enrollments loaded:', enrollments);
           
           const normalized: EnrolledCourse[] = enrollments.map((enrollment: any) => ({
             id: enrollment.courseId,
@@ -58,7 +53,6 @@ export default function StudentDashboard() {
             nextLesson: 'Next lesson',
             dueDate: undefined,
           }));
-          console.log('🎯 Normalized courses:', normalized);
           setEnrolledCourses(normalized);
 
           // Log today's activity for attendance
@@ -76,7 +70,7 @@ export default function StudentDashboard() {
               const c = await courseService.getCourseById(cid);
               if (c) courseMap[cid] = c;
             } catch (error) {
-              console.warn(`Failed to load course ${cid}:`, error);
+              // Silently handle course loading errors
             }
           }));
           const enriched = topSubs.map((s: any) => {
@@ -267,8 +261,8 @@ export default function StudentDashboard() {
                 <p className="text-gray-600">{t('student.myCourses.subtitle')}</p>
               </div>
               <div className="p-6 space-y-6">
-                {displayCourses.slice(0, 3).map((course) => (
-                  <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                {displayCourses.slice(0, 3).map((course, index) => (
+                  <div key={`dashboard-course-${course.id}-${index}`} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-1">{course.title}</h3>
@@ -330,8 +324,8 @@ export default function StudentDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   {upcomingAssignments.length > 0 ? (
-                    upcomingAssignments.map((assignment) => (
-                      <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                    upcomingAssignments.map((assignment, index) => (
+                      <div key={`dashboard-assignment-${assignment.id}-${index}`} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
                         <div className="flex items-center space-x-3">
                           <div className="bg-gray-100 p-2 rounded-full">
                             <FileText className="h-4 w-4 text-gray-600" />
@@ -376,8 +370,8 @@ export default function StudentDashboard() {
               </div>
               <div className="p-6 space-y-4">
                 {announcements.length > 0 ? (
-                  announcements.slice(0, 3).map((announcement) => (
-                    <div key={announcement.id} className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-lg">
+                  announcements.slice(0, 3).map((announcement, index) => (
+                    <div key={`dashboard-announcement-${announcement.id}-${index}`} className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-lg">
                       <h3 className="font-medium text-gray-900 mb-2">{announcement.title}</h3>
                       <p className="text-sm text-gray-700 mb-2">{announcement.body}</p>
                       <div className="flex justify-between items-center text-xs text-gray-500">
@@ -449,8 +443,8 @@ export default function StudentDashboard() {
               <Input placeholder="Search announcements..." value={announcementsSearch} onChange={(e) => setAnnouncementsSearch(e.target.value)} />
             </div>
             <div className="space-y-3 max-h-[60vh] overflow-auto">
-              {announcements.filter(a => [a.title, a.body, a.courseTitle].some((v: string) => v?.toLowerCase().includes(announcementsSearch.toLowerCase()))).map((a) => (
-                <div key={a.id} className="p-3 border rounded-lg">
+              {announcements.filter(a => [a.title, a.body, a.courseTitle].some((v: string) => v?.toLowerCase().includes(announcementsSearch.toLowerCase()))).map((a, index) => (
+                <div key={`modal-announcement-${a.id}-${index}`} className="p-3 border rounded-lg">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>{a.courseTitle || 'General'}</span>
                     <span>{a.createdAt ? a.createdAt.toDate().toLocaleString() : ''}</span>

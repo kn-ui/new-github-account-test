@@ -2134,10 +2134,14 @@ export const studentDataService = {
         lastAccessed: enrollment.lastAccessedAt?.toDate()
       }));
 
-      setCachedData(cacheKey, result);
-      return result;
+      // Ensure uniqueness by course ID (additional safety measure)
+      const uniqueResult = result.filter((course, index, self) => 
+        index === self.findIndex(c => c.id === course.id)
+      );
+
+      setCachedData(cacheKey, uniqueResult);
+      return uniqueResult;
     } catch (error) {
-      console.error('Error loading student courses data:', error);
       throw error;
     }
   },

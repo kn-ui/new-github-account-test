@@ -472,7 +472,7 @@ export default function AdminStudentGrades() {
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades]);
 
-  const calculateLetterGradeWithRanges = (points: number, max: number): { letterGrade: string; gradePoints: number } => {
+  const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
     const percent = max > 0 ? Math.round((points / max) * 100) : 0;
 
     // Sort ranges by minimum percentage in descending order to find the best match
@@ -520,7 +520,7 @@ export default function AdminStudentGrades() {
 
       const totalPossiblePoints = assignmentMax + examMax;
 
-      const { letterGrade, gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints);
+      const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints);
 
       // Check if grade already exists
       const existing = await gradeService.getGradeByStudentAndCourse(courseId, student.id!);
@@ -1278,7 +1278,7 @@ export default function AdminStudentGrades() {
                                 <tbody>
                                   {yearGrades.map((grade) => {
                                     // Use the configured grade ranges instead of hardcoded values
-                                    const { letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, grade.assignmentsMax + grade.examsMax);
+                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, grade.assignmentsMax + grade.examsMax);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
@@ -1289,7 +1289,7 @@ export default function AdminStudentGrades() {
                                           </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                          <Badge variant={letterGrade.startsWith('A') ? 'default' : letterGrade.startsWith('B') ? 'secondary' : letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
+                                          <Badge variant={letterGrade && letterGrade.startsWith('A') ? 'default' : letterGrade && letterGrade.startsWith('B') ? 'secondary' : letterGrade && letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
                                             {grade.letterGrade}
                                           </Badge>
                                         </td>

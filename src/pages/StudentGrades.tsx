@@ -832,14 +832,16 @@ export default function StudentGrades() {
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
-                                    const letterGrade = grade.finalGrade >= 90 ? 'A' : grade.finalGrade >= 80 ? 'B' : grade.finalGrade >= 70 ? 'C' : grade.finalGrade >= 60 ? 'D' : 'F';
+                                    const totalMax = (grade as any).assignmentsMax + (grade as any).examsMax;
+                                    const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : 0;
+                                    const letterGrade = (grade as any).letterGrade || (percent >= 90 ? 'A' : percent >= 80 ? 'B' : percent >= 70 ? 'C' : percent >= 60 ? 'D' : 'F');
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
                                         <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
                                         <td className="py-3 px-4 text-center">
-                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, 100)}`}>
-                                            {grade.finalGrade}%
+                                          <span className={`font-semibold ${getGradeColor(percent, 100)}`}>
+                                            {percent}%
                                           </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">

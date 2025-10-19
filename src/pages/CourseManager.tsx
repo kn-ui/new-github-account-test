@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload } from 'lucide-react';
 import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,6 +68,15 @@ export default function CourseManager() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
 
+  // Loading states for async button actions
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [creatingCourse, setCreatingCourse] = useState(false);
+  const [searchingStudents, setSearchingStudents] = useState(false);
+  const [enrollingUserId, setEnrollingUserId] = useState<string | null>(null);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+
   // Calculate stats
   const totalCourses = courses.length;
   const activeCourses = courses.filter(c => c.isActive).length;
@@ -117,12 +127,15 @@ export default function CourseManager() {
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
+      setDeletingCourseId(courseId);
       await courseService.deleteCourse(courseId);
       toast.success('Course deleted');
       loadCourses();
     } catch (error) {
       console.error('Error deleting course:', error);
       toast.error('Failed to delete course');
+    } finally {
+      setDeletingCourseId(null);
     }
   };
 
@@ -171,6 +184,7 @@ export default function CourseManager() {
 
   const unenrollStudent = async (enrollmentId: string) => {
     try {
+      setUnenrollingId(enrollmentId);
       await enrollmentService.deleteEnrollment(enrollmentId);
       toast.success('Student unenrolled successfully');
       // Refresh the enrolled students list
@@ -184,11 +198,14 @@ export default function CourseManager() {
       } else {
         toast.error('Failed to unenroll student. Please try again.');
       }
+    } finally {
+      setUnenrollingId(null);
     }
   };
 
   const searchStudents = async () => {
     try {
+      setSearchingStudents(true);
       const all = await userService.getUsers(500);
       const q = studentQuery.toLowerCase();
       
@@ -212,6 +229,8 @@ export default function CourseManager() {
       console.error('Error searching students:', error);
       setFoundStudents([]);
       toast.error('Failed to search students. Please try again.');
+    } finally {
+      setSearchingStudents(false);
     }
   };
 
@@ -225,6 +244,7 @@ export default function CourseManager() {
     }
     
     try {
+      setEnrollingUserId(studentId);
       await enrollmentService.createEnrollment({ 
         courseId: selectedCourseForEnroll.id, 
         studentId, 
@@ -248,11 +268,14 @@ export default function CourseManager() {
       } else {
         toast.error('Failed to enroll student. Please try again.');
       }
+    } finally {
+      setEnrollingUserId(null);
     }
   };
 
   const processCsv = async () => {
     if (!selectedCourseForEnroll) return;
+    setImportingCsv(true);
     const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     let count = 0;
     let errors = 0;
@@ -309,6 +332,7 @@ export default function CourseManager() {
     }
     
     setCsvText('');
+    setImportingCsv(false);
   };
 
   const openEdit = (course: CourseWithApproval) => {
@@ -357,6 +381,7 @@ export default function CourseManager() {
     }
     
     try {
+      setSavingEdit(true);
       await courseService.updateCourse(selectedCourse.id, {
         title: editForm.title,
         description: editForm.description,
@@ -374,6 +399,8 @@ export default function CourseManager() {
     } catch (e) {
       console.error(e);
       toast.error('Failed to update course');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -388,6 +415,7 @@ export default function CourseManager() {
 
   const submitCreate = async () => {
     try {
+      setCreatingCourse(true);
       if (!currentUser || !userProfile) {
         toast.error('Not authenticated');
         return;
@@ -451,6 +479,8 @@ export default function CourseManager() {
     } catch (e) {
       console.error(e);
       toast.error('Failed to create course');
+    } finally {
+      setCreatingCourse(false);
     }
   };
 
@@ -689,8 +719,9 @@ export default function CourseManager() {
                               <AlertDialogAction
                                 onClick={() => handleDeleteCourse(course.id)}
                                 className="bg-red-600 hover:bg-red-700"
+                                disabled={deletingCourseId === course.id}
                               >
-                                Delete
+                                {deletingCourseId === course.id ? 'Deleting…' : 'Delete'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -1074,14 +1105,16 @@ export default function CourseManager() {
                       <div className="text-sm text-gray-500">{enrollment.user?.email}</div>
                       <div className="text-xs text-gray-400">Progress: {enrollment.progress || 0}%</div>
                     </div>
-                    <Button 
+                    <LoadingButton 
                       variant="destructive" 
                       size="sm" 
                       onClick={() => unenrollStudent(enrollment.id)}
+                      loading={unenrollingId === enrollment.id}
+                      loadingText="Removing…"
                     >
                       <UserMinus className="h-4 w-4 mr-1" />
                       Remove
-                    </Button>
+                    </LoadingButton>
                   </div>
                 ))}
                 {enrolledStudents.length === 0 && (

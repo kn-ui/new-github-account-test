@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +26,8 @@ import { toast } from 'sonner';
 export default function SystemSettings() {
   const [activeTab, setActiveTab] = useState('activity-logs');
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const tabs = [
     { id: 'activity-logs', label: 'User Activity Logs', icon: Activity },
@@ -49,21 +52,27 @@ export default function SystemSettings() {
 
   const generateActivityLog = async () => {
     try {
+      setGenerating(true);
       // Simulate generating activity log
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Activity log generated successfully');
     } catch (error) {
       toast.error('Failed to generate activity log');
+    } finally {
+      setGenerating(false);
     }
   };
 
   const sendTestNotification = async () => {
     try {
+      setSending(true);
       // Simulate sending test notification
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Test notification sent successfully');
     } catch (error) {
       toast.error('Failed to send test notification');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -80,9 +89,9 @@ export default function SystemSettings() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleSaveSettings} disabled={loading}>
-            {loading ? 'Saving...' : 'Save All Settings'}
-          </Button>
+          <LoadingButton onClick={handleSaveSettings} loading={loading} loadingText="Saving…">
+            Save All Settings
+          </LoadingButton>
         </div>
       </div>
 
@@ -168,10 +177,10 @@ export default function SystemSettings() {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  <Button onClick={generateActivityLog}>
+                  <LoadingButton onClick={generateActivityLog} loading={generating} loadingText="Generating…">
                     <Download className="h-4 w-4 mr-2" />
                     Generate Activity Log
-                  </Button>
+                  </LoadingButton>
                   <Button variant="outline">
                     <Eye className="h-4 w-4 mr-2" />
                     View Recent Logs
@@ -260,10 +269,10 @@ export default function SystemSettings() {
                   </div>
                 </div>
 
-                <Button onClick={sendTestNotification} variant="outline">
+                <LoadingButton onClick={sendTestNotification} variant="outline" loading={sending} loadingText="Sending…">
                   <Bell className="h-4 w-4 mr-2" />
                   Send Test Notification
-                </Button>
+                </LoadingButton>
               </CardContent>
             </Card>
           </>

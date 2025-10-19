@@ -2358,6 +2358,26 @@ export const gradeService = {
     }
   },
 
+  async calculateLetterFromPoints(
+    achievedPoints: number,
+    maxPoints: number,
+    rangesOverride?: GradeRangesConfig
+  ): Promise<{ letterGrade: string; gradePoints: number }> {
+    const percent = maxPoints > 0 ? Math.round((achievedPoints / maxPoints) * 100) : 0;
+    if (rangesOverride) {
+      const sorted = Object.entries(rangesOverride).sort(([, a], [, b]) => (b as any).min - (a as any).min);
+      for (const [letter, cfg] of sorted) {
+        const min = (cfg as any).min ?? 0;
+        const max = (cfg as any).max ?? 100;
+        if (percent >= min && percent <= max) {
+          return { letterGrade: letter, gradePoints: (cfg as any).points ?? 0 };
+        }
+      }
+      return { letterGrade: 'F', gradePoints: 0 };
+    }
+    return this.calculateLetterGradeAndPoints(percent);
+  },
+
   // Calculate final grade based on assignment grades
   async calculateFinalGrade(
     courseId: string, 

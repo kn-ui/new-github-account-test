@@ -173,7 +173,8 @@ export default function AdminCourseGrades() {
         let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
         
         // Always recalculate using current grade ranges for consistency
-        const comp = computeLetter(points, max);
+        // Use default max of 100 if no assignments/exams to avoid division by zero
+        const comp = computeLetter(points, max > 0 ? max : 100);
         letter = comp.letter; 
         gradePoints = comp.points;
 
@@ -207,7 +208,9 @@ export default function AdminCourseGrades() {
     try {
       for (const r of rows) {
         // Recompute letter from percent using ranges
-        const comp = computeLetter(r.finalPoints, r.assignmentsMax + r.examsMax);
+        // Use default max of 100 if no assignments/exams to avoid division by zero
+        const totalMax = r.assignmentsMax + r.examsMax;
+        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,

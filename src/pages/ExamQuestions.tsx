@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { examService, FirestoreExam } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -263,15 +264,17 @@ export default function ExamQuestions() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Questions</h2>
-              <Button 
+              <LoadingButton 
                 onClick={saveQuestions} 
-                disabled={saving || isExamLocked} 
+                loading={saving}
+                disabled={isExamLocked}
                 className="flex items-center gap-2"
+                loadingText="Saving…"
                 title={isExamLocked ? 'Exam is locked - cannot save changes' : 'Save all questions'}
               >
                 <Save className="h-4 w-4" />
-                {saving ? 'Saving...' : 'Save All'}
-              </Button>
+                Save All
+              </LoadingButton>
             </div>
 
             {questions.length === 0 ? (

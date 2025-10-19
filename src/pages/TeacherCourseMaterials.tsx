@@ -9,6 +9,7 @@ import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@
 import { api, getAuthToken } from '@/lib/api';
 import { uploadToHygraph } from '@/lib/hygraphUpload';
 import { Button } from '@/components/ui/button';
+import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,6 +79,7 @@ export default function TeacherCourseMaterials() {
   });
   const [fileObj, setFileObj] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -127,6 +129,7 @@ export default function TeacherCourseMaterials() {
     }
 
     try {
+      setSaving(true);
       let uploadedUrl: string | undefined = undefined;
       if (formData.type === 'document' && fileObj) {
         setIsUploading(true);
@@ -177,6 +180,7 @@ export default function TeacherCourseMaterials() {
     }
     finally {
       setIsUploading(false);
+      setSaving(false);
     }
   };
 
@@ -691,9 +695,9 @@ export default function TeacherCourseMaterials() {
             )}
 
             <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1" disabled={isUploading}>
-                {isUploading ? 'Uploading…' : (editingMaterial ? 'Update Material' : 'Add Material')}
-              </Button>
+              <LoadingButton type="submit" className="flex-1" loading={saving || isUploading} loadingText={isUploading ? 'Uploading…' : 'Saving…'}>
+                {editingMaterial ? 'Update Material' : 'Add Material'}
+              </LoadingButton>
               <Button 
                 type="button" 
                 variant="outline" 

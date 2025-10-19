@@ -831,7 +831,8 @@ export default function StudentGrades() {
                                     const totalMax = (grade as any).assignmentsMax + (grade as any).examsMax;
                                     // finalGrade is already stored as points, not percentage
                                     const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : Math.round(grade.finalGrade);
-                                    const letterGrade = (grade as any).letterGrade || getGradeLetter(grade.finalGrade, totalMax > 0 ? totalMax : 100);
+                                    const comp = calculateLetterGrade(grade.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
+                                    const letterGrade = comp.letter;
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>

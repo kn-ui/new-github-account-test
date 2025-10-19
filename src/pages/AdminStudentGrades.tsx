@@ -444,8 +444,7 @@ export default function AdminStudentGrades() {
       = {};
 
     finalGrades.forEach((g) => {
-      // Only include published grades in GPA calculation
-      if (!g.isPublished) return;
+      // Include all final grades (published and drafts) for admin GPA view
       
       const d = g.calculatedAt.toDate();
       const ethiopianDate = toEthiopianDate(d);
@@ -491,8 +490,16 @@ export default function AdminStudentGrades() {
       cumulativeCount += data.count;
     });
 
-    // Calculate cumulative GPA using shared utility
-    const allGradePoints = finalGrades.filter(g => g.isPublished).map(g => g.gradePoints);
+    // Calculate cumulative GPA using shared utility (include all grades)
+    const allGradePoints = finalGrades.map(g => {
+      let p = g.gradePoints;
+      if (!p || p === 0) {
+        const totalMax = (g.assignmentsMax || 0) + (g.examsMax || 0);
+        const { points } = calculateLetterGradeWithRanges(g.finalGrade, totalMax > 0 ? totalMax : 100);
+        p = points;
+      }
+      return Math.min(4.0, Math.max(0, Number(p) || 0));
+    });
     const cumulativeGPA = calculateGPA(allGradePoints);
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades]);

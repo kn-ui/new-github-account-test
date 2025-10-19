@@ -93,6 +93,8 @@ export class ContentController {
   async deleteAsset(req: Request, res: Response): Promise<void> {
     try {
       const { assetId } = req.body;
+      console.log('Delete asset request received for ID:', assetId);
+      
       if (!assetId) {
         res.status(400).json({ success: false, message: 'Asset ID is required' });
         return;
@@ -101,15 +103,17 @@ export class ContentController {
       const result = await hygraphService.deleteAsset(assetId);
       
       if (result) {
+        console.log('Asset deletion successful for ID:', assetId);
         res.status(200).json({ success: true, message: 'Asset deleted successfully' });
       } else {
+        console.error('Asset deletion failed for ID:', assetId);
         res.status(404).json({ success: false, message: 'Asset not found or could not be deleted' });
       }
     } catch (error) {
       console.error('Delete asset error:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'An error occurred while deleting the asset' 
+        message: error instanceof Error ? error.message : 'An error occurred while deleting the asset'
       });
     }
   }

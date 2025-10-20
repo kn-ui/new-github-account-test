@@ -11,7 +11,7 @@ import { deleteHygraphAsset as deleteAsset } from './hygraphUpload';
 export interface HygraphAssetRecord {
   assetId: string;
   url: string;
-  documentType: 'blog' | 'assignment' | 'courseMaterial';
+  documentType: 'blog' | 'assignment' | 'courseMaterial' | 'submission';
   documentId: string;
   uploadedAt: Date;
 }
@@ -22,7 +22,7 @@ export interface HygraphAssetRecord {
 export async function storeAssetRecord(
   assetId: string,
   url: string,
-  documentType: 'blog' | 'assignment' | 'courseMaterial',
+  documentType: 'blog' | 'assignment' | 'courseMaterial' | 'submission',
   documentId: string
 ): Promise<void> {
   try {
@@ -48,7 +48,7 @@ export async function storeAssetRecord(
  * Delete all Hygraph assets associated with a document
  */
 export async function deleteDocumentAssets(
-  documentType: 'blog' | 'assignment' | 'courseMaterial',
+  documentType: 'blog' | 'assignment' | 'courseMaterial' | 'submission',
   documentId: string,
   assetIds?: string[],
   urls?: string[]

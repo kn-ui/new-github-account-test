@@ -62,9 +62,9 @@ export default function TeacherAssignments() {
     title: '',
     description: '',
     courseId: '',
-    dueDate: '',
+    dueDate: new Date().toISOString().slice(0, 10),
     dueTime: '',
-    maxScore: 100,
+    maxScore: 10,
     instructions: '',
     linkTitle: '',
     linkUrl: ''
@@ -226,9 +226,9 @@ export default function TeacherAssignments() {
       title: '',
       description: '',
       courseId: '',
-      dueDate: '',
+      dueDate: new Date().toISOString().slice(0, 10),
       dueTime: '',
-      maxScore: 100,
+      maxScore: 10,
       instructions: '',
       linkTitle: '',
       linkUrl: ''

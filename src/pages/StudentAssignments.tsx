@@ -285,8 +285,7 @@ export default function StudentAssignments() {
 
     try {
       // Prepare submission data
-      let uploadedUrls: string[] = [];
-      let uploadedAssetIds: string[] = [];
+      const attachments: { type: 'file' | 'link'; url: string; title?: string; assetId?: string }[] = [];
       if (selectedFile) {
         setIsUploading(true);
         const uploadResult = await uploadToHygraph(selectedFile);
@@ -296,10 +295,12 @@ export default function StudentAssignments() {
         if (!uploadResult.url) {
           throw new Error('No URL returned from upload');
         }
-        uploadedUrls = [uploadResult.url];
-        if (uploadResult.id) {
-          uploadedAssetIds = [uploadResult.id];
-        }
+        attachments.push({
+          type: 'file',
+          url: uploadResult.url,
+          title: selectedFile.name,
+          assetId: uploadResult.id
+        });
         if (uploadResult.warning) {
           toast.warning(uploadResult.warning);
         }
@@ -315,8 +316,7 @@ export default function StudentAssignments() {
         studentName: userProfile.displayName || 'Unknown Student',
         studentEmail: userProfile.email || currentUser.email || '',
         content: submissionContent,
-        attachments: uploadedUrls,
-        attachmentAssetIds: uploadedAssetIds,
+        attachments: attachments,
         status: 'submitted' as const,
         submittedAt: new Date(),
         isActive: true,

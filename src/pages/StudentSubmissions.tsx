@@ -226,6 +226,7 @@ export default function StudentSubmissions() {
       if (selectedSubmissionForEdit && selectedSubmissionForEdit.id) {
         // If a new file is selected during edit, upload and override attachments
         let newAttachments = submissionAttachments;
+        let newAssetIds: string[] = [];
         if (selectedEditFile) {
           const { uploadToHygraph } = await import('@/lib/hygraphUpload');
           const uploadResult = await uploadToHygraph(selectedEditFile);
@@ -233,11 +234,15 @@ export default function StudentSubmissions() {
             throw new Error(uploadResult.error || 'Upload failed');
           }
           newAttachments = [uploadResult.url];
+          if (uploadResult.id) {
+            newAssetIds = [uploadResult.id];
+          }
         }
         // Update existing submission
         const updateData = {
           content: submissionContent,
           attachments: newAttachments,
+          attachmentAssetIds: newAssetIds,
           status: 'submitted' as const,
           updatedAt: new Date()
         };

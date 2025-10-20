@@ -79,6 +79,7 @@ export interface FirestoreSubmission {
   feedback?: string;
   content: string;
   attachments?: string[];
+  attachmentAssetIds?: string[]; // Hygraph asset IDs for deletion
   maxScore?: number;
   instructions?: string;
   isActive: boolean;
@@ -840,6 +841,56 @@ export const submissionService = {
   },
 
   async deleteSubmission(submissionId: string): Promise<void> {
+    // First get the submission to check for Hygraph files
+    const submission = await this.getSubmissionById(submissionId);
+    
+    // Delete associated files from Hygraph BEFORE deleting the document
+    if (submission?.attachmentAssetIds && submission.attachmentAssetIds.length > 0) {
+      try {
+        const { deleteHygraphAssetById } = await import('@/lib/hygraphUpload');
+        let deletedCount = 0;
+        
+        for (const assetId of submission.attachmentAssetIds) {
+          const success = await deleteHygraphAssetById(assetId);
+          if (success) {
+            deletedCount++;
+          }
+        }
+        
+        if (deletedCount > 0) {
+          console.log(`Deleted ${deletedCount} Hygraph asset(s) for submission ${submissionId}`);
+        }
+      } catch (error) {
+        console.error('Failed to delete submission files from Hygraph:', error);
+        // Continue with submission deletion even if file deletion fails
+      }
+    }
+    
+    // Also try to delete files from URLs if asset IDs are not available (legacy support)
+    if (submission?.attachments && submission.attachments.length > 0) {
+      try {
+        const { deleteHygraphAsset, isHygraphUrl } = await import('@/lib/hygraphUpload');
+        let deletedCount = 0;
+        
+        for (const url of submission.attachments) {
+          if (isHygraphUrl(url)) {
+            const success = await deleteHygraphAsset(url);
+            if (success) {
+              deletedCount++;
+            }
+          }
+        }
+        
+        if (deletedCount > 0) {
+          console.log(`Deleted ${deletedCount} legacy Hygraph asset(s) for submission ${submissionId}`);
+        }
+      } catch (error) {
+        console.error('Failed to delete legacy submission files from Hygraph:', error);
+        // Continue with submission deletion even if file deletion fails
+      }
+    }
+    
+    // Delete the submission document
     const docRef = doc(db, 'submissions', submissionId);
     await deleteDoc(docRef);
   },

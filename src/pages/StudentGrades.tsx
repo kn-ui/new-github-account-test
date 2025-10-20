@@ -829,17 +829,14 @@ export default function StudentGrades() {
                                 <tbody>
                                   {yearGrades.map((grade) => {
                                     const totalMax = (grade as any).assignmentsMax + (grade as any).examsMax;
-                                    // finalGrade is already stored as points, not percentage
-                                    const percent = totalMax > 0 ? Math.round((grade.finalGrade / totalMax) * 100) : Math.round(grade.finalGrade);
-                                    const comp = calculateLetterGrade(grade.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
-                                    const letterGrade = grade.letterGrade || comp.letter;
+                                    const letterGrade = grade.letterGrade || '';
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
                                         <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
                                         <td className="py-3 px-4 text-center">
-                                          <span className={`font-semibold ${getGradeColor(percent, 100)}`}>
-                                            {percent}%
+                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, totalMax > 0 ? totalMax : 100)}`}>
+                                            {grade.finalGrade}
                                           </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">

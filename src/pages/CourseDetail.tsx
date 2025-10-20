@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
-import { calculateLetterGrade, loadGradeRanges } from '@/lib/gradeUtils';
+import { loadGradeRanges } from '@/lib/gradeUtils';
 import { 
   BookOpen, 
   Clock, 
@@ -601,7 +601,7 @@ const CourseDetail = () => {
                       </div>
                       <p className="text-3xl font-bold text-green-900">
                         {gradeViewMode === 'final' 
-                          ? (finalGrade ? `${finalGrade.finalGrade}%` : 'N/A')
+                          ? (finalGrade ? finalGrade.finalGrade : 'N/A')
                           : gradeViewMode === 'exams'
                           ? examGrades.length
                           : courseGrades.length
@@ -651,18 +651,11 @@ const CourseDetail = () => {
                             <tr>
                               <td className="px-4 py-2 font-medium">{course?.title || 'Course'}</td>
                               <td className="px-4 py-2">{course?.instructorName || 'Instructor'}</td>
-                              <td className="px-4 py-2 text-center font-semibold">{finalGrade.finalGrade}%</td>
+                              <td className="px-4 py-2 text-center font-semibold">{finalGrade.finalGrade}</td>
                             <td className="px-4 py-2 text-center">
-                              {(() => {
-                                const totalMax = ((finalGrade as any).assignmentsMax || 0) + ((finalGrade as any).examsMax || 0);
-                                const comp = calculateLetterGrade(finalGrade.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
-                                const letterToShow = finalGrade.letterGrade || comp.letter;
-                                return (
-                                  <Badge variant={letterToShow === 'A' ? 'default' : letterToShow === 'B' ? 'secondary' : letterToShow === 'C' ? 'outline' : 'destructive'}>
-                                    {letterToShow}
-                                  </Badge>
-                                );
-                              })()}
+                              <Badge variant={(finalGrade.letterGrade || '').startsWith('A') ? 'default' : (finalGrade.letterGrade || '').startsWith('B') ? 'secondary' : (finalGrade.letterGrade || '').startsWith('C') ? 'outline' : 'destructive'}>
+                                {finalGrade.letterGrade}
+                              </Badge>
                             </td>
                               <td className="px-4 py-2 text-center">{finalGrade.calculatedAt.toDate().toLocaleDateString()}</td>
                             </tr>

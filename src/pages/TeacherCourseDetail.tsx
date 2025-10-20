@@ -918,9 +918,7 @@ export default function TeacherCourseDetail() {
                               }
                             })
                             .map(g => {
-                              const points = Math.min(g.finalGrade, 100);
-                              const comp = calculateLetterGrade(points, 100, gradeRanges);
-                              const letterToShow = comp.letter || g.letterGrade;
+                              const letterToShow = g.letterGrade || '';
                               return (
                                 <tr key={g.id}>
                                   <td className="px-4 py-2">{studentNames[g.studentId] || g.studentId}</td>

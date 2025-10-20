@@ -1303,8 +1303,7 @@ export default function AdminStudentGrades() {
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
-                                    const points = Math.min(grade.finalGrade, 100);
-                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(points);
+                                    const letterGrade = grade.letterGrade || '';
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>

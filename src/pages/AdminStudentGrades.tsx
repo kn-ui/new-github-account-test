@@ -423,8 +423,8 @@ export default function AdminStudentGrades() {
     return filtered;
   }, [finalGrades, courses, searchTerm, courseFilter, sortBy]);
 
-  const calculateLetterGradeWithRanges = (points: number, max: number): { letter: string; points: number } => {
-    return calculateLetterGrade(points, max, gradeRanges);
+  const calculateLetterGradeWithRanges = (points: number): { letter: string; points: number } => {
+    return calculateLetterGrade(points, 100, gradeRanges);
   };
 
   // GPA Calculations (Semester, Yearly, Cumulative)
@@ -458,10 +458,8 @@ export default function AdminStudentGrades() {
         // Calculate gradePoints if missing or 0
         let points = g.gradePoints;
         if (!points || points === 0) {
-          // Calculate from finalGrade percentage
-          const totalMax = (g.assignmentsMax || 0) + (g.examsMax || 0);
-          const percentage = totalMax > 0 ? (g.finalGrade / totalMax) * 100 : g.finalGrade;
-          const { points: calculatedPoints } = calculateLetterGradeWithRanges(g.finalGrade, totalMax > 0 ? totalMax : 100);
+          const pointsToGrade = Math.min(g.finalGrade, 100);
+          const { points: calculatedPoints } = calculateLetterGradeWithRanges(pointsToGrade);
           points = calculatedPoints;
         }
         
@@ -493,9 +491,9 @@ export default function AdminStudentGrades() {
     const allGradePoints = finalGrades.map(g => {
       let p = g.gradePoints;
       if (!p || p === 0) {
-        const totalMax = (g.assignmentsMax || 0) + (g.examsMax || 0);
-        const { points } = calculateLetterGradeWithRanges(g.finalGrade, totalMax > 0 ? totalMax : 100);
-        p = points;
+        const points = Math.min(g.finalGrade, 100);
+        const { points: calculatedPoints } = calculateLetterGradeWithRanges(points);
+        p = calculatedPoints;
       }
       return Math.min(4.0, Math.max(0, Number(p) || 0));
     });
@@ -535,8 +533,8 @@ export default function AdminStudentGrades() {
 
       const totalPossiblePoints = assignmentMax + examMax;
 
-      // Use default max of 100 if no assignments/exams to avoid division by zero
-      const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGradeInPoints, totalPossiblePoints > 0 ? totalPossiblePoints : 100);
+      const points = Math.min(finalGradeInPoints, 100);
+      const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(points);
 
       // Check if grade already exists
       const existing = await gradeService.getGradeByStudentAndCourse(courseId, student.id!);
@@ -1305,8 +1303,8 @@ export default function AdminStudentGrades() {
                                 </thead>
                                 <tbody>
                                   {yearGrades.map((grade) => {
-                                    // Use the configured grade ranges instead of hardcoded values
-                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(grade.finalGrade, (grade.assignmentsMax + grade.examsMax) || 100);
+                                    const points = Math.min(grade.finalGrade, 100);
+                                    const { letter: letterGrade } = calculateLetterGradeWithRanges(points);
                                     return (
                                       <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>

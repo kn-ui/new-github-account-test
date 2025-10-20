@@ -73,17 +73,13 @@ export default function AdminCourseGrades() {
       setCourse(c);
       setGradeRanges(ranges);
       // Load rows after setting course and ranges
-      await loadRows();
+      await loadRows(ranges);
     } catch (e) {
       console.error('Error loading course data:', e);
       toast.error('Failed to load course data');
     } finally {
       setLoading(false);
     }
-  };
-
-  const computeLetter = (points: number, max: number): { letter: string; points: number } => {
-    return calculateLetterGrade(points, max, gradeRanges);
   };
 
   const loadRows = async () => {
@@ -170,14 +166,8 @@ export default function AdminCourseGrades() {
         // Percent should be calculated without 'other' points since they're bonus
         const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
 
-        let letter = finalByStudent.get(sid)?.letterGrade || 'F';
-        let gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
-        
-        // Always recalculate using current grade ranges for consistency
-        // Use default max of 100 if no assignments/exams to avoid division by zero
-        const comp = computeLetter(points, max > 0 ? max : 100);
-        letter = comp.letter; 
-        gradePoints = comp.points;
+        const letter = finalByStudent.get(sid)?.letterGrade || '';
+        const gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
 
         return {
           studentId: sid,
@@ -210,8 +200,8 @@ export default function AdminCourseGrades() {
       for (const r of rows) {
         // Recompute letter from percent using ranges
         // Use default max of 100 if no assignments/exams to avoid division by zero
-        const totalMax = r.assignmentsMax + r.examsMax;
-        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
+        const points = Math.min(r.finalPoints, 100);
+        const comp = calculateLetterGrade(points, 100, gradeRanges);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,
@@ -247,8 +237,8 @@ export default function AdminCourseGrades() {
     setAssignLoading(true);
     try {
       for (const r of rows) {
-        const totalMax = r.assignmentsMax + r.examsMax;
-        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
+        const points = Math.min(r.finalPoints, 100);
+        const comp = calculateLetterGrade(points, 100, gradeRanges);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,
@@ -284,8 +274,8 @@ export default function AdminCourseGrades() {
     try {
       // Ensure letters are assigned based on current ranges before publishing
       for (const r of rows) {
-        const totalMax = r.assignmentsMax + r.examsMax;
-        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
+        const points = Math.min(r.finalPoints, 100);
+        const comp = calculateLetterGrade(points, 100, gradeRanges);
         const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
         const payload: any = {
           finalGrade: r.finalPoints,

@@ -45,8 +45,8 @@ export const calculateLetterGrade = (
     return { letter: 'F', points: 0.0 };
   }
 
-  // Calculate percentage
-  const percentage = Math.round((points / maxPoints) * 100);
+  // Calculate percentage, if maxPoints is 100, points is already a percentage
+  const percentage = maxPoints === 100 ? points : Math.round((points / maxPoints) * 100);
 
   // Use provided ranges or defaults
   const ranges = gradeRanges || getDefaultGradeRanges();

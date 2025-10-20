@@ -641,8 +641,8 @@ export default function TeacherCourseDetail() {
                                 const e = examMap.get(en.studentId) || { total: 0, max: 0 };
                                 const o = otherMap.get(en.studentId) || 0;
                                 const points = a.total + e.total + o;
-                                const max = a.max + e.max;
-                                const comp = calculateLetterGrade(points, max > 0 ? max : 100, gradeRanges);
+                                const cappedPoints = Math.min(points, 100);
+                                const comp = calculateLetterGrade(cappedPoints, 100, gradeRanges);
                                 const existing = await gradeService.getGradeByStudentAndCourse(course.id, en.studentId);
                                 const payload: any = {
                                   finalGrade: Math.round(points),
@@ -918,8 +918,8 @@ export default function TeacherCourseDetail() {
                               }
                             })
                             .map(g => {
-                              const totalMax = ((g as any).assignmentsMax || 0) + ((g as any).examsMax || 0);
-                              const comp = calculateLetterGrade(g.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
+                              const points = Math.min(g.finalGrade, 100);
+                              const comp = calculateLetterGrade(points, 100, gradeRanges);
                               const letterToShow = comp.letter || g.letterGrade;
                               return (
                                 <tr key={g.id}>

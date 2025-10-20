@@ -100,10 +100,16 @@ export function isHygraphUrl(url: string): boolean {
 }
 
 export function getFileExtension(filename: string): string {
+  if (typeof filename !== 'string') {
+    return '';
+  }
   return filename.split('.').pop()?.toLowerCase() || '';
 }
 
 export function getFileIcon(filename: string): string {
+  if (typeof filename !== 'string') {
+    return '📎'; // Default file icon for non-string inputs
+  }
   const extension = getFileExtension(filename);
   
   switch (extension) {

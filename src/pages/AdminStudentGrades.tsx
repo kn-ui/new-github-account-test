@@ -427,79 +427,95 @@ export default function AdminStudentGrades() {
     return calculateLetterGrade(points, 100, gradeRanges);
   };
 
-  // GPA Calculations (Semester, Yearly, Cumulative)
+  // Helper function to get normalized grade points for a final grade
+  const getGradePoints = (grade: any): number => {
+    let points = grade.gradePoints;
+    if (!points || points === 0) {
+      const pointsToGrade = Math.min(grade.finalGrade, 100);
+      const { points: calculatedPoints } = calculateLetterGradeWithRanges(pointsToGrade);
+      points = calculatedPoints;
+    }
+    // Ensure gradePoints is valid and within range (0-4.0)
+    return isNaN(points) ? 0 : Math.min(4.0, Math.max(0, points));
+  };
+
+  // GPA Calculations (Semester, Yearly, Cumulative) using Ethiopian Calendar
   const gpaStats = useMemo(() => {
     // Helper to get semester based on Ethiopian calendar
     const getSemester = (ethiopianMonth: number) => {
       if (ethiopianMonth >= 1 && ethiopianMonth <= 5) {
-        return 1; // Semester 1
+        return 1; // Semester 1: Meskerem to Tir
       } else if (ethiopianMonth >= 6 && ethiopianMonth <= 12) {
-        return 2; // Semester 2
+        return 2; // Semester 2: Yekatit to Nehase
       }
-      return null; // Pagume is not in a semester
+      return null; // Pagume (month 13) is not assigned to a semester
     };
 
-    const byYear: Record<string, { semesters: Record<number, { totalPoints: number; count: number }>; totalPoints: number; count: number }>
-      = {};
+    const byYear: Record<string, { 
+      semesters: Record<number, { totalPoints: number; count: number }>; 
+      totalPoints: number; 
+      count: number 
+    }> = {};
 
+    // Process each final grade and categorize by Ethiopian year and semester
     finalGrades.forEach((g) => {
       // Include all final grades (published and drafts) for admin GPA view
-      
       const d = g.calculatedAt.toDate();
       const ethiopianDate = toEthiopianDate(d);
       const year = ethiopianDate.year.toString();
       const sem = getSemester(ethiopianDate.month);
 
+      // Only process grades that fall within a semester (exclude Pagume)
       if (sem) {
         if (!byYear[year]) {
-          byYear[year] = { semesters: { 1: { totalPoints: 0, count: 0 }, 2: { totalPoints: 0, count: 0 } }, totalPoints: 0, count: 0 };
+          byYear[year] = { 
+            semesters: { 
+              1: { totalPoints: 0, count: 0 }, 
+              2: { totalPoints: 0, count: 0 } 
+            }, 
+            totalPoints: 0, 
+            count: 0 
+          };
         }
         
-        // Calculate gradePoints if missing or 0
-        let points = g.gradePoints;
-        if (!points || points === 0) {
-          const pointsToGrade = Math.min(g.finalGrade, 100);
-          const { points: calculatedPoints } = calculateLetterGradeWithRanges(pointsToGrade);
-          points = calculatedPoints;
-        }
+        const points = getGradePoints(g);
         
-        // Ensure gradePoints is valid and within range (0-4.0)
-        points = isNaN(points) ? 0 : Math.min(4.0, Math.max(0, points));
+        // Add to semester totals
         byYear[year].semesters[sem].totalPoints += points;
         byYear[year].semesters[sem].count += 1;
+        
+        // Add to yearly totals
         byYear[year].totalPoints += points;
         byYear[year].count += 1;
       }
     });
 
+    // Calculate GPAs for each year and semester
     const byYearGPA: Record<string, { semester1GPA: number; semester2GPA: number; yearlyGPA: number }> = {};
-    let cumulativePoints = 0;
-    let cumulativeCount = 0;
+    
     Object.entries(byYear).forEach(([year, data]) => {
       const s1 = data.semesters[1];
       const s2 = data.semesters[2];
-      // Calculate GPAs with proper rounding and range validation (0-4.0)
-      const semester1GPA = s1.count > 0 ? Math.min(4.0, Math.max(0, Math.round((s1.totalPoints / s1.count) * 100) / 100)) : 0;
-      const semester2GPA = s2.count > 0 ? Math.min(4.0, Math.max(0, Math.round((s2.totalPoints / s2.count) * 100) / 100)) : 0;
-      const yearlyGPA = data.count > 0 ? Math.min(4.0, Math.max(0, Math.round((data.totalPoints / data.count) * 100) / 100)) : 0;
+      
+      // Calculate semester GPAs with proper rounding and range validation (0-4.0)
+      const semester1GPA = s1.count > 0 ? 
+        Math.min(4.0, Math.max(0, Math.round((s1.totalPoints / s1.count) * 100) / 100)) : 0;
+      const semester2GPA = s2.count > 0 ? 
+        Math.min(4.0, Math.max(0, Math.round((s2.totalPoints / s2.count) * 100) / 100)) : 0;
+      
+      // Calculate yearly GPA (average of all courses in that Ethiopian year)
+      const yearlyGPA = data.count > 0 ? 
+        Math.min(4.0, Math.max(0, Math.round((data.totalPoints / data.count) * 100) / 100)) : 0;
+      
       byYearGPA[year] = { semester1GPA, semester2GPA, yearlyGPA };
-      cumulativePoints += data.totalPoints;
-      cumulativeCount += data.count;
     });
 
-    // Calculate cumulative GPA using shared utility (include all grades)
-    const allGradePoints = finalGrades.map(g => {
-      let p = g.gradePoints;
-      if (!p || p === 0) {
-        const points = Math.min(g.finalGrade, 100);
-        const { points: calculatedPoints } = calculateLetterGradeWithRanges(points);
-        p = calculatedPoints;
-      }
-      return Math.min(4.0, Math.max(0, Number(p) || 0));
-    });
+    // Calculate cumulative GPA using all final grades (regardless of semester assignment)
+    const allGradePoints = finalGrades.map(getGradePoints);
     const cumulativeGPA = calculateGPA(allGradePoints);
+    
     return { byYearGPA, cumulativeGPA };
-  }, [finalGrades]);
+  }, [finalGrades, gradeRanges]);
 
   const refreshFinalGrades = async () => {
     try {
@@ -835,14 +851,19 @@ export default function AdminStudentGrades() {
               <CardContent><div className="text-3xl font-bold">{gpaStats.cumulativeGPA.toFixed(2)}</div></CardContent>
             </Card>
             <Card className="bg-white border-gray-100 lg:col-span-2">
-              <CardHeader className="pb-2"><CardTitle className="text-sm text-gray-600">Yearly & Semester GPA</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-gray-600">Yearly & Semester GPA</CardTitle>
+                <CardDescription className="text-xs text-gray-500">
+                  Based on Ethiopian Calendar: Sem 1 (Meskerem-Tir), Sem 2 (Yekatit-Nehase)
+                </CardDescription>
+              </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {Object.entries(gpaStats.byYearGPA)
                     .sort((a,b) => Number(b[0]) - Number(a[0]))
                     .map(([year, g]) => (
                     <div key={year} className="p-3 border rounded-lg">
-                      <div className="text-sm font-semibold text-gray-800">{year}</div>
+                      <div className="text-sm font-semibold text-gray-800">Ethiopian Year {year}</div>
                       <div className="mt-1 text-sm text-gray-700">Year GPA: <span className="font-semibold">{g.yearlyGPA.toFixed(2)}</span></div>
                       <div className="mt-1 text-xs text-gray-600">Sem 1: {g.semester1GPA.toFixed(2)} • Sem 2: {g.semester2GPA.toFixed(2)}</div>
                     </div>

@@ -566,20 +566,20 @@ export default function StudentSubmissions() {
                       {selectedSubmissionDetail.attachments.map((attachment, index) => (
                         <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="text-2xl">
-                            {getFileIcon(attachment)}
+                            {getFileIcon(typeof attachment === 'string' ? attachment : '')}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
-                              {attachment.split('/').pop() || `Attachment ${index + 1}`}
+                              {typeof attachment === 'string' ? (attachment.split('/').pop() || `Attachment ${index + 1}`) : `Attachment ${index + 1}`}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {isHygraphUrl(attachment) ? 'Hygraph Storage' : 'External File'} • Attachment {index + 1}
+                              {typeof attachment === 'string' && isHygraphUrl(attachment) ? 'Hygraph Storage' : 'External File'} • Attachment {index + 1}
                             </p>
                           </div>
                           <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
-                            <a href={attachment} target="_blank" rel="noopener noreferrer">
+                            <a href={typeof attachment === 'string' ? attachment : '#'} target="_blank" rel="noopener noreferrer">
                               <Eye className="h-4 w-4 mr-1" />
-                              {isHygraphUrl(attachment) ? 'Download' : 'Open'}
+                              {typeof attachment === 'string' && isHygraphUrl(attachment) ? 'Download' : 'Open'}
                             </a>
                           </Button>
                         </div>

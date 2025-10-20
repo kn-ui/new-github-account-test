@@ -109,30 +109,14 @@ export default function TakeExam() {
   };
 
   const handleSubmit = async () => {
-    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
     if (!attemptId) return;
     setShowSubmitModal(false);
-    
-    // auto-grade mcq and true/false
-    let autoScore = 0;
-    let totalAutoPoints = 0;
-    questions.forEach((q: any) => {
-      if (q.type === 'mcq') {
-        totalAutoPoints += q.points ?? 1;
-        if (Number(answers[q.id]) === Number(q.correct)) autoScore += q.points ?? 1;
-      } else if (q.type === 'truefalse') {
-        totalAutoPoints += q.points ?? 1;
-        if (Boolean(answers[q.id]) === Boolean(q.correct)) autoScore += q.points ?? 1;
-      }
-    });
     
     // Convert answers to the format expected by the backend
     const answersArray = Object.entries(answers).map(([questionId, response]) => ({ questionId, response }));
     
     await examAttemptService.submitAttempt(attemptId, { 
       answers: answersArray, 
-      autoScore, 
-      totalAutoPoints 
     });
     toast.success('Exam submitted');
     navigate('/dashboard/student-exams');

@@ -1592,7 +1592,7 @@ export const examAttemptService = {
     await updateDoc(ref, { 
       ...payload, 
       submittedAt: now, 
-      status: 'submitted', 
+      status: hasManualQuestions ? 'submitted' : 'graded', 
       autoScore,
       totalAutoPoints,
       score: autoScore, // Initial score is just auto score

@@ -656,7 +656,7 @@ const CourseDetail = () => {
                               {(() => {
                                 const totalMax = ((finalGrade as any).assignmentsMax || 0) + ((finalGrade as any).examsMax || 0);
                                 const comp = calculateLetterGrade(finalGrade.finalGrade, totalMax > 0 ? totalMax : 100, gradeRanges);
-                                const letterToShow = comp.letter || finalGrade.letterGrade;
+                                const letterToShow = finalGrade.letterGrade || comp.letter;
                                 return (
                                   <Badge variant={letterToShow === 'A' ? 'default' : letterToShow === 'B' ? 'secondary' : letterToShow === 'C' ? 'outline' : 'destructive'}>
                                     {letterToShow}

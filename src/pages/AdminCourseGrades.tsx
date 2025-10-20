@@ -39,6 +39,7 @@ export default function AdminCourseGrades() {
   const [gradeRanges, setGradeRanges] = useState<any>({});
   const [rangesOpen, setRangesOpen] = useState(false);
   const [recalcLoading, setRecalcLoading] = useState(false);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
@@ -241,11 +242,73 @@ export default function AdminCourseGrades() {
     }
   };
 
+  const assignLetters = async () => {
+    if (!courseId || rows.length === 0) return;
+    setAssignLoading(true);
+    try {
+      for (const r of rows) {
+        const totalMax = r.assignmentsMax + r.examsMax;
+        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
+        const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
+        const payload: any = {
+          finalGrade: r.finalPoints,
+          letterGrade: comp.letter,
+          gradePoints: comp.points,
+          calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
+          calculationMethod: 'automatic_sum',
+          assignmentsTotal: r.assignmentsTotal,
+          assignmentsMax: r.assignmentsMax,
+          examsTotal: r.examsTotal,
+          examsMax: r.examsMax,
+          otherTotal: r.otherTotal,
+          isPublished: existing?.isPublished ?? false,
+          updatedAt: new Date(),
+        };
+        if (existing) {
+          await gradeService.updateGrade(existing.id, payload);
+        } else {
+          await gradeService.createGrade({ courseId, studentId: r.studentId, ...payload } as any);
+        }
+      }
+      toast.success('Letters assigned based on configured ranges');
+      await loadRows();
+    } catch (e) {
+      toast.error('Failed to assign letters');
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
   const publishAll = async () => {
     if (!courseId) return;
     try {
+      // Ensure letters are assigned based on current ranges before publishing
+      for (const r of rows) {
+        const totalMax = r.assignmentsMax + r.examsMax;
+        const comp = computeLetter(r.finalPoints, totalMax > 0 ? totalMax : 100);
+        const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
+        const payload: any = {
+          finalGrade: r.finalPoints,
+          letterGrade: comp.letter,
+          gradePoints: comp.points,
+          calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
+          calculationMethod: 'automatic_sum',
+          assignmentsTotal: r.assignmentsTotal,
+          assignmentsMax: r.assignmentsMax,
+          examsTotal: r.examsTotal,
+          examsMax: r.examsMax,
+          otherTotal: r.otherTotal,
+          updatedAt: new Date(),
+          isPublished: existing?.isPublished ?? false,
+        };
+        if (existing) {
+          await gradeService.updateGrade(existing.id, payload);
+        } else {
+          await gradeService.createGrade({ courseId, studentId: r.studentId, ...payload } as any);
+        }
+      }
       await gradeService.publishCourseGrades(courseId);
-      toast.success('Grades published for this course');
+      toast.success('Letters assigned and grades published');
       await loadRows();
     } catch (e) {
       toast.error('Failed to publish');
@@ -280,6 +343,9 @@ export default function AdminCourseGrades() {
           <Button variant="outline" onClick={() => setRangesOpen(true)}>Configure Grade Ranges</Button>
           <LoadingButton variant="outline" loading={recalcLoading} onClick={recalcAll} loadingText="Recalculating…">
             <RefreshCcw className="h-4 w-4 mr-1" /> Recalculate All
+          </LoadingButton>
+          <LoadingButton variant="outline" loading={assignLoading} onClick={assignLetters} loadingText="Assigning…">
+            Assign Letters
           </LoadingButton>
           <LoadingButton onClick={publishAll} loading={false} loadingText="Publishing…">Publish Final Grades</LoadingButton>
         </div>

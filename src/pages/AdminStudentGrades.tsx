@@ -165,8 +165,7 @@ export default function AdminStudentGrades() {
         setGradeRanges(ranges);
       } catch {}
 
-      // Automatically calculate final grades for all courses using assignments + exams + other grades
-      await calculateAllFinalGrades();
+      // Do not auto-calculate or persist final grades here; admins assign letters explicitly elsewhere
 
     } catch (error) {
       console.error('Error loading student data:', error);

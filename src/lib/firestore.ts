@@ -716,6 +716,20 @@ export const enrollmentService = {
   },
 
   async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
+    // Prevent duplicate active enrollments for the same course and student
+    const existingQuery = query(
+      collections.enrollments(),
+      where('courseId', '==', enrollmentData.courseId),
+      where('studentId', '==', enrollmentData.studentId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    const existingSnap = await getDocs(existingQuery);
+    if (!existingSnap.empty) {
+      // Signal to callers (UI) that this student is already enrolled
+      throw new Error('Student already enrolled');
+    }
+
     const now = Timestamp.now();
     const docRef = await addDoc(collections.enrollments(), {
       ...enrollmentData,

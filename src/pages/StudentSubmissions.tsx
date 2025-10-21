@@ -563,27 +563,49 @@ export default function StudentSubmissions() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {selectedSubmissionDetail.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="text-2xl">
-                            {getFileIcon(typeof attachment === 'string' ? attachment : '')}
+                      {selectedSubmissionDetail.attachments.map((attachment, index) => {
+                        const link: string | undefined = typeof attachment === 'string' ? attachment : (attachment as any)?.url;
+                        const name = (() => {
+                          if (typeof attachment === 'string') {
+                            return attachment.split('/').pop() || `Attachment ${index + 1}`;
+                          }
+                          const att: any = attachment;
+                          if (att?.title && typeof att.title === 'string') return att.title;
+                          if (att?.url && typeof att.url === 'string') {
+                            try {
+                              const urlObj = new URL(att.url);
+                              const path = urlObj.pathname.split('/').filter(Boolean);
+                              return decodeURIComponent(path[path.length - 1] || '') || `Attachment ${index + 1}`;
+                            } catch {
+                              const parts = (att.url as string).split('?')[0].split('#')[0].split('/');
+                              return decodeURIComponent(parts[parts.length - 1] || '') || `Attachment ${index + 1}`;
+                            }
+                          }
+                          return `Attachment ${index + 1}`;
+                        })();
+                        const showHygraph = typeof link === 'string' && isHygraphUrl(link);
+                        return (
+                          <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div className="text-2xl">
+                              {getFileIcon(typeof name === 'string' ? name : '')}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {showHygraph ? 'Hygraph Storage' : 'External File'} • Attachment {index + 1}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
+                              <a href={link || '#'} target="_blank" rel="noopener noreferrer">
+                                <Eye className="h-4 w-4 mr-1" />
+                                {showHygraph ? 'Download' : 'Open'}
+                              </a>
+                            </Button>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {typeof attachment === 'string' ? (attachment.split('/').pop() || `Attachment ${index + 1}`) : `Attachment ${index + 1}`}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {typeof attachment === 'string' && isHygraphUrl(attachment) ? 'Hygraph Storage' : 'External File'} • Attachment {index + 1}
-                            </p>
-                          </div>
-                          <Button size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300" asChild>
-                            <a href={typeof attachment === 'string' ? attachment : '#'} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-4 w-4 mr-1" />
-                              {typeof attachment === 'string' && isHygraphUrl(attachment) ? 'Download' : 'Open'}
-                            </a>
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

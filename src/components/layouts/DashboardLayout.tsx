@@ -56,12 +56,40 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const [searchTerm, setSearchTerm] = useState('');
   const [announcements, setAnnouncements] = useState<FirestoreAnnouncement[]>([]);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
+  const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState<number>(0);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { lang, setLang, t } = useI18n();
+
+  // Local storage helpers for per-user seen announcement IDs
+  const seenStorageKey = React.useMemo(() => (
+    currentUser?.uid ? `seen_announcements_${currentUser.uid}` : undefined
+  ), [currentUser?.uid]);
+
+  const getSeenAnnouncementIds = React.useCallback((): Set<string> => {
+    if (!seenStorageKey) return new Set<string>();
+    try {
+      const raw = localStorage.getItem(seenStorageKey);
+      if (!raw) return new Set<string>();
+      const arr = JSON.parse(raw);
+      return new Set<string>(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set<string>();
+    }
+  }, [seenStorageKey]);
+
+  const saveSeenAnnouncementIds = React.useCallback((ids: Set<string>) => {
+    if (!seenStorageKey) return;
+    try {
+      localStorage.setItem(seenStorageKey, JSON.stringify(Array.from(ids)));
+    } catch {
+      // ignore storage errors
+    }
+  }, [seenStorageKey]);
 
   const navigationItems: NavigationItem[] = (() => {
     const baseItems = [
@@ -257,6 +285,18 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
     loadAnnouncements();
   }, [userRole, currentUser]);
 
+  // Recompute unread count whenever announcements list or user changes
+  useEffect(() => {
+    const seen = getSeenAnnouncementIds();
+    // Clean up any stale IDs not in current list (optional)
+    const currentIds = new Set(announcements.map(a => a.id));
+    const cleaned = new Set<string>();
+    seen.forEach(id => { if (currentIds.has(id)) cleaned.add(id); });
+    if (cleaned.size !== seen.size) saveSeenAnnouncementIds(cleaned);
+    const unread = announcements.reduce((acc, a) => acc + (cleaned.has(a.id) ? 0 : 1), 0);
+    setUnreadAnnouncementsCount(unread);
+  }, [announcements, getSeenAnnouncementIds, saveSeenAnnouncementIds]);
+
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     const q = searchTerm.trim();
@@ -402,13 +442,21 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             
             <div className="flex items-center space-x-4">
               {/* Notifications - announcements only */}
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => {
+                setIsNotificationsOpen(open);
+                if (open) {
+                  const seen = getSeenAnnouncementIds();
+                  announcements.forEach(a => seen.add(a.id));
+                  saveSeenAnnouncementIds(seen);
+                  setUnreadAnnouncementsCount(0);
+                }
+              }}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="relative">
                     <Bell className="h-5 w-5" />
-                    {announcements.length > 0 && (
+                    {unreadAnnouncementsCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                        {announcements.length}
+                        {unreadAnnouncementsCount}
                       </span>
                     )}
                   </Button>

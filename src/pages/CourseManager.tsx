@@ -174,7 +174,15 @@ export default function CourseManager() {
           }
         })
       );
-      setEnrolledStudents(studentsWithDetails);
+      // Ensure unique students (avoid duplicates if any stale or duplicated records)
+      const uniqueByStudent = Object.values(
+        studentsWithDetails.reduce((acc: Record<string, any>, curr: any) => {
+          const key = curr.studentId || curr.user?.id || curr.id;
+          if (!acc[key]) acc[key] = curr;
+          return acc;
+        }, {})
+      );
+      setEnrolledStudents(uniqueByStudent as any[]);
       setShowUnenrollDialog(true);
     } catch (error) {
       console.error('Error loading enrolled students:', error);
@@ -245,6 +253,12 @@ export default function CourseManager() {
     
     try {
       setEnrollingUserId(studentId);
+      // Optimistically prevent duplicate enroll button spam
+      const already = enrolledStudents.some((e) => e.studentId === studentId);
+      if (already) {
+        toast.info('This student is already enrolled in this course.');
+        return;
+      }
       await enrollmentService.createEnrollment({ 
         courseId: selectedCourseForEnroll.id, 
         studentId, 
@@ -257,10 +271,27 @@ export default function CourseManager() {
       // Clear search results after successful enrollment
       setFoundStudents([]);
       setStudentQuery('');
+      // Refresh enrolled students list if dialog is open
+      try {
+        if (selectedCourseForEnroll) {
+          const enrollments = await enrollmentService.getEnrollmentsByCourse(selectedCourseForEnroll.id);
+          const studentsWithDetails = await Promise.all(
+            enrollments.map(async (enrollment: any) => {
+              try {
+                const user = await userService.getUserById(enrollment.studentId);
+                return { ...enrollment, user };
+              } catch {
+                return { ...enrollment, user: { displayName: 'Unknown User', email: enrollment.studentId } };
+              }
+            })
+          );
+          setEnrolledStudents(studentsWithDetails);
+        }
+      } catch {}
     } catch (error) {
       console.error('Error enrolling student:', error);
       if (error instanceof Error) {
-        if (error.message.includes('already enrolled')) {
+        if (error.message.toLowerCase().includes('already enrolled')) {
           toast.error('This student is already enrolled in this course.');
         } else {
           toast.error(`Failed to enroll student: ${error.message}`);

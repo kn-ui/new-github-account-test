@@ -230,35 +230,53 @@ export default function SubmissionDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {((submission as any).attachments || []).map((attachment: any, idx: number) => (
+                    {((submission as any).attachments || []).map((attachment: any, idx: number) => {
+                      const link: string | undefined = typeof attachment === 'string' ? attachment : attachment?.url;
+                      const displayName = (() => {
+                        if (typeof attachment !== 'string') {
+                          if (attachment?.title && typeof attachment.title === 'string') {
+                            return attachment.title;
+                          }
+                          if (attachment?.url && typeof attachment.url === 'string') {
+                            try {
+                              const url = new URL(attachment.url);
+                              const path = url.pathname.split('/').filter(Boolean);
+                              const last = path[path.length - 1] || '';
+                              return decodeURIComponent(last) || `Attachment ${idx + 1}`;
+                            } catch {
+                              const parts = (attachment.url as string).split('?')[0].split('#')[0].split('/');
+                              return decodeURIComponent(parts[parts.length - 1] || '') || `Attachment ${idx + 1}`;
+                            }
+                          }
+                          return `Attachment ${idx + 1}`;
+                        }
+                        try {
+                          const url = new URL(attachment);
+                          const path = url.pathname.split('/').filter(Boolean);
+                          const last = path[path.length - 1] || '';
+                          return decodeURIComponent(last) || `Attachment ${idx + 1}`;
+                        } catch {
+                          const parts = attachment.split('?')[0].split('#')[0].split('/');
+                          return decodeURIComponent(parts[parts.length - 1] || '') || `Attachment ${idx + 1}`;
+                        }
+                      })();
+                      return (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {(() => {
-                              if (typeof attachment !== 'string') {
-                                return `Attachment ${idx + 1}`;
-                              }
-                              try {
-                                const url = new URL(attachment);
-                                const path = url.pathname.split('/').filter(Boolean);
-                                const last = path[path.length - 1] || '';
-                                return decodeURIComponent(last) || `Attachment ${idx + 1}`;
-                              } catch {
-                                const parts = attachment.split('?')[0].split('#')[0].split('/');
-                                return decodeURIComponent(parts[parts.length - 1] || '') || `Attachment ${idx + 1}`;
-                              }
-                            })()}
+                            {displayName}
                           </p>
                           <p className="text-xs text-gray-500">Attachment {idx + 1}</p>
                         </div>
                         <Button size="sm" variant="outline" asChild>
-                          <a href={typeof attachment === 'string' ? attachment : '#'} target="_blank" rel="noopener noreferrer">
+                          <a href={link || '#'} target="_blank" rel="noopener noreferrer">
                             <Eye className="h-4 w-4" />
                           </a>
                         </Button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>

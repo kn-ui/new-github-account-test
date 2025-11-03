@@ -25,6 +25,7 @@ export default function TakeExam() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [shuffledQuestions, setShuffledQuestions] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -32,7 +33,19 @@ export default function TakeExam() {
       try {
         setLoading(true);
         const found = await examService.getExamById(examId);
-        if (found) setExam(found);
+        if (found) {
+          setExam(found);
+          // Shuffle questions
+          const storedQuestions = sessionStorage.getItem(`shuffledQuestions_${examId}`);
+          if (storedQuestions) {
+            setShuffledQuestions(JSON.parse(storedQuestions));
+          } else {
+            const questions = found.questions || [];
+            const shuffled = [...questions].sort(() => Math.random() - 0.5);
+            setShuffledQuestions(shuffled);
+            sessionStorage.setItem(`shuffledQuestions_${examId}`, JSON.stringify(shuffled));
+          }
+        }
         let attempt = await examAttemptService.getAttemptForStudent(examId, currentUser.uid);
         if (!attempt) {
           const id = await examAttemptService.createAttempt(examId, currentUser.uid);
@@ -43,7 +56,7 @@ export default function TakeExam() {
         const initial: Record<string, any> = {};
         (found as any)?.questions?.forEach((q: any) => {
           const saved = attempt?.answers?.find((a: any) => a.questionId === q.id)?.response;
-          initial[q.id] = saved ?? (q.type === 'mcq' ? 0 : (q.type === 'truefalse' ? true : ''));
+          initial[q.id] = saved ?? null;
         });
         setAnswers(initial);
       } catch (e) {
@@ -56,7 +69,7 @@ export default function TakeExam() {
     if (userProfile?.role === 'student') load();
   }, [examId, currentUser?.uid, userProfile?.role]);
 
-  const questions = useMemo(() => (exam as any)?.questions || [], [exam]);
+  const questions = useMemo(() => shuffledQuestions || [], [shuffledQuestions]);
 
   // Timer and auto-save logic
   useEffect(() => {
@@ -124,7 +137,7 @@ export default function TakeExam() {
 
   // Get unanswered questions
   const getUnansweredQuestions = () => {
-    return questions.filter((q: any) => {
+    return shuffledQuestions.filter((q: any) => {
       const answer = answers[q.id];
       return answer === undefined || answer === null || answer === '' || 
              (q.type === 'mcq' && answer === 0 && !q.options?.[0]) ||
@@ -157,7 +170,7 @@ export default function TakeExam() {
   const isQuestionAnswered = (questionId: string) => {
     const answer = answers[questionId];
     return answer !== undefined && answer !== null && answer !== '' && 
-           !(answer === 0 && questions.find(q => q.id === questionId)?.type === 'mcq' && !questions.find(q => q.id === questionId)?.options?.[0]);
+           !(answer === 0 && shuffledQuestions.find(q => q.id === questionId)?.type === 'mcq' && !shuffledQuestions.find(q => q.id === questionId)?.options?.[0]);
   };
 
   return (
@@ -180,8 +193,8 @@ export default function TakeExam() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <div className="text-sm text-gray-600 mb-3">Questions ({questions.length})</div>
-                  {questions.map((q: any, idx: number) => (
+                  <div className="text-sm text-gray-600 mb-3">Questions ({shuffledQuestions.length})</div>
+                  {shuffledQuestions.map((q: any, idx: number) => (
                     <button
                       key={q.id}
                       onClick={() => setCurrentQuestionIndex(idx)}
@@ -255,26 +268,26 @@ export default function TakeExam() {
             </CardContent>
           </Card>
         )}
-        {!beforeStart && !afterEnd && !isSubmitted && questions.length > 0 && (
+        {!beforeStart && !afterEnd && !isSubmitted && shuffledQuestions.length > 0 && (
           <>
             {/* Current Question */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  Question {currentQuestionIndex + 1} of {questions.length}
+                  Question {currentQuestionIndex + 1} of {shuffledQuestions.length}
                 </CardTitle>
-                <div className="text-sm text-gray-600">{questions[currentQuestionIndex]?.prompt}</div>
+                <div className="text-sm text-gray-600">{shuffledQuestions[currentQuestionIndex]?.prompt}</div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {questions[currentQuestionIndex]?.type === 'mcq' && (
+                {shuffledQuestions[currentQuestionIndex]?.type === 'mcq' && (
                   <div className="space-y-3">
-                    {(questions[currentQuestionIndex].options || []).map((opt: string, oi: number) => (
+                    {(shuffledQuestions[currentQuestionIndex].options || []).map((opt: string, oi: number) => (
                       <label key={oi} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                         <input 
                           type="radio" 
-                          name={`q_${questions[currentQuestionIndex].id}`} 
-                          checked={Number(answers[questions[currentQuestionIndex].id]) === oi} 
-                          onChange={() => setAnswers(prev => ({ ...prev, [questions[currentQuestionIndex].id]: oi }))} 
+                          name={`q_${shuffledQuestions[currentQuestionIndex].id}`} 
+                          checked={answers[shuffledQuestions[currentQuestionIndex].id] === oi} 
+                          onChange={() => setAnswers(prev => ({ ...prev, [shuffledQuestions[currentQuestionIndex].id]: oi }))} 
                           className="h-4 w-4"
                         />
                         <span className="text-sm">{opt}</span>
@@ -282,14 +295,14 @@ export default function TakeExam() {
                     ))}
                   </div>
                 )}
-                {questions[currentQuestionIndex]?.type === 'truefalse' && (
+                {shuffledQuestions[currentQuestionIndex]?.type === 'truefalse' && (
                   <div className="space-x-6">
                     <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                       <input 
                         type="radio" 
-                        name={`q_${questions[currentQuestionIndex].id}`} 
-                        checked={Boolean(answers[questions[currentQuestionIndex].id]) === true} 
-                        onChange={() => setAnswers(prev => ({ ...prev, [questions[currentQuestionIndex].id]: true }))} 
+                        name={`q_${shuffledQuestions[currentQuestionIndex].id}`} 
+                        checked={answers[shuffledQuestions[currentQuestionIndex].id] === true} 
+                        onChange={() => setAnswers(prev => ({ ...prev, [shuffledQuestions[currentQuestionIndex].id]: true }))} 
                         className="h-4 w-4"
                       />
                       <span className="text-sm">True</span>
@@ -297,22 +310,22 @@ export default function TakeExam() {
                     <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                       <input 
                         type="radio" 
-                        name={`q_${questions[currentQuestionIndex].id}`} 
-                        checked={Boolean(answers[questions[currentQuestionIndex].id]) === false} 
-                        onChange={() => setAnswers(prev => ({ ...prev, [questions[currentQuestionIndex].id]: false }))} 
+                        name={`q_${shuffledQuestions[currentQuestionIndex].id}`} 
+                        checked={answers[shuffledQuestions[currentQuestionIndex].id] === false} 
+                        onChange={() => setAnswers(prev => ({ ...prev, [shuffledQuestions[currentQuestion-index].id]: false }))} 
                         className="h-4 w-4"
                       />
                       <span className="text-sm">False</span>
                     </label>
                   </div>
                 )}
-                {questions[currentQuestionIndex]?.type === 'short' && (
+                {shuffledQuestions[currentQuestionIndex]?.type === 'short' && (
                   <div>
                     <Label>Your Answer</Label>
                     <Textarea 
                       rows={6} 
-                      value={answers[questions[currentQuestionIndex].id] || ''} 
-                      onChange={(e) => setAnswers(prev => ({ ...prev, [questions[currentQuestionIndex].id]: e.target.value }))}
+                      value={answers[shuffledQuestions[currentQuestionIndex].id] || ''} 
+                      onChange={(e) => setAnswers(prev => ({ ...prev, [shuffledQuestions[currentQuestionIndex].id]: e.target.value }))}
                       placeholder="Type your answer here..."
                       className="mt-2"
                     />
@@ -331,12 +344,12 @@ export default function TakeExam() {
                 Previous
               </Button>
               <div className="text-sm text-gray-600">
-                {currentQuestionIndex + 1} of {questions.length}
+                {currentQuestionIndex + 1} of {shuffledQuestions.length}
               </div>
               <Button 
                 variant="outline" 
-                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                disabled={currentQuestionIndex === questions.length - 1}
+                onClick={() => setCurrentQuestionIndex(Math.min(shuffledQuestions.length - 1, currentQuestionIndex + 1))}
+                disabled={currentQuestionIndex === shuffledQuestions.length - 1}
               >
                 Next
               </Button>
@@ -391,7 +404,7 @@ export default function TakeExam() {
                     <ul className="text-sm text-orange-700 space-y-1">
                       {unansweredQuestions.map((q: any, idx: number) => (
                         <li key={q.id} className="flex items-center gap-2">
-                          <span className="font-medium">Q{questions.findIndex(qu => qu.id === q.id) + 1}:</span>
+                          <span className="font-medium">Q{shuffledQuestions.findIndex(qu => qu.id === q.id) + 1}:</span>
                           <span className="truncate">{q.prompt.substring(0, 50)}...</span>
                         </li>
                       ))}
@@ -414,8 +427,8 @@ export default function TakeExam() {
             {/* Exam Summary */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="text-sm text-gray-700">
-                <div><strong>Total Questions:</strong> {questions.length}</div>
-                <div><strong>Answered:</strong> {questions.length - unansweredQuestions.length}</div>
+                <div><strong>Total Questions:</strong> {shuffledQuestions.length}</div>
+                <div><strong>Answered:</strong> {shuffledQuestions.length - unansweredQuestions.length}</div>
                 <div><strong>Unanswered:</strong> {unansweredQuestions.length}</div>
               </div>
             </div>

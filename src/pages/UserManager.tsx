@@ -68,6 +68,8 @@ interface User {
   studentGroup?: string;
   programType?: string;
   classSection?: string;
+  phoneNumber?: string;
+  address?: string;
 }
 
 const UserManager = () => {
@@ -95,7 +97,9 @@ const UserManager = () => {
     deliveryMethod: '',
     studentGroup: '',
     programType: '',
-    classSection: ''
+    classSection: '',
+    phoneNumber: '',
+    address: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
@@ -246,6 +250,8 @@ const UserManager = () => {
         isActive: true,
         uid: userCredential.user.uid,
         passwordChanged: false, // New users must change their password
+        phoneNumber: newUser.phoneNumber,
+        address: newUser.address,
         ...studentData
       });
       
@@ -256,7 +262,7 @@ const UserManager = () => {
       sessionStorage.removeItem('suppressAuthRedirect');
       
       setIsAddUserOpen(false);
-      setNewUser({ displayName: '', email: '', role: 'student', password: '', deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
+      setNewUser({ displayName: '', email: '', role: 'student', password: '', deliveryMethod: '', studentGroup: '', programType: '', classSection: '', phoneNumber: '', address: '' });
       fetchUsers();
     } catch (error: any) {
       // Clear the suppress flag on error
@@ -301,6 +307,8 @@ const UserManager = () => {
         email: editingUser.email,
         role: editingUser.role,
         isActive: editingUser.isActive,
+        phoneNumber: editingUser.phoneNumber,
+        address: editingUser.address,
       };
       
       // Add student-specific fields if the user is a student
@@ -424,6 +432,26 @@ const UserManager = () => {
                         onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                         className="col-span-3"
                         placeholder={t('auth.email_placeholder')}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="phoneNumber" className="text-right">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        value={newUser.phoneNumber}
+                        onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
+                        className="col-span-3"
+                        placeholder="Phone Number"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="address" className="text-right">Address</Label>
+                      <Input
+                        id="address"
+                        value={newUser.address}
+                        onChange={(e) => setNewUser({...newUser, address: e.target.value})}
+                        className="col-span-3"
+                        placeholder="Address"
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -561,6 +589,24 @@ const UserManager = () => {
                       type="email"
                       value={editingUser.email}
                       onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editPhoneNumber" className="text-right">Phone Number</Label>
+                    <Input
+                      id="editPhoneNumber"
+                      value={editingUser.phoneNumber}
+                      onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="editAddress" className="text-right">Address</Label>
+                    <Input
+                      id="editAddress"
+                      value={editingUser.address}
+                      onChange={(e) => setEditingUser({...editingUser, address: e.target.value})}
                       className="col-span-3"
                     />
                   </div>
@@ -784,6 +830,8 @@ const UserManager = () => {
                         <div className="min-w-0 flex-1">
                           <div className="font-semibold text-gray-900 truncate">{user.displayName}</div>
                           <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                          <div className="text-sm text-gray-500 truncate">{user.phoneNumber}</div>
+                          <div className="text-sm text-gray-500 truncate">{user.address}</div>
                         </div>
                       </div>
                     </TableCell>

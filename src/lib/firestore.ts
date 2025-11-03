@@ -52,6 +52,9 @@ export interface FirestoreCourse {
   isActive: boolean;
   instructor: string;
   instructorName: string;
+  prerequisite?: string;
+  credit?: number;
+  year?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

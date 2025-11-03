@@ -64,6 +64,9 @@ export default function CourseManager() {
     maxStudents: 30,
     syllabus: '',
     isActive: false,
+    prerequisite: '',
+    credit: 0,
+    year: 0,
   });
   const [teachers, setTeachers] = useState<any[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
@@ -423,6 +426,9 @@ export default function CourseManager() {
         isActive: editForm.isActive,
         instructor: editForm.instructor,
         instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
+        prerequisite: editForm.prerequisite,
+        credit: editForm.credit,
+        year: editForm.year,
       } as Partial<FirestoreCourse>);
       toast.success('Course updated');
       setIsEditOpen(false);
@@ -503,6 +509,9 @@ export default function CourseManager() {
         isActive: !!createForm.isActive,
         instructor: selectedInstructor,
         instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
+        prerequisite: String(createForm.prerequisite || ''),
+        credit: Number(createForm.credit || 0),
+        year: Number(createForm.year || 0),
       } as any);
       toast.success('Course created');
       setIsCreateOpen(false);
@@ -814,6 +823,18 @@ export default function CourseManager() {
                   <span className="font-medium text-gray-700">Max Students:</span>
                   <p className="text-gray-600">{selectedCourse.maxStudents}</p>
                 </div>
+                <div>
+                  <span className="font-medium text-gray-700">Credit:</span>
+                  <p className="text-gray-600">{selectedCourse.credit}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Year:</span>
+                  <p className="text-gray-600">{selectedCourse.year}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Prerequisite:</span>
+                  <p className="text-gray-600">{selectedCourse.prerequisite}</p>
+                </div>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Syllabus:</span>
@@ -884,6 +905,45 @@ export default function CourseManager() {
                   }
                 }}
                 placeholder="Enter maximum number of students"
+              />
+            </div>
+            <div>
+              <Label htmlFor="credit">Credit</Label>
+              <Input 
+                id="credit" 
+                type="text" 
+                value={editForm.credit || ''} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setEditForm({ ...editForm, credit: value as any });
+                  }
+                }}
+                placeholder="Enter course credit"
+              />
+            </div>
+            <div>
+              <Label htmlFor="year">Year</Label>
+              <Input 
+                id="year" 
+                type="text" 
+                value={editForm.year || ''} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setEditForm({ ...editForm, year: value as any });
+                  }
+                }}
+                placeholder="Enter year of students taking the course"
+              />
+            </div>
+            <div>
+              <Label htmlFor="prerequisite">Prerequisite</Label>
+              <Input 
+                id="prerequisite" 
+                value={editForm.prerequisite || ''} 
+                onChange={(e) => setEditForm({ ...editForm, prerequisite: e.target.value })}
+                placeholder="Enter course prerequisite"
               />
             </div>
             <div>
@@ -1092,6 +1152,46 @@ export default function CourseManager() {
                 </div>
               )}
               {createStep === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Credit</Label>
+                    <Input 
+                      type="text" 
+                      value={createForm.credit || ''} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setCreateForm({ ...createForm, credit: value as any } as any);
+                        }
+                      }}
+                      placeholder="Enter course credit"
+                    />
+                  </div>
+                  <div>
+                    <Label>Year</Label>
+                    <Input 
+                      type="text" 
+                      value={createForm.year || ''} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setCreateForm({ ...createForm, year: value as any } as any);
+                        }
+                      }}
+                      placeholder="Enter year of students taking the course"
+                    />
+                  </div>
+                  <div>
+                    <Label>Prerequisite</Label>
+                    <Input 
+                      value={String(createForm.prerequisite || '')} 
+                      onChange={(e) => setCreateForm({ ...createForm, prerequisite: e.target.value } as any)}
+                      placeholder="Enter course prerequisite"
+                    />
+                  </div>
+                </div>
+              )}
+              {createStep === 4 && (
                 <div className="space-y-2 text-sm text-gray-700">
                   <div><span className="font-medium">Title:</span> {String(createForm.title || '')}</div>
                   <div><span className="font-medium">Category:</span> {String(createForm.category || '')}</div>
@@ -1109,10 +1209,10 @@ export default function CourseManager() {
                 )}
               </div>
               <div className="flex gap-2">
-                {createStep < 3 && (
-                  <Button onClick={() => setCreateStep((s) => Math.min(3, s + 1))}>Next</Button>
+                {createStep < 4 && (
+                  <Button onClick={() => setCreateStep((s) => Math.min(4, s + 1))}>Next</Button>
                 )}
-                {createStep === 3 && (
+                {createStep === 4 && (
                   <Button className="bg-green-600 hover:bg-green-700" onClick={submitCreate}>Create</Button>
                 )}
               </div>

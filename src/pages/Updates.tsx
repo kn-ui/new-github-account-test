@@ -192,7 +192,7 @@ export default function Updates() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
-        <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <img src="/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">{t('updatesPage.title')}</h1>
           <p className="text-xl opacity-90">{t('updatesPage.subtitle')}</p>

@@ -32,6 +32,9 @@ interface User {
   role: string;
   isActive: boolean;
   createdAt: any;
+  phoneNumber?: string;
+  address?: string;
+  schoolTitle?: string;
 }
 
 interface UsersListProps {
@@ -48,7 +51,7 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [addAdminOpen, setAddAdminOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '' });
+  const [newAdmin, setNewAdmin] = useState({ displayName: '', email: '', phoneNumber: '', address: '', schoolTitle: '' });
   const [isCreating, setIsCreating] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
@@ -273,6 +276,15 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                       <p className="text-sm text-gray-600 truncate">
                         {user.email}
                       </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.phoneNumber}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.address}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.schoolTitle}
+                      </p>
                     </div>
                   </div>
 
@@ -394,6 +406,18 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
               <Label htmlFor="adminEmail" className="text-right">Email</Label>
               <Input id="adminEmail" type="email" className="col-span-3" value={newAdmin.email} onChange={(e)=> setNewAdmin({ ...newAdmin, email: e.target.value })} />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="adminPhone" className="text-right">Phone Number</Label>
+              <Input id="adminPhone" className="col-span-3" value={newAdmin.phoneNumber} onChange={(e)=> setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="adminAddress" className="text-right">Address</Label>
+              <Input id="adminAddress" className="col-span-3" value={newAdmin.address} onChange={(e)=> setNewAdmin({ ...newAdmin, address: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="adminSchoolTitle" className="text-right">School Title</Label>
+              <Input id="adminSchoolTitle" className="col-span-3" value={newAdmin.schoolTitle} onChange={(e)=> setNewAdmin({ ...newAdmin, schoolTitle: e.target.value })} />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={()=> setAddAdminOpen(false)}>Cancel</Button>
@@ -410,6 +434,9 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                   role: 'admin' as any,
                   isActive: true,
                   passwordChanged: false,
+                  phoneNumber: newAdmin.phoneNumber,
+                  address: newAdmin.address,
+                  schoolTitle: newAdmin.schoolTitle,
                   createdAt: undefined as any, // set by service
                   updatedAt: undefined as any,
                 } as any);
@@ -447,6 +474,18 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                 <Label htmlFor="editEmail" className="text-right">Email</Label>
                 <Input id="editEmail" type="email" className="col-span-3" value={editUser.email} onChange={(e)=> setEditUser({ ...editUser, email: e.target.value })} />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editPhone" className="text-right">Phone Number</Label>
+                <Input id="editPhone" className="col-span-3" value={editUser.phoneNumber} onChange={(e)=> setEditUser({ ...editUser, phoneNumber: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editAddress" className="text-right">Address</Label>
+                <Input id="editAddress" className="col-span-3" value={editUser.address} onChange={(e)=> setEditUser({ ...editUser, address: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editSchoolTitle" className="text-right">School Title</Label>
+                <Input id="editSchoolTitle" className="col-span-3" value={editUser.schoolTitle} onChange={(e)=> setEditUser({ ...editUser, schoolTitle: e.target.value })} />
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -455,7 +494,13 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
               if (!editUser) return;
               setIsSaving(true);
               try {
-                await userService.updateUser(editUser.id, { displayName: editUser.displayName, email: editUser.email });
+                await userService.updateUser(editUser.id, { 
+                  displayName: editUser.displayName, 
+                  email: editUser.email, 
+                  phoneNumber: editUser.phoneNumber, 
+                  address: editUser.address, 
+                  schoolTitle: editUser.schoolTitle 
+                });
                 setEditOpen(false);
                 const usersData = await userService.getUsers(1000);
                 setUsers(usersData);

@@ -158,7 +158,8 @@ const UserManager = () => {
       (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterRole === 'all' || user.role === filterRole)
+      (filterRole === 'all' || user.role === filterRole) &&
+      (user.role === 'student' || user.role === 'teacher')
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users, filterRole]);
@@ -610,20 +611,7 @@ const UserManager = () => {
                       className="col-span-3"
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="editRole" className="text-right">{t('users.table.role')}</Label>
-                    <Select value={editingUser.role} onValueChange={(value) => setEditingUser({...editingUser, role: value as any})}>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="student">{t('users.roles.student')}</SelectItem>
-                        <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                        <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                        <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="editIsActive" className="text-right">{t('users.table.status')}</Label>
                     <Select value={editingUser.isActive ? 'active' : 'inactive'} onValueChange={(value) => setEditingUser({...editingUser, isActive: value === 'active'})}>
@@ -780,8 +768,6 @@ const UserManager = () => {
                   <SelectItem value="all">{t('users.roles.all')}</SelectItem>
                   <SelectItem value="student">{t('users.roles.student')}</SelectItem>
                   <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                  <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                  <SelectItem value="super_admin">{t('users.roles.super_admin')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button

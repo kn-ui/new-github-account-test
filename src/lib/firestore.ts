@@ -1937,7 +1937,7 @@ export const forumService = {
 export const analyticsService = {
   async getAdminStats() {
     const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot, eventsSnapshot] = await Promise.all([
-      getDocs(collections.users()),
+      getDocs(query(collections.users(), where('role', 'in', ['student', 'teacher']))),
       getDocs(collections.courses()),
       getDocs(collections.enrollments()),
       getDocs(collections.events()),
@@ -1965,6 +1965,42 @@ export const analyticsService = {
       systemHealth: 99.9, // Placeholder
     };
   },
+
+  async getSuperAdminStats() {
+    const [usersSnapshot, coursesSnapshot, enrollmentsSnapshot, eventsSnapshot] = await Promise.all([
+      getDocs(collections.users()),
+      getDocs(collections.courses()),
+      getDocs(collections.enrollments()),
+      getDocs(collections.events()),
+    ]);
+
+    const totalUsers = usersSnapshot.size;
+    const totalStudents = usersSnapshot.docs.filter(doc => doc.data().role === 'student').length;
+    const totalTeachers = usersSnapshot.docs.filter(doc => doc.data().role === 'teacher').length;
+    const totalAdmins = usersSnapshot.docs.filter(doc => doc.data().role === 'admin').length;
+    const totalSuperAdmins = usersSnapshot.docs.filter(doc => doc.data().role === 'super_admin').length;
+    const activeCourses = coursesSnapshot.docs.filter(doc => doc.data().isActive).length;
+    const pendingCourses = coursesSnapshot.docs.filter(doc => !doc.data().isActive).length;
+    const totalEvents = eventsSnapshot.size;
+
+    const totalEnrollments = enrollmentsSnapshot.size;
+    const completedEnrollments = enrollmentsSnapshot.docs.filter(doc => doc.data().status === 'completed').length;
+    const completionRate = totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
+
+    return {
+      totalUsers,
+      totalStudents,
+      totalTeachers,
+      totalAdmins,
+      totalSuperAdmins,
+      activeCourses,
+      pendingCourses,
+      completionRate,
+      totalEvents,
+      systemHealth: 99.9, // Placeholder
+    };
+  },
+
 
   async getTeacherStats(teacherId: string) {
     const [coursesSnapshot, enrollmentsSnapshot, submissionsSnapshot] = await Promise.all([

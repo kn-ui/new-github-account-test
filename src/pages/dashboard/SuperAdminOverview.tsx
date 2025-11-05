@@ -35,13 +35,15 @@ const SuperAdminOverview = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const adminStats = await analyticsService.getAdminStats();
+        const adminStats = await analyticsService.getSuperAdminStats();
 
         setStats(adminStats);
 
         setRoleDistributionData([
           { name: 'Students', value: adminStats.totalStudents, fill: '#8884d8' },
           { name: 'Teachers', value: adminStats.totalTeachers, fill: '#82ca9d' },
+          { name: 'Admins', value: adminStats.totalAdmins, fill: '#ffc658' },
+          { name: 'Super Admins', value: adminStats.totalSuperAdmins, fill: '#ff8042' },
         ]);
 
       } catch (error) {

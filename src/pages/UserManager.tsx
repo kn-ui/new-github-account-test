@@ -166,7 +166,7 @@ const UserManager = () => {
   const fetchUsers = async () => {
     try {
       const fetchedUsers = showArchived 
-        ? await userService.getAllUsersIncludingInactive()
+        ? await userService.getAllUsersIncludingInactive(undefined, ['student', 'teacher'])
         : await userService.getUsers(undefined, ['student', 'teacher']);
       setUsers(fetchedUsers);
     } catch (error) {

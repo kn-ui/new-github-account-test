@@ -509,15 +509,22 @@ export const userService = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 
-  async getAllUsersIncludingInactive(limitCount?: number): Promise<FirestoreUser[]> {
-    const q = limitCount
-      ? query(
-          collections.users(),
-          orderBy('createdAt', 'desc'),
-          limit(limitCount)
-        )
-      : query(collections.users(), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+  async getAllUsersIncludingInactive(limitCount?: number, roles?: FirestoreUser['role'][]): Promise<FirestoreUser[]> {
+    let qRef: any = collections.users();
+
+    if (roles && roles.length > 0) {
+      qRef = query(qRef, where('role', 'in', roles));
+    }
+
+    qRef = query(
+      qRef,
+      orderBy('createdAt', 'desc')
+    );
+
+    if (limitCount) {
+      qRef = query(qRef, limit(limitCount));
+    }
+    const snapshot = await getDocs(qRef);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 };

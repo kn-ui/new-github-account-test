@@ -303,8 +303,6 @@ export interface FirestoreEvent {
   type: string;
   time: string;
   location: string;
-  maxAttendees: number;
-  currentAttendees: number;
   status: string;
   isActive: boolean;
   imageUrl?: string;
@@ -1729,13 +1727,13 @@ export const eventService = {
       .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvent));
   },
 
-  async createEvent(eventData: Omit<FirestoreEvent, 'id'>): Promise<string> {
+  async createEvent(eventData: Omit<FirestoreEvent, 'id' | 'maxAttendees' | 'currentAttendees'>): Promise<string> {
     const docRef = await addDoc(collections.events(), eventData);
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.create', targetType: 'event', targetId: docRef.id, details: { title: eventData.title } }); } catch {}
     return docRef.id;
   },
 
-  async updateEvent(eventId: string, updates: Partial<FirestoreEvent>): Promise<void> {
+  async updateEvent(eventId: string, updates: Partial<Omit<FirestoreEvent, 'maxAttendees' | 'currentAttendees'>>): Promise<void> {
     const docRef = doc(db, 'events', eventId);
     await updateDoc(docRef, updates as any);
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.update', targetType: 'event', targetId: eventId, details: updates }); } catch {}

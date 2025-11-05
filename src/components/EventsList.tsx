@@ -35,8 +35,6 @@ interface Event {
   time: string;
   location: string;
   type: string;
-  maxAttendees: number;
-  currentAttendees: number;
   status: string;
   imageUrl?: string;
   fileUrl?: string;
@@ -150,8 +148,8 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
   const getTypeIcon = (type: string) => {
     switch (type?.toLowerCase()) {
       case 'workshop': return <Target className="h-4 w-4" />;
-      case 'seminar': return <Users className="h-4 w-4" />;
-      case 'meeting': return <Users className="h-4 w-4" />;
+      case 'seminar': return <CalendarIcon className="h-4 w-4" />;
+      case 'meeting': return <CalendarIcon className="h-4 w-4" />;
       case 'conference': return <Star className="h-4 w-4" />;
       case 'webinar': return <Zap className="h-4 w-4" />;
       default: return <CalendarIcon className="h-4 w-4" />;
@@ -330,10 +328,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                     <span className="truncate">{event.location}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-purple-500" />
-                  <span>{event.currentAttendees || 0}/{event.maxAttendees || 'Unlimited'} attendees</span>
-                </div>
+
                 {event.fileUrl && (
                   <div className="mt-4">
                     <a 

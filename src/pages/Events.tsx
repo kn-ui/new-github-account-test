@@ -65,8 +65,6 @@ interface Event {
   time: string;
   location: string;
   type: string;
-  maxAttendees: number;
-  currentAttendees: number;
   status: string;
   imageUrl?: string;
   fileUrl?: string;
@@ -84,7 +82,7 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: 0, currentAttendees: 0, status: 'upcoming', imageUrl: '', fileUrl: '' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', status: 'upcoming', imageUrl: '', fileUrl: '' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -232,7 +230,6 @@ const EventsPage = () => {
         time: editForm.time,
         location: editForm.location,
         type: editForm.type,
-        maxAttendees: editForm.maxAttendees,
         imageUrl,
         fileUrl,
       });
@@ -284,15 +281,13 @@ const EventsPage = () => {
         time: createForm.time || '',
         location: createForm.location || '',
         type: createForm.type || 'meeting',
-        maxAttendees: createForm.maxAttendees || 0,
-        currentAttendees: createForm.currentAttendees || 0,
         imageUrl,
         fileUrl,
         createdBy: 'system',
         status: getEventStatus(date),
       });
 
-      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming', imageUrl: '', fileUrl: '' });
+      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', status: 'upcoming', imageUrl: '', fileUrl: '' });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
@@ -539,10 +534,7 @@ const EventsPage = () => {
                             <span className="truncate">{event.location}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-purple-500" />
-                          <span>{event.currentAttendees}/{event.maxAttendees} {t('events.attendees')}</span>
-                        </div>
+
                         {event.fileUrl && (
                           <div className="mt-4">
                             <a 
@@ -744,13 +736,7 @@ const EventsPage = () => {
                         </div>
                       </div>
                     )}
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-purple-500" />
-                      <div>
-                        <p className="font-semibold text-gray-800">Attendees</p>
-                        <p>{selectedEvent.currentAttendees}/{selectedEvent.maxAttendees}</p>
-                      </div>
-                    </div>
+
                     <div className="flex items-center gap-3">
                       <Badge variant={getTypeBadgeVariant(selectedEvent.type)}>{selectedEvent.type}</Badge>
                       <Badge variant={getStatusBadgeVariant(selectedEvent.status)}>{selectedEvent.status}</Badge>
@@ -833,10 +819,7 @@ const EventsPage = () => {
               <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/1,000 characters</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('events.maxAttendees_label')}</label>
-              <Input type="number" value={String(editForm.maxAttendees || 0)} onChange={(e) => setEditForm({ ...editForm, maxAttendees: parseInt(e.target.value) } as any)} />
-            </div>
+
 
             <div className="grid grid-cols-2 gap-3">
               <div>

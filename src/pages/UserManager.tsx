@@ -158,8 +158,7 @@ const UserManager = () => {
       (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterRole === 'all' || user.role === filterRole) &&
-      (user.role === 'student' || user.role === 'teacher')
+      (filterRole === 'all' || user.role === filterRole)
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users, filterRole]);
@@ -168,9 +167,8 @@ const UserManager = () => {
     try {
       const fetchedUsers = showArchived 
         ? await userService.getAllUsersIncludingInactive()
-        : await userService.getUsers();
+        : await userService.getUsers(undefined, ['student', 'teacher']);
       setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {

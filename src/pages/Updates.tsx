@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Heart, Plus, Edit, Trash2 } from 'lucide-react';
+import { Heart, Plus, Edit, Trash2, Calendar, Clock, MapPin, Download } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -331,17 +331,51 @@ export default function Updates() {
               </select>
             </div>
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredEvents.map(ev => (
-                  <div key={ev.id} className="bg-white rounded-lg border p-4 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-gray-500">{(ev.date as Timestamp).toDate().toLocaleString()}</div>
-                      <div className="font-semibold text-gray-900">{ev.title}</div>
-                      <div className="text-gray-700">{ev.description}</div>
+                  <div key={ev.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-blue-500">
+                    {ev.imageUrl && (
+                      <div className="h-48 overflow-hidden">
+                        <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                        <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                        <span>{(ev.date as Timestamp).toDate().toLocaleDateString()}</span>
+                        {ev.time && (
+                          <>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <Clock className="w-4 h-4 mr-1 text-blue-500" />
+                            <span>{ev.time}</span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{ev.description}</p>
+                      {ev.location && (
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="truncate">{ev.location}</span>
+                        </div>
+                      )}
+                      {ev.fileUrl && (
+                        <div className="mt-4">
+                          <a 
+                            href={ev.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download File
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
-                {!filteredEvents.length && <div className="text-gray-500 text-center py-8">No events match.</div>}
+                {!filteredEvents.length && <div className="text-gray-500 text-center py-8 md:col-span-2">No events match.</div>}
               </div>
             )}
           </TabsContent>

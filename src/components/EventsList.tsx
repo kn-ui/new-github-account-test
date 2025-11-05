@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Play,
   Zap,
-  Star
+  Star,
+  Download
 } from 'lucide-react';
 import { eventService, Timestamp } from '@/lib/firestore';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
@@ -37,6 +38,8 @@ interface Event {
   maxAttendees: number;
   currentAttendees: number;
   status: string;
+  imageUrl?: string;
+  fileUrl?: string;
 }
 
 interface EventsListProps {
@@ -51,6 +54,32 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return 'default';
+      case 'ongoing':
+        return 'secondary';
+      case 'completed':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'workshop':
+        return 'default';
+      case 'seminar':
+        return 'secondary';
+      case 'meeting':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
 
   useEffect(() => {
     fetchEvents();
@@ -256,75 +285,70 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
       {/* Events Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => (
-          <Card key={event.id} className="hover:shadow-lg transition-all duration-300 border-gray-200 hover:border-purple-300 group">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {/* Event Header */}
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-12 w-12 border-2 border-gray-200">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${event.title}`} />
-                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white font-semibold">
-                      {getInitials(event.title)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-purple-700 transition-colors break-words">
-                      {event.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1 break-words">
-                      {event.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Event Details */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4 text-purple-500" />
-                    <span>{formatEventDate(event.date)}</span>
-                    {event.time && (
-                      <>
-                        <span>•</span>
-                        <span>{event.time}</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  {event.location && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-purple-500" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span>{event.currentAttendees || 0}/{event.maxAttendees || 'Unlimited'} attendees</span>
-                  </div>
-                </div>
-
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {event.type && (
-                    <Badge className={`flex items-center gap-1 text-xs ${getTypeColor(event.type)}`}>
-                      {getTypeIcon(event.type)}
-                      <span className="capitalize">{event.type}</span>
-                    </Badge>
-                  )}
-                  
-                  {event.status && (
-                    <Badge className={`flex items-center gap-1 text-xs ${getStatusColor(event.status)}`}>
-                      {getStatusIcon(event.status)}
-                      <span className="capitalize">{event.status}</span>
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Attendance percentage removed by request */}
-
-                {/* View Event button removed by request */}
+          <Card key={event.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-purple-500">
+            {event.imageUrl && (
+              <div className="h-48 overflow-hidden">
+                <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
-            </CardContent>
+            )}
+            <div className="p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge 
+                    variant={getTypeBadgeVariant(event.type)}
+                    className="text-xs"
+                  >
+                    {event.type}
+                  </Badge>
+                  <Badge 
+                    variant={getStatusBadgeVariant(event.status)}
+                    className="text-xs"
+                  >
+                    {event.status}
+                  </Badge>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+              </div>
+              <div className="space-y-3 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-purple-500" />
+                  <span>{formatEventDate(event.date)}</span>
+                  {event.time && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4 text-purple-500" />
+                        {event.time}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {event.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-purple-500" />
+                    <span className="truncate">{event.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-purple-500" />
+                  <span>{event.currentAttendees || 0}/{event.maxAttendees || 'Unlimited'} attendees</span>
+                </div>
+                {event.fileUrl && (
+                  <div className="mt-4">
+                    <a 
+                      href={event.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </Card>
         ))}
       </div>

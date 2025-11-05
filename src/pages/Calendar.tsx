@@ -3,8 +3,9 @@ import Header from '@/components/Header';
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 import { eventService, FirestoreEvent } from '@/lib/firestore';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Info, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { toEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar';
 import { EventsList } from '@/components/EventsList';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
@@ -17,8 +18,9 @@ const Calendar = () => {
     const ethiopianDate = toEthiopianDate(d);
     return `${ethiopianDate.year}-${String(ethiopianDate.month).padStart(2, '0')}`;
   });
-  const [selectedEvent, setSelectedEvent] = useState<FirestoreEvent | null>(null);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<FirestoreEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEventIndex, setSelectedEventIndex] = useState(0);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -126,15 +128,15 @@ const Calendar = () => {
             {loading ? (
               <div className="text-center text-gray-500">{safeT('calendar.loading','Loading...')}</div>
             ) : (
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="grid grid-cols-7 gap-1 p-4">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                <div className="grid grid-cols-7 p-4 bg-gray-50 border-b border-gray-200">
                   {weekdays.map((d) => (
-                    <div key={d} className="p-2 text-center font-semibold text-gray-600 bg-gray-50 rounded">{d}</div>
+                    <div key={d} className="p-2 text-center font-bold text-sm text-gray-600">{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1 p-4 pt-0">
+                <div className="grid grid-cols-7 gap-px bg-gray-200">
                   {Array.from({ length: firstWeekdayOffset }).map((_, i) => (
-                    <div key={`empty-${i}`} className="min-h-[90px] p-2 border border-transparent rounded" />
+                    <div key={`empty-${i}`} className="bg-gray-50" />
                   ))}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
                     const today = new Date();
@@ -142,15 +144,20 @@ const Calendar = () => {
                     const isToday = ethiopianToday.year === ethiopianYear && ethiopianToday.month === ethiopianMonth && ethiopianToday.day === day;
                     const dayEvents = eventsByDay[day] || [];
                     return (
-                      <div key={day} className={`min-h-[90px] p-2 border border-gray-200 rounded ${isToday ? 'bg-blue-100' : ''} ${dayEvents.length > 0 ? 'cursor-pointer hover:bg-gray-50' : ''}`}
-                        onClick={() => { if (dayEvents.length > 0) { setSelectedEvent(dayEvents[0]); setIsModalOpen(true); } }}>
-                        <div className={`font-semibold text-gray-900 mb-2 ${isToday ? 'text-blue-700' : ''}`}>{toGeezNumber(day)} ({day})</div>
-                        <div className="space-y-1">
-                          {dayEvents.slice(0, 3).map(ev => (
-                            <div key={ev.id} className="text-xs p-1 rounded truncate bg-blue-50 text-blue-800 border border-blue-200" title={ev.title}>{ev.title}</div>
+                      <div 
+                        key={day} 
+                        className={`relative min-h-[120px] p-2 bg-white ${dayEvents.length > 0 ? 'cursor-pointer hover:bg-gray-50 transition-colors duration-200' : ''}`}
+                        onClick={() => { if (dayEvents.length > 0) { setSelectedDayEvents(dayEvents); setSelectedEventIndex(0); setIsModalOpen(true); } }}
+                      >
+                        <div className={`text-sm font-semibold ${isToday ? 'flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white' : 'text-gray-800'}`}>
+                          {toGeezNumber(day)} ({day})
+                        </div>
+                        <div className="mt-1 space-y-1">
+                          {dayEvents.slice(0, 2).map(ev => (
+                            <div key={ev.id} className="text-xs p-1.5 rounded-lg truncate bg-blue-50 text-blue-800 border border-blue-200 font-medium" title={ev.title}>{ev.title}</div>
                           ))}
-                          {dayEvents.length > 3 && (
-                            <div className="text-xs text-gray-500">{t('calendar.more', { count: dayEvents.length - 3 as any })}</div>
+                          {dayEvents.length > 2 && (
+                            <div className="text-xs text-gray-500 font-semibold">+{dayEvents.length - 2} more</div>
                           )}
                         </div>
                       </div>
@@ -185,19 +192,69 @@ const Calendar = () => {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-blue-600" />
-              {selectedEvent?.title}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedEvent && (
-            <div className="space-y-3 text-sm text-gray-700">
-              <div className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-gray-500" /><span>{formatEthiopianDate(toEthiopianDate(selectedEvent.date))}</span></div>
-              {selectedEvent.time && (<div className="flex items-center gap-2"><Clock className="h-4 w-4 text-gray-500" /><span>{selectedEvent.time}</span></div>)}
-              {selectedEvent.location && (<div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-gray-500" /><span>{selectedEvent.location}</span></div>)}
-              <div className="flex items-center gap-2"><Info className="h-4 w-4 text-gray-500" /><span>{selectedEvent.description}</span></div>
+        <DialogContent className="max-w-2xl p-0">
+          {selectedDayEvents.length > 0 && (
+            <div className="p-6">
+              <DialogHeader className="mb-4 flex flex-row justify-between items-center">
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  Events for {formatEthiopianDate(toEthiopianDate(selectedDayEvents[0].date))}
+                </DialogTitle>
+                {selectedDayEvents.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setSelectedEventIndex(prev => (prev - 1 + selectedDayEvents.length) % selectedDayEvents.length)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium">{selectedEventIndex + 1} of {selectedDayEvents.length}</span>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setSelectedEventIndex(prev => (prev + 1) % selectedDayEvents.length)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </DialogHeader>
+              <div className="space-y-6">
+                {selectedDayEvents.map((event, index) => (
+                  <div key={event.id} className={`${index === selectedEventIndex ? '' : 'hidden'}`}>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{event.title}</h3>
+                    <p className="text-base leading-relaxed text-gray-600">{event.description}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-4 border-t border-gray-200">
+                      {event.time && (
+                        <div className="flex items-center gap-3">
+                          <Clock className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <p className="font-semibold text-gray-800">Time</p>
+                            <p>{event.time}</p>
+                          </div>
+                        </div>
+                      )}
+                      {event.location && (
+                        <div className="flex items-center gap-3">
+                          <MapPin className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <p className="font-semibold text-gray-800">Location</p>
+                            <p>{event.location}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {event.fileUrl && (
+                      <div className="pt-4 mt-4 border-t border-gray-200">
+                        <a href={event.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:underline font-semibold">
+                          <Download className="h-4 w-4" />
+                          Download Attached File
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </DialogContent>

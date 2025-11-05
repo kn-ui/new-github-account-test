@@ -40,7 +40,7 @@ export default function AdminSettings() {
         if (currentUser?.uid) {
           // Load basic stats
           const [users, courses, events] = await Promise.all([
-            userService.getUsers(1000),
+            userService.getUsers(1000, ['student', 'teacher']),
             courseService.getCourses(1000),
             eventService.getEvents(1000),
           ]);

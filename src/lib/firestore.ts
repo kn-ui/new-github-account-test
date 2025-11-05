@@ -307,6 +307,8 @@ export interface FirestoreEvent {
   currentAttendees: number;
   status: string;
   isActive: boolean;
+  imageUrl?: string;
+  fileUrl?: string;
 }
 
 export interface FirestoreForumThread {
@@ -353,18 +355,25 @@ const collections = {
 
 // User operations
 export const userService = {
-  async getUsers(limitCount?: number): Promise<FirestoreUser[]> {
-    const q = limitCount
-      ? query(
-          collections.users(),
-          orderBy('createdAt', 'desc'),
-          limit(limitCount)
-        )
-      : query(collections.users(), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser))
-      .filter(user => user.isActive !== false); // Client-side filter for isActive
+  async getUsers(limitCount?: number, roles?: FirestoreUser['role'][]): Promise<FirestoreUser[]> {
+    let qRef: any = collections.users();
+
+    if (roles && roles.length > 0) {
+      qRef = query(qRef, where('role', 'in', roles));
+    }
+
+    qRef = query(
+      qRef,
+      orderBy('createdAt', 'desc'),
+      where('isActive', '==', true) // Always filter for active users
+    );
+
+    if (limitCount) {
+      qRef = query(qRef, limit(limitCount));
+    }
+
+    const snapshot = await getDocs(qRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreUser));
   },
 
   // Returns users including inactive ones (no filtering by isActive)

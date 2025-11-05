@@ -32,7 +32,8 @@ import {
   Users,
   Target,
   Activity,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
 import { eventService, Timestamp } from '@/lib/firestore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -53,6 +54,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
+import { uploadToHygraph, deleteHygraphAsset } from '@/lib/hygraphUpload';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
 
 interface Event {
@@ -66,6 +68,8 @@ interface Event {
   maxAttendees: number;
   currentAttendees: number;
   status: string;
+  imageUrl?: string;
+  fileUrl?: string;
 }
 
 const EventsPage = () => {
@@ -80,8 +84,12 @@ const EventsPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming' });
+  const [createForm, setCreateForm] = useState<Partial<Event>>({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', maxAttendees: 0, currentAttendees: 0, status: 'upcoming', imageUrl: '', fileUrl: '' });
   const [editForm, setEditForm] = useState<Partial<Event>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalEvents = events.length;
@@ -158,6 +166,16 @@ const EventsPage = () => {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
+      const eventToDelete = events.find(e => e.id === eventId);
+      if (eventToDelete) {
+        if (eventToDelete.imageUrl) {
+          await deleteHygraphAsset(eventToDelete.imageUrl);
+        }
+        if (eventToDelete.fileUrl) {
+          await deleteHygraphAsset(eventToDelete.fileUrl);
+        }
+      }
+
       await eventService.deleteEvent(eventId);
       setConfirmDeleteId(null);
       fetchEvents();
@@ -176,12 +194,34 @@ const EventsPage = () => {
     if (!selectedEvent) return;
     setIsSubmitting(true);
     try {
-      // Validation for required fields
       if (!editForm.title || editForm.title.trim().length === 0) {
         toast.error('Title is required');
         return;
       }
-      
+
+      let imageUrl = editForm.imageUrl || '';
+      let fileUrl = editForm.fileUrl || '';
+
+      if (imageFile) {
+        if (editForm.imageUrl) {
+          await deleteHygraphAsset(editForm.imageUrl);
+        }
+        const imageAsset = await uploadToHygraph(imageFile);
+        if (imageAsset.success) {
+          imageUrl = imageAsset.url;
+        }
+      }
+
+      if (file) {
+        if (editForm.fileUrl) {
+          await deleteHygraphAsset(editForm.fileUrl);
+        }
+        const fileAsset = await uploadToHygraph(file);
+        if (fileAsset.success) {
+          fileUrl = fileAsset.url;
+        }
+      }
+
       const date = editForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
@@ -193,26 +233,47 @@ const EventsPage = () => {
         location: editForm.location,
         type: editForm.type,
         maxAttendees: editForm.maxAttendees,
+        imageUrl,
+        fileUrl,
       });
+
       setIsEditOpen(false);
-      setSelectedEvent(null); // Clear selected event to prevent view detail popup
+      setSelectedEvent(null);
       fetchEvents();
     } catch (e) {
       console.error(e);
     } finally {
       setIsSubmitting(false);
+      setImageFile(null);
+      setFile(null);
     }
   };
 
   const submitCreate = async () => {
     setIsSubmitting(true);
     try {
-      // Validation for required fields
       if (!createForm.title || createForm.title.trim().length === 0) {
         toast.error('Title is required');
         return;
       }
-      
+
+      let imageUrl = '';
+      let fileUrl = '';
+
+      if (imageFile) {
+        const imageAsset = await uploadToHygraph(imageFile);
+        if (imageAsset.success) {
+          imageUrl = imageAsset.url;
+        }
+      }
+
+      if (file) {
+        const fileAsset = await uploadToHygraph(file);
+        if (fileAsset.success) {
+          fileUrl = fileAsset.url;
+        }
+      }
+
       const date = createForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
@@ -220,22 +281,26 @@ const EventsPage = () => {
         title: createForm.title || '',
         description: createForm.description || '',
         date: timestampDate,
-        createdBy: 'system',
-        type: createForm.type || 'meeting',
         time: createForm.time || '',
         location: createForm.location || '',
-        maxAttendees: 0,
+        type: createForm.type || 'meeting',
+        maxAttendees: createForm.maxAttendees || 0,
         currentAttendees: createForm.currentAttendees || 0,
+        imageUrl,
+        fileUrl,
+        createdBy: 'system',
         status: getEventStatus(date),
       });
-      // Reset form after successful creation
-      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming' });
+
+      setCreateForm({ title: '', description: '', date: new Date(), time: '09:00', location: '', type: '', currentAttendees: 0, status: 'upcoming', imageUrl: '', fileUrl: '' });
       setIsCreateOpen(false);
       fetchEvents();
     } catch (e) {
       console.error(e);
     } finally {
       setIsSubmitting(false);
+      setImageFile(null);
+      setFile(null);
     }
   };
 
@@ -416,129 +481,114 @@ const EventsPage = () => {
             <div className="space-y-4">
               {filteredEvents.map((event) => (
 
-                <Card key={event.id} className="shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  <CardContent className="p-6 h-full">
-
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                            <CalendarIcon className="h-8 w-8 text-white" />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900 truncate flex-1">
-                                {event.title && event.title.length > 25 ? event.title.substring(0, 25) + '...' : event.title}
-                              </h3>
-
-                              <Badge 
-                                variant={getTypeBadgeVariant(event.type)}
-                                className="text-xs flex-shrink-0"
-                              >
-
-                                {event.type && event.type.length > 10 ? event.type.substring(0, 10) + '...' : event.type}
-                              </Badge>
-                            </div>
-                            <p className="text-gray-600 mb-2 text-sm line-clamp-1">
-                              {event.description && event.description.length > 50 ? event.description.substring(0, 50) + '...' : event.description}
-                            </p>
-
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {(() => {
-                                  try {
-                                    let gregorianEventDate: Date;
-                                    if (event.date instanceof Date) {
-                                      gregorianEventDate = event.date;
-                                    } else if (event.date && typeof (event.date as Timestamp).toDate === 'function') {
-                                      gregorianEventDate = (event.date as Timestamp).toDate();
-                                    } else {
-                                      console.error('Invalid event date format:', event.title, event.date);
-                                      return 'Invalid Date';
-                                    }
-
-                                    if (isNaN(gregorianEventDate.getTime())) {
-                                      console.error('Invalid Gregorian Date object:', event.title, gregorianEventDate);
-                                      return 'Invalid Date';
-                                    }
-                                    const ethiopianEventDate = toEthiopianDate(gregorianEventDate);
-                                    return formatEthiopianDate(ethiopianEventDate);
-                                  } catch (error) {
-                                    console.error('Error converting date for event:', event.title, error);
-                                    return 'Invalid Date';
-                                  }
-                                })()}
-                              </span>
-                              {event.time && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  {event.time}
-                                </span>
-                              )}
-                              {event.location && (
-                                <span className="flex items-center gap-1 min-w-0">
-                                  <MapPin className="h-4 w-4 flex-shrink-0" />
-
-                                  <span className="truncate max-w-[200px]">
-                                    {event.location}
-                                  </span>
-
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                {event.currentAttendees}/{event.maxAttendees} {t('events.attendees')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                <Card key={event.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-purple-500">
+                  <div className="flex flex-col md:flex-row">
+                    {event.imageUrl && (
+                      <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
+                        <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       </div>
-                      
-                      <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
-                        <Badge 
-                          variant={getStatusBadgeVariant(event.status)}
-                          className="text-sm px-3 py-1"
-                        >
-                          {event.status}
-                        </Badge>
-                        
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="hover:bg-gray-50"
-                            onClick={() => setSelectedEvent(event)}
+                    )}
+                    <div className={`p-6 flex flex-col justify-between ${event.imageUrl ? 'md:w-2/3' : 'w-full'}`}>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge 
+                            variant={getTypeBadgeVariant(event.type)}
+                            className="text-xs"
                           >
-                            <CalendarIcon className="h-4 w-4 mr-1" />
-                            {t('common.view')}
-                          </Button>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(event)}>
-                                <CalendarIcon className="h-4 w-4 mr-2" />
-                                {t('events.edit')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600 cursor-pointer"
-                                onClick={() => setConfirmDeleteId(event.id)}
-                              >
-                                <CalendarIcon className="h-4 w-4 mr-2" />
-                                {t('events.delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            {event.type}
+                          </Badge>
+                          <Badge 
+                            variant={getStatusBadgeVariant(event.status)}
+                            className="text-xs"
+                          >
+                            {event.status}
+                          </Badge>
                         </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                      </div>
+                      <div className="space-y-3 text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-purple-500" />
+                          <span>
+                            {(() => {
+                              try {
+                                const date = event.date instanceof Date ? event.date : (event.date as Timestamp)?.toDate();
+                                if (!date || isNaN(date.getTime())) return 'Invalid Date';
+                                const ethiopianDate = toEthiopianDate(date);
+                                return formatEthiopianDate(ethiopianDate);
+                              } catch (error) {
+                                console.error('Error converting date:', error);
+                                return 'Date Conversion Error';
+                              }
+                            })()}
+                          </span>
+                          {event.time && (
+                            <>
+                              <span className="text-gray-300">|</span>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4 text-purple-500" />
+                                {event.time}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {event.location && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-purple-500" />
+                            <span className="truncate">{event.location}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-purple-500" />
+                          <span>{event.currentAttendees}/{event.maxAttendees} {t('events.attendees')}</span>
+                        </div>
+                        {event.fileUrl && (
+                          <div className="mt-4">
+                            <a 
+                              href={event.fileUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-end gap-2 mt-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-purple-600 hover:bg-purple-50"
+                          onClick={() => setSelectedEvent(event)}
+                        >
+                          {t('common.viewDetails')}
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(event)}>
+                              <CalendarIcon className="h-4 w-4 mr-2" />
+                              {t('events.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600 cursor-pointer"
+                              onClick={() => setConfirmDeleteId(event.id)}
+                            >
+                              <CalendarIcon className="h-4 w-4 mr-2" />
+                              {t('events.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -573,7 +623,7 @@ const EventsPage = () => {
               {t('events.createEventTitle')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
             <div>
               <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input 
@@ -633,6 +683,19 @@ const EventsPage = () => {
               <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/1,000 characters</p>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('events.image_label')}</label>
+                <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} />
+                {imageFile && <img src={URL.createObjectURL(imageFile)} alt="Preview" className="mt-2 h-10 w-10 object-cover" />}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('events.file_label')}</label>
+                <Input type="file" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} />
+              </div>
+            </div>
+
           </div>
           <DialogFooter>
             <LoadingButton onClick={submitCreate} className="bg-purple-600 hover:bg-purple-700" loading={isSubmitting} loadingText="Creating…">
@@ -643,35 +706,65 @@ const EventsPage = () => {
       </Dialog>
 
       <Dialog open={!!selectedEvent && !isEditOpen} onOpenChange={(o) => !o && setSelectedEvent(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-purple-600" />
-              {t('events.detailsTitle')}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-2xl p-0">
           {selectedEvent && (
-            <div className="space-y-2 text-sm text-gray-700">
-              <div className="flex gap-2">
-                <span className="font-medium flex-shrink-0">{t('events.title_label')}:</span> 
-                <span className="break-words">{selectedEvent.title}</span>
-              </div>
-              <div><span className="font-medium">{t('events.date_label')}:</span> {formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</div>
-              {selectedEvent.time && (<div><span className="font-medium">{t('events.time_label')}:</span> {selectedEvent.time}</div>)}
-              {selectedEvent.location && (
-                <div className="flex gap-2">
-                  <span className="font-medium flex-shrink-0">{t('events.location_label')}:</span> 
-                  <span className="break-words">{selectedEvent.location}</span>
-                </div>
+            <div>
+              {selectedEvent.imageUrl && (
+                <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${selectedEvent.imageUrl})` }}></div>
               )}
-              <div className="flex gap-2">
-                <span className="font-medium flex-shrink-0">{t('events.type_label')}:</span> 
-                <span className="break-words">{selectedEvent.type}</span>
-              </div>
-              <div><span className="font-medium">Status:</span> {selectedEvent.status}</div>
-              <div className="flex gap-2">
-                <span className="font-medium flex-shrink-0">{t('events.description_label')}:</span> 
-                <span className="break-words max-h-40 overflow-y-auto block text-sm">{selectedEvent.description}</span>
+              <div className="p-6">
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-2xl font-bold text-gray-900">{selectedEvent.title}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-gray-600">
+                  <p className="text-base leading-relaxed">{selectedEvent.description}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <CalendarIcon className="h-5 w-5 text-purple-500" />
+                      <div>
+                        <p className="font-semibold text-gray-800">Date</p>
+                        <p>{formatEthiopianDate(toEthiopianDate(selectedEvent.date instanceof Date ? selectedEvent.date : (selectedEvent.date as Timestamp).toDate()))}</p>
+                      </div>
+                    </div>
+                    {selectedEvent.time && (
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-purple-500" />
+                        <div>
+                          <p className="font-semibold text-gray-800">Time</p>
+                          <p>{selectedEvent.time}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedEvent.location && (
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-purple-500" />
+                        <div>
+                          <p className="font-semibold text-gray-800">Location</p>
+                          <p>{selectedEvent.location}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-purple-500" />
+                      <div>
+                        <p className="font-semibold text-gray-800">Attendees</p>
+                        <p>{selectedEvent.currentAttendees}/{selectedEvent.maxAttendees}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={getTypeBadgeVariant(selectedEvent.type)}>{selectedEvent.type}</Badge>
+                      <Badge variant={getStatusBadgeVariant(selectedEvent.status)}>{selectedEvent.status}</Badge>
+                    </div>
+                  </div>
+                  {selectedEvent.fileUrl && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <a href={selectedEvent.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-purple-600 hover:underline font-semibold">
+                        <Zap className="h-4 w-4" />
+                        Download Attached File
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -686,7 +779,7 @@ const EventsPage = () => {
               {t('events.edit')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
               <label className="block text-sm font-medium mb-1">{t('events.title_label')}</label>
               <Input 
@@ -738,6 +831,29 @@ const EventsPage = () => {
                 rows={4}
               />
               <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/1,000 characters</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('events.maxAttendees_label')}</label>
+              <Input type="number" value={String(editForm.maxAttendees || 0)} onChange={(e) => setEditForm({ ...editForm, maxAttendees: parseInt(e.target.value) } as any)} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('events.image_label')}</label>
+                <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} />
+                {imageFile ? (
+                  <img src={URL.createObjectURL(imageFile)} alt="Preview" className="mt-2 h-10 w-10 object-cover" />
+                ) : (
+                  editForm.imageUrl && <img src={editForm.imageUrl} alt="Current" className="mt-2 h-10 w-10 object-cover" />
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('events.file_label')}</label>
+                <Input type="file" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} />
+                {editForm.fileUrl && <a href={editForm.fileUrl} target="_blank" rel="noreferrer">View Current File</a>}
+              </div>
             </div>
           </div>
           <DialogFooter>

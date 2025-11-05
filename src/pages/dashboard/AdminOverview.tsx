@@ -68,7 +68,7 @@ const AdminOverview = () => {
       try {
         const [adminStats, users, courses, allEvents, recentEvents] = await Promise.all([
           analyticsService.getAdminStats(),
-          userService.getUsers(5),
+          userService.getUsers(5, ['student', 'teacher']),
           courseService.getCourses(5),
           eventService.getAllEvents(),
           eventService.getEvents(5)

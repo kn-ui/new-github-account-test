@@ -307,7 +307,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                   </Badge>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
-                                <RichTextRenderer content={event.description} />
+                                <RichTextRenderer content={event.description} truncate={true} />
               </div>
               <div className="space-y-3 text-sm text-gray-500">
                 <div className="flex items-center gap-2">

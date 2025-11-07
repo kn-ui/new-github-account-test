@@ -293,7 +293,7 @@ export default function Updates() {
                       )}
                     </div>
                     <h3 className="text-lg font-semibold mt-2 text-gray-900 mb-3">{b.title}</h3>
-                                        <RichTextRenderer content={b.content} />
+                                        <RichTextRenderer content={b.content} truncate={true} />
                     
                     {/* Love Button */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100">
@@ -357,7 +357,7 @@ export default function Updates() {
                         )}
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{ev.description}</p>
+                                            <RichTextRenderer content={ev.description} truncate={true} />
                       {ev.location && (
                         <div className="flex items-center text-sm text-gray-500">
                           <MapPin className="w-4 h-4 mr-2 text-gray-400" />

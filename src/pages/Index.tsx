@@ -84,7 +84,7 @@ const Index = () => {
                       )}
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
-                                        <RichTextRenderer content={ev.description} />
+                                        <RichTextRenderer content={ev.description} truncate={true} />
                     {ev.location && (
                       <div className="flex items-center text-sm text-gray-500">
                         <MapPin className="w-4 h-4 mr-2 text-gray-400" />

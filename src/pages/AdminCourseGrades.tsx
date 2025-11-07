@@ -28,6 +28,20 @@ interface StudentRow {
   isPublished: boolean;
 }
 
+
+const defaultGradeRanges = {
+          'A+': { min: 95, max: 100, points: 4.0 },
+          'A': { min: 85, max: 94, points: 4.0 },
+          'A-': { min: 80, max: 84, points: 3.75 },
+          'B+': { min: 75, max: 79, points: 3.5 },
+          'B': { min: 70, max: 74, points: 3.0 },
+          'B-': { min: 60, max: 69, points: 2.75 },
+          'C+': { min: 55, max: 59, points: 2 },
+          'C': { min: 50, max: 54, points: 1.5 },
+          'D': { min: 40, max: 49, points: 1.0 },
+          'F': { min: 0, max: 39, points: 0.0 },
+};
+
 export default function AdminCourseGrades() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -54,21 +68,7 @@ export default function AdminCourseGrades() {
       // Load course and grade ranges in parallel
       const [c, ranges] = await Promise.all([
         courseService.getCourseById(courseId!),
-        settingsService.getGradeRanges().catch(() => ({
-          'A+': { min: 97, max: 100, points: 4.0 },
-          'A': { min: 93, max: 96, points: 4.0 },
-          'A-': { min: 90, max: 92, points: 3.7 },
-          'B+': { min: 87, max: 89, points: 3.3 },
-          'B': { min: 83, max: 86, points: 3.0 },
-          'B-': { min: 80, max: 82, points: 2.7 },
-          'C+': { min: 77, max: 79, points: 2.3 },
-          'C': { min: 73, max: 76, points: 2.0 },
-          'C-': { min: 70, max: 72, points: 1.7 },
-          'D+': { min: 67, max: 69, points: 1.3 },
-          'D': { min: 63, max: 66, points: 1.0 },
-          'D-': { min: 60, max: 62, points: 0.7 },
-          'F': { min: 0, max: 59, points: 0.0 },
-        })),
+        settingsService.getGradeRanges().catch(() => (defaultGradeRanges)),
       ]);
       setCourse(c);
       setGradeRanges(ranges);
@@ -424,6 +424,7 @@ export default function AdminCourseGrades() {
             </div>
           </div>
           <DialogFooter>
+            <Button variant="outline" onClick={() => setGradeRanges(defaultGradeRanges)}>Reset to Default</Button>
             <Button variant="outline" onClick={() => setRangesOpen(false)}>Cancel</Button>
             <Button onClick={async () => { try { await settingsService.setGradeRanges(gradeRanges); toast.success('Grade ranges updated'); } catch { toast.error('Failed to save grade ranges'); } finally { setRangesOpen(false); } }}>Save Ranges</Button>
           </DialogFooter>

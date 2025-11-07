@@ -13,6 +13,8 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { uploadToHygraph } from '@/lib/hygraphUpload';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 
 export default function Updates() {
   const { t } = useI18n();
@@ -134,18 +136,21 @@ export default function Updates() {
         imageAssetId = uploadResult.id;
       }
 
+      const content = blogForm.content ? JSON.parse(blogForm.content) : '';
+
       if (editingBlog) {
         await blogService.updateBlogPost(editingBlog.id, {
           title: blogForm.title,
-          content: blogForm.content,
+          content,
           imageUrl: imageUrl || undefined,
           ...(imageAssetId ? { imageAssetId } : {}),
         } as any);
         toast.success('Blog post updated');
       } else {
+        const content = blogForm.content ? JSON.parse(blogForm.content) : '';
         await blogService.createBlogPost({
           title: blogForm.title,
-          content: blogForm.content,
+          content,
           authorId: currentUser.uid,
           authorName: userProfile.displayName || userProfile.email || 'Unknown Author',
           ...(imageUrl ? { imageUrl } : {}),
@@ -288,7 +293,7 @@ export default function Updates() {
                       )}
                     </div>
                     <h3 className="text-lg font-semibold mt-2 text-gray-900 mb-3">{b.title}</h3>
-                    <p className="text-gray-700 mt-2 line-clamp-3 mb-4">{b.content}</p>
+                                        <RichTextRenderer content={b.content} />
                     
                     {/* Love Button */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100">
@@ -400,12 +405,9 @@ export default function Updates() {
             </div>
             <div>
               <Label htmlFor="blog-content">Content</Label>
-              <Textarea
-                id="blog-content"
-                value={blogForm.content}
-                onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
-                placeholder="Write your blog post content here..."
-                rows={10}
+              <RichTextEditor
+                content={blogForm.content}
+                onChange={(content) => setBlogForm({ ...blogForm, content })}
               />
             </div>
               <div>

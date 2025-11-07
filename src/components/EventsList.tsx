@@ -26,6 +26,7 @@ import {
 import { eventService, Timestamp } from '@/lib/firestore';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { useI18n } from '@/contexts/I18nContext';
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 
 interface Event {
   id: string;
@@ -306,7 +307,7 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
                   </Badge>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                                <RichTextRenderer content={event.description} />
               </div>
               <div className="space-y-3 text-sm text-gray-500">
                 <div className="flex items-center gap-2">

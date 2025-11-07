@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toEthiopianDate, formatEthiopianDate, getEthiopianDaysInMonth, getEthiopianFirstWeekdayOffset, toGeezNumber } from '@/lib/ethiopianCalendar';
 import { EventsList } from '@/components/EventsList';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 
 const Calendar = () => {
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -223,7 +224,7 @@ const Calendar = () => {
                 {selectedDayEvents.map((event, index) => (
                   <div key={event.id} className={`${index === selectedEventIndex ? '' : 'hidden'}`}>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">{event.title}</h3>
-                    <p className="text-base leading-relaxed text-gray-600">{event.description}</p>
+                                        <RichTextRenderer content={event.description} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-4 border-t border-gray-200">
                       {event.time && (
                         <div className="flex items-center gap-3">

@@ -16,7 +16,9 @@
     "install:backend": "cd server && npm install",
     "install:all": "npm install && npm run install:backend",
     "seed": "tsx src/scripts/runSeedNode.ts",
-    "seed:clear": "tsx src/scripts/clearSeedNode.ts"
+    "seed:clear": "tsx src/scripts/clearSeedNode.ts",
+    "install:tiptap": "npm install @tiptap/react @tiptap/starter-kit @tiptap/pm prosemirror-model",
+    "install:vite": "npm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -71,7 +73,11 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@tiptap/react": "^2.1.13",
+    "@tiptap/starter-kit": "^2.1.13",
+    "@tiptap/pm": "^2.1.13",
+    "prosemirror-model": "^1.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

@@ -56,6 +56,8 @@ import { toast } from 'sonner';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { uploadToHygraph, deleteHygraphAsset } from '@/lib/hygraphUpload';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 
 interface Event {
   id: string;
@@ -223,9 +225,11 @@ const EventsPage = () => {
       const date = editForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
+      const description = editForm.description ? JSON.parse(editForm.description) : '';
+
       await eventService.updateEvent(selectedEvent.id, {
         title: editForm.title,
-        description: editForm.description,
+        description,
         date: timestampDate,
         time: editForm.time,
         location: editForm.location,
@@ -274,9 +278,11 @@ const EventsPage = () => {
       const date = createForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
+      const description = createForm.description ? JSON.parse(createForm.description) : '';
+
       await eventService.createEvent({
         title: createForm.title || '',
-        description: createForm.description || '',
+        description,
         date: timestampDate,
         time: createForm.time || '',
         location: createForm.location || '',
@@ -500,7 +506,7 @@ const EventsPage = () => {
                           </Badge>
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                                                <RichTextRenderer content={event.description} />
                       </div>
                       <div className="space-y-3 text-sm text-gray-500">
                         <div className="flex items-center gap-2">
@@ -665,14 +671,10 @@ const EventsPage = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
-              <Textarea 
-                value={String(createForm.description || '')} 
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value.slice(0, 1000) } as any)}
-                placeholder="Event description..."
-                maxLength={1000}
-                rows={4}
+              <RichTextEditor
+                content={createForm.description || ''}
+                onChange={(content) => setCreateForm({ ...createForm, description: content })}
               />
-              <p className="text-xs text-gray-500 mt-1">{(createForm.description || '').length}/1,000 characters</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -709,7 +711,7 @@ const EventsPage = () => {
                   <DialogTitle className="text-2xl font-bold text-gray-900">{selectedEvent.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 text-gray-600">
-                  <p className="text-base leading-relaxed">{selectedEvent.description}</p>
+                                    <RichTextRenderer content={selectedEvent.description} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                     <div className="flex items-center gap-3">
                       <CalendarIcon className="h-5 w-5 text-purple-500" />
@@ -810,13 +812,10 @@ const EventsPage = () => {
             
             <div>
               <label className="block text-sm font-medium mb-1">{t('events.description_label')}</label>
-              <Textarea 
-                value={String(editForm.description || '')} 
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value.slice(0, 1000) } as any)}
-                maxLength={1000}
-                rows={4}
+              <RichTextEditor
+                content={editForm.description || ''}
+                onChange={(content) => setEditForm({ ...editForm, description: content })}
               />
-              <p className="text-xs text-gray-500 mt-1">{(editForm.description || '').length}/1,000 characters</p>
             </div>
 
 

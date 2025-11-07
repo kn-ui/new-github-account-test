@@ -6,6 +6,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { CalendarDays, Clock, MapPin, Download } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 
 const Index = () => {
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -83,7 +84,7 @@ const Index = () => {
                       )}
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{ev.description}</p>
+                                        <RichTextRenderer content={ev.description} />
                     {ev.location && (
                       <div className="flex items-center text-sm text-gray-500">
                         <MapPin className="w-4 h-4 mr-2 text-gray-400" />

@@ -1,15 +1,17 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
 import { useState, useRef, useEffect } from 'react';
 
 interface RichTextRendererProps {
   content: string | object;
   truncate?: boolean;
+  isExpanded?: boolean;
+  onToggleExpanded?: () => void;
 }
 
-const RichTextRenderer = ({ content, truncate = false }: RichTextRendererProps) => {
-  const [isTruncated, setIsTruncated] = useState(truncate);
+const RichTextRenderer = ({ content, truncate = false, isExpanded, onToggleExpanded }: RichTextRendererProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -25,13 +27,13 @@ const RichTextRenderer = ({ content, truncate = false }: RichTextRendererProps) 
   }
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Image],
     content: parsedContent,
     editable: false,
-  });
+  }, [content]);
 
   useEffect(() => {
-    if (contentRef.current) {
+    if (editor && contentRef.current) {
       const { scrollHeight, clientHeight } = contentRef.current;
       if (scrollHeight > clientHeight) {
         setIsOverflowing(true);
@@ -41,18 +43,21 @@ const RichTextRenderer = ({ content, truncate = false }: RichTextRendererProps) 
     }
   }, [editor, content]);
 
-  const toggleTruncate = () => {
-    setIsTruncated(!isTruncated);
-  };
+  const isTruncated = truncate && !isExpanded;
 
   return (
     <div className="prose max-w-none">
       <div ref={contentRef} className={isTruncated ? 'max-h-24 overflow-hidden' : ''}>
         <EditorContent editor={editor} />
       </div>
-      {truncate && isOverflowing && <button onClick={toggleTruncate} className="text-blue-500 hover:underline">{isTruncated ? 'Read more' : 'Read less'}</button>}
+      {truncate && isOverflowing && (
+        <button onClick={onToggleExpanded} className="text-blue-500 hover:underline">
+          {isTruncated ? 'Read more' : 'Read less'}
+        </button>
+      )}
     </div>
   );
 };
 
 export default RichTextRenderer;
+

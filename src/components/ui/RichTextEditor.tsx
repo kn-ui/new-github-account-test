@@ -1,8 +1,13 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { forwardRef, useImperativeHandle } from 'react';
-import { Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code } from 'lucide-react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Code, Image as ImageIcon, ChevronDown } from 'lucide-react';
 import UnderlineExtension from '@tiptap/extension-underline';
+import Image from '@tiptap/extension-image';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
+import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 interface RichTextEditorProps {
   content: string | object;
@@ -10,13 +15,13 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = forwardRef(({ content, onChange }: RichTextEditorProps, ref) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   let parsedContent;
   if (typeof content === 'string') {
     try {
       parsedContent = JSON.parse(content);
     } catch (error) {
-      // If it's not valid JSON, treat it as plain text.
-      // Tiptap can handle plain text and convert it to its document format.
       parsedContent = {
         type: 'doc',
         content: [
@@ -40,6 +45,7 @@ const RichTextEditor = forwardRef(({ content, onChange }: RichTextEditorProps, r
     extensions: [
       StarterKit,
       UnderlineExtension,
+      Image,
     ],
     content: parsedContent,
     onUpdate: ({ editor }) => {
@@ -58,13 +64,61 @@ const RichTextEditor = forwardRef(({ content, onChange }: RichTextEditorProps, r
     }
   }));
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && editor) {
+      const toastId = toast.loading('Uploading image...');
+      try {
+        const result = await uploadToHygraph(file);
+        if (result.success && result.url) {
+          editor.chain().focus().setImage({ src: result.url }).run();
+          toast.success('Image uploaded and inserted!', { id: toastId });
+        } else {
+          throw new Error(result.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Image upload error:', error);
+        toast.error('Failed to upload image.', { id: toastId });
+      }
+    }
+  };
+
   if (!editor) {
     return null;
   }
 
+  const getTextStyleLabel = () => {
+    if (editor.isActive('heading', { level: 1 })) return 'Heading 1';
+    if (editor.isActive('heading', { level: 2 })) return 'Heading 2';
+    if (editor.isActive('heading', { level: 3 })) return 'Heading 3';
+    return 'Paragraph';
+  };
+
   return (
     <div className="border border-gray-300 rounded-md">
       <div className="flex flex-wrap items-center gap-2 p-2 border-b border-gray-300">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-32 justify-between">
+              {getTextStyleLabel()}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => editor.chain().focus().setParagraph().run()}>
+              Paragraph
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+              Heading 1
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+              Heading 2
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+              Heading 3
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`p-2 rounded ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
@@ -94,27 +148,6 @@ const RichTextEditor = forwardRef(({ content, onChange }: RichTextEditorProps, r
           <Strikethrough className="h-4 w-4" />
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-2 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''}`}
-          type="button"
-        >
-          <Heading1 className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-2 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''}`}
-          type="button"
-        >
-          <Heading2 className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`p-2 rounded ${editor.isActive('heading', { level: 3 }) ? 'bg-gray-200' : ''}`}
-          type="button"
-        >
-          <Heading3 className="h-4 w-4" />
-        </button>
-        <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`p-2 rounded ${editor.isActive('bulletList') ? 'bg-gray-200' : ''}`}
           type="button"
@@ -142,6 +175,20 @@ const RichTextEditor = forwardRef(({ content, onChange }: RichTextEditorProps, r
         >
           <Code className="h-4 w-4" />
         </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded"
+          type="button"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          className="hidden"
+          accept="image/*"
+        />
       </div>
       <EditorContent editor={editor} />
     </div>

@@ -225,7 +225,7 @@ const EventsPage = () => {
       const date = editForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
-      const description = editForm.description ? JSON.parse(editForm.description) : '';
+      const description = editForm.description || '';
 
       await eventService.updateEvent(selectedEvent.id, {
         title: editForm.title,
@@ -278,7 +278,7 @@ const EventsPage = () => {
       const date = createForm.date || new Date();
       const timestampDate = date instanceof Date ? Timestamp.fromDate(date) : date;
 
-      const description = createForm.description ? JSON.parse(createForm.description) : '';
+      const description = createForm.description || '';
 
       await eventService.createEvent({
         title: createForm.title || '',
@@ -614,7 +614,7 @@ const EventsPage = () => {
         </div>
       </div>
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-purple-600" />
@@ -760,7 +760,7 @@ const EventsPage = () => {
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-purple-600" />

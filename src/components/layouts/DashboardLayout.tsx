@@ -62,7 +62,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, currentUser } = useAuth();
+  const { logout, currentUser, userProfile } = useAuth();
   const { lang, setLang, t } = useI18n();
 
   // Local storage helpers for per-user seen announcement IDs
@@ -383,7 +383,12 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
                 <p className="text-sm font-medium text-gray-900 capitalize">
                   {userRole}
                 </p>
-                <p className="text-xs text-gray-500">{t('common.dashboard')}</p>
+                {userProfile && userProfile.role === 'admin' && userProfile.schoolTitle && (
+                  <p className="text-sm font-semibold text-blue-700 truncate mt-1">
+                    {userProfile.schoolTitle}
+                  </p>
+                )}
+
               </div>
               <Button
                 variant="ghost"

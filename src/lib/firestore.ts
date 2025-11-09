@@ -37,6 +37,7 @@ export interface FirestoreUser {
   studentGroup?: string;   // Children, Youth, Adolescent, Elders, Academic Students, or custom
   programType?: string;    // Extension, Apostolic, Preaching, In Different Class, Weekend, Apostolic Missionary, Practical and technical, or custom
   classSection?: string;   // e.g., "A", "B1" (free text or from presets)
+  schoolTitle?: string; // Only for admin role
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

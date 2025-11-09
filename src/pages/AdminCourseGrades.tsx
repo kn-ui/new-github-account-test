@@ -31,15 +31,15 @@ interface StudentRow {
 
 const defaultGradeRanges = {
           'A+': { min: 95, max: 100, points: 4.0 },
-          'A': { min: 85, max: 94, points: 4.0 },
-          'A-': { min: 80, max: 84, points: 3.75 },
-          'B+': { min: 75, max: 79, points: 3.5 },
-          'B': { min: 70, max: 74, points: 3.0 },
-          'B-': { min: 60, max: 69, points: 2.75 },
-          'C+': { min: 55, max: 59, points: 2 },
-          'C': { min: 50, max: 54, points: 1.5 },
-          'D': { min: 40, max: 49, points: 1.0 },
-          'F': { min: 0, max: 39, points: 0.0 },
+          'A': { min: 85, max: 94.9, points: 4.0 },
+          'A-': { min: 80, max: 84.9, points: 3.75 },
+          'B+': { min: 75, max: 79.9, points: 3.5 },
+          'B': { min: 70, max: 74.9, points: 3.0 },
+          'B-': { min: 60, max: 69.9, points: 2.75 },
+          'C+': { min: 55, max: 59.9, points: 2 },
+          'C': { min: 50, max: 54.9, points: 1.5 },
+          'D': { min: 40, max: 49.9, points: 1.0 },
+          'F': { min: 0, max: 39.9, points: 0.0 },
 };
 
 export default function AdminCourseGrades() {

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { userService } from '@/lib/firestore';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { courseService } from '@/lib/firestore';
 import { eventService } from '@/lib/firestore';
 import { analyticsService } from '@/lib/firestore';
@@ -51,6 +52,7 @@ interface Event {
 
 const AdminOverview = () => {
   const { t } = useI18n();
+  const { currentUser } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -111,6 +113,8 @@ const AdminOverview = () => {
       <DashboardHero 
         title={t('admin.title')}
         subtitle={t('admin.subtitle')}
+        adminRole={currentUser?.role}
+        adminSchoolTitle={currentUser?.schoolTitle}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

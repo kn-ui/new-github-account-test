@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Calendar, Target, User, FileText, Trash2 } from 'lucide-react';
+import { Activity, Calendar, Target, User, FileText, Trash2, Shield } from 'lucide-react';
 
 export default function ManageAdmins() {
   const { userProfile } = useAuth();
@@ -49,7 +49,13 @@ export default function ManageAdmins() {
                 <div key={a.id} className="p-3 border rounded bg-white">
                   <div className="font-semibold text-gray-800">{a.displayName}</div>
                   <div className="text-sm text-gray-600">{a.email}</div>
-                  <div className="text-xs text-gray-500">{a.id}</div>
+
+                  {a.schoolTitle && (
+                    <div className="flex items-center gap-1 text-sm font-bold text-red-700 mt-1">
+                      <Shield className="h-3 w-3" />
+                      {a.schoolTitle}
+                    </div>
+                  )}
                   <div className="mt-2">
                     <Button variant="outline" size="sm" onClick={() => { setSelectedAdmin(a); loadActivity(a.id!); }}>View Activity</Button>
                   </div>

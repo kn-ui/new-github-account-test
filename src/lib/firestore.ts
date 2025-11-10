@@ -307,7 +307,9 @@ export interface FirestoreEvent {
   status: string;
   isActive: boolean;
   imageUrl?: string;
+  imageAssetId?: string;
   fileUrl?: string;
+  fileAssetId?: string;
 }
 
 export interface FirestoreForumThread {
@@ -1748,6 +1750,30 @@ export const eventService = {
   },
 
   async deleteEvent(eventId: string): Promise<void> {
+    // First get the event to check for files
+    const eventRef = doc(db, 'events', eventId);
+    const eventSnap = await getDoc(eventRef);
+
+    if (eventSnap.exists()) {
+        const event = eventSnap.data() as FirestoreEvent;
+
+        // Delete associated file from Hygraph BEFORE deleting the document
+        if (event.fileUrl || event.imageUrl) {
+            try {
+                const { deleteDocumentAssets, extractHygraphAssetIds, extractHygraphUrls } = await import('@/lib/hygraphAssetManager');
+                const assetIds = extractHygraphAssetIds(event);
+                const urls = extractHygraphUrls(event);
+                const deletedCount = await deleteDocumentAssets('event', eventId, assetIds, urls);
+                if (deletedCount > 0) {
+                    console.log(`Deleted ${deletedCount} Hygraph asset(s) for event ${eventId}`);
+                }
+            } catch (error) {
+                console.error('Failed to delete event files from Hygraph:', error);
+                // Continue with event deletion even if file deletion fails
+            }
+        }
+    }
+
     const docRef = doc(db, 'events', eventId);
     await deleteDoc(docRef);
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'event.delete', targetType: 'event', targetId: eventId }); } catch {}

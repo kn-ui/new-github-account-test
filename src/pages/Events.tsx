@@ -54,7 +54,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
-import { uploadToHygraph, deleteHygraphAsset } from '@/lib/hygraphUpload';
+import { uploadToHygraph } from '@/lib/hygraphUpload';
 import EthiopianHolidays from '@/components/EthiopianHolidays';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import RichTextRenderer from '@/components/ui/RichTextRenderer';
@@ -166,21 +166,13 @@ const EventsPage = () => {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      const eventToDelete = events.find(e => e.id === eventId);
-      if (eventToDelete) {
-        if (eventToDelete.imageUrl) {
-          await deleteHygraphAsset(eventToDelete.imageUrl);
-        }
-        if (eventToDelete.fileUrl) {
-          await deleteHygraphAsset(eventToDelete.fileUrl);
-        }
-      }
-
       await eventService.deleteEvent(eventId);
       setConfirmDeleteId(null);
       fetchEvents();
+      toast.success('Event deleted successfully');
     } catch (error) {
       console.error('Error deleting event:', error);
+      toast.error('Failed to delete event');
     }
   };
 
@@ -201,24 +193,22 @@ const EventsPage = () => {
 
       let imageUrl = editForm.imageUrl || '';
       let fileUrl = editForm.fileUrl || '';
+      let imageAssetId = (editForm as any).imageAssetId || '';
+      let fileAssetId = (editForm as any).fileAssetId || '';
 
       if (imageFile) {
-        if (editForm.imageUrl) {
-          await deleteHygraphAsset(editForm.imageUrl);
-        }
         const imageAsset = await uploadToHygraph(imageFile);
         if (imageAsset.success) {
           imageUrl = imageAsset.url;
+          imageAssetId = imageAsset.id;
         }
       }
 
       if (file) {
-        if (editForm.fileUrl) {
-          await deleteHygraphAsset(editForm.fileUrl);
-        }
         const fileAsset = await uploadToHygraph(file);
         if (fileAsset.success) {
           fileUrl = fileAsset.url;
+          fileAssetId = fileAsset.id;
         }
       }
 
@@ -236,6 +226,8 @@ const EventsPage = () => {
         type: editForm.type,
         imageUrl,
         fileUrl,
+        imageAssetId,
+        fileAssetId,
       });
 
       setIsEditOpen(false);
@@ -260,11 +252,14 @@ const EventsPage = () => {
 
       let imageUrl = '';
       let fileUrl = '';
+      let imageAssetId = '';
+      let fileAssetId = '';
 
       if (imageFile) {
         const imageAsset = await uploadToHygraph(imageFile);
         if (imageAsset.success) {
           imageUrl = imageAsset.url;
+          imageAssetId = imageAsset.id;
         }
       }
 
@@ -272,6 +267,7 @@ const EventsPage = () => {
         const fileAsset = await uploadToHygraph(file);
         if (fileAsset.success) {
           fileUrl = fileAsset.url;
+          fileAssetId = fileAsset.id;
         }
       }
 
@@ -289,6 +285,8 @@ const EventsPage = () => {
         type: createForm.type || 'meeting',
         imageUrl,
         fileUrl,
+        imageAssetId,
+        fileAssetId,
         createdBy: 'system',
         status: getEventStatus(date),
       });

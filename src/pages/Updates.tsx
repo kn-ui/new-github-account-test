@@ -265,7 +265,7 @@ export default function Updates() {
               )}
             </div>
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-6 items-start">
                 {filteredBlogs.map(b => (
                   <article key={b.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                     {/* Featured image */}

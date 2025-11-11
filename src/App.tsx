@@ -1,3 +1,4 @@
+import EventDetail from "./pages/EventDetail";
 import { Toaster } from "@/components/ui/toaster";
 import "@/lib/silenceConsole";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/forum/:threadId" element={<ForumThread />} />
             {/* Public events page */}
             <Route path="/events" element={<Events />} />
+            <Route path="/event/:eventId" element={<EventDetail />} />
             {/* <Route path="/catalog" element={<Catalog />} /> */}
             <Route path="/course/:courseId" element={<CourseDetail />} />
             <Route 

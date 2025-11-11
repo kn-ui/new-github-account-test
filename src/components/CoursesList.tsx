@@ -256,10 +256,6 @@ export const CoursesList: React.FC<CoursesListProps> = ({ readOnly, showAll }) =
                     <Calendar className="h-3 w-3" />
                     <span>{course.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>Level: {course.level || 'Beginner'}</span>
-                  </div>
                 </div>
 
                 {/* Badges */}

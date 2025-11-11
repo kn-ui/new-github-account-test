@@ -504,7 +504,9 @@ const EventsPage = () => {
                           </Badge>
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
-                                                <RichTextRenderer content={event.description} truncate={true} />
+                        <div className="text-gray-600 mb-4">
+                          <RichTextRenderer content={event.description} truncate={true} />
+                        </div>
                       </div>
                       <div className="space-y-3 text-sm text-gray-500">
                         <div className="flex items-center gap-2">
@@ -698,7 +700,7 @@ const EventsPage = () => {
       </Dialog>
 
       <Dialog open={!!selectedEvent && !isEditOpen} onOpenChange={(o) => !o && setSelectedEvent(null)}>
-        <DialogContent className="max-w-2xl p-0">
+        <DialogContent className="max-w-2xl p-0 max-h-[80vh] overflow-y-auto">
           {selectedEvent && (
             <div>
               {selectedEvent.imageUrl && (
@@ -709,7 +711,7 @@ const EventsPage = () => {
                   <DialogTitle className="text-2xl font-bold text-gray-900">{selectedEvent.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 text-gray-600">
-                                    <RichTextRenderer content={selectedEvent.description} truncate={false} />
+                                    <RichTextRenderer content={selectedEvent.description} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                     <div className="flex items-center gap-3">
                       <CalendarIcon className="h-5 w-5 text-purple-500" />

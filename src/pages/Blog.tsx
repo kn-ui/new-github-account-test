@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
 import { blogService, FirestoreBlog } from '@/lib/firestore';
@@ -111,6 +112,11 @@ const Blog = () => {
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>{post.authorName}</span>
                     <span>{formatDate(post.createdAt)}</span>
+                  </div>
+                  <div className="mt-4">
+                    <Link to={`/blog/${post.id}`} className="text-blue-600 hover:underline">
+                      {t('blog.readMore')}
+                    </Link>
                   </div>
                 </div>
               </article>

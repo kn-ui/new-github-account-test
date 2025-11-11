@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { uploadToHygraph } from '@/lib/hygraphUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import RichTextRenderer from '@/components/ui/RichTextRenderer';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Updates() {
   const { t } = useI18n();
@@ -38,6 +39,15 @@ export default function Updates() {
   const [deletingBlog, setDeletingBlog] = useState(false);
   const [expandedBlogs, setExpandedBlogs] = useState<Record<string, boolean>>({});
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('announcements');
+
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash) {
+      setActiveTab(hash);
+    }
+  }, [location]);
 
   const toggleBlogExpanded = (blogId: string) => {
     setExpandedBlogs(prev => ({ ...prev, [blogId]: !prev[blogId] }));
@@ -214,7 +224,7 @@ export default function Updates() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Tabs defaultValue="announcements">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="announcements">{t('nav.announcements') ?? 'Announcements'}</TabsTrigger>
             <TabsTrigger value="blogs">{t('nav.blog') ?? 'Blog Posts'}</TabsTrigger>
@@ -306,7 +316,7 @@ export default function Updates() {
                                           content={b.content}
                                           truncate={true}
                                           isExpanded={expandedBlogs[b.id]}
-                                          onToggleExpanded={() => toggleBlogExpanded(b.id)}
+                                          onToggleExpanded={() => window.location.href = `/blog/${b.id}`}
                                         />
                     
                     {/* Love Button */}
@@ -375,7 +385,7 @@ export default function Updates() {
                                               content={ev.description}
                                               truncate={true}
                                               isExpanded={expandedEvents[ev.id]}
-                                              onToggleExpanded={() => toggleEventExpanded(ev.id)}
+                                              onToggleExpanded={() => window.location.href = `/event/${ev.id}`}
                                             />
                       {ev.location && (
                         <div className="flex items-center text-sm text-gray-500">

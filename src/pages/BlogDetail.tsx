@@ -1,10 +1,12 @@
+import RichTextRenderer from '@/components/ui/RichTextRenderer';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FirestoreBlog } from '@/lib/firestore';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Calendar, User } from 'lucide-react';
 
 export default function BlogDetail() {
   const { t } = useI18n();
@@ -28,24 +30,43 @@ export default function BlogDetail() {
   }, [blogId]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
         {loading ? (
           <div className="text-center text-gray-500">{t('blog.loading')}</div>
         ) : blog ? (
-          <article className="bg-white rounded-lg border p-6">
-            <div className="text-sm text-gray-500 flex items-center justify-between">
-              <span>{blog.authorName}</span>
-              <span>{blog.createdAt.toDate().toLocaleString()}</span>
+          <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            {(blog as any).imageUrl && (
+              <img src={(blog as any).imageUrl} alt={blog.title} className="w-full h-96 object-cover" />
+            )}
+            <div className="p-8 md:p-12">
+              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span>{blog.authorName}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{blog.createdAt.toDate().toLocaleDateString()}</span>
+                </div>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">{blog.title}</h1>
+              <div className="prose prose-lg max-w-none text-gray-700">
+                <RichTextRenderer content={blog.content} />
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mt-3">{blog.title}</h1>
-            <div className="prose max-w-none mt-6 text-gray-800 whitespace-pre-wrap">
-              {blog.content}
+
+             <div className="mb-12 text-center">
+               <Link to="/updates#blogs" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                  {"Back to Blogs"}
+              </Link>
             </div>
           </article>
         ) : (
-          <div className="text-center text-gray-500">{t('blog.notFound')}</div>
+          <div className="text-center text-gray-500 py-16">{t('blog.notFound')}</div>
         )}
       </div>
     </div>

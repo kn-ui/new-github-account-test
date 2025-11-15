@@ -62,6 +62,7 @@ export default function AdminAnnouncements() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<FirestoreAnnouncement | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
@@ -189,12 +190,15 @@ export default function AdminAnnouncements() {
 
   const handleDelete = async (announcementId: string) => {
     try {
+      setDeletingId(announcementId);
       await announcementService.deleteAnnouncement(announcementId);
       toast.success('Announcement deleted successfully');
       loadData();
     } catch (error) {
       console.error('Error deleting announcement:', error);
       toast.error('Failed to delete announcement');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -415,12 +419,14 @@ export default function AdminAnnouncements() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
+                          <LoadingButton
                             className="bg-red-600 hover:bg-red-700"
                             onClick={() => handleDelete(announcement.id)}
+                            loading={deletingId === announcement.id}
+                            loadingText="Deleting..."
                           >
                             Delete
-                          </AlertDialogAction>
+                          </LoadingButton>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -466,7 +472,7 @@ export default function AdminAnnouncements() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)}>Delete</AlertDialogAction>
+                          <LoadingButton className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)} loading={deletingId === announcement.id} loadingText="Deleting...">Delete</LoadingButton>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

@@ -80,6 +80,7 @@ export default function TeacherCourseMaterials() {
   const [fileObj, setFileObj] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser?.uid && userProfile?.role === 'teacher') {
@@ -206,12 +207,15 @@ export default function TeacherCourseMaterials() {
 
   const handleDelete = async (materialId: string) => {
     try {
+      setDeletingId(materialId);
       await courseMaterialService.deleteCourseMaterial(materialId);
       toast.success('Material deleted successfully');
       loadData();
     } catch (error) {
       console.error('Error deleting material:', error);
       toast.error('Failed to delete material');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -478,32 +482,33 @@ export default function TeacherCourseMaterials() {
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this material?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove the material
-                            "{material.title}".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={() => handleDelete(material.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="sm">
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>Delete this material?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently remove the material
+                                                "{material.title}".
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <LoadingButton
+                                                className="bg-red-600 hover:bg-red-700"
+                                                onClick={() => handleDelete(material.id)}
+                                                loading={deletingId === material.id}
+                                                loadingText="Deleting..."
+                                              >
+                                                Delete
+                                              </LoadingButton>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>                  </div>
                 </div>
               ) : (
                 // List View
@@ -563,33 +568,34 @@ export default function TeacherCourseMaterials() {
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this material?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove the material
-                            "{material.title}".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={() => handleDelete(material.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="sm">
+                                              <Trash2 className="h-4 w-4 mr-1" />
+                                              Delete
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>Delete this material?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently remove the material
+                                                "{material.title}".
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <LoadingButton
+                                                className="bg-red-600 hover:bg-red-700"
+                                                onClick={() => handleDelete(material.id)}
+                                                loading={deletingId === material.id}
+                                                loadingText="Deleting..."
+                                              >
+                                                Delete
+                                              </LoadingButton>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>                  </div>
                 </div>
               )}
             </div>

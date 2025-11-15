@@ -72,6 +72,7 @@ export default function TeacherAssignments() {
   const [fileObj, setFileObj] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
 
@@ -211,12 +212,15 @@ export default function TeacherAssignments() {
 
   const handleDelete = async (assignmentId: string) => {
     try {
+      setDeletingId(assignmentId);
       await assignmentService.deleteAssignment(assignmentId);
       toast.success('Assignment deleted successfully');
       loadData();
     } catch (error) {
       console.error('Error deleting assignment:', error);
       toast.error('Failed to delete assignment');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -416,7 +420,7 @@ export default function TeacherAssignments() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                      <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(assignment.id)}>{t('common.delete')}</AlertDialogAction>
+                      <LoadingButton className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(assignment.id)} loading={deletingId === assignment.id} loadingText="Deleting...">{t('common.delete')}</LoadingButton>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

@@ -33,7 +33,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import DualDateInput from '@/components/ui/DualDateInput';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -74,13 +76,24 @@ export default function TeacherCourseDetail() {
   );
   const [materialFile, setMaterialFile] = useState<File | null>(null);
   const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
+  const [savingMaterial, setSavingMaterial] = useState(false);
+
+  const [savingAssignment, setSavingAssignment] = useState(false);
+  const [deletingAssignment, setDeletingAssignment] = useState(false);
+  const [savingExam, setSavingExam] = useState(false);
+  const [deletingExam, setDeletingExam] = useState(false);
+  const [savingGrade, setSavingGrade] = useState(false);
+  const [savingOtherGrade, setSavingOtherGrade] = useState(false);
+
+  const [savingGradeRanges, setSavingGradeRanges] = useState(false);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<FirestoreAssignment | null>(null);
-  const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; maxScore: number }>(
-    { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }
+  const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; dueTime: string; maxScore: number; instructions: string; linkTitle: string; linkUrl: string }>(
+    { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), dueTime: '', maxScore: 100, instructions: '', linkTitle: '', linkUrl: '' }
   );
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [assignmentToDelete, setAssignmentToDelete] = useState<FirestoreAssignment | null>(null);
+  const [fileObj, setFileObj] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
   const [submissionsForAssignment, setSubmissionsForAssignment] = useState<FirestoreSubmission[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<FirestoreAssignment | null>(null);
@@ -93,9 +106,19 @@ export default function TeacherCourseDetail() {
   const [gradeSort, setGradeSort] = useState<'recent' | 'oldest' | 'grade-desc' | 'grade-asc'>('recent');
   const [examDialogOpen, setExamDialogOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<FirestoreExam | null>(null);
-  const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; startTime: string; durationMinutes: number; questions: any[] }>({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] });
-  const [showExamDeleteConfirm, setShowExamDeleteConfirm] = useState(false);
-  const [examToDelete, setExamToDelete] = useState<FirestoreExam | null>(null);
+  const [examForm, setExamForm] = useState<{ title: string; description: string; date: string; startTime: string; durationMinutes: number; questions: any[] }>(() => {
+    const now = new Date();
+    now.setHours(now.getHours() + 5); // Add 5 hours
+    return { 
+      title: '', 
+      description: '', 
+      date: new Date().toISOString().slice(0,10), 
+      startTime: now.toTimeString().slice(0,5), 
+      durationMinutes: 60, 
+      questions: [] 
+    };
+  });
+
   const [examLockStatus, setExamLockStatus] = useState<Record<string, { locked: boolean; reason?: string }>>({});
 
   // Check exam lock status
@@ -386,7 +409,19 @@ export default function TeacherCourseDetail() {
                               </Button>
                             )}
                             <Button variant="outline" size="sm" onClick={() => { setEditingMaterial(m); setMaterialForm({ title: m.title, description: m.description, type: m.type, fileUrl: m.fileUrl || '', externalLink: m.externalLink || '' }); setMaterialDialogOpen(true); }}>Edit</Button>
-                            <Button variant="destructive" size="sm" onClick={async () => { try { await (await import('@/lib/firestore')).courseMaterialService.deleteCourseMaterial(m.id); toast.success('Material deleted'); const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id); setMaterials(latest); } catch (e) { toast.error('Failed to delete'); } }}>Delete</Button>
+                            <Button variant="destructive" size="sm" onClick={async () => {
+                                try {
+                                  await (await import('@/lib/firestore')).courseMaterialService.deleteCourseMaterial(m.id);
+                                  toast.success('Material deleted');
+                                  const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id);
+                                  setMaterials(latest);
+                                } catch (e) {
+                                  toast.error('Failed to delete');
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -411,7 +446,21 @@ export default function TeacherCourseDetail() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={() => { setEditingAssignment(null); setAssignmentForm({ title: '', description: '', dueDate: new Date().toISOString().slice(0,10), maxScore: 100 }); setAssignmentDialogOpen(true); }}>Create Assignment</Button>
+                  <Button onClick={() => { 
+                    setEditingAssignment(null); 
+                    setAssignmentForm({ 
+                      title: '', 
+                      description: '', 
+                      dueDate: new Date().toISOString().slice(0,10), 
+                      dueTime: '', 
+                      maxScore: 100, 
+                      instructions: '', 
+                      linkTitle: '', 
+                      linkUrl: '' 
+                    }); 
+                    setFileObj(null);
+                    setAssignmentDialogOpen(true); 
+                  }}>Create Assignment</Button>
                 </div>
                 {(assignments.length > 0 ? (
                   <div className="divide-y">
@@ -443,8 +492,29 @@ export default function TeacherCourseDetail() {
                                 <Link to={`/dashboard/submissions/${a.id}/submissions`}>View submissions</Link>
                               </Button>
                               <Button variant="outline" size="sm" onClick={() => { setSelectedAssignment(a); setSubmissionsForAssignment(submissions.filter(s => s.assignmentId === a.id)); setSubmissionsDialogOpen(true); }}>Grade submissions</Button>
-                              <Button variant="outline" size="sm" onClick={() => { setEditingAssignment(a); setAssignmentForm({ title: a.title, description: a.description, dueDate: a.dueDate.toDate().toISOString().slice(0,10), maxScore: (a as any).maxScore ?? 100 }); setAssignmentDialogOpen(true); }}>Edit</Button>
-                              <Button variant="destructive" size="sm" onClick={() => { setAssignmentToDelete(a); setShowDeleteConfirm(true); }}>Delete</Button>
+                              <Button variant="outline" size="sm" onClick={() => { 
+                                setEditingAssignment(a); 
+                                setAssignmentForm({ 
+                                  title: a.title, 
+                                  description: a.description, 
+                                  dueDate: a.dueDate.toDate().toISOString().slice(0,10), 
+                                  dueTime: a.dueDate.toDate().toTimeString().slice(0,5), // Extract time part
+                                  maxScore: (a as any).maxScore ?? 100,
+                                  instructions: a.instructions || '',
+                                  linkTitle: a.attachments?.find((att: any) => att.type === 'link')?.title || '',
+                                  linkUrl: a.attachments?.find((att: any) => att.type === 'link')?.url || '',
+                                }); 
+                                setFileObj(a.attachments?.find((att: any) => att.type === 'file') ? new File([], a.attachments?.find((att: any) => att.type === 'file').title) : null); // Placeholder for file
+                                setAssignmentDialogOpen(true); 
+                              }}>Edit</Button>
+                              <Button variant="destructive" size="sm" onClick={async () => {
+                                try {
+                                  await (await import('@/lib/firestore')).assignmentService.deleteAssignment(a.id);
+                                  toast.success('Assignment deleted');
+                                  const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course!.id, 1000);
+                                  setAssignments(latest);
+                                } catch { toast.error('Failed to delete'); }
+                              }}>Delete</Button>
                             </div>
                           </div>
                         );
@@ -458,7 +528,20 @@ export default function TeacherCourseDetail() {
               <TabsContent value="exams" className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">Exams</div>
-                  <Button onClick={() => { setEditingExam(null); setExamForm({ title: '', description: '', date: new Date().toISOString().slice(0,16), startTime: new Date().toISOString().slice(0,16), durationMinutes: 60, questions: [] }); setExamDialogOpen(true); }}>Create Exam</Button>
+                  <Button onClick={() => { 
+                    const now = new Date();
+                    now.setHours(now.getHours() + 5); // Add 5 hours
+                    setEditingExam(null); 
+                    setExamForm({ 
+                      title: '', 
+                      description: '', 
+                      date: new Date().toISOString().slice(0,10), // Current date
+                      startTime: now.toTimeString().slice(0,5), // 5 hours from now
+                      durationMinutes: 60, 
+                      questions: [] 
+                    }); 
+                    setExamDialogOpen(true); 
+                  }}>Create Exam</Button>
                 </div>
                 {exams.length > 0 ? (
                   <div className="divide-y">
@@ -489,8 +572,8 @@ export default function TeacherCourseDetail() {
                               setExamForm({ 
                                 title: exam.title, 
                                 description: exam.description || '', 
-                                date: exam.date.toDate().toISOString().slice(0,16), 
-                                startTime: (exam.startTime ? exam.startTime.toDate().toISOString().slice(0,16) : new Date().toISOString().slice(0,16)), 
+                                date: exam.date.toDate().toISOString().slice(0,10), // YYYY-MM-DD
+                                startTime: exam.startTime.toDate().toTimeString().slice(0,5), // HH:MM
                                 durationMinutes: (exam as any).durationMinutes || 60, 
                                 questions: (exam as any).questions || [] 
                               }); 
@@ -500,22 +583,26 @@ export default function TeacherCourseDetail() {
                           >
                             Edit
                           </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            disabled={examLockStatus[exam.id]?.locked}
-                            onClick={() => { 
-                              if (examLockStatus[exam.id]?.locked) {
-                                toast.error(examLockStatus[exam.id]?.reason || 'Exam is locked');
-                                return;
-                              }
-                              setExamToDelete(exam); 
-                              setShowExamDeleteConfirm(true); 
-                            }}
-                            title={examLockStatus[exam.id]?.locked ? examLockStatus[exam.id]?.reason : 'Delete exam'}
-                          >
-                            Delete
-                          </Button>
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                disabled={examLockStatus[exam.id]?.locked}
+                                onClick={async () => { 
+                                  if (examLockStatus[exam.id]?.locked) {
+                                    toast.error(examLockStatus[exam.id]?.reason || 'Exam is locked');
+                                    return;
+                                  }
+                                  try {
+                                    await examService.deleteExam(exam.id);
+                                    toast.success('Exam deleted');
+                                    const latest = await examService.getExamsByCourse(course!.id);
+                                    setExams(latest);
+                                  } catch { toast.error('Failed to delete exam'); }
+                                }}
+                                title={examLockStatus[exam.id]?.locked ? examLockStatus[exam.id]?.reason : 'Delete exam'}
+                              >
+                                Delete
+                              </Button>
                         </div>
                       </div>
                     ))}
@@ -970,7 +1057,18 @@ export default function TeacherCourseDetail() {
                                           <div className="text-xs font-semibold text-gray-900 mr-2">+{e.points}</div>
                                           <div className="flex items-center gap-1">
                                             <Button size="sm" variant="outline" onClick={()=>{ setOtherGradeEditing(e); setOtherGradeForm({ reason: e.reason, points: e.points }); setOtherGradeDialogOpen(true); }}>Edit</Button>
-                                            <Button size="sm" variant="destructive" onClick={async ()=>{ try { await otherGradeService.delete(e.id); setOtherGrades(prev => prev.filter(x => x.id !== e.id)); } catch {} }}>Delete</Button>
+                                            <Button size="sm" variant="destructive" onClick={async () => {
+                                                try {
+                                                  await otherGradeService.delete(e.id);
+                                                  setOtherGrades(prev => prev.filter(x => x.id !== e.id));
+                                                  toast.success('Other grade entry deleted');
+                                                } catch (error) {
+                                                  console.error('Error deleting other grade entry:', error);
+                                                  toast.error('Failed to delete other grade entry');
+                                                }
+                                              }}>
+                                                Delete
+                                              </Button>
                                           </div>
                                         </div>
                                       ))}
@@ -1044,24 +1142,7 @@ export default function TeacherCourseDetail() {
         </div>
       </div>
 
-      {/* Delete Assignment Confirm */}
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="Delete assignment?"
-        description="This action cannot be undone. The assignment and its submissions will remain but unlinking may affect grading workflows."
-        confirmText="Delete"
-        variant="destructive"
-        onConfirm={async () => {
-          if (!assignmentToDelete) return;
-          try {
-            await (await import('@/lib/firestore')).assignmentService.deleteAssignment(assignmentToDelete.id);
-            toast.success('Assignment deleted');
-            const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course!.id, 1000);
-            setAssignments(latest);
-          } catch { toast.error('Failed to delete'); }
-        }}
-      />
+
 
       {/* Submissions Dialog for an Assignment */}
       <Dialog open={submissionsDialogOpen} onOpenChange={setSubmissionsDialogOpen}>
@@ -1147,8 +1228,17 @@ export default function TeacherCourseDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMaterialDialogOpen(false)}>Cancel</Button>
-            <Button onClick={async () => {
+            <LoadingButton loading={savingMaterial} loadingText="Saving..." onClick={async () => {
+              if (!materialForm.title.trim()) {
+                toast.error('Material title is required.');
+                return;
+              }
+              if (!materialForm.description.trim()) {
+                toast.error('Material description is required.');
+                return;
+              }
               try {
+                setSavingMaterial(true);
                 const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
                 if (materialForm.type === 'document') {
                   let url = materialForm.fileUrl || '';
@@ -1187,68 +1277,238 @@ export default function TeacherCourseDetail() {
                 setEditingMaterial(null);
                 setMaterialFile(null);
               } catch (e) { toast.error('Failed to save material'); }
-              finally { setIsUploadingMaterial(false); }
-            }}>Save</Button>
+              finally { setIsUploadingMaterial(false); setSavingMaterial(false); }
+            }}>Save</LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Assignment Dialog */}
-      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingAssignment ? 'Edit Assignment' : 'Create Assignment'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="a-title">Title</Label>
-              <Input id="a-title" value={assignmentForm.title} onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="a-desc">Description</Label>
-              <Input id="a-desc" value={assignmentForm.description} onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="a-due">Due Date</Label>
-                <Input id="a-due" type="date" value={assignmentForm.dueDate} onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="a-max">Max Score</Label>
-                <Input id="a-max" type="number" value={assignmentForm.maxScore} onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: parseInt(e.target.value) || 0 })} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignmentDialogOpen(false)}>Cancel</Button>
-            <Button onClick={async () => {
-              try {
-                const payload: any = {
-                  title: assignmentForm.title,
-                  description: assignmentForm.description,
-                  courseId: course.id,
-                  dueDate: new Date(assignmentForm.dueDate),
-                  maxScore: assignmentForm.maxScore,
-                };
-                if (editingAssignment) {
-                  await (await import('@/lib/firestore')).assignmentService.updateAssignment(editingAssignment.id, payload);
-                  toast.success('Assignment updated');
-                } else {
-                  payload.teacherId = course.instructor;
-                  await (await import('@/lib/firestore')).assignmentService.createAssignment(payload);
-                  toast.success('Assignment created');
-                }
-                const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000);
-                setAssignments(latest);
-                setAssignmentDialogOpen(false);
-                setEditingAssignment(null);
-              } catch (e) { toast.error('Failed to save assignment'); }
-            }}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Exam Dialog */}
+            <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+                  </DialogTitle>
+                </DialogHeader>
+      
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  
+                  if (!assignmentForm.title.trim()) {
+                    toast.error('Assignment title is required.');
+                    return;
+                  }
+                  if (!assignmentForm.description.trim()) {
+                    toast.error('Assignment description is required.');
+                    return;
+                  }
+                  if (!assignmentForm.dueDate) {
+                    toast.error('Assignment due date is required.');
+                    return;
+                  }
+                  if (assignmentForm.maxScore <= 0) {
+                    toast.error('Max score must be a positive number.');
+                    return;
+                  }
+      
+                  try {
+                    setSavingAssignment(true);
+                    // Parse due date in local time to avoid UTC off-by-one issues when Ethiopian calendar is used
+                    const [yearStr, monthStr, dayStr] = (assignmentForm.dueDate || new Date().toISOString().slice(0,10)).split('-');
+                    const year = parseInt(yearStr, 10);
+                    const month = parseInt(monthStr, 10) - 1; // JS Date months are 0-based
+                    const day = parseInt(dayStr, 10);
+                    const dueDate = new Date(year, month, day);
+                    if (assignmentForm.dueTime) {
+                      const [hh, mm] = assignmentForm.dueTime.split(':');
+                      const hours = parseInt(hh, 10);
+                      const minutes = parseInt(mm, 10);
+                      if (!isNaN(hours) && !isNaN(minutes)) dueDate.setHours(hours, minutes, 0, 0);
+                    } else {
+                      // Set to end of day local time if no time specified
+                      dueDate.setHours(23, 59, 59, 999);
+                    }
+      
+                    const attachments: { type: 'file' | 'link'; url: string; title?: string; assetId?: string }[] = [];
+                    if (fileObj) {
+                      try {
+                        setIsUploading(true);
+                        const uploadResult = await uploadToHygraph(fileObj);
+                        if (!uploadResult.success) {
+                          throw new Error(uploadResult.error || 'Upload failed');
+                        }
+                        if (!uploadResult.url) {
+                          throw new Error('No URL returned from upload');
+                        }
+                        attachments.push({ 
+                          type: 'file', 
+                          url: uploadResult.url, 
+                          title: fileObj.name,
+                          ...(uploadResult.id ? { assetId: uploadResult.id } : {})
+                        });
+                        if (uploadResult.warning) {
+                          toast.warning(uploadResult.warning);
+                        }
+                      } catch (err) {
+                        console.error('Attachment upload failed', err);
+                        toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                        // Don't continue if upload failed
+                        setIsUploading(false);
+                        setSavingAssignment(false);
+                        return;
+                      }
+                    }
+                    if (assignmentForm.linkUrl) attachments.push({ type: 'link', url: assignmentForm.linkUrl, title: assignmentForm.linkTitle || undefined });
+      
+                    const assignmentData = {
+                      title: assignmentForm.title,
+                      description: assignmentForm.description,
+                      courseId: course.id, // courseId is already known
+                      dueDate,
+                      maxScore: assignmentForm.maxScore,
+                      instructions: assignmentForm.instructions,
+                      teacherId: course.instructor, // teacherId is already known
+                      ...(attachments.length ? { attachments } : {})
+                    } as any;
+      
+                    if (editingAssignment) {
+                      await (await import('@/lib/firestore')).assignmentService.updateAssignment(editingAssignment.id, assignmentData);
+                      toast.success('Assignment updated successfully');
+                    } else {
+                      await (await import('@/lib/firestore')).assignmentService.createAssignment(assignmentData);
+                      toast.success('Assignment created successfully');
+                    }
+      
+                    setAssignmentDialogOpen(false);
+                    setEditingAssignment(null);
+                    // resetForm(); // Will implement resetForm later
+                    const latest = await (await import('@/lib/firestore')).assignmentService.getAssignmentsByCourse(course.id, 1000);
+                    setAssignments(latest);
+                  } catch (error) {
+                    console.error('Error saving assignment:', error);
+                    toast.error('Failed to save assignment');
+                  }
+                  finally {
+                    setIsUploading(false);
+                    setSavingAssignment(false);
+                  }
+                }} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Title *</Label>
+                      <Input
+                        id="title"
+                        value={assignmentForm.title}
+                        onChange={(e) => setAssignmentForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Assignment title"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="courseId">Course</Label> {/* Course is not editable here */}
+                      <Input id="courseName" value={course?.title || ''} disabled />
+                    </div>
+      
+                  </div>
+                  
+                  <div>
+                      <Label htmlFor="description">Description *</Label>
+                    <Input
+                      id="description"
+                      value={assignmentForm.description}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of the assignment"
+                      required
+                    />
+                  </div>
+      
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dueDate">Due Date *</Label>
+                      <DualDateInput
+                        value={assignmentForm.dueDate ? new Date(assignmentForm.dueDate) : new Date()}
+                        onChange={(d) => {
+                          const year = d.getFullYear();
+                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                          const day = d.getDate().toString().padStart(2, '0');
+                          const formattedDate = `${year}-${month}-${day}`;
+                          setAssignmentForm(prev => ({ ...prev, dueDate: formattedDate }));
+                        }}
+                        defaultMode="ethiopian"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dueTime">Due Time</Label>
+                      <Input id="dueTime" type="time" value={assignmentForm.dueTime} onChange={(e) => setAssignmentForm(prev => ({ ...prev, dueTime: e.target.value }))} />
+                    </div>
+                  </div>
+      
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="maxScore">Max Score</Label>
+                      <Input
+                        id="maxScore"
+                        type="number"
+                        value={assignmentForm.maxScore}
+                        onChange={(e) => setAssignmentForm(prev => ({ ...prev, maxScore: parseInt(e.target.value) }))}
+                        min="1"
+                        max="1000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="file">Attachment (optional)</Label>
+                      <div className="flex items-center gap-2">
+                        <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} className="flex-1" />
+                        {fileObj && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">{fileObj.name}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setFileObj(null)}>X</Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+      
+                  <div>
+                      <Label htmlFor="instructions">Instructions</Label>
+                    <Textarea
+                      id="instructions"
+                      value={assignmentForm.instructions}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, instructions: e.target.value }))}
+                      placeholder="Detailed instructions for students"
+                      rows={4}
+                    />
+                  </div>
+      
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="linkTitle">Resource Title (optional)</Label>
+                      <Input id="linkTitle" value={assignmentForm.linkTitle} onChange={(e) => setAssignmentForm(prev => ({ ...prev, linkTitle: e.target.value }))} placeholder="Syllabus link" />
+                    </div>
+                    <div>
+                      <Label htmlFor="linkUrl">Resource URL (optional)</Label>
+                      <Input id="linkUrl" value={assignmentForm.linkUrl} onChange={(e) => setAssignmentForm(prev => ({ ...prev, linkUrl: e.target.value }))} placeholder="https://example.com/resource" />
+                    </div>
+                  </div>
+      
+                  <div className="flex space-x-3 pt-4">
+                    <LoadingButton type="submit" className="flex-1" loading={savingAssignment || isUploading} loadingText={isUploading ? 'Uploading…' : 'Saving…'}>
+                      {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+                    </LoadingButton>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setAssignmentDialogOpen(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            {/* Exam Dialog */}
       <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -1265,12 +1525,21 @@ export default function TeacherCourseDetail() {
             </div>
               <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="e-date">Date</Label>
-                <Input id="e-date" type="date" value={examForm.date.split('T')[0]} onChange={(e) => setExamForm({ ...examForm, date: e.target.value + 'T' + examForm.date.split('T')[1] })} />
+                <DualDateInput
+                  value={examForm.date ? new Date(examForm.date) : null}
+                  onChange={(d) => {
+                    const year = d.getFullYear();
+                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                    const day = d.getDate().toString().padStart(2, '0');
+                    const formattedDate = `${year}-${month}-${day}`;
+                    setExamForm(prev => ({ ...prev, date: formattedDate }));
+                  }}
+                  defaultMode="ethiopian"
+                />
               </div>
               <div>
                 <Label htmlFor="e-time">Time</Label>
-                <Input id="e-time" type="time" value={examForm.date.split('T')[1]} onChange={(e) => setExamForm({ ...examForm, date: examForm.date.split('T')[0] + 'T' + e.target.value })} />
+                <Input id="e-time" type="time" value={examForm.startTime} onChange={(e) => setExamForm({ ...examForm, startTime: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1282,16 +1551,37 @@ export default function TeacherCourseDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
-            <Button onClick={async () => {
+            <LoadingButton loading={savingExam} loadingText={editingExam ? 'Updating Exam...' : 'Creating Exam...'} onClick={async () => {
+              if (!examForm.title.trim()) {
+                toast.error('Exam title is required.');
+                return;
+              }
+              if (!examForm.description.trim()) {
+                toast.error('Exam description is required.');
+                return;
+              }
+              if (!examForm.date) {
+                toast.error('Exam date is required.');
+                return;
+              }
+              if (!examForm.startTime) {
+                toast.error('Exam start time is required.');
+                return;
+              }
+              if (examForm.durationMinutes <= 0) {
+                toast.error('Exam duration must be a positive number.');
+                return;
+              }
               try {
+                setSavingExam(true);
                 const questions = editingExam ? examForm.questions : [];
                 
                 const payload: any = { 
                   courseId: course!.id, 
                   title: examForm.title, 
                   description: examForm.description, 
-                  date: new Date(examForm.date), 
-                  startTime: new Date(examForm.startTime), 
+                  date: new Date(`${examForm.date}T${examForm.startTime}:00`), 
+                  startTime: new Date(`${examForm.date}T${examForm.startTime}:00`), 
                   durationMinutes: examForm.durationMinutes, 
                   questions: questions
                 };
@@ -1311,29 +1601,13 @@ export default function TeacherCourseDetail() {
                   navigate(`/dashboard/exam-questions/${examId}`);
                 }
               } catch { toast.error('Failed to save exam'); }
-            }}>{editingExam ? 'Update Exam' : 'Create Exam & Add Questions'}</Button>
+              finally { setSavingExam(false); }
+            }}>{editingExam ? 'Update Exam' : 'Create Exam & Add Questions'}</LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Exam Confirm */}
-      <ConfirmDialog
-        open={showExamDeleteConfirm}
-        onOpenChange={setShowExamDeleteConfirm}
-        title="Delete exam?"
-        description="This action cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-        onConfirm={async () => {
-          if (!examToDelete) return;
-          try {
-            await examService.deleteExam(examToDelete.id);
-            toast.success('Exam deleted');
-            const latest = await examService.getExamsByCourse(course!.id);
-            setExams(latest);
-          } catch { toast.error('Failed to delete exam'); }
-        }}
-      />
+
 
       {/* Grade Dialog */}
       <Dialog open={gradeDialogOpen} onOpenChange={setGradeDialogOpen}>
@@ -1368,7 +1642,7 @@ export default function TeacherCourseDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGradeDialogOpen(false)}>Cancel</Button>
-            <Button onClick={async () => {
+            <LoadingButton loading={savingGrade} loadingText="Saving..." onClick={async () => {
               if (!selectedSubmission) return;
               
               // Find the assignment for this submission to get max score
@@ -1386,6 +1660,7 @@ export default function TeacherCourseDetail() {
               }
               
               try {
+                setSavingGrade(true);
                 await (await import('@/lib/firestore')).submissionService.updateSubmission(selectedSubmission.id, { grade: gradeValue, feedback: gradeFeedback, status: 'graded' });
                 studentDataService.clearStudentCache(selectedSubmission.studentId);
                 toast.success('Grade updated');
@@ -1393,7 +1668,8 @@ export default function TeacherCourseDetail() {
                 setSubmissions(latest);
                 setGradeDialogOpen(false);
               } catch { toast.error('Failed to update grade'); }
-            }}>Save</Button>
+              finally { setSavingGrade(false); }
+            }}>Save</LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1417,13 +1693,22 @@ export default function TeacherCourseDetail() {
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={()=> setOtherGradeDialogOpen(false)}>Cancel</Button>
-        <Button onClick={async ()=>{
+        <LoadingButton loading={savingOtherGrade} loadingText={otherGradeEditing ? 'Saving...' : 'Adding...'} onClick={async ()=>{
           if (!course || (!otherGradeTargetStudentId && !otherGradeEditing)) { 
             toast.error('Missing required information');
             setOtherGradeDialogOpen(false); 
             return; 
           }
+          if (!otherGradeForm.reason.trim()) {
+            toast.error('Reason for other grade is required.');
+            return;
+          }
+          if (typeof otherGradeForm.points !== 'number' || isNaN(otherGradeForm.points)) {
+            toast.error('Points must be a valid number.');
+            return;
+          }
           try {
+            setSavingOtherGrade(true);
             if (otherGradeEditing) {
               await otherGradeService.update(otherGradeEditing.id, { reason: otherGradeForm.reason, points: otherGradeForm.points });
               // Refresh list from backend to ensure consistency
@@ -1444,8 +1729,10 @@ export default function TeacherCourseDetail() {
           } catch (error) {
             console.error('Error saving other grade:', error);
             toast.error('Failed to save other grade');
+          } finally {
+            setSavingOtherGrade(false);
           }
-        }}>{otherGradeEditing ? 'Save' : 'Add'}</Button>
+        }}>{otherGradeEditing ? 'Save' : 'Add'}</LoadingButton>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -1485,16 +1772,18 @@ export default function TeacherCourseDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRangesOpen(false)}>Cancel</Button>
-            <Button onClick={async () => {
+            <LoadingButton loading={savingGradeRanges} loadingText="Saving..." onClick={async () => {
               try {
+                setSavingGradeRanges(true);
                 await settingsService.setGradeRanges(gradeRanges);
                 toast.success('Grade ranges updated');
               } catch {
                 toast.error('Failed to save grade ranges');
               } finally {
+                setSavingGradeRanges(false);
                 setRangesOpen(false);
               }
-            }}>Save Ranges</Button>
+            }}>Save Ranges</LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

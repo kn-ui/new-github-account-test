@@ -65,6 +65,7 @@ export default function TeacherAnnouncements() {
   const [courseStudents, setCourseStudents] = useState<{ id: string; name: string }[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
   const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -262,12 +263,15 @@ export default function TeacherAnnouncements() {
 
   const handleDelete = async (announcementId: string) => {
     try {
+      setDeletingId(announcementId);
       await announcementService.deleteAnnouncement(announcementId);
       toast.success('Announcement deleted successfully');
       loadData();
     } catch (error) {
       console.error('Error deleting announcement:', error);
       toast.error('Failed to delete announcement');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -482,12 +486,14 @@ export default function TeacherAnnouncements() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction 
+                          <LoadingButton
                             className="bg-red-600 hover:bg-red-700"
                             onClick={() => handleDelete(announcement.id)}
+                            loading={deletingId === announcement.id}
+                            loadingText="Deleting..."
                           >
                             {t('common.delete')}
-                          </AlertDialogAction>
+                          </LoadingButton>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -546,7 +552,7 @@ export default function TeacherAnnouncements() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                           <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)}>{t('common.delete')}</AlertDialogAction>
+                          <LoadingButton className="bg-red-600 hover:bg-red-700" onClick={() => handleDelete(announcement.id)} loading={deletingId === announcement.id} loadingText="Deleting...">{t('common.delete')}</LoadingButton>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

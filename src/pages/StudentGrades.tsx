@@ -143,7 +143,7 @@ export default function StudentGrades() {
           instructorName: (assignment as any).instructorName,
           submittedAt: submission.submittedAt.toDate(),
           gradedAt: (submission as any).gradedAt?.toDate() || submission.submittedAt.toDate(),
-          grade: submission.grade || 0,
+          grade: parseFloat((submission.grade || 0).toFixed(1)),
           maxScore: assignment.maxScore,
           feedback: submission.feedback || '',
           status: 'graded' as const
@@ -163,7 +163,7 @@ export default function StudentGrades() {
               if (attempt && attempt.status === 'graded' && attempt.isGraded) {
                 // Calculate manual score from manualScores object
                 const manualScores = attempt.manualScores || {};
-                const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + (Number(score) || 0), 0);
+                const manualScore = Object.values(manualScores).reduce((sum: number, score: any) => sum + parseFloat((Number(score) || 0).toFixed(1)), 0);
                 
                 return {
                   id: attempt.id,
@@ -174,12 +174,12 @@ export default function StudentGrades() {
                   instructorName: course?.instructorName || 'Unknown Instructor',
                   submittedAt: attempt.submittedAt?.toDate() || new Date(),
                   gradedAt: attempt.submittedAt?.toDate() || new Date(),
-                  grade: attempt.score || 0,
+                  grade: parseFloat((attempt.score || 0).toFixed(1)),
                   maxScore: exam.totalPoints,
                   feedback: attempt.manualFeedback || {},
                   status: 'graded' as const,
-                  autoScore: attempt.autoScore || 0,
-                  manualScore: manualScore
+                  autoScore: parseFloat((attempt.autoScore || 0).toFixed(1)),
+                  manualScore: parseFloat(manualScore.toFixed(1))
                 };
               }
               return null;
@@ -393,10 +393,10 @@ export default function StudentGrades() {
       const lowestGrade = Math.min(...finalGrades.map(grade => grade.finalGrade));
 
       return {
-        averageGrade: Math.round(averageGrade),
+        averageGrade: parseFloat(averageGrade.toFixed(1)),
         totalCourses: finalGrades.length,
-        highestGrade: Math.round(highestGrade),
-        lowestGrade: Math.round(lowestGrade)
+        highestGrade: parseFloat(highestGrade.toFixed(1)),
+        lowestGrade: parseFloat(lowestGrade.toFixed(1))
       };
     } else if (gradeType === 'exams') {
       // Stats for exam grades
@@ -411,10 +411,10 @@ export default function StudentGrades() {
       const lowestGrade = Math.min(...examGrades.map(grade => (grade.grade / grade.maxScore) * 100));
 
       return {
-        averageGrade: Math.round(averageGrade),
+        averageGrade: parseFloat(averageGrade.toFixed(1)),
         totalExams: examGrades.length,
-        highestGrade: Math.round(highestGrade),
-        lowestGrade: Math.round(lowestGrade)
+        highestGrade: parseFloat(highestGrade.toFixed(1)),
+        lowestGrade: parseFloat(lowestGrade.toFixed(1))
       };
     } else if (gradeType === 'others') {
       // Stats for other grades (points-based)
@@ -425,7 +425,7 @@ export default function StudentGrades() {
       const average = points.reduce((a, b) => a + b, 0) / points.length;
       const highest = Math.max(...points);
       const lowest = Math.min(...points);
-      return { averageGrade: Math.round(average), totalOthers: otherGrades.length, highestGrade: Math.round(highest), lowestGrade: Math.round(lowest) } as any;
+      return { averageGrade: parseFloat(average.toFixed(1)), totalOthers: otherGrades.length, highestGrade: parseFloat(highest.toFixed(1)), lowestGrade: parseFloat(lowest.toFixed(1)) } as any;
     } else {
       // Stats for assignment grades
       if (grades.length === 0) {
@@ -439,10 +439,10 @@ export default function StudentGrades() {
       const lowestGrade = Math.min(...grades.map(grade => (grade.grade / grade.maxScore) * 100));
 
       return {
-        averageGrade: Math.round(averageGrade),
+        averageGrade: parseFloat(averageGrade.toFixed(1)),
         totalAssignments: grades.length,
-        highestGrade: Math.round(highestGrade),
-        lowestGrade: Math.round(lowestGrade)
+        highestGrade: parseFloat(highestGrade.toFixed(1)),
+        lowestGrade: parseFloat(lowestGrade.toFixed(1))
       };
     }
   };

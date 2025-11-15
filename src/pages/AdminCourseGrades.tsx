@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { GraduationCap, ChevronLeft, Users, Award, RefreshCcw } from 'lucide-react';
+import { GraduationCap, ChevronLeft, Users, Award } from 'lucide-react';
+
 
 interface StudentRow {
   studentId: string;
@@ -26,6 +27,8 @@ interface StudentRow {
   letterGrade: string;
   gradePoints: number;
   isPublished: boolean;
+  editedFinalPoints?: number; // New field for editable final points
+  isEditing?: boolean; // New field to indicate if the row is being edited
 }
 
 
@@ -52,8 +55,78 @@ export default function AdminCourseGrades() {
   const [loading, setLoading] = useState(true);
   const [gradeRanges, setGradeRanges] = useState<any>({});
   const [rangesOpen, setRangesOpen] = useState(false);
-  const [recalcLoading, setRecalcLoading] = useState(false);
+
   const [assignLoading, setAssignLoading] = useState(false);
+
+  const handleEditClick = (studentId: string) => {
+    setRows(prevRows =>
+      prevRows.map(row =>
+        row.studentId === studentId
+          ? { ...row, isEditing: true, editedFinalPoints: row.finalPoints }
+          : row
+      )
+    );
+  };
+
+  const handleFinalPointsChange = (studentId: string, value: string) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.studentId === studentId) {
+          const parsedValue = parseFloat(value);
+          const roundedValue = isNaN(parsedValue) ? 0 : parseFloat(parsedValue.toFixed(1));
+          return { ...row, editedFinalPoints: roundedValue };
+        }
+        return row;
+      })
+    );
+  };
+
+  const handleSaveClick = async (studentId: string) => {
+    const studentRow = rows.find(row => row.studentId === studentId);
+    if (!studentRow || studentRow.editedFinalPoints === undefined) return;
+
+    try {
+      // Recalculate letter grade based on edited final points
+      const comp = calculateLetterGrade(studentRow.editedFinalPoints, 100, gradeRanges);
+      const existingGrade = await gradeService.getGradeByStudentAndCourse(courseId!, studentId);
+
+      const payload: any = {
+        finalGrade: studentRow.editedFinalPoints,
+        letterGrade: comp.letter,
+        gradePoints: comp.points,
+        calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
+        calculationMethod: 'manual_override', // Indicate manual override
+        assignmentsTotal: studentRow.assignmentsTotal,
+        assignmentsMax: studentRow.assignmentsMax,
+        examsTotal: studentRow.examsTotal,
+        examsMax: studentRow.examsMax,
+        otherTotal: studentRow.otherTotal,
+        isPublished: existingGrade?.isPublished ?? false,
+        updatedAt: new Date(),
+      };
+
+      if (existingGrade) {
+        await gradeService.updateGrade(existingGrade.id, payload);
+      } else {
+        await gradeService.createGrade({ courseId: courseId!, studentId, ...payload } as any);
+      }
+
+      toast.success(`Final points for ${studentRow.name} saved.`);
+      // Reload rows to reflect changes and exit editing mode
+      await loadRows();
+    } catch (error) {
+      console.error('Error saving final points:', error);
+      toast.error('Failed to save final points.');
+    } finally {
+      setRows(prevRows =>
+        prevRows.map(row =>
+          row.studentId === studentId
+            ? { ...row, isEditing: false, finalPoints: studentRow.editedFinalPoints }
+            : row
+        )
+      );
+    }
+  };
 
   useEffect(() => {
     if (!courseId) return;
@@ -73,8 +146,7 @@ export default function AdminCourseGrades() {
       setCourse(c);
       setGradeRanges(ranges);
       // Load rows after setting course and ranges
-      await loadRows(ranges);
-    } catch (e) {
+              await loadRows();    } catch (e) {
       console.error('Error loading course data:', e);
       toast.error('Failed to load course data');
     } finally {
@@ -161,7 +233,10 @@ export default function AdminCourseGrades() {
         const e = examTotals.get(sid) || { total: 0, max: 0 };
         const o = otherTotals.get(sid) || 0;
 
-        const points = a.total + e.total + o;
+        const finalGradeFromDb = finalByStudent.get(sid)?.finalGrade;
+        const calculatedPoints = a.total + e.total + o;
+        const finalPointsToUse = finalGradeFromDb !== undefined ? finalGradeFromDb : calculatedPoints;
+
         const max = a.max + e.max;
         // Percent should be calculated without 'other' points since they're bonus
         const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
@@ -178,7 +253,7 @@ export default function AdminCourseGrades() {
           examsTotal: Math.round(e.total),
           examsMax: e.max,
           otherTotal: Math.round(o),
-          finalPoints: Math.round(points),
+          finalPoints: Math.round(finalPointsToUse),
           percent,
           letterGrade: letter,
           gradePoints,
@@ -193,44 +268,7 @@ export default function AdminCourseGrades() {
     }
   };
 
-  const recalcAll = async () => {
-    if (!courseId || rows.length === 0) return;
-    setRecalcLoading(true);
-    try {
-      for (const r of rows) {
-        // Recompute letter from percent using ranges
-        // Use default max of 100 if no assignments/exams to avoid division by zero
-        const points = Math.min(r.finalPoints, 100);
-        const comp = calculateLetterGrade(points, 100, gradeRanges);
-        const existing = await gradeService.getGradeByStudentAndCourse(courseId, r.studentId);
-        const payload: any = {
-          finalGrade: r.finalPoints,
-          letterGrade: comp.letter,
-          gradePoints: comp.points,
-          calculatedBy: userProfile?.id || (userProfile as any)?.uid || 'unknown',
-          calculationMethod: 'automatic_sum',
-          assignmentsTotal: r.assignmentsTotal,
-          assignmentsMax: r.assignmentsMax,
-          examsTotal: r.examsTotal,
-          examsMax: r.examsMax,
-          otherTotal: r.otherTotal,
-          isPublished: existing?.isPublished ?? false,
-          updatedAt: new Date(),
-        };
-        if (existing) {
-          await gradeService.updateGrade(existing.id, payload);
-        } else {
-          await gradeService.createGrade({ courseId, studentId: r.studentId, ...payload } as any);
-        }
-      }
-      toast.success('Final grades recalculated');
-      await loadRows();
-    } catch (e) {
-      toast.error('Failed to recalculate');
-    } finally {
-      setRecalcLoading(false);
-    }
-  };
+
 
   const assignLetters = async () => {
     if (!courseId || rows.length === 0) return;
@@ -331,9 +369,7 @@ export default function AdminCourseGrades() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setRangesOpen(true)}>Configure Grade Ranges</Button>
-          <LoadingButton variant="outline" loading={recalcLoading} onClick={recalcAll} loadingText="Recalculating…">
-            <RefreshCcw className="h-4 w-4 mr-1" /> Recalculate All
-          </LoadingButton>
+
           <LoadingButton variant="outline" loading={assignLoading} onClick={assignLetters} loadingText="Assigning…">
             Assign Letters
           </LoadingButton>
@@ -357,11 +393,12 @@ export default function AdminCourseGrades() {
                   <th className="text-center py-2 px-3">Final Points</th>
                   <th className="text-center py-2 px-3">Letter</th>
                   <th className="text-center py-2 px-3">Status</th>
+                  <th className="text-center py-2 px-3">Actions</th>
                 </tr>
               </thead>
               <tbody>{loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center">
+                  <td colSpan={8} className="py-8 text-center">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="text-gray-500">Loading student grades...</span>
@@ -370,7 +407,7 @@ export default function AdminCourseGrades() {
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-gray-500">No enrolled students found.</td>
+                  <td colSpan={8} className="py-6 text-center text-gray-500">No enrolled students found.</td>
                 </tr>
               ) : (
                 rows.map(r => (
@@ -382,12 +419,31 @@ export default function AdminCourseGrades() {
                     <td className="py-2 px-3 text-center">{r.assignmentsTotal}/{r.assignmentsMax}</td>
                     <td className="py-2 px-3 text-center">{r.examsTotal}/{r.examsMax}</td>
                     <td className="py-2 px-3 text-center">+{r.otherTotal}</td>
-                    <td className="py-2 px-3 text-center">{r.finalPoints}</td>
+                    <td className="py-2 px-3 text-center">
+                      {r.isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={r.editedFinalPoints ?? ''}
+                          onChange={(e) => handleFinalPointsChange(r.studentId, e.target.value)}
+                          className="w-20 text-center"
+                        />
+                      ) : (
+                        r.finalPoints
+                      )}
+                    </td>
                     <td className="py-2 px-3 text-center font-semibold">{r.letterGrade}</td>
                     <td className="py-2 px-3 text-center">
                       <span className={`text-xs px-2 py-1 rounded-full ${r.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                         {r.isPublished ? 'Published' : 'Draft'}
                       </span>
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      {r.isEditing ? (
+                        <Button variant="outline" size="sm" onClick={() => handleSaveClick(r.studentId)}>Save</Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(r.studentId)}>Edit</Button>
+                      )}
                     </td>
                   </tr>
                 ))

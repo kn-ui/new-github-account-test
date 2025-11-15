@@ -70,6 +70,7 @@ interface User {
   classSection?: string;
   phoneNumber?: string;
   address?: string;
+  year?: string;
 }
 
 const UserManager = () => {
@@ -99,13 +100,18 @@ const UserManager = () => {
     programType: '',
     classSection: '',
     phoneNumber: '',
-    address: ''
+    address: '',
+    year: ''
   });
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
   const [studentMeta, setStudentMeta] = useState<{ deliveryMethods: string[]; studentGroups: string[]; programTypes: string[]; classSections: string[] }>({ deliveryMethods: [], studentGroups: [], programTypes: [], classSections: [] });
   const [customMetaInputs, setCustomMetaInputs] = useState<{ deliveryMethod: string; studentGroup: string; programType: string; classSection: string }>({ deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
+  const [customYearInput, setCustomYearInput] = useState('');
+  const [studentFilters, setStudentFilters] = useState({
+    year: '',
+  });
 
   // Calculate stats
   const totalUsers = users.length;
@@ -154,14 +160,27 @@ const UserManager = () => {
   };
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterRole === 'all' || user.role === filterRole)
-    );
+    const filtered = users.filter(user => {
+        const generalFilter =
+            (user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
+            (filterRole === 'all' || user.role === filterRole);
+
+        if (!generalFilter) {
+            return false;
+        }
+
+        if (filterRole === 'student') {
+            return (
+                (studentFilters.year ? user.year === studentFilters.year : true)
+            );
+        }
+
+        return true;
+    });
     setFilteredUsers(filtered);
-  }, [searchTerm, users, filterRole]);
+  }, [searchTerm, users, filterRole, studentFilters]);
 
   const fetchUsers = async () => {
     try {
@@ -240,6 +259,7 @@ const UserManager = () => {
         ...(newUser.studentGroup && { studentGroup: newUser.studentGroup }),
         ...(newUser.programType && { programType: newUser.programType }),
         ...(newUser.classSection && { classSection: newUser.classSection }),
+        ...(newUser.year && { year: newUser.year }),
       } : {};
 
       await userService.createUser({
@@ -316,6 +336,7 @@ const UserManager = () => {
         updateData.studentGroup = editingUser.studentGroup ?? null;
         updateData.programType = editingUser.programType ?? null;
         updateData.classSection = editingUser.classSection ?? null;
+        updateData.year = editingUser.year ?? null;
       }
       
       await userService.updateUser(editingUser.id, updateData);
@@ -475,9 +496,10 @@ const UserManager = () => {
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">Delivery Method</Label>
                           <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.deliveryMethod} onValueChange={(v)=> setNewUser(prev=>({...prev, deliveryMethod: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
+                            <Select value={newUser.deliveryMethod} onValueChange={(v)=> setNewUser(prev=>({...prev, deliveryMethod: v === '__NONE__' ? '' : v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
                                 {studentMeta.deliveryMethods.map(dm => (
                                   <SelectItem key={dm} value={dm}>{dm}</SelectItem>
                                 ))}
@@ -490,9 +512,10 @@ const UserManager = () => {
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">Student Group</Label>
                           <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.studentGroup} onValueChange={(v)=> setNewUser(prev=>({...prev, studentGroup: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
+                            <Select value={newUser.studentGroup} onValueChange={(v)=> setNewUser(prev=>({...prev, studentGroup: v === '__NONE__' ? '' : v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
                                 {studentMeta.studentGroups.map(sg => (
                                   <SelectItem key={sg} value={sg}>{sg}</SelectItem>
                                 ))}
@@ -505,9 +528,10 @@ const UserManager = () => {
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">Program Type</Label>
                           <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.programType} onValueChange={(v)=> setNewUser(prev=>({...prev, programType: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
+                            <Select value={newUser.programType} onValueChange={(v)=> setNewUser(prev=>({...prev, programType: v === '__NONE__' ? '' : v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
                                 {studentMeta.programTypes.map(pt => (
                                   <SelectItem key={pt} value={pt}>{pt}</SelectItem>
                                 ))}
@@ -520,9 +544,10 @@ const UserManager = () => {
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">Class Section</Label>
                           <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.classSection} onValueChange={(v)=> setNewUser(prev=>({...prev, classSection: v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="Optional: select or add" /></SelectTrigger>
+                            <Select value={newUser.classSection} onValueChange={(v)=> setNewUser(prev=>({...prev, classSection: v === '__NONE__' ? '' : v}))}>
+                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
                                 {studentMeta.classSections.map(cs => (
                                   <SelectItem key={cs} value={cs}>{cs}</SelectItem>
                                 ))}
@@ -530,6 +555,30 @@ const UserManager = () => {
                             </Select>
                             <Input placeholder="Add new" value={customMetaInputs.classSection} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, classSection: e.target.value}))} className="w-40" />
                             <Button type="button" variant="outline" onClick={()=> addCustomMeta('classSections')}>Add</Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="year" className="text-right">Year</Label>
+                          <div className="col-span-3 flex items-center gap-2">
+                            <Select value={newUser.year} onValueChange={(value) => setNewUser({...newUser, year: value === '__NONE__' ? '' : value})}>
+                              <SelectTrigger className="w-56">
+                                <SelectValue placeholder="None" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
+                                <SelectItem value="1st Year">1st Year</SelectItem>
+                                <SelectItem value="2nd Year">2nd Year</SelectItem>
+                                <SelectItem value="3rd Year">3rd Year</SelectItem>
+                                <SelectItem value="4th Year">4th Year</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input placeholder="Add new" value={customYearInput} onChange={(e)=> setCustomYearInput(e.target.value)} className="w-40" />
+                            <Button type="button" variant="outline" onClick={()=> {
+                              if (customYearInput.trim()) {
+                                setNewUser(prev => ({...prev, year: customYearInput.trim()}));
+                                setCustomYearInput('');
+                              }
+                            }}>Add</Button>
                           </div>
                         </div>
                       </>
@@ -626,11 +675,12 @@ const UserManager = () => {
                     <>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="editDeliveryMethod" className="text-right">Delivery Method</Label>
-                        <Select value={editingUser.deliveryMethod || ''} onValueChange={(value) => setEditingUser({...editingUser, deliveryMethod: value})}>
+                        <Select value={editingUser.deliveryMethod || ''} onValueChange={(value) => setEditingUser({...editingUser, deliveryMethod: value === '__NONE__' ? '' : value})}>
                           <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Optional: select delivery method" />
+                            <SelectValue placeholder="None" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="__NONE__">None</SelectItem>
                             <SelectItem value="online">Online</SelectItem>
                             <SelectItem value="offline">Offline</SelectItem>
                             <SelectItem value="hybrid">Hybrid</SelectItem>
@@ -649,11 +699,12 @@ const UserManager = () => {
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="editProgramType" className="text-right">Program Type</Label>
-                        <Select value={editingUser.programType || ''} onValueChange={(value) => setEditingUser({...editingUser, programType: value})}>
+                        <Select value={editingUser.programType || ''} onValueChange={(value) => setEditingUser({...editingUser, programType: value === '__NONE__' ? '' : value})}>
                           <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Optional: select program type" />
+                            <SelectValue placeholder="None" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="__NONE__">None</SelectItem>
                             <SelectItem value="undergraduate">Undergraduate</SelectItem>
                             <SelectItem value="graduate">Graduate</SelectItem>
                             <SelectItem value="postgraduate">Postgraduate</SelectItem>
@@ -669,6 +720,16 @@ const UserManager = () => {
                           onChange={(e) => setEditingUser({...editingUser, classSection: e.target.value})}
                           className="col-span-3"
                           placeholder="Optional"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="editYear" className="text-right">Year</Label>
+                        <Input
+                          id="editYear"
+                          value={editingUser.year || ''}
+                          onChange={(e) => setEditingUser({...editingUser, year: e.target.value})}
+                          className="col-span-3"
+                          placeholder="e.g., 1st Year, 2nd Year"
                         />
                       </div>
                     </>
@@ -776,6 +837,22 @@ const UserManager = () => {
                 {showArchived ? "Hide Archived" : "Show Archived"}
               </Button>
             </div>
+            {filterRole === 'student' && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Select value={studentFilters.year} onValueChange={(value) => setStudentFilters({...studentFilters, year: value === '__ALL__' ? '' : value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__ALL__">All</SelectItem>
+                    <SelectItem value="1st Year">1st Year</SelectItem>
+                    <SelectItem value="2nd Year">2nd Year</SelectItem>
+                    <SelectItem value="3rd Year">3rd Year</SelectItem>
+                    <SelectItem value="4th Year">4th Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -795,6 +872,7 @@ const UserManager = () => {
                 <TableRow className="bg-gray-50">
                   <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
+                  <TableHead className="font-semibold text-gray-900">Year</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.created')}</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
@@ -819,19 +897,25 @@ const UserManager = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
-                        className="flex items-center gap-1"
-                      >
-                        {user.role === 'admin' && <Shield className="h-3 w-3" />}
-                        {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
-                        {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
-                        {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
-                        {t(`users.roles.${user.role}`)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
+                                        <TableCell>
+                                          <Badge
+                                            variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
+                                            className="flex items-center gap-1"
+                                          >
+                                            {user.role === 'admin' && <Shield className="h-3 w-3" />}
+                                            {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
+                                            {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
+                                            {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
+                                            {t(`users.roles.${user.role}`)}
+                                          </Badge>
+                                        </TableCell>
+                                                            <TableCell>
+                                                              {user.role === 'student' && user.year && (
+                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                                                                  {user.year}
+                                                                </Badge>
+                                                              )}
+                                                            </TableCell>                    <TableCell>
                       <Badge 
                         variant={user.isActive ? 'default' : 'secondary'}
                         className={user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}

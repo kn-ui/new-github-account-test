@@ -42,7 +42,7 @@ export const calculateLetterGrade = (
   }
 
   // Calculate percentage, if maxPoints is 100, points is already a percentage
-  const percentage = maxPoints === 100 ? points : Math.round((points / maxPoints) * 100);
+  const percentage = maxPoints === 100 ? parseFloat(points.toFixed(1)) : parseFloat(((points / maxPoints) * 100).toFixed(1));
 
   // Use provided ranges or defaults
   const ranges = gradeRanges || getDefaultGradeRanges();
@@ -100,7 +100,7 @@ export const formatGPA = (gpa: number): string => {
  */
 export const calculatePercentage = (points: number, maxPoints: number): number => {
   if (maxPoints <= 0) return 0;
-  return Math.round((points / maxPoints) * 100);
+  return parseFloat(((points / maxPoints) * 100).toFixed(1));
 };
 
 /**

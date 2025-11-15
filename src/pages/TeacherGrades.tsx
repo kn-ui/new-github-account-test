@@ -449,10 +449,14 @@ export default function TeacherGrades() {
                   <Input
                     id="grade"
                     type="number"
+                    step="0.1"
                     min="0"
                     max={selectedSubmission.maxScore}
                     value={grade}
-                    onChange={(e) => setGrade(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      setGrade(isNaN(value) ? 0 : parseFloat(value.toFixed(1)));
+                    }}
                   />
                 </div>
                 <div>

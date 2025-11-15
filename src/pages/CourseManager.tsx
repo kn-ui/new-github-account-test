@@ -46,6 +46,7 @@ export default function CourseManager() {
   const [enrollTab, setEnrollTab] = useState<'manual'|'csv'>('manual');
   const [selectedCourseForEnroll, setSelectedCourseForEnroll] = useState<CourseWithApproval | null>(null);
   const [studentQuery, setStudentQuery] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [foundStudents, setFoundStudents] = useState<any[]>([]);
   const [csvText, setCsvText] = useState('');
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
@@ -227,13 +228,14 @@ export default function CourseManager() {
         const matchesSearch = (u.displayName||'').toLowerCase().includes(q) || 
                              (u.email||'').toLowerCase().includes(q) || 
                              (u.id||'').toLowerCase().includes(q);
+        const matchesYear = yearFilter ? u.year === yearFilter : true;
         
-        return isStudent && isNotCurrentUser && matchesSearch;
+        return isStudent && isNotCurrentUser && matchesSearch && matchesYear;
       }).slice(0, 10);
       
       setFoundStudents(studentsOnly);
       
-      if (studentsOnly.length === 0 && q.length > 0) {
+      if (studentsOnly.length === 0 && (q.length > 0 || yearFilter)) {
         toast.info('No students found matching your search criteria.');
       }
     } catch (error) {
@@ -1026,6 +1028,18 @@ export default function CourseManager() {
                   <Label>Search student (name/email/id)</Label>
                   <div className="flex gap-2">
                     <Input value={studentQuery} onChange={(e) => setStudentQuery(e.target.value)} placeholder="john@school.edu or user id" />
+                    <Select value={yearFilter} onValueChange={(value) => setYearFilter(value === '__ALL__' ? '' : value)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__ALL__">All Years</SelectItem>
+                        <SelectItem value="1st Year">1st Year</SelectItem>
+                        <SelectItem value="2nd Year">2nd Year</SelectItem>
+                        <SelectItem value="3rd Year">3rd Year</SelectItem>
+                        <SelectItem value="4th Year">4th Year</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button onClick={searchStudents}>Search</Button>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-auto">

@@ -80,6 +80,7 @@ export default function CourseManager() {
   const [importingCsv, setImportingCsv] = useState(false);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+  const [enrolledStudentIds, setEnrolledStudentIds] = useState<string[]>([]);
 
   // Calculate stats
   const totalCourses = courses.length;
@@ -148,13 +149,22 @@ export default function CourseManager() {
     setShowCourseDialog(true);
   };
 
-  const openEnroll = (course: CourseWithApproval) => {
+  const openEnroll = async (course: CourseWithApproval) => {
     setSelectedCourseForEnroll(course);
     setEnrollTab('manual');
     setStudentQuery('');
     setFoundStudents([]);
     setCsvText('');
     setShowEnrollDialog(true);
+
+    try {
+      const enrollments = await enrollmentService.getEnrollmentsByCourse(course.id);
+      const studentIds = enrollments.map(e => e.studentId);
+      setEnrolledStudentIds(studentIds);
+    } catch (error) {
+      console.error('Error fetching enrolled students:', error);
+      toast.error('Failed to load enrolled students');
+    }
   };
 
   const openUnenroll = async (course: CourseWithApproval) => {
@@ -1042,16 +1052,23 @@ export default function CourseManager() {
                     </Select>
                     <Button onClick={searchStudents}>Search</Button>
                   </div>
-                  <div className="space-y-2 max-h-64 overflow-auto">
-                    {foundStudents.map(s => (
-                      <div key={s.id} className="flex items-center justify-between p-2 border rounded">
-                        <div>
-                          <div className="font-medium">{s.displayName}</div>
-                          <div className="text-xs text-gray-500">{s.email}</div>
+                  <div className="space-y-2 max-h-80 overflow-auto">
+                    {foundStudents.map(s => {
+                      const isEnrolled = enrolledStudentIds.includes(s.uid || s.id);
+                      return (
+                        <div key={s.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <div className="font-medium">{s.displayName}</div>
+                            <div className="text-xs text-gray-500">{s.email}</div>
+                          </div>
+                          {isEnrolled ? (
+                            <Badge variant="secondary">Enrolled</Badge>
+                          ) : (
+                            <Button size="sm" onClick={() => enrollStudent(s.uid || s.id)}>Enroll</Button>
+                          )}
                         </div>
-                        <Button size="sm" onClick={() => enrollStudent(s.uid || s.id)}>Enroll</Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {foundStudents.length === 0 && (<div className="text-sm text-gray-500">No results</div>)}
                   </div>
                 </div>
@@ -1242,7 +1259,7 @@ export default function CourseManager() {
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-gray-600">Select students to remove from this course:</p>
-              <div className="max-h-96 overflow-y-auto space-y-2 scrollbar-thin">
+              <div className="max-h-[500px] overflow-y-auto space-y-2 scrollbar-thin">
                 {enrolledStudents.map((enrollment) => (
                   <div key={enrollment.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>

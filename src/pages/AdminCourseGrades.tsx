@@ -57,6 +57,7 @@ export default function AdminCourseGrades() {
   const [rangesOpen, setRangesOpen] = useState(false);
 
   const [assignLoading, setAssignLoading] = useState(false);
+  const [publishingGrades, setPublishingGrades] = useState(false);
 
   const handleEditClick = (studentId: string) => {
     setRows(prevRows =>
@@ -309,6 +310,7 @@ export default function AdminCourseGrades() {
 
   const publishAll = async () => {
     if (!courseId) return;
+    setPublishingGrades(true); // Set loading to true
     try {
       // Ensure letters are assigned based on current ranges before publishing
       for (const r of rows) {
@@ -340,6 +342,8 @@ export default function AdminCourseGrades() {
       await loadRows();
     } catch (e) {
       toast.error('Failed to publish');
+    } finally {
+      setPublishingGrades(false); // Set loading to false
     }
   };
 
@@ -373,7 +377,7 @@ export default function AdminCourseGrades() {
           <LoadingButton variant="outline" loading={assignLoading} onClick={assignLetters} loadingText="Assigning…">
             Assign Letters
           </LoadingButton>
-          <LoadingButton onClick={publishAll} loading={false} loadingText="Publishing…">Publish Final Grades</LoadingButton>
+          <LoadingButton onClick={publishAll} loading={publishingGrades} loadingText="Publishing…">Publish Final Grades</LoadingButton>
         </div>
       </div>
 
@@ -397,18 +401,14 @@ export default function AdminCourseGrades() {
                 </tr>
               </thead>
               <tbody>{loading ? (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center">
+                <tr><td colSpan={8} className="py-8 text-center">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="text-gray-500">Loading student grades...</span>
                     </div>
-                  </td>
-                </tr>
+                  </td></tr>
               ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-6 text-center text-gray-500">No enrolled students found.</td>
-                </tr>
+                <tr><td colSpan={8} className="py-6 text-center text-gray-500">No enrolled students found.</td></tr>
               ) : (
                 rows.map(r => (
                   <tr key={r.studentId} className="border-b hover:bg-gray-50">

@@ -1687,7 +1687,31 @@ export default function TeacherCourseDetail() {
         </div>
         <div>
           <Label htmlFor="og-points">Points</Label>
-          <Input id="og-points" type="number" value={otherGradeForm.points} onChange={(e)=> setOtherGradeForm(prev => ({ ...prev, points: Number(e.target.value) }))} />
+          <Input
+            id="og-points"
+            type="text" // Change type to text to allow more control over input
+            value={otherGradeForm.points === 0 && otherGradeForm.reason === '' ? '' : otherGradeForm.points.toString()} // Display empty string if points is 0 and reason is empty
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow empty string or a string matching the pattern for numbers with at most one decimal place
+              if (value === '' || /^\d*\.?\d{0,1}$/.test(value)) {
+                let newPoints;
+                if (value === '') {
+                  newPoints = 0;
+                } else if (value === '.') {
+                  newPoints = 0; // Treat '.' as 0 for the state to avoid NaN
+                } else {
+                  newPoints = Number(value);
+                }
+                
+                if (newPoints > 100) {
+                  newPoints = 100;
+                }
+                setOtherGradeForm(prev => ({ ...prev, points: newPoints }));
+              }
+            }}
+            inputMode="decimal" // Suggest decimal keyboard on mobile
+          />
           <div className="text-xs text-gray-500 mt-1">Additive points; final grade will be clamped to 100 in admin view.</div>
         </div>
       </div>

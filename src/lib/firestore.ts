@@ -1116,6 +1116,20 @@ export const announcementService = {
       createdAt: now,
     });
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'announcement.create', targetType: 'announcement', targetId: docRef.id, details: { courseId: announcementData.courseId, title: announcementData.title } }); } catch {}
+    
+    // Send email to students
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/announcement`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ announcement: { id: docRef.id, ...announcementData, createdAt: now.toDate().toISOString() } }),
+      });
+    } catch (error) {
+      console.error('Failed to send announcement email:', error);
+    }
+
     return docRef.id;
   },
 

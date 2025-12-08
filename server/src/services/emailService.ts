@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 interface EmailOptions {
   from?: string; // Make from optional
-  to: string;
+  to: string | string[];
   subject: string;
   text: string;
   html?: string;
@@ -22,7 +22,7 @@ export const sendEmail = async (options: EmailOptions) => {
   try {
     const mailOptions = {
       from: options.from || process.env.EMAIL_FROM, // Use provided from or fallback
-      to: options.to,
+      to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
       subject: options.subject,
       text: options.text,
       html: options.html,

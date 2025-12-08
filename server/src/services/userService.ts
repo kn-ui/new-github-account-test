@@ -36,24 +36,25 @@ class UserService {
   }
 
   // Get user by UID
-  async getUserById(uid: string): Promise<User | null> {
-    try {
-      if (!this.usersCollection) {
-        return null;
-      }
+async getUserById(uid: string): Promise<User | null> {
+  console.log(`[userService.getUserById] Fetching user doc ${uid}`);
 
-      const userDoc = await this.usersCollection.doc(uid).get();
-      
-      if (!userDoc.exists) {
-        return null;
-      }
-
-      return { uid, ...userDoc.data() } as User;
-    } catch (error) {
-      console.error('Error getting user:', error);
-      throw new Error('Failed to get user');
-    }
+  if (!this.usersCollection) {
+    console.error("Users collection not initialized");
+    return null;
   }
+
+  const doc = await this.usersCollection.doc(uid).get();
+
+  if (!doc.exists) {
+    console.log(`[userService.getUserById] User not found: ${uid}`);
+    return null;
+  }
+
+  const userData = doc.data();
+  return { uid: doc.id, ...userData } as User;
+}
+
 
   // Get user by email
   async getUserByEmail(email: string): Promise<User | null> {

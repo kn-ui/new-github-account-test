@@ -6,6 +6,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import SiteFooter from '@/components/SiteFooter';
 
 const ForumThread = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -200,6 +201,7 @@ const ForumThread = () => {
           variant="destructive"
         />
       </div>
+      <SiteFooter />
     </div>
   );
 };

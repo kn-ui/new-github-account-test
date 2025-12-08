@@ -9,7 +9,7 @@ const SiteFooter = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1">
             <div className="flex items-center space-x-3 mb-4">
-              <img src="/src/assets/main-logo.png" alt="Orthodox Church" className="w-[70px] h-[70px] rounded-full" />
+              <img src="/assets/main-logo.png" alt="Orthodox Church" className="w-[70px] h-[70px] rounded-full" />
               <div>
                 <div className="text-lg font-bold">St. Raguel Church</div>
                 <div className="text-sm text-gray-400">Spiritual School</div>

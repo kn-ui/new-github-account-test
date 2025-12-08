@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, Users, BookOpen, Clock, Award, AlertTriangle, Download, FileText } from 'lucide-react';
 
+
 export default function RulesPage() {
   const ruleCategories = [
     {
@@ -252,6 +253,7 @@ export default function RulesPage() {
           </div>
         </div>
       </section>
+
     </div>
   );
 }

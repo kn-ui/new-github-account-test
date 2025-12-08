@@ -1,676 +1,855 @@
 {
-  "nav": {
-    "home": "ሆም",
-    "about": "ስለ እኛ",
-    "academic": "አካዳሚክ",
-    "admissions": "መግቢያ",
-    "blog": "ብሎግ",
-    "contact": "አግኙን",
-    "dashboard": "ዳሽቦርድ",
-    "courses": "ኮርሶች",
-    "forum": "ፎረም",
-    "calendar": "የቀን መቁጠሪያ",
-    "userManagement": "የተጠቃሚ አስተዳደር",
-    "courseManagement": "የኮርስ አስተዳደር",
-    "events": "ክስተቶች",
-    "reports": "ሪፖርቶች",
-    "settings": "የስርዓት ቅንብር",
-    "myCourses": "የእኔ ኮርሶች",
-    "students": "ተማሪዎች",
-    "assignments": "ተግባራት",
-    "submissions": "ስብስቦች",
-    "announcements": "ማስታወቂያዎች",
-    "materials": "የኮርስ ቁሳቁሶች",
-    "certificates": "ማረጋገጫዎች",
-    "progress": "እድገት",
-    "updates": "አዳዲስ",
-    "rulesAndRegulations": "ህጎች እና መመሪያዎች",
-    "grades": "ደረጃዎች",
-    "analytics": "ትንታኔ",
-    "exams": "ፈተናዎች",
-    "myGrades": "የእኔ ደረጃዎች"
-  },
-  "auth": {
-    "login": "መግባት",
-    "logout": "መውጣት",
-    "getStarted": "ጀምር",
-    "user": "ተጠቃሚ",
-    "welcomeBack": "እንኳን በደህና መጣችሁ",
-    "signInSubtitle": "ወደ ስት. ራጉኤል ቻርች መለያዎ ይግቡ",
-    "email": "ኢሜይል አድራሻ",
-    "email_placeholder": "ኢሜይልዎን ያስገቡ",
-    "password": "የይለፍ ቃል",
-    "password_placeholder": "የይለፍ ቃልዎን ያስገቡ",
-    "rememberMe": "አስታውሰኝ",
-    "forgotPassword": "የይለፍ ቃል ረሳሁ?",
-    "signIn": "ግባ",
-    "signingIn": "በመግባት ላይ...",
-    "newHere": "አዲስ ነዎት?",
-    "createAccount": "አዲስ መለያ ፍጠር",
-    "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ"
-  },
-  "site": {
-    "brand": "ስት. ራጉኤል ቤተክርስቲያን",
-    "taglineShort": "መንፈሳዊ ትምህርት ቤት"
-  },
-  "hero": {
-    "title1": "እምነትን እና የባህርይን ግንባታ",
-    "title2Prefix": "ማበርታት",
-    "title2Highlight": "ባህርይ",
-    "subtitle": "የስት. ራጉኤል መንፈሳዊ ትምህርት ቤት በኢትዮጵያ ባህል ሥር የተቀመጠ የኦርቶዶክስ ትምህርት ያቀርባል።",
-    "applyNow": "አሁን ይመዝገቡ →",
-    "explorePrograms": "ፕሮግራሞችን ይመልከቱ"
-  },
-  "loginAside": {
-    "headline": "በእምነት እና በጥበብ ያድጉ",
-    "subtitle": "ባህርይን እና የአካዳሚ ብልጥናን ለማበርታት የተሰሩ ፕሮግራሞቻችንን ያግኙ።",
-    "explore": "ፕሮግራሞችን ይመልከቱ"
-  },
-  "home": {
-    "message": {
-      "body": "የመንፈሳዊ እድገት እና የአካዳሚ ብልጥና እርከን የሚሄዱበትን ማህበረሰብ ያግኙ፣ አዲስ ትውልድን ለአገልግሎት እና ለመሪነት የሚያዘጋጅ ትምህርት እንሰጣለን።"
+    "nav": {
+        "home": "ሆም",
+        "about": "ስለ እኛ",
+        "academic": "አካዳሚክ",
+        "admissions": "መግቢያ",
+        "blog": "ብሎግ",
+        "contact": "አግኙን",
+        "dashboard": "ዳሽቦርድ",
+        "courses": "ኮርሶች",
+        "forum": "ፎረም",
+        "calendar": "የቀን መቁጠሪያ",
+        "userManagement": "የተጠቃሚ አስተዳደር",
+        "courseManagement": "የኮርስ አስተዳደር",
+        "courseManagementSubtitle": "ኮርሶችን ማፅደቆችን እና ይዘቶችን ያስተዳድሩ።",
+        "attendance": "አቴንዳስ",
+        "events": "ክስተቶች",
+        "reports": "ሪፖርቶች",
+        "settings": "የስርዓት ቅንብር",
+        "myCourses": "የእኔ ኮርሶች",
+        "students": "ተማሪዎች",
+        "assignments": "አሳየመንት",
+        "submissions": "ስብስቦች",
+        "announcements": "ማስታወቂያ",
+        "materials": "የኮርስ ቁሳቁሶች",
+        "certificates": "ማረጋገጫዎች",
+        "progress": "እድገት",
+        "updates": "አዳዲስ",
+        "rulesAndRegulations": "ህጎች እና መመሪያዎች",
+        "grades": "ውጤት",
+        "analytics": "ትንታኔ",
+        "exams": "ፈተናዎች",
+        "myGrades": "የእኔ ደረጃዎች",
+        "manageAdmins": "የአስተዳደር አስተዳደር"
     },
-    "events": { "subtitle": "ከካሌንዳራችን ጋር ዘመናዊ ይቆዩ" }
-  },
-  "academicPage": {
-    "maxStudents": "ከፍተኛ ተማሪዎች:",
-    "status": "ሁኔታ:",
-    "active": "ንቁ",
-    "planned": "የታቀደ",
-    "ctaTitle": "የአካዳሚያዊ ጉዞዎን ጀምሩ?",
-    "ctaSubtitle": "ለመሪነት እና ለአገልግሎት ጥሪዎ የመጀመሪያ ደረጃ ውስጥ ይግቡ።"
-  },
-  "common": { "general": "አጠቃላይ" },
-  "student": {
-    "title": "የተማሪ ዳሽቦርድ",
-    "subtitle": "እንኳን በደህና መጣችሁ! መንፈሳዊ ትምህርትዎን ቀጥሉ.",
-    "stats": {
-      "enrolledCourses": "የተመዘገቡ ኮርሶች",
-      "averageProgress": "አማካይ እድገት",
-      "pendingAssignments": "የሚጠብቁ ተግባራት",
-      "certificates": "የተከፈሉ ማረጋገጫዎች"
-    },
-    "assignments": {
-      "title": "ተግባራት",
-      "subtitle": "የኮርስ ተግባራትን ፍጠር እና አስተዳድር",
-      "create": "ተግባር ፍጠር",
-      "searchPlaceholder": "በርእስ ወይም መግለጫ ፈልግ...",
-      "countSuffix": "ተግባራት ተገኝተዋል",
-      "deleteTitle": "ይህን ተግባር ስወግድ?",
-      "deleteDesc": "ይህ እርምጃ አይመለስም። ተግባሩን በፍጥነት ያስወግዳል",
-      "deleteDesc2": "እና ጋር የተያያዙ ስብስቦች ሁሉ.",
-      "editTitle": "ተግባር አርትዕ",
-      "createNew": "አዲስ ተግባር ፍጠር",
-      "dueTime": "የማብቂያ ጊዜ",
-      "attachment": "አባሪ (አማራጭ)",
-      "instructions": "መመሪያዎች",
-      "resourceTitle": "የሀብት ርእስ (አማራጭ)",
-      "resourceUrl": "የሀብት URL (አማራጭ)",
-      "update": "ተግባር አዘምን"
-    },
-    "myCourses": {
-      "title": "የእኔ ኮርሶች",
-      "subtitle": "የመማር ጉዞዎን ቀጥሉ"
-    },
-    "next": "ቀጣይ",
-    "due": "ማብቂያ",
-    "continue": "ቀጥል",
-    "upcomingAssignments": {
-      "title": "የሚመጡ ተግባራት",
-      "subtitle": "ከትምህርቶችዎ ጋር ተከታትሉ",
-      "view": "ተመልከት"
-    },
-    "announcements": "ማስታወቂያዎች",
-    "quickActions": {
-      "title": "ፈጣን እርምጃዎች",
-      "viewSchedule": "መርሃ ግብር ይመልከቱ",
-      "browseCourses": "ኮርሶች ይመልከቱ",
-      "myCertificates": "የእኔ ማረጋገጫዎች"
-    }
-  },
-  "teacher": {
-    "title": "የአስተማሪ ዳሽቦርድ",
-    "subtitle": "ኮርሶችዎን ያስተዳድሩ እና የተማሪዎችን እድገት ይከታተሉ",
-    "stats": {
-      "activeCourses": "ንቁ ኮርሶች",
-      "totalStudents": "ጠቅላላ ተማሪዎች",
-      "pendingReviews": "የሚጠብቁ ግምገማዎች",
-      "avgRating": "አማካይ ደረጃ"
-    },
-    "myCourses": {
-      "title": "የእኔ ኮርሶች",
-      "subtitle": "ኮርሶችዎን አስተዳድሩ እና እንቅስቃሴን ተከታትሉ",
-      "students": "ተማሪዎች",
-      "assignments": "ተግባራት",
-      "rating": "ደረጃ",
-      "manageCourse": "ኮርሱን አስተዳድር",
-      "viewAnalytics": "ትንታኔ ይመልከቱ",
-      "complete": "ተጠናቀቀ"
-    },
-    "recentSubmissions": {
-      "title": "የቅርብ ጊዜ ስብስቦች",
-      "subtitle": "የተማሪዎችን ሥራ ይገመግሙ",
-      "by": "በ",
-      "review": "ክለም"
-    },
-    "topStudents": "ከፍተኛ ተማሪዎች",
-    "quickActions": {
-      "title": "ፈጣን እርምጃዎች",
-      "createAssignment": "ተግባር ፍጠር",
-      "messageStudents": "መልዕክት ላክ ለተማሪዎች",
-      "viewReports": "ሪፖርቶች ይመልከቱ"
-    },
-    "messages": "የቅርብ ጊዜ መልዕክቶች",
-    "submissions": {
-      "title": "ስብስቦች",
-      "subtitle": "ከርስዎ ኮርሶች ሁሉ ስብስቦች",
-      "searchLabel": "ፈልግ",
-      "searchPlaceholder": "በኮርስ ወይም ተማሪ መለያ ፈልግ",
-      "filterByStatus": "ሁኔታ",
-      "all": "ሁሉም",
-      "submitted": "ቀርቧል",
-      "graded": "ተገመግሟል",
-      "sortBy": "ደርድር",
-      "newest": "አዲስ",
-      "oldest": "አሮጌ",
-      "countSuffix": "ስብስቦች ተገኝተዋል",
-      "assignment": "ተግባር",
-      "submittedGraded": "ቀርቧል / ተገመግሟል",
-      "gradedLower": "ተገመግሟል",
-      "viewSubmissions": "ስብስቦች ይመልከቱ",
-      "noAssignments": "ተግባር አልተገኘም",
-      "submissions": "ስብስቦች"
-    }
-  },
-  "admin": {
-    "title": "የአስተዳዳሪ ዳሽቦርድ",
-    "subtitle": "የስርዓት እይታ እና አስተዳደር",
-    "systemStats": {
-      "totalUsers": "ጠቅላላ ተጠቃሚዎች",
-      "activeCourses": "ንቁ ኮርሶች",
-      "completionRate": "የመጨረሻ መጠን",
-      "systemHealth": "የስርዓት ጤና",
-      "totalEvents": "ጠቅላላ ዝግጅቶች"
-    },
-    "recentUsers": {
-      "title": "የቅርብ ጊዜ ተጠቃሚዎች",
-      "subtitle": "የተጠቃሚ መለያዎችን እና ፈቃዶችን ያስተዳድሩ",
-      "viewAll": "ሁሉንም ይመልከቱ",
-      "table": {
+    "auth": {
+        "login": "መግባት",
+        "logout": "መውጣት",
+        "getStarted": "ጀምር",
         "user": "ተጠቃሚ",
-        "role": "ሚና",
-        "joinDate": "የተቀላቀለበት ቀን",
-        "status": "ሁኔታ",
-        "actions": "እርምጃዎች"
-      },
-      "noUsers": "ተጠቃሚ አልተገኘም",
-      "edit": "አርትዕ"
+        "welcomeBack": "እንኳን በደህና መጣችሁ",
+        "signInSubtitle": "ወደ ስት. ራጉኤል ቻርች መለያዎ ይግቡ",
+        "email": "ኢሜይል አድራሻ",
+        "email_placeholder": "ኢሜይልዎን ያስገቡ",
+        "password": "የይለፍ ቃል",
+        "password_placeholder": "የይለፍ ቃልዎን ያስገቡ",
+        "rememberMe": "አስታውሰኝ",
+        "forgotPassword": "የይለፍ ቃል ረሳሁ?",
+        "signIn": "ግባ",
+        "signingIn": "በመግባት ላይ...",
+        "newHere": "አዲስ ነዎት?",
+        "createAccount": "አዲስ መለያ ፍጠር",
+        "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ"
     },
-    "recentCourses": {
-      "title": "የቅርብ ጊዜ የተጨመሩ ኮርሶች",
-      "noCourses": "ኮርስ አልተገኘም"
+    "site": {
+        "brand": "ስት. ራጉኤል ቤተክርስቲያን",
+        "taglineShort": "መንፈሳዊ ትምህርት ቤት"
     },
-    "analytics": {
-      "title": "የስርዓት ትንታኔ",
-      "subtitle": "የተጠቃሚ እንቅስቃሴ እና የኮርስ መመዝገብ",
-      "export": "ገንብት",
-      "placeholder": "የትንታኔ ገጽታ ቦታ",
-      "realtime": "በእውነተኛ ጊዜ ዳታ"
+    "hero": {
+        "title1": "እምነትን እና የባህርይን ግንባታ",
+        "title2Prefix": "ማበርታት",
+        "title2Highlight": "ባህርይ",
+        "subtitle": "የስት. ራጉኤል መንፈሳዊ ትምህርት ቤት በኢትዮጵያ ባህል ሥር የተቀመጠ የኦርቶዶክስ ትምህርት ያቀርባል።",
+        "applyNow": "አሁን ይመዝገቡ →",
+        "explorePrograms": "ፕሮግራሞችን ይመልከቱ"
     },
-    "pendingApprovals": "ቅርብ ጊዜ የተጨመሩ ኮርሶች",
-    "systemAlerts": "የስርዓት ማንቂያዎች",
-    "quickActions": {
-      "title": "ፈጣን እርምጃዎች",
-      "addUser": "አዲስ ተጠቃሚ",
-      "createCourse": "ኮርስ ፍጠር (አስተዳዳሪ)",
-      "generateReport": "ሪፖርት መፍጠር",
-      "systemSettings": "የስርዓት ቅንብር"
-    }
-  },
-  "blog": {
-    "searchPlaceholder": "ፖስቶች አስስ...",
-    "categories": {
-      "all": "ሁሉም ፖስቶች",
-      "theology": "እምነት ሳይንስ",
-      "spirituality": "መንፈሳዊነት",
-      "community": "ማህበረሰብ",
-      "education": "ትምህርት",
-      "events": "ክስተቶች"
+    "loginAside": {
+        "headline": "በእምነት እና በጥበብ ያድጉ",
+        "subtitle": "ባህርይን እና የአካዳሚ ብልጥናን ለማበርታት የተሰሩ ፕሮግራሞቻችንን ያግኙ።",
+        "explore": "ፕሮግራሞችን ይመልከቱ"
     },
-    "loading": "በመጫን ላይ...",
-    "noPosts": "ፖስት አልተገኘም"
-  },
-  "calendar": {
-    "month": "ወር",
-    "type": "አይነት",
-    "types": {
-      "all": "ሁሉም ክስተቶች",
-      "academic": "አካዳሚክ",
-      "religious": "ሀይማኖታዊ",
-      "social": "ማህበራዊ",
-      "examination": "ፈተናዎች",
-      "holiday": "ዕረፍት ቀኖች"
+    "home": {
+        "message": {
+            "body": "የመንፈሳዊ እድገት እና የአካዳሚ ብልጥና እርከን የሚሄዱበትን ማህበረሰብ ያግኙ፣ አዲስ ትውልድን ለአገልግሎት እና ለመሪነት የሚያዘጋጅ ትምህርት እንሰጣለን።"
+        },
+        "events": { "subtitle": "ከካሌንዳራችን ጋር ዘመናዊ ይቆዩ" }
     },
-    "weekdays": ["እሑድ","ሰኞ","ማክሰኞ","ረቡዕ","ሐሙስ","ዓርብ","ቅዳሜ"],
-    "loading": "ክስተቶች በመጫን ላይ...",
-    "more": "+{count} ተጨማሪ"
-  },
-  "forum": {
-    "title": "ውይይት ፎረም",
-    "subtitle": "ከማህበረሰባችን ጋር ይተባበሩ",
-    "searchPlaceholder": "ጉዳዮች ፈልግ...",
-    "searchTopics": "ጉዳዮችን ፈልግ",
-    "categories": {
-      "all": "ሁሉም ጉዳዮች",
-      "theology": "እምነት ሳይንስ",
-      "spirituality": "መንፈሳዊነት",
-      "academic": "አካዳሚክ እገዛ",
-      "community": "ማህበረሰብ",
-      "announcements": "ማስታወቂያዎች"
+    "academicPage": {
+        "maxStudents": "ከፍተኛ ተማሪዎች:",
+        "status": "ሁኔታ:",
+        "active": "ክፍት",
+        "planned": "የታቀደ",
+        "ctaTitle": "የአካዳሚያዊ ጉዞዎን ጀምሩ?",
+        "ctaSubtitle": "ለመሪነት እና ለአገልግሎት ጥሪዎ የመጀመሪያ ደረጃ ውስጥ ይግቡ።"
     },
-    "create": {
-      "titlePlaceholder": "የጉዳይ ርዕስ",
-      "post": "ለጥፍ"
+    "common": { "general": "አጠቃላይ" },
+    "student": {
+        "title": "የተማሪ ዳሽቦርድ",
+        "subtitle": "እንኳን በደህና መጣችሁ! መንፈሳዊ ትምህርትዎን ቀጥሉ.",
+        "stats": {
+            "enrolledCourses": "የተመዘገቡ ኮርሶች",
+            "averageProgress": "አማካይ እድገት",
+            "pendingAssignments": "የሚጠብቁ ተግባራት",
+            "certificates": "የተከፈሉ ማረጋገጫዎች"
+        },
+        "assignments": {
+            "title": "ተግባራት",
+            "subtitle": "የኮርስ ተግባራትን ፍጠር እና አስተዳድር",
+            "create": "ተግባር ፍጠር",
+            "searchPlaceholder": "በርእስ ወይም መግለጫ ፈልግ...",
+            "countSuffix": "ተግባራት ተገኝተዋል",
+            "deleteTitle": "ይህን ተግባር ስወግድ?",
+            "deleteDesc": "ይህ እርምጃ አይመለስም። ተግባሩን በፍጥነት ያስወግዳል",
+            "deleteDesc2": "እና ጋር የተያያዙ ስብስቦች ሁሉ.",
+            "editTitle": "ተግባር አርትዕ",
+            "createNew": "አዲስ ተግባር ፍጠር",
+            "dueTime": "የማብቂያ ጊዜ",
+            "attachment": "አባሪ (አማራጭ)",
+            "instructions": "መመሪያዎች",
+            "resourceTitle": "የሀብት ርእስ (አማራጭ)",
+            "resourceUrl": "የሀብት URL (አማራጭ)",
+            "update": "ተግባር አዘምን"
+        },
+        "myCourses": {
+            "title": "የእኔ ኮርሶች",
+            "subtitle": "የመማር ጉዞዎን ቀጥሉ"
+        },
+        "next": "ቀጣይ",
+        "due": "ማብቂያ",
+        "continue": "ቀጥል",
+        "upcomingAssignments": {
+            "title": "የሚመጡ ተግባራት",
+            "subtitle": "ከትምህርቶችዎ ጋር ተከታትሉ",
+            "view": "ተመልከት"
+        },
+        "announcements": "ማስታወቂያዎች",
+        "quickActions": {
+            "title": "ፈጣን እርምጃዎች",
+            "viewSchedule": "መርሃ ግብር ይመልከቱ",
+            "browseCourses": "ኮርሶች ይመልከቱ",
+            "myCertificates": "የእኔ ማረጋገጫዎች"
+        }
     },
-    "loading": "በመጫን ላይ...",
-    "noTopics": "ጉዳይ አልተገኘም",
-    "pinned": "ተሰናክሏል",
-    "by": "በ",
-    "newTopic": "አዲስ ጉዳይ",
-    "editThread": "ጉዳዩን አርትዕ",
-    "deleteThread": "ጉዳዩን ሰርዝ",
-    "deleteConfirm": "ይህን ጉዳይ መሰረዝ እርግጠኛ ነዎት? ይህ እርምጃ አይመለስም.",
-    "reply": "ምላሽ",
-    "publicReplyWarning": "ለህዝብ ተጠቃሚዎች ምላሽ መስጠት አይቻልም",
-    "categoriesTitle": "ሬማዎች",
-    "stats": { "totalTopics": "ጠቅላላ ጉዳዮች", "totalPosts": "ጠቅላላ ልጥፎች", "todaysPosts": "ዛሬ የተደረጉ ልጥፎች" },
-    "saveChanges": "ለውጦችን አስቀምጥ",
-    "cancel": "ሰርዝ"
-  }
-  ,
-  "updatesPage": {
-    "title": "አዳዲስ መረጃዎች",
-    "subtitle": "የትምህርት ቤቱን ዜናዎች፣ ክስተቶች እና ግንዛቤ ይከታተሉ"
-  },
-  "home": {
-    "message": {
-      "title": "መልዕክት ከትምህርት ቤቱ",
-      "subtitle": "በተለምዶ ለትውልዶች ሁሉ በእምነት እና በእውቀት እንመራ ነበር፣ በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን ባህል ላይ የተመሰረተ.",
-      "cta": "ስለ አገልግሎታችን"
+    "teacher": {
+        "title": "የአስተማሪ ዳሽቦርድ",
+        "subtitle": "ኮርሶችዎን ያስተዳድሩ እና የተማሪዎችን እድገት ይከታተሉ",
+        "stats": {
+            "activeCourses": "ክፍት ኮርሶች",
+            "totalStudents": "ጠቅላላ ተማሪዎች",
+            "pendingReviews": "የሚጠብቁ ግምገማዎች",
+            "avgRating": "አማካይ ደረጃ"
+        },
+        "myCourses": {
+            "title": "የእኔ ኮርሶች",
+            "subtitle": "ኮርሶችዎን አስተዳድሩ እና እንቅስቃሴን ተከታትሉ",
+            "students": "ተማሪዎች",
+            "assignments": "ተግባራት",
+            "rating": "ደረጃ",
+            "manageCourse": "ኮርሱን አስተዳድር",
+            "viewAnalytics": "ትንታኔ ይመልከቱ",
+            "complete": "ተጠናቀቀ"
+        },
+        "recentSubmissions": {
+            "title": "የቅርብ ጊዜ ስብስቦች",
+            "subtitle": "የተማሪዎችን ሥራ ይገመግሙ",
+            "by": "በ",
+            "review": "ክለም"
+        },
+        "topStudents": "ከፍተኛ ተማሪዎች",
+        "quickActions": {
+            "title": "ፈጣን እርምጃዎች",
+            "createAssignment": "ተግባር ፍጠር",
+            "messageStudents": "መልዕክት ላክ ለተማሪዎች",
+            "viewReports": "ሪፖርቶች ይመልከቱ"
+        },
+        "messages": "የቅርብ ጊዜ መልዕክቶች",
+        "submissions": {
+            "title": "ስብስቦች",
+            "subtitle": "ከርስዎ ኮርሶች ሁሉ ስብስቦች",
+            "searchLabel": "ፈልግ",
+            "searchPlaceholder": "በኮርስ ወይም ተማሪ መለያ ፈልግ",
+            "filterByStatus": "ሁኔታ",
+            "all": "ሁሉም",
+            "submitted": "ቀርቧል",
+            "graded": "ተገመግሟል",
+            "sortBy": "ደርድር",
+            "newest": "አዲስ",
+            "oldest": "አሮጌ",
+            "countSuffix": "ስብስቦች ተገኝተዋል",
+            "assignment": "ተግባር",
+            "submittedGraded": "ቀርቧል / ተገመግሟል",
+            "gradedLower": "ተገመግሟል",
+            "viewSubmissions": "ስብስቦች ይመልከቱ",
+            "noAssignments": "ተግባር አልተገኘም",
+            "submissions": "ስብስቦች"
+        }
     },
-    "events": {
-      "title": "የሚመጡ ክስተቶች"
-    }
-  },
-  "footer": {
-    "quickLinks": "ፈጣን አገናኞች",
-    "resources": "ሀብቶች",
-    "contact": "የእውቂያ መረጃ",
-    "about": "ስለ እኛ",
-    "academicPrograms": "አካዳሚክ ፕሮግራሞች",
-    "admissions": "መግቢያ",
-    "academicCalendar": "የአካዳሚክ ቀን መቁጠሪያ",
-    "rules": "ህጎች እና መመሪያዎች",
-    "latestUpdates": "የቅርብ ጊዜ አዳዲስ",
-    "discussionForum": "ውይይት ፎረም",
-    "studentPortal": "የተማሪ ፖርታል",
-    "privacy": "የግላዊነት ፖሊሲ",
-    "terms": "የአገልግሎት ውሎች",
-    "tagline": "በኦርቶዶክስ ባህል ውስጥ ጥሩ መንፈሳዊ ትምህርት መስጠት እና የትንሽ አእምሮዎችን ማሳደግ.",
-    "copyright": "የሁሉም መብት ተፈጻሚ ነው።"
-  },
-  "academicPage": {
-    "title": "አካዳሚክ ፕሮግራሞች",
-    "subtitle": "ሁሉንም ኮርሶች እና ፕሮግራሞች ይመልከቱ",
-    "apply": "ለመቀበል ይመልከቱ",
-    "contact": "አግኙን"
-  },
-  "search": {
-    "placeholder": "ተጠቃሚዎችን፣ ኮርሶችን፣ ክስተቶችን ፈልግ..."
-  },
-  "notifications": {
-    "announcements": "ማስታወቂያዎች",
-    "none": "ማስታወቂያ የለም"
-  },
-  "language": {
-    "label": "ቋንቋ"
-  },
-  "courses": {
-    "title": "ኮርስ ካታሎግ",
-    "subtitle": "ለመድረስ እና ለማስተላለፍ የተነደፉ የኮርሶች ስብስብ ያስሱ።",
-    "searchLabel": "ኮርሶች ፈልግ",
-    "searchPlaceholder": "ኮርሶች፣ አስተማሪዎች ወይም ርዕሶች ፈልግ...",
-    "categoryFilter": "ምድብ",
-    "allCategories": "ሁሉም ምድቦች",
-    "statusFilter": "የሁኔታ ማጣሪያ",
-    "allStatus": "ሁሉም ሁኔታ",
-    "approved": "አጽድቋል",
-    "pending": "በመጠባበቅ ላይ",
-    "pendingApproval": "የማጽደቅ መጠባበቂያ",
-    "instructor": "አስተማሪ",
-    "hours": "ሰዓታት"
-  },
-  "events": {
-    "searchPlaceholder": "ክስተቶችን በርእስ፣ መግለጫ ወይም ቦታ ፈልግ...",
-    "allStatus": "ሁሉም ሁኔታ",
-    "status": {
-      "upcoming": "በቅርቡ",
-      "ongoing": "በመካከል",
-      "completed": "ተጠናቀቀ"
+    "admin": {
+        "title": "የአስተዳዳሪ ዳሽቦርድ",
+        "subtitle": "የስርዓት እይታ እና አስተዳደር",
+        "systemStats": {
+            "totalUsers": "ጠቅላላ ተጠቃሚዎች",
+            "activeCourses": "ክፍት ኮርሶች",
+            "completionRate": "የመጨረሻ መጠን",
+            "systemHealth": "የስርዓት ጤና",
+            "totalEvents": "ጠቅላላ ዝግጅቶች"
+        },
+        "recentUsers": {
+            "title": "የቅርብ ጊዜ ተጠቃሚዎች",
+            "subtitle": "የተጠቃሚ መለያዎችን እና ፈቃዶችን ያስተዳድሩ",
+            "viewAll": "ሁሉንም ይመልከቱ",
+            "table": {
+                "user": "ተጠቃሚ",
+                "role": "ሚና",
+                "joinDate": "የተቀላቀለበት ቀን",
+                "status": "ሁኔታ",
+                "actions": "እርምጃዎች"
+            },
+            "noUsers": "ተጠቃሚ አልተገኘም",
+            "edit": "አርትዕ"
+        },
+        "recentCourses": {
+            "title": "የቅርብ ጊዜ የተጨመሩ ኮርሶች",
+            "noCourses": "ኮርስ አልተገኘም"
+        },
+        "analytics": {
+            "title": "የስርዓት ትንታኔ",
+            "subtitle": "የተጠቃሚ እንቅስቃሴ እና የኮርስ መመዝገብ",
+            "export": "ገንብት",
+            "placeholder": "የትንታኔ ገጽታ ቦታ",
+            "realtime": "በእውነተኛ ጊዜ ዳታ"
+        },
+        "pendingApprovals": "ቅርብ ጊዜ የተጨመሩ ኮርሶች",
+        "systemAlerts": "የስርዓት ማንቂያዎች",
+        "quickActions": {
+            "title": "ፈጣን እርምጃዎች",
+            "addUser": "አዲስ ተጠቃሚ",
+            "createCourse": "ኮርስ ፍጠር (አስተዳዳሪ)",
+            "generateReport": "ሪፖርት መፍጠር",
+            "systemSettings": "የስርዓት ቅንብር"
+        },
+        "submittedAttendance": "የገባ አቴንዳስ",
+        "adminAnnouncements": "ማስታወቂያዎች",
+        "createAnnouncement": "ማስታወቂያ ፍጠር"
+
     },
-    "attendees": "ተሳታፊዎች"
-  },
-  "superadmin": {
-    "title": "የሱፐር አስተዳዳሪ ዳሽቦርድ",
-    "subtitle": "የስርዓት ደረጃ ትንታኔ እና እይታ.",
-    "completionRate": "የመጨረሻ መጠን",
-    "roleDistribution": "የሚና መመዝገብ",
-    "courseCompletion": "የኮርስ መጨረሻ",
-    "userActivity": "የተጠቃሚ እንቅስቃሴ"
-  }
-  ,
-  "common": {
-    "dashboard": "ዳሽቦርድ",
-    "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ",
-    "saving": "በመቀመጥ ላይ...",
-    "cancel": "ሰርዝ",
-    "delete": "ሰርዝ",
-    "approve": "ፀድቅ",
-    "reject": "አትቀበል",
-    "by": "በ",
-    "view": "ይመልከቱ",
-    "table": "ሰንጠረዥ",
-    "grid": "ግሪድ",
-    "viewAll": "ሁሉንም ይመልከቱ",
-    "accessDenied": "መዳረሻ ታግዷል",
-    "teacherOnly": "ይህን ገፅ መዳረስ ለአስተማሪዎች ብቻ ነው።",
-    "saveChanges": "ለውጦችን አስቀምጥ",
-    "created": "ተፈጥሯል"
-  },
-  "studentProgress": {
-    "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
-  },
-  "users": {
-    "all": "ሁሉም ተጠቃሚዎች",
-    "searchPlaceholder": "ተጠቃሚዎችን በስም፣ ኢሜይል ወይም ሚና ፈልግ...",
-    "filterByRole": "በሚና አጣራ",
-    "subtitle": "የተጠቃሚ መለያዎችን፣ ፈቃዶችን እና መዳረሻን አስተዳድር.",
-    "export": "ተጠቃሚዎች አስመጣ",
-    "add": "ተጠቃሚ ጨምር",
-    "addMany": "ተጠቃሚዎች ጨምር",
-    "mode": { "single": "ነጠላ", "bulk": "ብዙ" },
-    "singleDescription": "ከተወሰነ ሚና ጋር ነጠላ መለያ ፍጠር.",
-    "bulkDescription": "በአንድ ጊዜ ብዙ ተጠቃሚዎች ለመፍጠር CSV አስገባ.",
-    "form": { "name": "ስም", "name_placeholder": "ሙሉ ስም አስገባ" },
-    "create": "ተጠቃሚ ፍጠር",
-    "edit": "ተጠቃሚ አርትዕ",
-    "updateFor": "ዝርዝሮችን አስተካክል ለ {name}.",
-    "thisUser": "ይህ ተጠቃሚ",
-    "saveChanges": "ለውጦችን አስቀምጥ",
-    "cannotDeleteAdmin": "አስተዳዳሪ ወይም ሱፐር አስተዳዳሪ አይሰረዝም",
-    "confirmDelete": "ይህን ተጠቃሚ መሰረዝ እርግጠኛ ነዎት?",
-    "errors": { "deleteFailed": "ተጠቃሚን ማስወገድ ላይ ስህተት:" },
-    "delete": "ሰርዝ",
-    "roles": {
-      "all": "ሁሉም ሚናዎች",
-      "student": "ተማሪ",
-      "teacher": "አስተማሪ",
-      "admin": "አስተዳዳሪ",
-      "super_admin": "ሱፐር አስተዳዳሪ"
+    "blog": {
+        "searchPlaceholder": "ፖስቶች አስስ...",
+        "categories": {
+            "all": "ሁሉም ፖስቶች",
+            "theology": "እምነት ሳይንስ",
+            "spirituality": "መንፈሳዊነት",
+            "community": "ማህበረሰብ",
+            "education": "ትምህርት",
+            "events": "ክስተቶች"
+        },
+        "loading": "በመጫን ላይ...",
+        "noPosts": "ፖስት አልተገኘም"
     },
-    "table": {
-      "user": "ተጠቃሚ",
-      "role": "ሚና",
-      "status": "ሁኔታ",
-      "created": "ተፈጠረ"
+    "calendar": {
+        "month": "ወር",
+        "type": "አይነት",
+        "types": {
+            "all": "ሁሉም ክስተቶች",
+            "academic": "አካዳሚክ",
+            "religious": "ሀይማኖታዊ",
+            "social": "ማህበራዊ",
+            "examination": "ፈተናዎች",
+            "holiday": "ዕረፍት ቀኖች"
+        },
+        "weekdays": ["እሑድ", "ሰኞ", "ማክሰኞ", "ረቡዕ", "ሐሙስ", "ዓርብ", "ቅዳሜ"],
+        "loading": "ክስተቶች በመጫን ላይ...",
+        "more": "+{count} ተጨማሪ"
     },
-    "status": {
-      "active": "ንቁ",
-      "inactive": "ባልንቁ"
+    "forum": {
+        "title": "ውይይት ፎረም",
+        "subtitle": "ከማህበረሰባችን ጋር ይተባበሩ",
+        "searchPlaceholder": "ጉዳዮች ፈልግ...",
+        "searchTopics": "ጉዳዮችን ፈልግ",
+        "categories": {
+            "all": "ሁሉም ጉዳዮች",
+            "theology": "እምነት ሳይንስ",
+            "spirituality": "መንፈሳዊነት",
+            "academic": "አካዳሚክ እገዛ",
+            "community": "ማህበረሰብ",
+            "announcements": "ማስታወቂያዎች"
+        },
+        "create": {
+            "titlePlaceholder": "የጉዳይ ርዕስ",
+            "post": "ለጥፍ"
+        },
+        "loading": "በመጫን ላይ...",
+        "noTopics": "ጉዳይ አልተገኘም",
+        "pinned": "ተሰናክሏል",
+        "by": "በ",
+        "newTopic": "አዲስ ጉዳይ",
+        "editThread": "ጉዳዩን አርትዕ",
+        "deleteThread": "ጉዳዩን ሰርዝ",
+        "deleteConfirm": "ይህን ጉዳይ መሰረዝ እርግጠኛ ነዎት? ይህ እርምጃ አይመለስም.",
+        "reply": "ምላሽ",
+        "publicReplyWarning": "ለህዝብ ተጠቃሚዎች ምላሽ መስጠት አይቻልም",
+        "categoriesTitle": "ሬማዎች",
+        "stats": { "totalTopics": "ጠቅላላ ጉዳዮች", "totalPosts": "ጠቅላላ ልጥፎች", "todaysPosts": "ዛሬ የተደረጉ ልጥፎች" },
+        "saveChanges": "ለውጦችን አስቀምጥ",
+        "cancel": "ሰርዝ"
     },
-    "stats": {
-      "totalUsers": "ጠቅላላ ተጠቃሚዎች",
-      "activeUsers": "ንቁ ተጠቃሚዎች",
-      "teachers": "አስተማሪዎች",
-      "students": "ተማሪዎች"
-    }
-  },
-  "settings": {
-    "title": "ቅንብሮች",
-    "subtitle": "የመለያ ቅንብሮችን እና ምርጫዎችን አስተዳድር።",
-    "changePassword": "የይለፍ ቃል ቀይር",
-    "changePasswordDescription": "የአሁኑን የይለፍ ቃል አስገባ እና አዲስ የይለፍ ቃል ምረጥ።",
-    "currentPassword": "የአሁኑ የይለፍ ቃል",
-    "newPassword": "አዲስ የይለፍ ቃል",
-    "confirmPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
-    "updatePassword": "የይለፍ ቃል አዘምን"
-  },
-  "reports": {
-    "title": "ሪፖርቶች",
-    "subtitle": "የስርዓት ሪፖርቶችን እና ትንታኔዎችን ይፍጠሩ።",
-    "generateReport": "ሪፖርት ፍጠር",
-    "reportType": "የሪፖርት አይነት",
-    "dateRange": "የቀን ክልል",
-    "fromDate": "ከቀን",
-    "toDate": "እስከ ቀን",
-    "includeDetails": "ዝርዝሮችን አካትት",
-    "exportFormat": "የማስመጣት ቅርጸት",
-    "pdf": "PDF",
-    "excel": "Excel",
-    "csv": "CSV",
-    "userReport": "የተጠቃሚ ሪፖርት",
-    "courseReport": "የኮርስ ሪፖርት",
-    "eventReport": "የክስተት ሪፖርት",
-    "systemReport": "የስርዓት ሪፖርት",
-    "generating": "ሪፖርት እየተፈጠረ...",
-    "download": "ሪፖርት አውርድ",
-    "reportGenerated": "ሪፖርት በተሳካ ሁኔታ ተፈጥሯል!",
-    "reportError": "ሪፖርት መፍጠር አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
-  },
-  "teacher": {
-    "title": "የአስተማሪ ዳሽቦርድ",
-    "subtitle": "ኮርሶችዎን፣ ተማሪዎችዎን እና የትምህርት እንቅስቃሴዎችዎን አስተዳድር።",
-    "stats": {
-      "activeCourses": "ንቁ ኮርሶች",
-      "totalStudents": "ጠቅላላ ተማሪዎች",
-      "pendingReviews": "ለጥበቃ በጥበቃ",
-      "avgRating": "አማካይ ደረጃ"
+    "updatesPage": {
+        "title": "አዳዲስ መረጃዎች",
+        "subtitle": "የትምህርት ቤቱን ዜናዎች፣ ክስተቶች እና ግንዛቤ ይከታተሉ"
     },
-    "recentSubmissions": {
-      "title": "የቅርብ ጊዜ ስብስቦች",
-      "subtitle": "ለግምገማ የሚያስፈልጉ የተማሪ ስራዎች",
-      "none": "የቅርብ ጊዜ ስብስቦች የሉም"
+    "home": {
+        "message": {
+            "title": "መልዕክት ከትምህርት ቤቱ",
+            "subtitle": "በተለምዶ ለትውልዶች ሁሉ በእምነት እና በእውቀት እንመራ ነበር፣ በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን ባህል ላይ የተመሰረተ.",
+            "body": "መንፈሳዊ እድገት እና የአካዳሚክ ልህቀት እጅ ለእጅ ተያይዘው የሚሄዱበት፣ ወጣት አእምሮዎችን ለአገልግሎት፣ ለአመራር እና የዕድሜ ልክ ትምህርት የሚያዘጋጁበትን ማህበረሰባችንን እንድታዩ እንጋብዝዎታለን።",
+            "cta": "ስለ አገልግሎታችን"
+        },
+        "events": {
+            "title": "የሚመጡ ክስተቶች",
+            "subtitle": "ከፕሮግራማችን ጋር ወቅታዊ ይሁኑ።"
+        },
+        "academicDepartments": {
+            "title": "የአካዳሚክ ክፍሎች",
+            "subtitle": "የተለያዩ የትምህርት አቅርቦቶች ያስሱ"
+        },
+        "stats": {
+            "studentsEnrolled": "የተመዘገቡ ተማሪዎች",
+            "yearsExperience": "የሚገኙ ኮርሶች",
+            "numberFaculty": "የተሞላ አስተማሪዎች",
+            "campus": "የካምፓስ መሣሪያዎች"
+        }
     },
-    "topStudents": "ከፍተኛ ተማሪዎች",
-    "myCourses": {
-      "rating": "አማካይ ደረጃ"
+    "admissions": {
+        "title": "ምዝገባ",
+        "subtitle": "የምዝገባ መስፈርቶች",
+        "card1": {
+            "title": "ርቀት, መደበኛ እና በይነመረብ ላይ ",
+            "point1": "ፎቶ",
+            "point2": "የመዝግብ ክፍያ",
+            "point3": "የትምህርት ሰነዶች (10 ክፍል በኋላ)",
+            "point4": "የቅድመ ፈተና ነጥብ"
+        },
+        "card2": {
+            "title": "ልጆች እና ጎረምሶች",
+            "point1": "ፎቶ",
+            "point2": "የመዝግብ ክፍያ",
+            "point3": "የትምህርት ሰነዶች (10 ክፍል በኋላ)",
+            "point4": "የቅድመ ፈተና ነጥብ"
+        },
+        "card3": {
+            "title": "ታዳጊ",
+            "point1": "የተመዘገቡ የትምህርት ሰነዶች",
+            "point2": "የቅድመ ፈተና ነጥብ",
+            "point3": "ዕድሜ 15-18"
+        }
     },
-    "quickActions": {
-      "title": "ፈጣን እንቅስቃሴዎች",
-      "createAssignment": "ስራ ፍጠር",
-      "messageStudents": "ተማሪዎችን መልእክት ላክ"
+    "contact": {
+        "hero": {
+            "title": "እኛን ያግኙ። ",
+            "subtitle": "ሊኖሮት የሚችለውን ማንኛውንም ጥያቄ ለመርዳት እና ለመመለስ ዝግጁ ነን።"
+        },
+        "cards": {
+            "phone": { "title": "ስልክ", "description": "ሰኞ - አርብ, 2:00 AM - 11:00 PM" },
+            "email": { "title": "ኢሜይል", "description": "በ 24 ሰዓታት ውስጥ ምላሽ እንሰጣለን" },
+            "address": { "title": "አድራሻ", "description": "ዋና ካምፓስ አድራሻ" },
+            "officeHours": { "title": "የቢሮ ሰዓቶች", "description": "በእሁድ እና በበዓላት ዝግ ነው።" }
+        },
+        "form": {
+            "title": "መልእክት ላኩልን",
+            "subtitle": "ከታች ያለውን ቅጽ ይሙሉ እና በተቻለ ፍጥነት ወደ እርስዎ እንመለሳለን",
+            "labels": {
+                "name": "ሙሉ ስም *",
+                "email": "የኢሜል አድራሻ *",
+                "subject": "ርዕሰ ጉዳይ *",
+                "message": "መልእክት *"
+            },
+            "placeholders": {
+                "name": "ሙሉ ስምዎን ያስገቡ",
+                "email": "የኢሜል አድራሻዎን ያስገቡ",
+                "subject": "የመልእክት ርዕሰ ጉዳይ ያስገቡ",
+                "message": "የመልእክትዎን ይጻፉ"
+            },
+            "submit": "መልእክት ላኩልን",
+            "sending": "መላክ በሂደት ላይ ነው...",
+            "success": "መልእክት ተላክቷል!",
+            "error": "መልእክት ላኩልን አልቻልንም። እባኮትን ይሞክሩ.",
+            "failed": "መልእክት መላክ አልተሳካም"
+        },
+        "map": {
+            "title": "Interactive Map",
+            "subtitle": "Google Maps integration would go here"
+        },
+        "visit": {
+            "title": "ካምፓሳችንን ይጎብኙ",
+            "body": "ዋናው ካምፓሳችን የሚገኘው በአዲስ አበባ እምብርት ሲሆን በቀላሉ በህዝብ ማመላለሻ ተደራሽ ነው።",
+            "address": "አድራሻ:",
+            "city": "ከተማ:",
+            "postalCode": "የፖስታ ኮድ:"
+        },
+        "quick": {
+            "title": "ፈጣን ኮንክት",
+            "emergency": { "title": "", "value": "+251-11-123-4569" },
+            "support": { "title": "የተማሪ ድጋፍ", "value": "support@straguel.edu.et" }
+        },
+        "faq": {
+            "title": "የተደጋገሙ ጥያቄዎች",
+            "body": "Before contacting us, you might find the answer to your question in our FAQ section.",
+            "cta": "View FAQ"
+        }
     },
-    "analytics": {
-      "title": "ትንታኔ",
-      "subtitle": "የትምህርት አፈጻጸምዎን እና የተማሪ እድገትን ይከታተሉ።",
-      "courseAnalytics": "የኮርስ ትንታኔ",
-      "studentPerformance": "የተማሪ አፈጻጸም",
-      "overview": "አጠቃላይ እይታ",
-      "selectCourse": "ኮርስ ይምረጡ",
-      "allCourses": "ሁሉም ኮርሶች",
-      "totalStudents": "ጠቅላላ ተማሪዎች",
-      "averageProgress": "አማካይ እድገት",
-      "averageGrade": "አማካይ ደረጃ",
-      "completionRate": "የማጠናቀቂያ መጠን",
-      "totalAssignments": "ጠቅላላ ስራዎች",
-      "totalSubmissions": "ጠቅላላ ስራዎች",
-      "gradedSubmissions": "የተገመገመ ስራዎች",
-      "studentName": "የተማሪ ስም",
-      "courseTitle": "የኮርስ ርእስ",
-      "progress": "እድገት",
-      "averageGrade": "አማካይ ደረጃ",
-      "totalAssignments": "ጠቅላላ ስራዎች",
-      "completedAssignments": "የተጠናቀቁ ስራዎች",
-      "lastActivity": "የመጨረሻ እንቅስቃሴ",
-      "noData": "ዳታ የለም",
-      "loading": "ትንታኔ እየተጫነ..."
+    "footer": {
+        "quickLinks": "ፈጣን አገናኞች",
+        "resources": "ሀብቶች",
+        "contact": "የእውቂያ መረጃ",
+        "about": "ስለ እኛ",
+        "academicPrograms": "አካዳሚክ ፕሮግራሞች",
+        "admissions": "መግቢያ",
+        "academicCalendar": "የአካዳሚክ ቀን መቁጠሪያ",
+        "rules": "ህጎች እና መመሪያዎች",
+        "latestUpdates": "የቅርብ ጊዜ አዳዲስ",
+        "discussionForum": "ውይይት ፎረም",
+        "studentPortal": "የተማሪ ፖርታል",
+        "privacy": "የግላዊነት ፖሊሲ",
+        "terms": "የአገልግሎት ውሎች",
+        "tagline": "በኦርቶዶክስ ባህል ውስጥ ጥሩ መንፈሳዊ ትምህርት መስጠት እና የትንሽ አእምሮዎችን ማሳደግ.",
+        "copyright": "የሁሉም መብት ተፈጻሚ ነው።"
     },
-    "grades": {
-      "title": "የደረጃ አስተዳደር",
-      "subtitle": "የተማሪ ስራዎችን ይገምግሙ እና ይገምግሙ።",
-      "searchPlaceholder": "ስራዎችን ፈልግ...",
-      "filterByStatus": "በሁኔታ አጣራ",
-      "allStatuses": "ሁሉም ሁኔታዎች",
-      "submitted": "ቀርቧል",
-      "graded": "ተገመግሟል",
-      "filterByCourse": "በኮርስ አጣራ",
-      "allCourses": "ሁሉም ኮርሶች",
-      "sortBy": "በዚህ አይነት አደራጅ",
-      "submissionDate": "የስራ ቀን",
-      "studentName": "የተማሪ ስም",
-      "courseTitle": "የኮርስ ርእስ",
-      "assignmentTitle": "የስራ ርእስ",
-      "grade": "ደረጃ",
-      "maxScore": "ከፍተኛ ነጥብ",
-      "status": "ሁኔታ",
-      "actions": "እንቅስቃሴዎች",
-      "view": "ይመልከቱ",
-      "grade": "ይገምግሙ",
-      "noSubmissions": "ምንም ስራ አልተገኘም",
-      "loading": "ስራዎች እየተጫነ...",
-      "gradeSubmission": "ስራ ይገምግሙ",
-      "enterGrade": "ደረጃ ያስገቡ",
-      "enterFeedback": "ግብረ መልስ ያስገቡ",
-      "saveGrade": "ደረጃ አስቀምጥ",
-      "cancel": "ይቅር",
-      "gradeSaved": "ደረጃ በተሳካ ሁኔታ ተስቀምጧል!",
-      "gradeError": "ደረጃ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
+    "academic": {
+        "hero": {
+            "title": "የአካዳሚክ ፕሮግራሞች",
+            "subtitle": "መንፈሳዊ አጠቃላይ ሥነ-መለኮታዊ ትምህርት።"
+        },
+        "subhero": {
+            "title": "ዓመታዊ ትምህርቶች",
+            "subtitle": "የእኛን አጠቃላይ የስነ-መለኮት እና የመንፈሳዊ ጥናት መርሃ ግብሮችን ያስሱ"
+        },
+        "offerings": {
+            "year1": {
+                "course1": ["ትምህርተ ሃይማኖት", "84 hour", "5 Credits", "መግቢያ ፈተና ያለፉ፣ከ10 ክፍል በላይ፣ከ18 ዓመት በላይ"],
+                "course2": ["መጽሐፍ ቅዱስ ጥናት", "57 hour", "3 Credits", "መግቢያ ፈተና ያለፉ፣ከ10 ክፍል በላይ፣ከ18 ዓመት በላይ"],
+                "course3": ["የቤተክርስቲያን ታሪክ መግቢያ", " 57 hour", "3 Credits", "መግቢያ ፈተና ያለፉ፣ከ10 ክፍል በላይ፣ከ18 ዓመት በላይ"],
+                "course4": ["ክርስቲያናዊ ሥነምግባር", "57 hour", "3 Credits", "መግቢያ ፈተና ያለፉ፣ከ10 ክፍል በላይ፣ከ18 ዓመት በላይ"],
+                "course5": ["ግእዝ 1", "29 hours", "2 Credits", "መግቢያ ፈተና ያለፉ፣ከ10 ክፍል በላይ፣ከ18 ዓመት በላይ"]
+            },
+            "year2": {
+                "course1": ["የቤተክርስቲያን ታሪክ በዓለም መድረክ", "57 hour", "3 Credits", "ታሪክ መግቢያ"],
+                "course2": ["የቤተክርስቲያን ታሪክ በኢትዮጵያ", "57 hour", "3 Credits", "ታሪክ መግቢያ"],
+                "course3": ["ምስጢራተ ቤተክርሰቲያን", "57 hour", "3 Credits", "-"],
+                "course4": ["ነገረ ማርያም ወቅዱሳን", "57 hour", "3 Credits", "ትምህርተ ሃይማኖት መግቢያ"],
+                "course5": ["ግእዝ 2", "29 hours", "2 Credits", "ግእዝ 1"],
+                "course6": ["ሥርዓተ ቤተ ክርስቲያን", "29 hours", "2 Credits", "-"]
+            },
+            "year4": {
+                "course1": ["የማቴዮስ አንድምታ 2", "57 hour", "3 Credits", "ማቴዎስ አንድምታ 1"],
+                "course2": ["የዮሐንስ አንድምታ 2", "57 hour", "3 Credits", "ዮሐንስ አንድምታ 1"],
+                "course3": ["ትምህርተ አበው", "57 hour", "3 Credits", "ነገረ ድኅነት ፣ጉባኤያት"],
+                "course4": ["ግእዝ 4", "57 hour", "3 Credits", "ግእዝ 3"],
+                "course5": ["ስብከት ዘዴ", "57 hours", "3 Credits", "-"],
+                "course6": ["ጥናታዊ ጽሑፍ ", "29 hours", "2 Credits", "ጥናትና ምርምር"]
+            },
+            "year3": {
+                "course1": ["የማቴዮስ አንድምታ 1", "57 hour", "3 Credits", "ሐዲስ ኪዳን"],
+                "course2": ["የዮሐንስ አንድምታ 1 ", "57 hour", "3 Credits", "ሐዲስ ኪዳን"],
+                "course3": ["ጉባዔያት", "29 hour", "2 Credits", "ት/ሃይማኖት፣ ነገረ ማርያም ወቅዱሳን"],
+                "course4": ["ጥናት ና ምርምር", "29 hour'", "2 Credits", "-"],
+                "course5": ["መንፈሳዊ አገልግሎት ", "29 hours", "2 Credits", "-"],
+                "course6": ["ግእዝ 3", "57 hours", "3 Credits", "ግእዝ 2"],
+                "course7": ["ነገረ ድኅነት", "29 hours", "2 Credits", "ት/ሃይማኖት፣ ነገረ ማርያም ወቅዱሳን"]
+            }
+        },
+        "cta": { "title": "የአካዳሚክ ጉዞዎን ለመጀመር ዝግጁ ነዎት?", "subtitle": "በመንፈሳዊ አመራር እና አገልግሎት ጥሪዎ ላይ የመጀመሪያውን እርምጃ ይውሰዱ።", "applyButton": "የመግቢያ ማመልከቻ" }
+
     },
-    "announcements": {
-      "title": "ማስታወቂያዎች",
-      "subtitle": "የኮርስ ማስታወቂያዎችን ይፍጠሩ እና አስተዳድሩ።",
-      "createAnnouncement": "ማስታወቂያ ፍጠር",
-      "searchPlaceholder": "ማስታወቂያዎችን ፈልግ...",
-      "filterByCourse": "በኮርስ አጣራ",
-      "allCourses": "ሁሉም ኮርሶች",
-      "sortBy": "በዚህ አይነት አደራጅ",
-      "newest": "አዲስ",
-      "oldest": "አሮጌ",
-      "title": "ርእስ",
-      "course": "ኮርስ",
-      "createdAt": "ተፈጥሯል",
-      "actions": "እንቅስቃሴዎች",
-      "edit": "አርትዕ",
-      "delete": "ሰርዝ",
-      "noAnnouncements": "ምንም ማስታወቂያ አልተገኘም",
-      "loading": "ማስታወቂያዎች እየተጫነ...",
-      "createNew": "አዲስ ማስታወቂያ ፍጠር",
-      "editAnnouncement": "ማስታወቂያ አርትዕ",
-      "announcementTitle": "የማስታወቂያ ርእስ",
-      "selectCourse": "ኮርስ ይምረጡ",
-      "announcementContent": "የማስታወቂያ ይዘት",
-      "saveAnnouncement": "ማስታወቂያ አስቀምጥ",
-      "cancel": "ይቅር",
-      "announcementCreated": "ማስታወቂያ በተሳካ ሁኔታ ተፈጥሯል!",
-      "announcementUpdated": "ማስታወቂያ በተሳካ ሁኔታ ተዘመነ!",
-      "announcementDeleted": "ማስታወቂያ በተሳካ ሁኔታ ተሰርዟል!",
-      "announcementError": "ማስታወቂያ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
-      "deleteConfirm": "ይህን ማስታወቂያ መሰረዝ እርግጠኛ ነዎት?",
-      "deleteConfirmTitle": "ማስታወቂያ ሰርዝ"
+    "academicPage": {
+        "title": "አካዳሚክ ፕሮግራሞች",
+        "subtitle": "ሁሉንም ኮርሶች እና ፕሮግራሞች ይመልከቱ",
+        "apply": "ለመቀበል ይመልከቱ",
+        "contact": "አግኙን"
     },
-    "materials": {
-      "title": "የኮርስ ቁሳቁሶች",
-      "subtitle": "የኮርስ ቁሳቁሶችን እና ሀብቶችን አስተዳድር።",
-      "createMaterial": "ቁሳቁስ ፍጠር",
-      "searchPlaceholder": "ቁሳቁሶችን ፈልግ...",
-      "filterByCourse": "በኮርስ አጣራ",
-      "allCourses": "ሁሉም ኮርሶች",
-      "sortBy": "በዚህ አይነት አደራጅ",
-      "newest": "አዲስ",
-      "oldest": "አሮጌ",
-      "title": "ርእስ",
-      "course": "ኮርስ",
-      "type": "አይነት",
-      "createdAt": "ተፈጥሯል",
-      "actions": "እንቅስቃሴዎች",
-      "edit": "አርትዕ",
-      "delete": "ሰርዝ",
-      "noMaterials": "ምንም ቁሳቁስ አልተገኘም",
-      "loading": "ቁሳቁሶች እየተጫነ...",
-      "createNew": "አዲስ ቁሳቁስ ፍጠር",
-      "editMaterial": "ቁሳቁስ አርትዕ",
-      "materialTitle": "የቁሳቁስ ርእስ",
-      "selectCourse": "ኮርስ ይምረጡ",
-      "materialType": "የቁሳቁስ አይነት",
-      "document": "ሰነድ",
-      "video": "ቪዲዮ",
-      "link": "አገናኝ",
-      "materialContent": "የቁሳቁስ ይዘት",
-      "materialUrl": "የቁሳቁስ URL",
-      "saveMaterial": "ቁሳቁስ አስቀምጥ",
-      "cancel": "ይቅር",
-      "materialCreated": "ቁሳቁስ በተሳካ ሁኔታ ተፈጥሯል!",
-      "materialUpdated": "ቁሳቁስ በተሳካ ሁኔታ ተዘመነ!",
-      "materialDeleted": "ቁሳቁስ በተሳካ ሁኔታ ተሰርዟል!",
-      "materialError": "ቁሳቁስ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
-      "deleteConfirm": "ይህን ቁሳቁስ መሰረዝ እርግጠኛ ነዎት?",
-      "deleteConfirmTitle": "ቁሳቁስ ሰርዝ"
+    "search": {
+        "placeholder": "ተጠቃሚዎችን፣ ኮርሶችን፣ ክስተቶችን ፈልግ..."
+    },
+    "notifications": {
+        "announcements": "ማስታወቂያዎች",
+        "none": "ማስታወቂያ የለም"
+    },
+    "language": {
+        "label": "ቋንቋ"
     },
     "courses": {
-      "title": "የእኔ ኮርሶች",
-      "subtitle": "ኮርሶችዎን አስተዳድሩ እና የተማሪ እድገትን ተከታትሉ።",
-      "searchPlaceholder": "ኮርሶችን ፈልግ...",
-      "filterByStatus": "በሁኔታ አጣራ",
-      "allStatuses": "ሁሉም ሁኔታዎች",
-      "active": "ንቁ",
-      "inactive": "አልተንቀሳቀሰ",
-      "sortBy": "በዚህ አይነት አደራጅ",
-      "titleAsc": "ርእስ አ-ዘ",
-      "titleDesc": "ርእስ ዘ-አ",
-      "dateAsc": "ቀን (አሮጌ)",
-      "dateDesc": "ቀን (አዲስ)",
-      "course": "ኮርስ",
-      "category": "ምድብ",
-      "status": "ሁኔታ",
-      "duration": "ጊዜ",
-      "created": "ተፈጥሯል",
-      "actions": "እንቅስቃሴዎች",
-      "view": "ይመልከቱ",
-      "edit": "አርትዕ",
-      "noCourses": "ምንም ኮርስ አልተገኘም",
-      "loading": "ኮርሶች እየተጫነ...",
-      "createNew": "አዲስ ኮርስ ፍጠር",
-      "weeks": "ሳምንታት",
-      "editCourse": "ኮርስ አርትዕ",
-      "description": "መግለጫ",
-      "syllabus": "ሲላብስ",
-      "noMatch": "በማጣሪያዎ ጋር የሚዛመዱ ኮርሶች የሉም",
-      "countSuffix": "ኮርሶች ተገኝተዋል"
+        "title": "ኮርስ ካታሎግ",
+        "subtitle": "ለመድረስ እና ለማስተላለፍ የተነደፉ የኮርሶች ስብስብ ያስሱ።",
+        "searchLabel": "ኮርሶች ፈልግ",
+        "searchPlaceholder": "ኮርሶች፣ አስተማሪዎች ወይም ርዕሶች ፈልግ...",
+        "categoryFilter": "ምድብ",
+        "allCategories": "ሁሉም ምድቦች",
+        "statusFilter": "የሁኔታ ማጣሪያ",
+        "allStatus": "ሁሉም ሁኔታ",
+        "approved": "አጽድቋል",
+        "pending": "በመጠባበቅ ላይ",
+        "pendingApproval": "የማጽደቅ መጠባበቂያ",
+        "instructor": "አስተማሪ",
+        "hours": "ሰዓታት"
+    },
+    "events": {
+        "searchPlaceholder": "ክስተቶችን በርእስ፣ መግለጫ ወይም ቦታ ፈልግ...",
+        "allStatus": "ሁሉም ሁኔታ",
+        "status": {
+            "upcoming": "በቅርቡ",
+            "ongoing": "በመካከል",
+            "completed": "ተጠናቀቀ"
+        },
+        "attendees": "ተሳታፊዎች"
+    },
+    "superadmin": {
+        "title": "የሱፐር አስተዳዳሪ ዳሽቦርድ",
+        "subtitle": "የስርዓት ደረጃ ትንታኔ እና እይታ.",
+        "completionRate": "የመጨረሻ መጠን",
+        "roleDistribution": "የሚና መመዝገብ",
+        "courseCompletion": "የኮርስ መጨረሻ",
+        "userActivity": "የተጠቃሚ እንቅስቃሴ"
+    },
+    "rules": {
+        "hero": { "title": "ህግ እና ደንቦች", "subtitle": "የተከበረ፣ ደህንነቱ የተጠበቀ እና ታማኝ ማህበረሰብን ለማረጋገጥ የምንከተላቸው መመሪያዎች።" },
+        "items": {
+            "respect": { "title": "Respect and Conduct", "body": "Students must maintain respectful behavior towards peers, faculty, and staff at all times, reflecting our Orthodox values." },
+            "attendance": { "title": "Attendance", "body": "Regular attendance is mandatory for all classes, liturgies, and scheduled events unless excused." },
+            "dress": { "title": "Dress Code", "body": "Modest attire is required on campus and during services, in accordance with school guidelines." },
+            "integrity": { "title": "Academic Integrity", "body": "Plagiarism, cheating, and any form of academic dishonesty are strictly prohibited." },
+            "facilities": { "title": "Use of Facilities", "body": "School facilities should be used responsibly. Any damage or misuse will result in disciplinary action." }
+        },
+        "importantNotice": {
+            "title": "ማስታወቂያ",
+            "body": "ሁሉም ተማሪዎች በምዝገባ ወቅት ስለእነዚህ ህጎች እና መመሪያዎች ግንዛቤ ማንበብ እና እውቅና መስጠት ይጠበቅባቸዋል። የእነዚህ ፖሊሲዎች መጣስ ማስጠንቀቂያዎችን፣ የሙከራ ጊዜን፣ መታገድን ወይም ከተቋሙ መባረርን ጨምሮ የዲሲፕሊን እርምጃ ሊወስድ ይችላል።",
+            "body2": "ስለእነዚህ ፖሊሲዎች ጥያቄዎች ካሉዎት፣ እባክዎን መመሪያ ለማግኘት የተማሪ ጉዳይ ቢሮን ያነጋግሩ።"
+        },
+        "ruleCategories": {
+            "StudentConduct": { "title": "የተማሪ ምግባር", "rules": ["ለመምህራን፣ ለሰራተኞች እና ለሌሎች ተማሪዎች አክብሮት ያለው ባህሪ ይኑርዎት።", "በተቋማዊ መመሪያዎች መሰረት በትህትና እና በአግባቡ ይልበሱ።", "በሁሉም የታቀዱ ክፍሎች ይሳተፉ እና በውይይቶች ላይ በንቃት ይሳተፋሉ።", "ስራዎችን በሰዓቱ ያቅርቡ እና የአካዳሚክ ታማኝነትን ይጠብቁ።", "በማህበረሰብ አምልኮ እና በመንፈሳዊ መሰረት እንቅስቃሴዎች ውስጥ ይሳተፉ"] },
+            "AcademicStandards": { "title": "የትምህርት እሴቶች", "rules": ["በጥሩ የትምህርት ደረጃ ለመቆየት ቢያንስ 3.5 GPA ይጠብቁ።", "ሁሉንም የሚፈለጉትን የኮርስ ስራዎች በተሰየመው የጊዜ ገደብ ውስጥ ያጠናቅቁ።", "ሁሉንም ምንጮች በትክክል መጥቀስ እና በሁሉም የአካዳሚክ ስራዎች ውስጥ ማጭበርበርን ያስወግዱ", "ለፈተና ብቁ ለመሆን ለእያንዳንዱ ኮርስ ቢያንስ 80% ክፍሎችን ይከታተሉ።", "በማስተማር እና በምክር አገልግሎቶች አስፈላጊ ሆኖ ሲገኝ የአካዳሚክ ድጋፍ ይፈልጉ።"] },
+            "AcademicPolicies": { "title": "የአካዳሚክ ፖሊሲዎች", "rules": ["ለሁሉም ክፍሎች እና የጸሎት ቤቶች አገልግሎቶች መደበኛ መገኘት ግዴታ ነው።", "በተቻለ መጠን ለታቀዱ መቅረቶች ለአስተማሪዎች አስቀድመው ያሳውቁ።", "ከህክምና ወይም ከድንገተኛ አደጋ ጋር ለተያያዙ መቅረቶች ሰነዶችን ያቅርቡ።", "ወደ ክፍል ከተመለሱ በኋላ በአንድ ሳምንት ውስጥ ያመለጡ ስራዎችን ያካክሉ።", "ከመጠን በላይ መቅረት የኮርስ ውድቀትን ወይም የዲሲፕሊን እርምጃን ሊያስከትል ይችላል።"] },
+            "CampusSafety": { "title": "የካምፓስ ደህንነት", "rules": ["ሁሉንም የደህንነት ፕሮቶኮሎች እና የአደጋ ጊዜ ሂደቶችን ይከተሉ።", "ማናቸውንም የደህንነት ስጋቶች ወይም ክስተቶች ለግቢው ደህንነት ወዲያውኑ ያሳውቁ።", "ንጹህ እና የተደራጁ የመኖሪያ እና የጥናት ቦታዎችን ይጠብቁ።", "የግቢውን ንብረት አክብሩ እና ማንኛውንም ጉዳት ወዲያውኑ ያሳውቁ።", "የጎብኝ ፖሊሲዎችን ያከብሩ እና እንግዶችን በማንኛውም ጊዜ ያጅቡ።"] },
+            "SpiritualFormation": { "title": "የመንፈሳዊ መሠረት", "rules": ["በየእለቱ ጸሎቶች እና ሳምንታዊ የጸሎት አገልግሎቶች ላይ በንቃት ይሳተፋሉ።", "በሃይማኖቶች መካከል በሚደረግ ውይይት እና ውይይት ውስጥ በአክብሮት ይሳተፉ።", "ሙሉ በሙሉ የሚፈለጉ መንፈሳዊ ምስረታ እንቅስቃሴዎች እና ማፈግፈግ።", "በፋኩልቲ እንደተበረታቱት የግል የአምልኮ ልማዶችን ይጠብቁ።", "በበጎ ፈቃደኝነት ስራ እና በማዳረስ ፕሮግራሞች ማህበረሰቡን ማገልገል።"] },
+            "DisciplinaryProcedures": { "title": "የዲሲፕሊን ሂደቶች", "rules": ["ጥቃቅን ጥሰቶች የቃል ማስጠንቀቂያዎችን እና ምክርን ያስከትላሉ", "የተደጋገሙ ጥሰቶች ወደ የጽሁፍ ማስጠንቀቂያዎች እና የሙከራ ጊዜ ሊመሩ ይችላሉ", "ከባድ የስነምግባር ጉድለት መታገድ ወይም መባረር ሊያስከትል ይችላል", "ተማሪዎች የዲሲፕሊን ውሳኔዎችን ይግባኝ የማለት መብት አላቸው", "ሁሉም የዲሲፕሊን እርምጃዎች በተማሪ መዝገቦች ውስጥ ተመዝግበዋል"] }
+        },
+        "Download": {
+            "title": "ሙሉ መመሪያዎችን ያውርዱ።",
+            "subTitle": "ለአጠቃላይ መረጃ ዝርዝር የፖሊሲ ሰነዶችን ያግኙ።",
+            "button": { "label": "የተሟላ የተማሪ መመሪያ መጽሐፍ እና ህጎች።", "subLabel": "ሁሉንም ፖሊሲዎች እና ሂደቶችን የሚሸፍን አጠቃላይ መመሪያ።" }
+        },
+        "Questions": {
+            "title": "ስለ ፖሊሲያችን ጥያቄዎች?",
+            "body": "የኛ የተማሪ ጉዳይ ቡድን ሊኖሩዎት የሚችሉትን ማንኛውንም ጥያቄዎች ለማብራራት እዚህ አሉ።",
+            "contactButton": "የተማሪ ጉዳዮችን ያግኙ።"
+        },
+        "communityStandards": {
+            "title": "የማህበረሰብ እሴቶች",
+            "body": "እነዚህ መመሪያዎች ሁሉም የማህበረሰባችን አባላት በመንፈሳዊ፣ በአካዳሚክ እና በግል የሚያድጉበት ደጋፊ አካባቢ ለመፍጠር ይረዳሉ። ሁሉም የተማሪ ስቶ እነዚህን መመዘኛዎች በታማኝነት እና በአክብሮት ያከብራሉ ብለን እንጠብቃለን።"
+        }
+
+    },
+    "common": {
+        "dashboard": "ዳሽቦርድ",
+        "viewAllSubmissions": "ሁሉንም ስብስቦች ይመልከቱ",
+        "saving": "በመቀመጥ ላይ...",
+        "cancel": "ሰርዝ",
+        "delete": "ሰርዝ",
+        "approve": "ፀድቅ",
+        "reject": "አትቀበል",
+        "by": "በ",
+        "view": "ይመልከቱ",
+        "table": "ሰንጠረዥ",
+        "grid": "ግሪድ",
+        "viewAll": "ሁሉንም ይመልከቱ",
+        "accessDenied": "መዳረሻ ታግዷል",
+        "teacherOnly": "ይህን ገፅ መዳረስ ለአስተማሪዎች ብቻ ነው።",
+        "saveChanges": "ለውጦችን አስቀምጥ",
+        "created": "ተፈጥሯል"
+    },
+    "studentProgress": {
+        "highest": "ከፍተኛ እድገት ያላቸው ተማሪዎች"
+    },
+    "users": {
+        "all": "ሁሉም ተጠቃሚዎች",
+        "searchPlaceholder": "ተጠቃሚዎችን በስም፣ ኢሜይል ወይም ሚና ፈልግ...",
+        "filterByRole": "በሚና አጣራ",
+        "subtitle": "የተጠቃሚ መለያዎችን፣ ፈቃዶችን እና መዳረሻን አስተዳድር.",
+        "export": "ተጠቃሚዎች አስመጣ",
+        "add": "ተጠቃሚ ጨምር",
+        "addMany": "ተጠቃሚዎች ጨምር",
+        "mode": { "single": "ነጠላ", "bulk": "ብዙ" },
+        "singleDescription": "ከተወሰነ ሚና ጋር ነጠላ መለያ ፍጠር.",
+        "bulkDescription": "በአንድ ጊዜ ብዙ ተጠቃሚዎች ለመፍጠር CSV አስገባ.",
+        "form": { "name": "ስም", "name_placeholder": "ሙሉ ስም አስገባ" },
+        "create": "ተጠቃሚ ፍጠር",
+        "edit": "ተጠቃሚ አርትዕ",
+        "updateFor": "ዝርዝሮችን አስተካክል ለ {name}.",
+        "thisUser": "ይህ ተጠቃሚ",
+        "saveChanges": "ለውጦችን አስቀምጥ",
+        "cannotDeleteAdmin": "አስተዳዳሪ ወይም ሱፐር አስተዳዳሪ አይሰረዝም",
+        "confirmDelete": "ይህን ተጠቃሚ መሰረዝ እርግጠኛ ነዎት?",
+        "errors": { "deleteFailed": "ተጠቃሚን ማስወገድ ላይ ስህተት:" },
+        "delete": "ሰርዝ",
+        "roles": {
+            "all": "ሁሉም ሚናዎች",
+            "student": "ተማሪ",
+            "teacher": "አስተማሪ",
+            "admin": "አስተዳዳሪ",
+            "super_admin": "ሱፐር አስተዳዳሪ"
+        },
+        "table": {
+            "user": "ተጠቃሚ",
+            "role": "ሚና",
+            "status": "ሁኔታ",
+            "created": "ተፈጠረ"
+        },
+        "status": {
+            "active": "ክፍት",
+            "inactive": "ተዘግቷል"
+        },
+        "stats": {
+            "totalUsers": "ጠቅላላ ተጠቃሚዎች",
+            "activeUsers": "ክፍት ተጠቃሚዎች",
+            "teachers": "አስተማሪዎች",
+            "students": "ተማሪዎች"
+        }
+    },
+    "settings": {
+        "title": "ቅንብሮች",
+        "subtitle": "የመለያ ቅንብሮችን እና ምርጫዎችን አስተዳድር።",
+        "changePassword": "የይለፍ ቃል ቀይር",
+        "changePasswordDescription": "የአሁኑን የይለፍ ቃል አስገባ እና አዲስ የይለፍ ቃል ምረጥ።",
+        "currentPassword": "የአሁኑ የይለፍ ቃል",
+        "newPassword": "አዲስ የይለፍ ቃል",
+        "confirmPassword": "አዲሱን የይለፍ ቃል አረጋግጥ",
+        "updatePassword": "የይለፍ ቃል አዘምን"
+    },
+    "reports": {
+        "title": "ሪፖርቶች",
+        "subtitle": "የስርዓት ሪፖርቶችን እና ትንታኔዎችን ይፍጠሩ።",
+        "generateReport": "ሪፖርት ፍጠር",
+        "reportType": "የሪፖርት አይነት",
+        "dateRange": "የቀን ክልል",
+        "fromDate": "ከቀን",
+        "toDate": "እስከ ቀን",
+        "includeDetails": "ዝርዝሮችን አካትት",
+        "exportFormat": "የማስመጣት ቅርጸት",
+        "pdf": "PDF",
+        "excel": "Excel",
+        "csv": "CSV",
+        "userReport": "የተጠቃሚ ሪፖርት",
+        "courseReport": "የኮርስ ሪፖርት",
+        "eventReport": "የክስተት ሪፖርት",
+        "systemReport": "የስርዓት ሪፖርት",
+        "generating": "ሪፖርት እየተፈጠረ...",
+        "download": "ሪፖርት አውርድ",
+        "reportGenerated": "ሪፖርት በተሳካ ሁኔታ ተፈጥሯል!",
+        "reportError": "ሪፖርት መፍጠር አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
+    },
+    "teacher": {
+        "title": "የአስተማሪ ዳሽቦርድ",
+        "subtitle": "ኮርሶችዎን፣ ተማሪዎችዎን እና የትምህርት እንቅስቃሴዎችዎን አስተዳድር።",
+        "stats": {
+            "activeCourses": "ክፍት ኮርሶች",
+            "totalStudents": "ጠቅላላ ተማሪዎች",
+            "pendingReviews": "ለጥበቃ በጥበቃ",
+            "avgRating": "አማካይ ደረጃ"
+        },
+        "recentSubmissions": {
+            "title": "የቅርብ ጊዜ ስብስቦች",
+            "subtitle": "ለግምገማ የሚያስፈልጉ የተማሪ ስራዎች",
+            "none": "የቅርብ ጊዜ ስብስቦች የሉም"
+        },
+        "topStudents": "ከፍተኛ ተማሪዎች",
+        "myCourses": {
+            "rating": "አማካይ ደረጃ"
+        },
+        "quickActions": {
+            "title": "ፈጣን እንቅስቃሴዎች",
+            "createAssignment": "ስራ ፍጠር",
+            "messageStudents": "ተማሪዎችን መልእክት ላክ"
+        },
+        "analytics": {
+            "title": "ትንታኔ",
+            "subtitle": "የትምህርት አፈጻጸምዎን እና የተማሪ እድገትን ይከታተሉ።",
+            "courseAnalytics": "የኮርስ ትንታኔ",
+            "studentPerformance": "የተማሪ አፈጻጸም",
+            "overview": "አጠቃላይ እይታ",
+            "selectCourse": "ኮርስ ይምረጡ",
+            "allCourses": "ሁሉም ኮርሶች",
+            "totalStudents": "ጠቅላላ ተማሪዎች",
+            "averageProgress": "አማካይ እድገት",
+            "averageGrade": "አማካይ ደረጃ",
+            "completionRate": "የማጠናቀቂያ መጠን",
+            "totalAssignments": "ጠቅላላ ስራዎች",
+            "totalSubmissions": "ጠቅላላ ስራዎች",
+            "gradedSubmissions": "የተገመገመ ስራዎች",
+            "studentName": "የተማሪ ስም",
+            "courseTitle": "የኮርስ ርእስ",
+            "progress": "እድገት",
+            "averageGrade": "አማካይ ደረጃ",
+            "totalAssignments": "ጠቅላላ ስራዎች",
+            "completedAssignments": "የተጠናቀቁ ስራዎች",
+            "lastActivity": "የመጨረሻ እንቅስቃሴ",
+            "noData": "ዳታ የለም",
+            "loading": "ትንታኔ እየተጫነ..."
+        },
+        "grades": {
+            "title": "የደረጃ አስተዳደር",
+            "subtitle": "የተማሪ ስራዎችን ይገምግሙ እና ይገምግሙ።",
+            "searchPlaceholder": "ስራዎችን ፈልግ...",
+            "filterByStatus": "በሁኔታ አጣራ",
+            "allStatuses": "ሁሉም ሁኔታዎች",
+            "submitted": "ቀርቧል",
+            "graded": "ተገመግሟል",
+            "filterByCourse": "በኮርስ አጣራ",
+            "allCourses": "ሁሉም ኮርሶች",
+            "sortBy": "በዚህ አይነት አደራጅ",
+            "submissionDate": "የስራ ቀን",
+            "studentName": "የተማሪ ስም",
+            "courseTitle": "የኮርስ ርእስ",
+            "assignmentTitle": "የስራ ርእስ",
+            "grade": "ደረጃ",
+            "maxScore": "ከፍተኛ ነጥብ",
+            "status": "ሁኔታ",
+            "actions": "እንቅስቃሴዎች",
+            "view": "ይመልከቱ",
+            "grade": "ይገምግሙ",
+            "noSubmissions": "ምንም ስራ አልተገኘም",
+            "loading": "ስራዎች እየተጫነ...",
+            "gradeSubmission": "ስራ ይገምግሙ",
+            "enterGrade": "ደረጃ ያስገቡ",
+            "enterFeedback": "ግብረ መልስ ያስገቡ",
+            "saveGrade": "ደረጃ አስቀምጥ",
+            "cancel": "ይቅር",
+            "gradeSaved": "ደረጃ በተሳካ ሁኔታ ተስቀምጧል!",
+            "gradeError": "ደረጃ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
+        },
+        "announcements": {
+            "title": "ማስታወቂያዎች",
+            "subtitle": "የኮርስ ማስታወቂያዎችን ይፍጠሩ እና አስተዳድሩ።",
+            "createAnnouncement": "ማስታወቂያ ፍጠር",
+            "searchPlaceholder": "ማስታወቂያዎችን ፈልግ...",
+            "filterByCourse": "በኮርስ አጣራ",
+            "allCourses": "ሁሉም ኮርሶች",
+            "sortBy": "በዚህ አይነት አደራጅ",
+            "newest": "አዲስ",
+            "oldest": "አሮጌ",
+            "title": "ርእስ",
+            "course": "ኮርስ",
+            "createdAt": "ተፈጥሯል",
+            "actions": "እንቅስቃሴዎች",
+            "edit": "አርትዕ",
+            "delete": "ሰርዝ",
+            "noAnnouncements": "ምንም ማስታወቂያ አልተገኘም",
+            "loading": "ማስታወቂያዎች እየተጫነ...",
+            "createNew": "አዲስ ማስታወቂያ ፍጠር",
+            "editAnnouncement": "ማስታወቂያ አርትዕ",
+            "announcementTitle": "የማስታወቂያ ርእስ",
+            "selectCourse": "ኮርስ ይምረጡ",
+            "announcementContent": "የማስታወቂያ ይዘት",
+            "saveAnnouncement": "ማስታወቂያ አስቀምጥ",
+            "cancel": "ይቅር",
+            "announcementCreated": "ማስታወቂያ በተሳካ ሁኔታ ተፈጥሯል!",
+            "announcementUpdated": "ማስታወቂያ በተሳካ ሁኔታ ተዘመነ!",
+            "announcementDeleted": "ማስታወቂያ በተሳካ ሁኔታ ተሰርዟል!",
+            "announcementError": "ማስታወቂያ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+            "deleteConfirm": "ይህን ማስታወቂያ መሰረዝ እርግጠኛ ነዎት?",
+            "deleteConfirmTitle": "ማስታወቂያ ሰርዝ"
+        },
+        "materials": {
+            "title": "የኮርስ ቁሳቁሶች",
+            "subtitle": "የኮርስ ቁሳቁሶችን እና ሀብቶችን አስተዳድር።",
+            "createMaterial": "ቁሳቁስ ፍጠር",
+            "searchPlaceholder": "ቁሳቁሶችን ፈልግ...",
+            "filterByCourse": "በኮርስ አጣራ",
+            "allCourses": "ሁሉም ኮርሶች",
+            "sortBy": "በዚህ አይነት አደራጅ",
+            "newest": "አዲስ",
+            "oldest": "አሮጌ",
+            "title": "ርእስ",
+            "course": "ኮርስ",
+            "type": "አይነት",
+            "createdAt": "ተፈጥሯል",
+            "actions": "እንቅስቃሴዎች",
+            "edit": "አርትዕ",
+            "delete": "ሰርዝ",
+            "noMaterials": "ምንም ቁሳቁስ አልተገኘም",
+            "loading": "ቁሳቁሶች እየተጫነ...",
+            "createNew": "አዲስ ቁሳቁስ ፍጠር",
+            "editMaterial": "ቁሳቁስ አርትዕ",
+            "materialTitle": "የቁሳቁስ ርእስ",
+            "selectCourse": "ኮርስ ይምረጡ",
+            "materialType": "የቁሳቁስ አይነት",
+            "document": "ሰነድ",
+            "video": "ቪዲዮ",
+            "link": "አገናኝ",
+            "materialContent": "የቁሳቁስ ይዘት",
+            "materialUrl": "የቁሳቁስ URL",
+            "saveMaterial": "ቁሳቁስ አስቀምጥ",
+            "cancel": "ይቅር",
+            "materialCreated": "ቁሳቁስ በተሳካ ሁኔታ ተፈጥሯል!",
+            "materialUpdated": "ቁሳቁስ በተሳካ ሁኔታ ተዘመነ!",
+            "materialDeleted": "ቁሳቁስ በተሳካ ሁኔታ ተሰርዟል!",
+            "materialError": "ቁሳቁስ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+            "deleteConfirm": "ይህን ቁሳቁስ መሰረዝ እርግጠኛ ነዎት?",
+            "deleteConfirmTitle": "ቁሳቁስ ሰርዝ"
+        },
+        "courses": {
+            "title": "የእኔ ኮርሶች",
+            "subtitle": "ኮርሶችዎን አስተዳድሩ እና የተማሪ እድገትን ተከታትሉ።",
+            "searchPlaceholder": "ኮርሶችን ፈልግ...",
+            "filterByStatus": "በሁኔታ አጣራ",
+            "allStatuses": "ሁሉም ሁኔታዎች",
+            "active": "ክፍት",
+            "inactive": "አልተንቀሳቀሰ",
+            "sortBy": "በዚህ አይነት አደራጅ",
+            "titleAsc": "ርእስ አ-ዘ",
+            "titleDesc": "ርእስ ዘ-አ",
+            "dateAsc": "ቀን (አሮጌ)",
+            "dateDesc": "ቀን (አዲስ)",
+            "course": "ኮርስ",
+            "category": "ምድብ",
+            "status": "ሁኔታ",
+            "duration": "ጊዜ",
+            "created": "ተፈጥሯል",
+            "actions": "እንቅስቃሴዎች",
+            "view": "ይመልከቱ",
+            "edit": "አርትዕ",
+            "noCourses": "ምንም ኮርስ አልተገኘም",
+            "loading": "ኮርሶች እየተጫነ...",
+            "createNew": "አዲስ ኮርስ ፍጠር",
+            "weeks": "ሳምንታት",
+            "editCourse": "ኮርስ አርትዕ",
+            "description": "መግለጫ",
+            "syllabus": "ሲላብስ",
+            "noMatch": "በማጣሪያዎ ጋር የሚዛመዱ ኮርሶች የሉም",
+            "countSuffix": "ኮርሶች ተገኝተዋል"
+        }
+    },
+    "events": {
+        "title": "የክስተት አስተዳደር",
+        "subtitle": "የስርዓት ክስተቶችን፣ የጊዜ ሰሌዳዎችን እና እንቅስቃሴዎችን አስተዳድር።",
+        "viewCalendar": "የቀን መቁጠሪያ ይመልከቱ",
+        "createEvent": "ክስተት ፍጠር",
+        "totalEvents": "ጠቅላላ ክስተቶች",
+        "upcomingEvents": "የሚመጡ ክስተቶች",
+        "pastEvents": "የቀድሞ ክስተቶች",
+        "searchPlaceholder": "ክስተቶችን ፈልግ...",
+        "filterByStatus": "በሁኔታ አጣራ",
+        "allStatuses": "ሁሉም ሁኔታዎች",
+        "upcoming": "የሚመጣ",
+        "past": "የቀድሞ",
+        "create": "ፍጠር",
+        "edit": "አርትዕ",
+        "delete": "ሰርዝ",
+        "title_label": "ርዕስ",
+        "date_label": "ቀን",
+        "time_label": "ጊዜ (አማራጭ)",
+        "type_label": "ዓይነት (አማራጭ)",
+        "location_label": "አካባቢ (አማራጭ)",
+        "description_label": "መግለጫ (አማራጭ)",
+        "noEvents": "ክስተት አልተገኘም",
+        "createEventTitle": "ክስተት ፍጠር"
     }
-  },
-  "events": {
-    "title": "የክስተት አስተዳደር",
-    "subtitle": "የስርዓት ክስተቶችን፣ የጊዜ ሰሌዳዎችን እና እንቅስቃሴዎችን አስተዳድር።",
-    "viewCalendar": "የቀን መቁጠሪያ ይመልከቱ",
-    "createEvent": "ክስተት ፍጠር",
-    "totalEvents": "ጠቅላላ ክስተቶች",
-    "upcomingEvents": "የሚመጡ ክስተቶች",
-    "pastEvents": "የቀድሞ ክስተቶች",
-    "searchPlaceholder": "ክስተቶችን ፈልግ...",
-    "filterByStatus": "በሁኔታ አጣራ",
-    "allStatuses": "ሁሉም ሁኔታዎች",
-    "upcoming": "የሚመጣ",
-    "past": "የቀድሞ",
-    "create": "ፍጠር",
-    "edit": "አርትዕ",
-    "delete": "ሰርዝ",
-    "title_label": "ርዕስ",
-    "date_label": "ቀን",
-    "time_label": "ጊዜ (አማራጭ)",
-    "type_label": "ዓይነት (አማራጭ)",
-    "location_label": "አካባቢ (አማራጭ)",
-    "description_label": "መግለጫ (አማራጭ)",
-    "noEvents": "ክስተት አልተገኘም",
-    "createEventTitle": "ክስተት ፍጠር"
-  }
 }

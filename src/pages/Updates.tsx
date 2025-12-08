@@ -223,7 +223,7 @@ export default function Updates() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="announcements">{t('nav.announcements') ?? 'Announcements'}</TabsTrigger>
@@ -243,16 +243,16 @@ export default function Updates() {
                     <div className="font-semibold text-gray-900">{a.title}</div>
                     <div className="text-gray-700 mt-1">{a.body}</div>
                     {(a as any).externalLink && (
-                      <div className="mt-3">
-                        <a 
-                          href={(a as any).externalLink} 
+                       <div className="mt-2">
+                <a  href={(a as any).externalLink} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 underline text-sm"
-                        >
-                          🔗 External Link
-                        </a>
-                      </div>
+                          className="inline-flex items-center gap text-blue-600 hover:text-blue-800 underline text-sm">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                  {" External Link"}
+              </a>
+            </div>
+                      
                     )}
                     <div className="mt-2 text-xs text-gray-500">
                       {(a.courseId ? 'Course' : 'General')}{a.recipientStudentId ? ' · Direct' : ''}
@@ -275,9 +275,10 @@ export default function Updates() {
               )}
             </div>
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
-              <div className="grid md:grid-cols-2 gap-6 items-start">
+              <div className="flex flex-wrap gap-y-6 justify-left gap-x-3 align-middle mt-10">
                 {filteredBlogs.map(b => (
-                  <article key={b.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <Link to={`/blog/${b.id}`} key={b.id} className="no-underline">
+                  <article key={b.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow max-w-[450px]">
                     {/* Featured image */}
                     {(b as any).imageUrl && (
                       <div className="-mt-6 -mx-6 mb-4">
@@ -286,7 +287,6 @@ export default function Updates() {
                     )}
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{b.authorName}</span>
                         <span>{b.createdAt.toDate().toLocaleDateString()}</span>
                       </div>
                       {(userProfile?.role === 'teacher' || userProfile?.role === 'admin') && 
@@ -312,38 +312,18 @@ export default function Updates() {
                       )}
                     </div>
                     <h3 className="text-lg font-semibold mt-2 text-gray-900 mb-3">{b.title}</h3>
-                                        <RichTextRenderer
+                                        {/* <RichTextRenderer
                                           content={b.content}
                                           truncate={true}
                                           isExpanded={expandedBlogs[b.id]}
                                           onToggleExpanded={() => window.location.href = `/blog/${b.id}`}
-                                        />
+                                        /> */}
                     
                     {/* Love Button */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleBlogLike(b.id)}
-                        className="flex items-center gap-2 hover:bg-red-50"
-                      >
-                        <Heart 
-                          size={18} 
-                          className={`transition-colors ${
-                            blogLikes[b.id]?.liked 
-                              ? 'text-red-500 fill-red-500' 
-                              : 'text-gray-400 hover:text-red-500'
-                          }`} 
-                        />
-                        <span className={`text-sm ${blogLikes[b.id]?.liked ? 'text-red-500' : 'text-gray-600'}`}>
-                          {blogLikes[b.id]?.count || 0}
-                        </span>
-                      </Button>
-                      <span className="text-xs text-gray-400">
-                        {blogLikes[b.id]?.liked ? 'You liked this' : 'Click to like'}
-                      </span>
-                    </div>
+                    <span className="font-medium text-[12px]">Author: {b.authorName}</span>
+
                   </article>
+                  </Link>
                 ))}
                 {!filteredBlogs.length && <div className="text-gray-500 text-center py-8 col-span-2">No blog posts match.</div>}
               </div>
@@ -360,9 +340,10 @@ export default function Updates() {
               </select>
             </div>
             {loading ? <div className="text-gray-500 text-center">Loading...</div> : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-wrap gap-y-6 justify-left gap-x-3 align-middle mt-10">
                 {filteredEvents.map(ev => (
-                  <div key={ev.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-blue-500">
+                  <Link to={`/event/${ev.id}`} key={ev.id} className="no-underline">
+                  <div key={ev.id} className="max-w-[430px] bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ">
                     {ev.imageUrl && (
                       <div className="h-48 overflow-hidden">
                         <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -380,13 +361,8 @@ export default function Updates() {
                           </>
                         )}
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
-                                            <RichTextRenderer
-                                              content={ev.description}
-                                              truncate={true}
-                                              isExpanded={expandedEvents[ev.id]}
-                                              onToggleExpanded={() => window.location.href = `/event/${ev.id}`}
-                                            />
+                      <h3 className="text-xl font-bold text-gray-900  group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
+                                           
                       {ev.location && (
                         <div className="flex items-center text-sm text-gray-500">
                           <MapPin className="w-4 h-4 mr-2 text-gray-400" />
@@ -408,6 +384,7 @@ export default function Updates() {
                       )}
                     </div>
                   </div>
+                  </Link>
                 ))}
                 {!filteredEvents.length && <div className="text-gray-500 text-center py-8 md:col-span-2">No events match.</div>}
               </div>
@@ -478,6 +455,7 @@ export default function Updates() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
     </div>
   );
 }

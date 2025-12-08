@@ -1,7 +1,7 @@
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import logo from '@/assets/logo.jpg';
+import logo from '/assets/logo.jpg';
 import { useI18n } from '@/contexts/I18nContext';
 
 const LoginHeroAside = () => {
@@ -9,7 +9,7 @@ const LoginHeroAside = () => {
   return (
     <aside className="hidden lg:block w-1/2 bg-gradient-to-br from-blue-600 to-[#13A0E2] relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
-        <img src="/src/assets/message-from-school-img.png" alt="Campus" className="w-full h-full object-cover" />
+        <img src="/assets/message-from-school-img.png" alt="Campus" className="w-full h-full object-cover" />
       </div>
       <div className="relative z-10 h-full flex flex-col justify-center p-16 text-white">
         <div className="flex items-center gap-3">

@@ -5,7 +5,7 @@ import { Menu, X, Globe, LogIn, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
-import mainLogo from '@/assets/main-logo.png';
+import mainLogo from '/assets/main-logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

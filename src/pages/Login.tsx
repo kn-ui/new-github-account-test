@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 import LoginHeroAside from '@/components/LoginHeroAside';
 
-import logo from '@/assets/logo.jpg';
+import logo from '/assets/logo.jpg';
 
 const Login = () => {
   const [email, setEmail] = useState('');

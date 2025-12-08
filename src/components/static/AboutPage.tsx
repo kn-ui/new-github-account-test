@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, Award, BookOpen, Heart, ArrowRight, MapPin, Phone, Mail } from 'lucide-react';
+import SiteFooter from '../SiteFooter';
 
 export default function AboutPage() {
   const leadership = [
@@ -197,6 +198,8 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      <SiteFooter />
+
     </div>
   );
 }

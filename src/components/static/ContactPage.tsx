@@ -3,6 +3,7 @@ import { MapPin, Phone, Mail, Clock, Send, User, MessageSquare } from 'lucide-re
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { useI18n } from '@/contexts/I18nContext';
+import SiteFooter from '../SiteFooter';
 
 export default function ContactPage() {
   const { t } = useI18n();
@@ -18,19 +19,19 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: t('contact.cards.phone.title'),
-      details: ['+251-11-123-4567', '+251-11-123-4568'],
+      details: ['+251-11-278-4646', '+251-975726868'],
       description: t('contact.cards.phone.description')
     },
     {
       icon: Mail,
       title: t('contact.cards.email.title'),
-      details: ['info@straguel.edu.et', 'admissions@straguel.edu.et'],
+      details: ['dhsraguelabssedu21@gmail.com'],
       description: t('contact.cards.email.description')
     },
     {
       icon: MapPin,
       title: t('contact.cards.address.title'),
-      details: ['St. Raguel Church Spiritual School', 'Addis Ababa, Ethiopia'],
+      details: ['Merkato St.Raguel Church Anqtse birhan Sunday school, Woreda 8', 'Addis Ababa, Ethiopia'],
       description: t('contact.cards.address.description')
     },
     {
@@ -72,7 +73,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gradient-to-r from-blue-600 to-[#13A0E2]">
       {/* Hero Section */}
       <div className="relative text-white">
-        <img src="/src/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <img src="/assets/background-img.png" alt="background" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">{t('contact.hero.title')}</h1>
@@ -150,52 +151,38 @@ export default function ContactPage() {
             <div className="space-y-8">
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="h-64 bg-gray-200 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <MapPin className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-lg font-medium">{t('contact.map.title')}</p>
-                    <p className="text-sm">{t('contact.map.subtitle')}</p>
-                  </div>
+                  <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.335716797473!2d38.737273474775584!3d9.033108288925106!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85fe8f43d46f%3A0xc0fc09305d08f9c2!2sSt%20Raguel%20church%20school!5e0!3m2!1sen!2set!4v1760704991147!5m2!1sen!2set" className='w-full h-full' loading="lazy"></iframe>
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('contact.visit.title')}</h3>
                   <p className="text-gray-600 mb-4">{t('contact.visit.body')}</p>
                   <div className="space-y-2 text-sm text-gray-600">
-                    <p><strong>{t('contact.visit.address')}</strong> St. Raguel Church Spiritual School</p>
+                    <p><strong>{t('contact.visit.address')}</strong>Merkato St.Raguel Church Anqtse birhan Sunday school,Woreda 8</p>
                     <p><strong>{t('contact.visit.city')}</strong> Addis Ababa, Ethiopia</p>
-                    <p><strong>{t('contact.visit.postalCode')}</strong> 1000</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">Quick Contact</h3>
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">{t('contact.quick.title')}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="font-medium text-blue-900">{t('contact.quick.emergency.title')}</p>
-                      <p className="text-sm text-blue-700">{t('contact.quick.emergency.value')}</p>
+                      <p className="text-sm text-blue-700">+251-11-278-4646</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="font-medium text-blue-900">{t('contact.quick.support.title')}</p>
-                      <p className="text-sm text-blue-700">{t('contact.quick.support.value')}</p>
-                    </div>
-                  </div>
+                  
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('contact.faq.title')}</h3>
-                <p className="text-gray-600 mb-4">{t('contact.faq.body')}</p>
-                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium">{t('contact.faq.cta')}</button>
-              </div>
+            
             </div>
           </div>
         </div>
       </section>
+      <SiteFooter />
     </div>
   );
 }

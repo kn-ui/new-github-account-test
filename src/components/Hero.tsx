@@ -32,7 +32,7 @@ const Hero = () => {
           </div>
           <div>
             <img 
-              src="/src/assets/hero-img.png"
+              src="/assets/hero-img.png"
               alt="Orthodox Church"
               className="w-full h-100 object-cover rounded-lg shadow-lg"
             />

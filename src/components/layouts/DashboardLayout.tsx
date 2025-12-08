@@ -48,7 +48,7 @@ interface NavigationItem {
   badge?: number;
 }
 
-import logo from '@/assets/logo.jpg';
+import logo from '/assets/logo.jpg';
 
 export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
 
@@ -102,11 +102,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           ...baseItems,
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
-          { label: 'Attendance', href: '/dashboard/admin-attendance', icon: ClipboardList },
-          { label: 'Grades', href: '/dashboard/admin-grades', icon: Award },
+          { label: t('nav.attendance'), href: '/dashboard/admin-attendance', icon: ClipboardList },
+          { label: t('nav.grades'), href: '/dashboard/admin-grades', icon: Award },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
-          { label: 'Announcements', href: '/dashboard/admin-announcements', icon: Bell },
+          { label: t('nav.announcements'), href: '/dashboard/admin-announcements', icon: Bell },
           { label: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
         ];
       case 'super_admin':
@@ -114,7 +114,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           ...baseItems,
           { label: t('nav.userManagement'), href: '/dashboard/users', icon: Users },
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
-          { label: 'Manage Admin', href: '/dashboard/manage-admins', icon: Users },
+          { label: t('nav.manageAdmins'), href: '/dashboard/manage-admins', icon: Users },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
         ];
@@ -126,7 +126,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.assignments'), href: '/dashboard/assignments', icon: FileText },
           { label: t('nav.submissions'), href: '/dashboard/submissions', icon: ClipboardList },
           { label: t('nav.grades'), href: '/dashboard/teacher-grades', icon: Award },
-          { label: 'Attendance', href: '/dashboard/attendance', icon: ClipboardList },
+          { label: t('nav.attendance'), href: '/dashboard/attendance', icon: ClipboardList },
           { label: t('nav.analytics'), href: '/dashboard/teacher-analytics', icon: BarChart3 },
           { label: t('nav.announcements'), href: '/dashboard/announcements', icon: Bell },
           { label: t('nav.materials'), href: '/dashboard/materials', icon: FolderOpen },

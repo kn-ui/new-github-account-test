@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, CheckCircle, Clock, User, Mail, Phone, Upload, Download } from 'lucide-react';
+import SiteFooter from '../SiteFooter';
 
 export default function AdmissionsPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -278,6 +279,8 @@ export default function AdmissionsPage() {
           </div>
         </div>
       </section>
+      <SiteFooter />
+
     </div>
   );
 }

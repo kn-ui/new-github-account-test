@@ -1,150 +1,245 @@
 import React, { useState } from 'react';
 import { BookOpen, Users, Clock, Heart, Scroll, Church, User, GraduationCap } from 'lucide-react';
 import Header from '@/components/Header';
+import SiteFooter from '@/components/SiteFooter';
+import { Link } from 'react-router-dom';
+import { useI18n } from '@/contexts/I18nContext';
+
 
 const Academic: React.FC = () => {
+    const { t } = useI18n();
+  
   const departments = [
     {
       id: 1,
-      name: 'Biblical Studies',
-      description: 'Comprehensive study of scripture, hermeneutics, and biblical interpretation',
+      name: `${t('academic.offerings.year1.course1.0') }`,
       icon: BookOpen,
-      duration: '4 Years',
-      credits: '120 Credits',
-      degree: 'Bachelor of Theology',
-      courses: [
-        'Old Testament Survey',
-        'New Testament Theology',
-        'Biblical Hermeneutics',
-        'Hebrew Language',
-        'Greek Language',
-        'Biblical Archaeology'
-      ]
+      contactHr: `${t('academic.offerings.year1.course1.1')}`,
+      credits: `${t('academic.offerings.year1.course1.2')}`,
+      degree: `${t('academic.offerings.year1.course1.3')}`,
+      
     },
     {
       id: 2,
-      name: 'Systematic Theology',
-      description: 'Systematic study of Christian doctrine and theological principles',
+      name: `${t('academic.offerings.year1.course2.0')}`,
       icon: Scroll,
-      duration: '4 Years',
-      credits: '120 Credits',
-      degree: 'Bachelor of Theology',
-      courses: [
-        'Introduction to Theology',
-        'Christology',
-        'Pneumatology',
-        'Ecclesiology',
-        'Eschatology',
-        'Theological Method'
-      ]
+      contactHr: `${t('academic.offerings.year1.course2.1')}`,
+      credits: `${t('academic.offerings.year1.course2.2')}`,
+      degree: `${t('academic.offerings.year1.course2.3')}`,
     },
     {
       id: 3,
-      name: 'Church History',
-      description: 'Historical development of Christianity from apostolic times to present',
+      name: `${t('academic.offerings.year1.course3.0')}`,
       icon: Clock,
-      duration: '3 Years',
-      credits: '90 Credits',
-      degree: 'Bachelor of Arts',
-      courses: [
-        'Early Church History',
-        'Medieval Christianity',
-        'Reformation Era',
-        'Modern Church History',
-        'American Church History',
-        'Global Christianity'
-      ]
+      contactHr: `${t('academic.offerings.year1.course3.1')}`,
+      credits: `${t('academic.offerings.year1.course3.2')}`,
+      degree: `${t('academic.offerings.year1.course3.3')}`,
+
     },
     {
       id: 4,
-      name: 'Pastoral Care & Counseling',
-      description: 'Training in spiritual guidance, counseling, and pastoral ministry',
+      name: `${t('academic.offerings.year1.course4.0')}`,
       icon: Heart,
-      duration: '3 Years',
-      credits: '90 Credits',
-      degree: 'Bachelor of Ministry',
-      courses: [
-        'Introduction to Pastoral Care',
-        'Crisis Counseling',
-        'Marriage & Family Counseling',
-        'Grief & Loss Counseling',
-        'Spiritual Direction',
-        'Pastoral Leadership'
-      ]
+      contactHr: `${t('academic.offerings.year1.course4.1')}`,
+      credits: `${t('academic.offerings.year1.course4.2')}`,
+      degree: `${t('academic.offerings.year1.course4.3')}`,
+
     },
     {
       id: 5,
-      name: 'Christian Ethics',
-      description: 'Moral theology and ethical decision-making in Christian context',
+      name: `${t('academic.offerings.year1.course5.0')}`,
       icon: Users,
-      duration: '2 Years',
-      credits: '60 Credits',
-      degree: 'Certificate',
-      courses: [
-        'Foundations of Christian Ethics',
-        'Bioethics',
-        'Social Ethics',
-        'Environmental Ethics',
-        'Business Ethics',
-        'Medical Ethics'
-      ]
+      contactHr: `${t('academic.offerings.year1.course5.1')}`,
+      credits: `${t('academic.offerings.year1.course5.2')}`,
+      degree: `${t('academic.offerings.year1.course5.3')}`,
+
+    }
+  ];
+
+  const departmentsThird = [
+    {
+      id: 1,
+      name: `${t('academic.offerings.year3.course1.0')}`,
+      icon: BookOpen,
+      contactHr: `${t('academic.offerings.year3.course1.1')}`,
+      credits: `${t('academic.offerings.year3.course1.2')}`,
+      degree: `${t('academic.offerings.year3.course1.3')}`,
+
+    },
+    {
+      id: 2,
+      name: `${t('academic.offerings.year3.course2.0')}`,
+      icon: Scroll,
+      contactHr: `${t('academic.offerings.year3.course2.1')}`,
+      credits: `${t('academic.offerings.year3.course2.2')}`,
+      degree: `${t('academic.offerings.year3.course2.3')}`,
+    },
+    {
+      id: 3,
+      name: `${t('academic.offerings.year3.course3.0')}`,
+      icon: Clock,
+      contactHr: `${t('academic.offerings.year3.course3.1')}`,
+      credits: `${t('academic.offerings.year3.course3.2')}`,
+      degree: `${t('academic.offerings.year3.course3.3')}`,
+
+    },
+    {
+      id: 4,
+      name: `${t('academic.offerings.year3.course4.0')}`,
+      icon: Heart,
+      contactHr: `${t('academic.offerings.year3.course4.1')}`,
+      credits: `${t('academic.offerings.year3.course4.2')}`,
+      degree: `${t('academic.offerings.year3.course4.3')}`,
+
+    },
+    {
+      id: 5,
+      name: `${t('academic.offerings.year3.course5.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year3.course5.1')}`,
+      credits: `${t('academic.offerings.year3.course5.2')}`,
+      degree: `${t('academic.offerings.year3.course5.3')}`,
+
     },
     {
       id: 6,
-      name: 'Liturgical Studies',
-      description: 'Study of worship, liturgy, and sacramental theology',
-      icon: Church,
-      duration: '3 Years',
-      credits: '90 Credits',
-      degree: 'Bachelor of Arts',
-      courses: [
-        'History of Christian Worship',
-        'Liturgical Theology',
-        'Sacramental Theology',
-        'Music in Worship',
-        'Seasonal Liturgies',
-        'Contemporary Worship'
-      ]
+      name: `${t('academic.offerings.year3.course6.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year3.course6.1')}`,
+      credits: `${t('academic.offerings.year3.course6.2')}`,
+      degree: `${t('academic.offerings.year3.course6.3')}`,
+
     },
     {
       id: 7,
-      name: 'Mission & Evangelism',
-      description: 'Training for missionary work and evangelistic ministry',
-      icon: User,
-      duration: '3 Years',
-      credits: '90 Credits',
-      degree: 'Bachelor of Ministry',
-      courses: [
-        'Introduction to Missions',
-        'Cross-Cultural Ministry',
-        'Evangelism Strategies',
-        'Church Planting',
-        'Global Missions',
-        'Urban Ministry'
-      ]
+      name: `${t('academic.offerings.year3.course7.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year3.course7.1')}`,
+      credits: `${t('academic.offerings.year3.course7.2')}`,
+      degree: `${t('academic.offerings.year3.course7.3')}`,
+
+    }
+  ];
+
+
+  const departmentsSecondary = [
+    {
+      id: 1,
+      name: `${t('academic.offerings.year2.course1.0')}`,
+      icon: BookOpen,
+      contactHr: `${t('academic.offerings.year2.course1.1')}`,
+      credits: `${t('academic.offerings.year2.course1.2')}`,
+      degree: `${t('academic.offerings.year2.course1.3')}`,
+
     },
     {
-      id: 8,
-      name: 'Youth & Family Ministry',
-      description: 'Specialized training for youth and family-focused ministry',
-      icon: GraduationCap,
-      duration: '2 Years',
-      credits: '60 Credits',
-      degree: 'Certificate',
-      courses: [
-        'Youth Ministry Foundations',
-        'Adolescent Development',
-        'Family Systems',
-        'Youth Discipleship',
-        'Event Planning',
-        'Volunteer Management'
-      ]
+      id: 2,
+      name: `${t('academic.offerings.year2.course2.0')}`,
+      icon: Scroll,
+      contactHr: `${t('academic.offerings.year2.course2.1')}`,
+      credits: `${t('academic.offerings.year2.course2.2')}`,
+      degree: `${t('academic.offerings.year2.course2.3')}`,
+    },
+    {
+      id: 3,
+      name: `${t('academic.offerings.year2.course3.0')}`,
+      icon: Clock,
+      contactHr: `${t('academic.offerings.year2.course3.1')}`,
+      credits: `${t('academic.offerings.year2.course3.2')}`,
+      degree: `${t('academic.offerings.year2.course3.3')}`,
+
+    },
+    {
+      id: 4,
+      name: `${t('academic.offerings.year2.course4.0')}`,
+      icon: Heart,
+      contactHr: `${t('academic.offerings.year2.course4.1')}`,
+      credits: `${t('academic.offerings.year2.course4.2')}`,
+      degree: `${t('academic.offerings.year2.course4.3')}`,
+
+    },
+    {
+      id: 5,
+      name: `${t('academic.offerings.year2.course5.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year2.course5.1')}`,
+      credits: `${t('academic.offerings.year2.course5.2')}`,
+      degree: `${t('academic.offerings.year2.course5.3')}`,
+
+    },
+    {
+      id: 6,
+      name: `${t('academic.offerings.year2.course6.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year2.course6.1')}`,
+      credits: `${t('academic.offerings.year2.course6.2')}`,
+      degree: `${t('academic.offerings.year2.course6.3')}`,
+
+    }
+  ];
+
+  const departmentsFourth = [
+    {
+      id: 1,
+      name: `${t('academic.offerings.year4.course1.0')}`,
+      icon: BookOpen,
+      contactHr: `${t('academic.offerings.year4.course1.1')}`,
+      credits: `${t('academic.offerings.year4.course1.2')}`,
+      degree: `${t('academic.offerings.year4.course1.3')}`,
+
+    },
+    {
+      id: 2,
+      name: `${t('academic.offerings.year4.course2.0')}`,
+      icon: Scroll,
+      contactHr: `${t('academic.offerings.year4.course2.1')}`,
+      credits: `${t('academic.offerings.year4.course2.2')}`,
+      degree: `${t('academic.offerings.year4.course2.3')}`,
+    },
+    {
+      id: 3,
+      name: `${t('academic.offerings.year4.course3.0')}`,
+      icon: Clock,
+      contactHr: `${t('academic.offerings.year4.course3.1')}`,
+      credits: `${t('academic.offerings.year4.course3.2')}`,
+      degree: `${t('academic.offerings.year4.course3.3')}`,
+
+    },
+    {
+      id: 4,
+      name: `${t('academic.offerings.year4.course4.0')}`,
+      icon: Heart,
+      contactHr: `${t('academic.offerings.year4.course4.1')}`,
+      credits: `${t('academic.offerings.year4.course4.2')}`,
+      degree: `${t('academic.offerings.year4.course4.3')}`,
+
+    },
+    {
+      id: 5,
+      name: `${t('academic.offerings.year4.course5.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year4.course5.1')}`,
+      credits: `${t('academic.offerings.year4.course5.2')}`,
+      degree: `${t('academic.offerings.year4.course5.3')}`,
+
+    },
+    {
+      id: 6,
+      name: `${t('academic.offerings.year4.course6.0')}`,
+      icon: Users,
+      contactHr: `${t('academic.offerings.year4.course6.1')}`,
+      credits: `${t('academic.offerings.year4.course6.2')}`,
+      degree: `${t('academic.offerings.year4.course6.3')}`,
+
     }
   ];
 
   // instead of a single boolean
   const [openDept, setOpenDept] = useState<number | null>(null);
-
+  const deptKey1 = 1;
+const deptKey2 = 2;
+const deptKey3 = 3;
+  const deptKey4 = 4;
   return (
     <div>
       <Header />
@@ -152,7 +247,7 @@ const Academic: React.FC = () => {
       <div className="relative bg-gradient-to-r from-blue-600 to-[#13A0E2] text-white">
         {/* Background Image */}
         <img
-          src="../../asset/background-img.png"
+          src="/assets/background-img.png"
           alt="background"
           className="absolute inset-0 w-full h-full object-cover opacity-20"
         />
@@ -160,10 +255,9 @@ const Academic: React.FC = () => {
         {/* Overlay for gradient and content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Academic Programs</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('academic.hero.title')}</h1>
             <p className="text-xl mb-8">
-              Comprehensive theological education for spiritual leaders<br />
-              and servants
+              {t('academic.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -172,95 +266,229 @@ const Academic: React.FC = () => {
       {/* Departments Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Departments</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('academic.subhero.title')}</h2>
           <p className="text-lg text-gray-600">
-            Explore our comprehensive range of theological and spiritual studies<br />
-            programs
+            {t('academic.subhero.subtitle')}
           </p>
         </div>
-
         <div className="space-y-6 cursor-pointer">
-          {departments.map((dept) => {
-            const Icon = dept.icon;
-            return (
-              <div key={dept.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow" 
-                onClick={() => setOpenDept(openDept === dept.id ? null : dept.id)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4 flex-1">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <Icon className="w-6 h-6 text-blue-600" />
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{dept.name}</h3>
-                      <p className="text-gray-600 mb-4">{dept.description}</p>
-                      
-                      {openDept === dept.id && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <div>
-                            <h4 className="font-semibold text-gray-900 mb-3">Core Courses</h4>
-                            <ul className="space-y-1 text-sm text-gray-600">
-                              {dept.courses?.map((course, index) => (
-                                <li key={index} className="flex items-center">
-                                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                                  {course}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+         
+               
+                   
+              <div key={deptKey1} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow" 
+                            onClick={() => setOpenDept(openDept === deptKey1 ? null : deptKey1)}
+              >  <div className="flex items-start justify-center"> <div className='flex space-x-4'> <div className="bg-blue-100 p-3 rounded-lg ">
+                      <BookOpen className="w-6 h-6 text-blue-600" />
+            </div>  <h3 className="text-xl font-semibold text-gray-900 mb-2 ">First (Year 1)</h3></div> {openDept === deptKey1 && (
+                    <div className="flex-1 mt-11 "> 
+                    <div className="">
+             
+                  
+                      {departments.map((dept) => {
+                        return (
+                    
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6">
+                          
                           <div>
                             <h4 className="font-semibold text-gray-900 mb-3">Program Details</h4>
                             <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Course:</span>
+                                  <span className="font-medium">{dept.name}</span>
+                                </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">Duration:</span>
-                                <span className="font-medium">{dept.duration}</span>
+                                <span className="text-gray-600">Contact Hr:</span>
+                                <span className="font-medium">{dept.contactHr}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-gray-600">Total Credits:</span>
                                 <span className="font-medium">{dept.credits}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">Degree Type:</span>
+                                <span className="text-gray-600">Prerequisites:</span>
                                 <span className="font-medium">{dept.degree}</span>
                               </div>
                             </div>
-                            <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                              Learn More & Apply
-                            </button>
+                          </div>
+
+                      
+                          
+                        </div>
+                        )
+                      })}
+                    </div>
+                        
+                      </div>
+                 
+                )} </div>
+              </div>
+
+          <div key={deptKey2} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            onClick={() => setOpenDept(openDept === deptKey2 ? null : deptKey2)}
+          >  <div className="flex items-start justify-center"> <div className='flex space-x-4'> <div className="bg-blue-100 p-3 rounded-lg ">
+            <BookOpen className="w-6 h-6 text-blue-600" />
+          </div>  <h3 className="text-xl font-semibold text-gray-900 mb-2 ">Second (Year 2)</h3></div> {openDept === deptKey2 && (
+            <div className="flex-1 mt-11 ">
+              <div className="">
+
+
+                {departmentsSecondary.map((dept) => {
+                  return (
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6">
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Program Details</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Course:</span>
+                            <span className="font-medium">{dept.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Contact Hr:</span>
+                            <span className="font-medium">{dept.contactHr}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Credits:</span>
+                            <span className="font-medium">{dept.credits}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Prerequisites:</span>
+                            <span className="font-medium">{dept.degree}</span>
                           </div>
                         </div>
-                      )}
+                      </div>
+
+
+
                     </div>
-                  </div>
-                  <div className="text-right ml-4">
-                    <div className="text-sm text-gray-500 mb-1">{dept.duration}</div>
-                    <div className="text-sm font-medium text-gray-700">{dept.credits}</div>
-                  </div>
-                </div>
+                  )
+                })}
               </div>
-            );
-          })}
+
+            </div>
+
+          )} </div>
+          </div>
+
+
+          <div key={deptKey3} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            onClick={() => setOpenDept(openDept === deptKey3 ? null : deptKey3)}
+          >  <div className="flex items-start justify-center"> <div className='flex space-x-4'> <div className="bg-blue-100 p-3 rounded-lg ">
+            <BookOpen className="w-6 h-6 text-blue-600" />
+          </div>  <h3 className="text-xl font-semibold text-gray-900 mb-2 ">Third (Year 3)</h3></div> {openDept === deptKey3 && (
+            <div className="flex-1 mt-11 ">
+              <div className="">
+
+
+                {departmentsThird.map((dept) => {
+                  return (
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6">
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Program Details</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Course:</span>
+                            <span className="font-medium">{dept.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Contact Hr:</span>
+                            <span className="font-medium">{dept.contactHr}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Credits:</span>
+                            <span className="font-medium">{dept.credits}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Prerequisites:</span>
+                            <span className="font-medium">{dept.degree}</span>
+                          </div>
+                        </div>
+                      </div>
+
+
+
+                    </div>
+                  )
+                })}
+              </div>
+
+            </div>
+
+          )} </div>
+          </div>
+
+
+          <div key={deptKey4} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            onClick={() => setOpenDept(openDept === deptKey4 ? null : deptKey4)}
+          >  <div className="flex items-start justify-center"> <div className='flex space-x-4'> <div className="bg-blue-100 p-3 rounded-lg ">
+            <BookOpen className="w-6 h-6 text-blue-600" />
+          </div>  <h3 className="text-xl font-semibold text-gray-900 mb-2 ">Fourth (Year 4)</h3></div> {openDept === deptKey4 && (
+            <div className="flex-1 mt-11 ">
+              <div className="">
+
+
+                {departmentsFourth.map((dept) => {
+                  return (
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6">
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Program Details</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Course:</span>
+                            <span className="font-medium">{dept.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Contact Hr:</span>
+                            <span className="font-medium">{dept.contactHr}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Credits:</span>
+                            <span className="font-medium">{dept.credits}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Prerequisites:</span>
+                            <span className="font-medium">{dept.degree}</span>
+                          </div>
+                        </div>
+                      </div>
+
+
+
+                    </div>
+                  )
+                })}
+              </div>
+
+            </div>
+
+          )} </div>
+          </div>
+            
         </div>
+
       </div>
 
       {/* Call to Action */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Your Academic Journey?</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('academic.cta.title')}</h2>
           <p className="text-xl mb-8">
-            Take the first step towards your calling in spiritual leadership and service.
+            {t('academic.cta.subtitle')}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <button className="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">
-              Apply for Admission
-            </button>
-            <button className="border-2 border-white text-white px-8 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors">
-              Download Brochure
+              <Link to="/contact">{t('academic.cta.applyButton')}</Link>
             </button>
           </div>
         </div>
       </div>
+      <SiteFooter />
+
     </div>
   );
 };

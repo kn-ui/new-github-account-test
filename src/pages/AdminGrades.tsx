@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BookOpen, Search, GraduationCap, ArrowRight } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function AdminGrades() {
   const { userProfile } = useAuth();
@@ -14,6 +15,7 @@ export default function AdminGrades() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { t } = useI18n();
 
   useEffect(() => {
     if (userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin')) {
@@ -48,7 +50,7 @@ export default function AdminGrades() {
         <div className="flex items-center gap-3">
           <GraduationCap className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Grades</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('nav.grades')}</h1>
             <p className="text-gray-600">Browse courses and view all students' grades.</p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function AdminAttendance() {
   const { userProfile } = useAuth();
@@ -18,6 +19,7 @@ export default function AdminAttendance() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSheet, setSelectedSheet] = useState<FirestoreAttendanceSheet | null>(null);
   const [studentMap, setStudentMap] = useState<Record<string, FirestoreUser | null>>({});
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) return;
@@ -58,7 +60,7 @@ export default function AdminAttendance() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Submitted Attendance</CardTitle>
+            <CardTitle>{t('admin.submittedAttendance')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-4 w-72">

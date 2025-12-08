@@ -282,7 +282,9 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                       <p className="text-sm text-gray-600 truncate">
                         {user.address}
                       </p>
-
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.schoolTitle}
+                      </p>
                     </div>
                   </div>
 
@@ -305,15 +307,6 @@ export const UsersList: React.FC<UsersListProps> = ({ readOnly }) => {
                         {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </Badge>
-
-                    {user.role === 'admin' && user.schoolTitle && (
-                      <Badge className="flex items-center gap-1 bg-red-100 text-red-800 border-red-200">
-                        <Shield className="h-3 w-3" />
-                        <span className="text-xs font-medium">
-                          {user.schoolTitle}
-                        </span>
-                      </Badge>
-                    )}
                   </div>
 
                   {/* Created Date */}

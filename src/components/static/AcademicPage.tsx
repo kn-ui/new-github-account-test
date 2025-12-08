@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Users, Award, Heart, Calendar, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import SiteFooter from '../SiteFooter';
 
 export default function AcademicPage() {
   const [expandedDepartment, setExpandedDepartment] = useState<number | null>(null);
@@ -253,6 +254,8 @@ export default function AcademicPage() {
             </button>
           </div>
         </div>
+        <SiteFooter />
+
       </section>
     </div>
   );

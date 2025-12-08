@@ -3,7 +3,7 @@ import Hero from "@/components/Hero";
 import SiteFooter from "@/components/SiteFooter";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/contexts/I18nContext";
-import { CalendarDays, Clock, MapPin, Download } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Download, Calendar } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { eventService, FirestoreEvent, Timestamp } from "@/lib/firestore";
 import RichTextRenderer from '@/components/ui/RichTextRenderer';
@@ -38,7 +38,7 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <img 
-                src="/src/assets/message-from-school-img.png"
+                src="/assets/message-from-school-img.png"
                 alt="School Building"
                 className="w-full h-80 object-cover rounded-lg"
               />
@@ -65,47 +65,49 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {top3.map(ev => (
-                <div key={ev.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-blue-500">
-                  {ev.imageUrl && (
-                    <div className="h-48 overflow-hidden">
-                      <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  )}
-                  <div className="p-6">
-                    <div className="flex items-center text-sm text-gray-600 mb-3">
-                      <CalendarDays className="w-4 h-4 mr-2 text-blue-500" />
-                      <span>{(ev.date as Timestamp).toDate().toLocaleDateString()}</span>
-                      {ev.time && (
-                        <>
-                          <span className="mx-2 text-gray-300">|</span>
-                          <Clock className="w-4 h-4 mr-1 text-blue-500" />
-                          <span>{ev.time}</span>
-                        </>
-                      )}
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
-                                        <RichTextRenderer content={ev.description} truncate={true} />
-                    {ev.location && (
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="truncate">{ev.location}</span>
-                      </div>
-                    )}
-                    {ev.fileUrl && (
-                      <div className="mt-4">
-                        <a 
-                          href={ev.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download File
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                 <Link to={`/event/${ev.id}`} key={ev.id} className="no-underline">
+                                  <div key={ev.id} className="max-w-[430px] bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ">
+                                    {ev.imageUrl && (
+                                      <div className="h-48 overflow-hidden">
+                                        <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                      </div>
+                                    )}
+                                    <div className="p-6">
+                                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                                        <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                                        <span>{(ev.date as Timestamp).toDate().toLocaleDateString()}</span>
+                                        {ev.time && (
+                                          <>
+                                            <span className="mx-2 text-gray-300">|</span>
+                                            <Clock className="w-4 h-4 mr-1 text-blue-500" />
+                                            <span>{ev.time}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                      <h3 className="text-xl font-bold text-gray-900  group-hover:text-blue-600 transition-colors duration-300">{ev.title}</h3>
+                                                           
+                                      {ev.location && (
+                                        <div className="flex items-center text-sm text-gray-500">
+                                          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                                          <span className="truncate">{ev.location}</span>
+                                        </div>
+                                      )}
+                                      {ev.fileUrl && (
+                                        <div className="mt-4">
+                                          <a 
+                                            href={ev.fileUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                                          >
+                                            <Download className="w-4 h-4" />
+                                            Download File
+                                          </a>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  </Link>
               ))}
               {!top3.length && (
                 <div className="md:col-span-3 text-center text-gray-500 py-12">
@@ -115,7 +117,7 @@ const Index = () => {
                 </div>
               )}
             </div>
-            <div className="text-center">
+            <div className="text-center mt-12">
               <Link 
                 to="/calendar"
                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-md font-medium transition-colors"

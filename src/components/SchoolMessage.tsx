@@ -1,4 +1,4 @@
-import schoolHero from '@/assets/hero-school.jpg';
+import schoolHero from '/assets/hero-school.jpg';
 
 const SchoolMessage = () => {
   return (

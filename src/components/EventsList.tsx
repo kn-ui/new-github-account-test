@@ -21,12 +21,14 @@ import {
   Play,
   Zap,
   Star,
-  Download
+  Download,
+  Calendar
 } from 'lucide-react';
 import { eventService, Timestamp } from '@/lib/firestore';
 import { toEthiopianDate, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 import { useI18n } from '@/contexts/I18nContext';
 import RichTextRenderer from '@/components/ui/RichTextRenderer';
+import { Link } from 'react-router-dom';
 
 interface Event {
   id: string;
@@ -284,68 +286,49 @@ export const EventsList: React.FC<EventsListProps> = ({ readOnly }) => {
       {/* Events Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => (
-          <Card key={event.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group border-l-4 border-purple-500">
-            {event.imageUrl && (
-              <div className="h-48 overflow-hidden">
-                <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
-            )}
-            <div className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge 
-                    variant={getTypeBadgeVariant(event.type)}
-                    className="text-xs"
-                  >
-                    {event.type}
-                  </Badge>
-                  <Badge 
-                    variant={getStatusBadgeVariant(event.status)}
-                    className="text-xs"
-                  >
-                    {event.status}
-                  </Badge>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">{event.title}</h3>
-                                <RichTextRenderer content={event.description} truncate={true} />
-              </div>
-              <div className="space-y-3 text-sm text-gray-500">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-purple-500" />
-                  <span>{formatEventDate(event.date)}</span>
-                  {event.time && (
-                    <>
-                      <span className="text-gray-300">|</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4 text-purple-500" />
-                        {event.time}
-                      </div>
-                    </>
-                  )}
-                </div>
-                {event.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-purple-500" />
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                )}
-
-                {event.fileUrl && (
-                  <div className="mt-4">
-                    <a 
-                      href={event.fileUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download File
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
+           <Link to={`/event/${event.id}`} key={event.id} className="no-underline">
+                            <div key={event.id} className="max-w-[430px] bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ">
+                              {event.imageUrl && (
+                                <div className="h-48 overflow-hidden">
+                                  <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                </div>
+                              )}
+                              <div className="p-6">
+                                <div className="flex items-center text-sm text-gray-600 mb-3">
+                                  <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                                  <span>{(event.date as Timestamp).toDate().toLocaleDateString()}</span>
+                                  {event.time && (
+                                    <>
+                                      <span className="mx-2 text-gray-300">|</span>
+                                      <Clock className="w-4 h-4 mr-1 text-blue-500" />
+                                      <span>{event.time}</span>
+                                    </>
+                                  )}
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900  group-hover:text-blue-600 transition-colors duration-300">{event.title}</h3>
+                                                     
+                                {event.location && (
+                                  <div className="flex items-center text-sm text-gray-500">
+                                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                                    <span className="truncate">{event.location}</span>
+                                  </div>
+                                )}
+                                {event.fileUrl && (
+                                  <div className="mt-4">
+                                    <a 
+                                      href={event.fileUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                      Download File
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            </Link>
         ))}
       </div>
 

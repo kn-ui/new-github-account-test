@@ -32,17 +32,16 @@ export default function BlogDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
           <div className="text-center text-gray-500">{t('blog.loading')}</div>
         ) : blog ? (
-          <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <article className=" rounded-2xl shadow-md overflow-hidden">
             {(blog as any).imageUrl && (
               <img src={(blog as any).imageUrl} alt={blog.title} className="w-full h-96 object-cover" />
             )}
             <div className="p-8 md:p-12">
-              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+              <div className="flex justify-between items-center space-x-4 text-sm text-gray-500 mb-4">
                 <div className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
                   <span>{blog.authorName}</span>
@@ -52,14 +51,14 @@ export default function BlogDetail() {
                   <span>{blog.createdAt.toDate().toLocaleDateString()}</span>
                 </div>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">{blog.title}</h1>
-              <div className="prose prose-lg max-w-none text-gray-700">
+              <h1 className="text-4xl md:text-5xl font-semibold text-center text-gray-900 mb-6 leading-tight">{blog.title}</h1>
+              <div className="prose prose-sm max-w-none text-gray-700">
                 <RichTextRenderer content={blog.content} />
               </div>
             </div>
 
              <div className="mb-12 text-center">
-               <Link to="/updates#blogs" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <Link to="/updates#blogs" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm bg-white text-blue-600 border-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                   {"Back to Blogs"}
               </Link>

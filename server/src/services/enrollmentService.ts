@@ -10,7 +10,10 @@ class EnrollmentService {
         return [];
       }
 
-      const snapshot = await this.enrollmentsCollection.where('courseId', '==', courseId).get();
+      const snapshot = await this.enrollmentsCollection
+        .where('courseId', '==', courseId)
+        .where('isActive', '==', true) // Filter for active enrollments
+        .get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Enrollment));
     } catch (error) {
       console.error('Error getting enrollments by course:', error);

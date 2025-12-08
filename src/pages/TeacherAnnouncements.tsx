@@ -197,9 +197,10 @@ export default function TeacherAnnouncements() {
         base.recipientStudentId = null;
       } else if (formData.recipientStudentId) {
         // Direct message to specific student
-        base.targetAudience = 'SPECIFIC_STUDENT';
-        base.recipientStudentId = formData.recipientStudentId;
+        base.targetAudience = 'SPECIFIC_USER'; // Use 'SPECIFIC_USER'
+        base.recipientUserId = formData.recipientStudentId; // Use 'recipientUserId'
         base.courseId = null;
+        base.recipientStudentId = null; // Clear out the old field
       } else if (formData.courseId) {
         // Course-specific announcement
         base.targetAudience = 'COURSE_STUDENTS';

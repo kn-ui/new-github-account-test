@@ -59,12 +59,12 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface User {
   id: string;
+  studentId?: string; // New field
   displayName: string;
   email: string;
   role: string;
   isActive: boolean;
   createdAt: any; // Timestamp from Firestore
-  deliveryMethod?: string;
   studentGroup?: string;
   programType?: string;
   classSection?: string;
@@ -95,7 +95,7 @@ const UserManager = () => {
     email: '',
     role: 'student' as 'student' | 'teacher' | 'admin' | 'super_admin',
     password: '',
-    deliveryMethod: '',
+    studentId: '', // Add studentId
     studentGroup: '',
     programType: '',
     classSection: '',
@@ -106,12 +106,89 @@ const UserManager = () => {
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+  const [isGeneratingId, setIsGeneratingId] = useState(false); // New state for ID generation
+  const [isIdUnique, setIsIdUnique] = useState(true);
+  const [idCheckMessage, setIdCheckMessage] = useState('');
   const [studentMeta, setStudentMeta] = useState<{ deliveryMethods: string[]; studentGroups: string[]; programTypes: string[]; classSections: string[] }>({ deliveryMethods: [], studentGroups: [], programTypes: [], classSections: [] });
-  const [customMetaInputs, setCustomMetaInputs] = useState<{ deliveryMethod: string; studentGroup: string; programType: string; classSection: string }>({ deliveryMethod: '', studentGroup: '', programType: '', classSection: '' });
+  const [customMetaInputs, setCustomMetaInputs] = useState<{ studentGroup: string; programType: string; classSection: string }>({ studentGroup: '', programType: '', classSection: '' });
   const [customYearInput, setCustomYearInput] = useState('');
   const [studentFilters, setStudentFilters] = useState({
     year: '',
   });
+
+  // Debounced check for student ID uniqueness
+  useEffect(() => {
+    // Don't run on initial load or if the user object is not yet populated
+    if (!editingUser?.studentId) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      // If the ID is the same as the original, it's considered "unique" in this context
+      const originalUser = users.find(u => u.id === editingUser.id);
+      if (originalUser && originalUser.studentId === editingUser.studentId) {
+        setIsIdUnique(true);
+        setIdCheckMessage('');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student-id/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId: editingUser.studentId }),
+        });
+        const data = await response.json();
+        if (data.exists) {
+          setIsIdUnique(false);
+          setIdCheckMessage('ID already exists.');
+        } else {
+          setIsIdUnique(true);
+          setIdCheckMessage('ID is unique.');
+        }
+      } catch (error) {
+        console.error('Error checking student ID:', error);
+        setIsIdUnique(true); // Fail open to not block the user
+        setIdCheckMessage('Could not verify ID.');
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [editingUser?.studentId, editingUser?.id, users]);
+
+  // Auto-generate student ID
+  useEffect(() => {
+    const generateStudentId = async () => {
+      if (newUser.role === 'student' && newUser.programType) {
+        setIsGeneratingId(true);
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student-id/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              programType: newUser.programType,
+            }),
+          });
+          if (!response.ok) {
+            throw new Error('API Error');
+          }
+          const data = await response.json();
+          if (data.studentId) {
+            setNewUser(prev => ({ ...prev, studentId: data.studentId }));
+          }
+        } catch (error) {
+          console.error('Error generating student ID:', error);
+          setNewUser(prev => ({ ...prev, studentId: 'Error generating ID' }));
+        } finally {
+          setIsGeneratingId(false);
+        }
+      }
+    };
+
+    generateStudentId();
+  }, [newUser.deliveryMethod, newUser.programType, newUser.role]);
 
   // Calculate stats
   const totalUsers = users.length;
@@ -255,7 +332,6 @@ const UserManager = () => {
       
       // Create Firestore user profile using the UID from secondary auth
       const studentData = newUser.role === 'student' ? {
-        ...(newUser.deliveryMethod && { deliveryMethod: newUser.deliveryMethod }),
         ...(newUser.studentGroup && { studentGroup: newUser.studentGroup }),
         ...(newUser.programType && { programType: newUser.programType }),
         ...(newUser.classSection && { classSection: newUser.classSection }),
@@ -269,6 +345,7 @@ const UserManager = () => {
         isActive: true,
         uid: userCredential.user.uid,
         passwordChanged: false, // New users must change their password
+        studentId: newUser.studentId, // Add studentId
         phoneNumber: newUser.phoneNumber,
         address: newUser.address,
         ...studentData
@@ -281,8 +358,20 @@ const UserManager = () => {
       sessionStorage.removeItem('suppressAuthRedirect');
       
       setIsAddUserOpen(false);
-      setNewUser({ displayName: '', email: '', role: 'student', password: '', deliveryMethod: '', studentGroup: '', programType: '', classSection: '', phoneNumber: '', address: '' });
-      fetchUsers();
+      setNewUser({ 
+        displayName: '', 
+        email: '', 
+        role: 'student', 
+        password: '', 
+        studentGroup: '', 
+        programType: '', 
+        classSection: '', 
+        phoneNumber: '', 
+        address: '',
+        // ⭐️ ADDED MISSING PROPERTIES ⭐️
+        studentId: '', // Default to empty string
+        year: '',      // Default to empty string
+      });  fetchUsers();
     } catch (error: any) {
       // Clear the suppress flag on error
       sessionStorage.removeItem('suppressAuthRedirect');
@@ -332,7 +421,7 @@ const UserManager = () => {
       
       // Add student-specific fields if the user is a student
       if (editingUser.role === 'student') {
-        updateData.deliveryMethod = editingUser.deliveryMethod ?? null;
+        updateData.studentId = editingUser.studentId ?? null;
         updateData.studentGroup = editingUser.studentGroup ?? null;
         updateData.programType = editingUser.programType ?? null;
         updateData.classSection = editingUser.classSection ?? null;
@@ -491,24 +580,10 @@ const UserManager = () => {
                       </Select>
                     </div>
 
+
+
                     {newUser.role === 'student' && (
                       <>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">Delivery Method</Label>
-                          <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.deliveryMethod} onValueChange={(v)=> setNewUser(prev=>({...prev, deliveryMethod: v === '__NONE__' ? '' : v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__NONE__">None</SelectItem>
-                                {studentMeta.deliveryMethods.map(dm => (
-                                  <SelectItem key={dm} value={dm}>{dm}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input placeholder="Add new" value={customMetaInputs.deliveryMethod} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, deliveryMethod: e.target.value}))} className="w-40" />
-                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('deliveryMethods')}>Add</Button>
-                          </div>
-                        </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">Student Group</Label>
                           <div className="col-span-3 flex items-center gap-2">
@@ -532,6 +607,8 @@ const UserManager = () => {
                               <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="__NONE__">None</SelectItem>
+                                <SelectItem value="Online">Online</SelectItem>
+                                <SelectItem value="Six Months">Six Months</SelectItem>
                                 {studentMeta.programTypes.map(pt => (
                                   <SelectItem key={pt} value={pt}>{pt}</SelectItem>
                                 ))}
@@ -672,21 +749,21 @@ const UserManager = () => {
                     </Select>
                   </div>
                   {editingUser.role === 'student' && (
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="editStudentId" className="text-right">Student ID</Label>
+                      <Input
+                        id="editStudentId"
+                        value={editingUser.studentId || ''}
+                        onChange={(e) => setEditingUser({...editingUser, studentId: e.target.value})}
+                        className="col-span-3"
+                      />
+                      <p className={`col-span-4 text-right text-sm ${isIdUnique ? 'text-green-600' : 'text-red-600'}`}>
+                        {idCheckMessage}
+                      </p>
+                    </div>
+                  )}
+                  {editingUser.role === 'student' && (
                     <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="editDeliveryMethod" className="text-right">Delivery Method</Label>
-                        <Select value={editingUser.deliveryMethod || ''} onValueChange={(value) => setEditingUser({...editingUser, deliveryMethod: value === '__NONE__' ? '' : value})}>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="None" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__NONE__">None</SelectItem>
-                            <SelectItem value="online">Online</SelectItem>
-                            <SelectItem value="offline">Offline</SelectItem>
-                            <SelectItem value="hybrid">Hybrid</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="editStudentGroup" className="text-right">Student Group</Label>
                         <Input
@@ -705,6 +782,8 @@ const UserManager = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__NONE__">None</SelectItem>
+                            <SelectItem value="Online">Online</SelectItem>
+                            <SelectItem value="Six Months">Six Months</SelectItem>
                             <SelectItem value="undergraduate">Undergraduate</SelectItem>
                             <SelectItem value="graduate">Graduate</SelectItem>
                             <SelectItem value="postgraduate">Postgraduate</SelectItem>
@@ -737,7 +816,7 @@ const UserManager = () => {
                 </div>
               )}
               <DialogFooter>
-                <LoadingButton type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700" loading={isUpdatingUser} loadingText="Saving…">
+                <LoadingButton type="submit" onClick={handleUpdateUser} className="bg-blue-600 hover:bg-blue-700" loading={isUpdatingUser} loadingText="Saving…" disabled={!isIdUnique}>
                   {t('users.saveChanges')}
                 </LoadingButton>
               </DialogFooter>
@@ -871,6 +950,7 @@ const UserManager = () => {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead className="font-semibold text-gray-900">{t('users.table.user')}</TableHead>
+                  <TableHead className="font-semibold text-gray-900">Student ID</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.role')}</TableHead>
                   <TableHead className="font-semibold text-gray-900">Year</TableHead>
                   <TableHead className="font-semibold text-gray-900">{t('users.table.status')}</TableHead>
@@ -897,25 +977,31 @@ const UserManager = () => {
                         </div>
                       </div>
                     </TableCell>
-                                        <TableCell>
-                                          <Badge
-                                            variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
-                                            className="flex items-center gap-1"
-                                          >
-                                            {user.role === 'admin' && <Shield className="h-3 w-3" />}
-                                            {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
-                                            {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
-                                            {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
-                                            {t(`users.roles.${user.role}`)}
-                                          </Badge>
-                                        </TableCell>
-                                                            <TableCell>
-                                                              {user.role === 'student' && user.year && (
-                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-                                                                  {user.year}
-                                                                </Badge>
-                                                              )}
-                                                            </TableCell>                    <TableCell>
+                    <TableCell>
+                      {user.role === 'student' && (
+                        <span className="text-sm text-gray-600">{user.studentId}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={user.role === 'admin' ? 'default' : user.role === 'teacher' ? 'secondary' : user.role === 'super_admin' ? 'destructive' : 'outline'}
+                        className="flex items-center gap-1"
+                      >
+                        {user.role === 'admin' && <Shield className="h-3 w-3" />}
+                        {user.role === 'super_admin' && <Eye className="h-3 w-3" />}
+                        {user.role === 'teacher' && <BookOpen className="h-3 w-3" />}
+                        {user.role === 'student' && <GraduationCap className="h-3 w-3" />}
+                        {t(`users.roles.${user.role}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.role === 'student' && user.year && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                          {user.year}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge 
                         variant={user.isActive ? 'default' : 'secondary'}
                         className={user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}

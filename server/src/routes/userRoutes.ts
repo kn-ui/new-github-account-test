@@ -21,6 +21,8 @@ router.get('/profile', userController.getProfile);
 router.put('/profile', userController.updateProfile);
 
 // Specific routes first (before parameterized routes)
+router.post('/generate-student-id', requireAdmin, userController.generateStudentId);
+router.post('/check-student-id', requireAdmin, userController.checkStudentId);
 
 router.get('/search', requireTeacherOrAdmin, validatePagination, userController.searchUsers);
 router.get('/admin/stats', requireAdminOrSuperAdmin, userController.getUserStats);

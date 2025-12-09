@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import userService from '../services/userService';
-import { auth as adminAuth } from '../config/firebase';
+import { auth as adminAuth, firestore } from '../config/firebase';
 import {
   sendSuccess,
   sendError,
@@ -10,6 +10,17 @@ import {
   sendPaginatedResponse,
   sendServerError
 } from '../utils/response';
+
+// Helper to get program code
+const getProgramCode = (deliveryMethod?: string, programType?: string): string => {
+  if (programType?.toLowerCase().includes('six months')) return 'E6';
+  if (deliveryMethod === 'Extension') return 'E';
+  if (deliveryMethod === 'Weekend') return 'W';
+  if (deliveryMethod === 'Distance') return 'D';
+  if (deliveryMethod === 'Online') return 'O';
+  if (deliveryMethod === 'Regular') return 'R';
+  return 'GEN'; // General/Default
+};
 
 export class UserController {
   // Admin: Create a new user
@@ -257,6 +268,53 @@ async createOrUpdateProfile(req: AuthenticatedRequest, res: Response): Promise<v
     } catch (error) {
       console.error('Get user stats error:', error);
       sendServerError(res, 'Failed to get user statistics');
+    }
+  }
+
+  // Generate Student ID
+  async generateStudentId(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { deliveryMethod, programType } = req.body;
+    try {
+      const counterRef = firestore.collection('counters').doc('studentIdCounter');
+      let nextIdNumber = 1;
+
+      await firestore.runTransaction(async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        if (!counterDoc.exists) {
+          transaction.set(counterRef, { lastNumber: 1 });
+        } else {
+          const lastNumber = counterDoc.data()?.lastNumber || 0;
+          nextIdNumber = lastNumber + 1;
+          transaction.update(counterRef, { lastNumber: nextIdNumber });
+        }
+      });
+
+      const programCode = getProgramCode(deliveryMethod, programType);
+      const year = new Date().getFullYear();
+      const sequentialNumber = String(nextIdNumber).padStart(3, '0');
+      const studentId = `DHSR/${programCode}/${year}/${sequentialNumber}`;
+
+      sendSuccess(res, 'Student ID generated successfully', { studentId });
+    } catch (error) {
+      console.error('Error generating student ID:', error);
+      sendServerError(res, 'Failed to generate student ID');
+    }
+  }
+
+  // Check if Student ID exists
+  async checkStudentId(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { studentId } = req.body;
+    if (!studentId) {
+      sendError(res, 'studentId is required.');
+      return;
+    }
+    try {
+      const querySnapshot = await firestore.collection('users').where('studentId', '==', studentId).limit(1).get();
+      const exists = !querySnapshot.empty;
+      sendSuccess(res, 'Student ID check complete', { exists });
+    } catch (error) {
+      console.error('Error checking student ID:', error);
+      sendServerError(res, 'Failed to check student ID');
     }
   }
 }

@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import courseRoutes from './routes/courseRoutes';
 import contentRoutes from './routes/contentRoutes';
 import emailRoutes from './routes/emailRoutes';
+import studentIdRoutes from './routes/studentIdRoutes';
 import devRoutes from './routes/devRoutes';
 
 
@@ -30,7 +31,7 @@ app.use(limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: '*', // Allow all origins for debugging
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -75,6 +76,7 @@ try {
   app.use('/api/courses', courseRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/email', emailRoutes);
+  app.use('/api/student-id', studentIdRoutes);
   if ((process.env.NODE_ENV || 'development') !== 'production') {
     app.use('/api/dev/seed', devRoutes);
   }

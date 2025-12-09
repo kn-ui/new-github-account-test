@@ -27,6 +27,7 @@ export { Timestamp };
 export interface FirestoreUser {
   uid?: string; // Optional for backward compatibility
   id?: string;  // Document ID
+  studentId?: string; // New field for student ID
   displayName: string;
   email: string;
   role: 'student' | 'teacher' | 'admin' | 'super_admin';

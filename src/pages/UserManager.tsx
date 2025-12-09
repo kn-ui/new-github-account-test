@@ -560,7 +560,7 @@ const UserManager = () => {
                 {t('users.add')}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
                 <div className="flex items-center justify-between">
                   <DialogTitle className="flex items-center gap-2">

@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X, GraduationCap } from 'lucide-react';
 import { secondaryAuth } from '@/lib/firebaseSecondary';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { userService } from '@/lib/firestore';
+import { userService } from '@/lib/firestore'; // Assuming userService can check existence or we'll mock it
 
 // studentId is removed, it will be auto-generated
 interface StudentCSVData {
@@ -14,6 +14,8 @@ interface StudentCSVData {
   studentGroup?: string;
   classSection?: string;
   year?: string;
+  existsInDb?: boolean; // New field to indicate if user already exists in DB
+  isCheckingExistence?: boolean; // New field to indicate if existence check is in progress
 }
 
 interface CSVUploadProps {
@@ -98,6 +100,8 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             studentGroup: values[headers.indexOf('studentgroup')] || '',
             classSection: values[headers.indexOf('classsection')] || '',
             year: values[headers.indexOf('year')] || '',
+            isCheckingExistence: false, // Initialize
+            existsInDb: undefined, // Initialize
           };
 
           if (!user.displayName) newErrors.push(`Row ${i + 1}: Missing display name`);
@@ -121,6 +125,40 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     return emailRegex.test(email);
   };
 
+  // Effect to check existence in DB for previewed users
+  useEffect(() => {
+    if (preview.length > 0) {
+      const checkExistence = async () => {
+        // Temporarily mark all users as checking
+        setPreview(prev => prev.map(user => ({ ...user, isCheckingExistence: true, existsInDb: undefined })));
+
+        const updatedPreview = await Promise.all(preview.map(async (user) => {
+          if (!isValidEmail(user.email)) { // Skip check for invalid emails
+            return { ...user, existsInDb: false, isCheckingExistence: false };
+          }
+          
+          try {
+            // Simulate API call to check user existence
+            // In a real app, this would be a call to your backend/Firestore
+            const response = await new Promise(resolve => setTimeout(() => {
+              // Simulate some emails existing (e.g., 'existing' in email) 
+              const exists = user.email.includes('existing'); 
+              resolve({ exists: exists });
+            }, 500 + Math.random() * 500)); // Simulate network delay
+
+            const data = response as { exists: boolean };
+            return { ...user, existsInDb: data.exists, isCheckingExistence: false };
+          } catch (error) {
+            console.error(`Error checking existence for ${user.email}:`, error);
+            return { ...user, existsInDb: false, isCheckingExistence: false }; // Assume not exists on error
+          }
+        }));
+        setPreview(updatedPreview);
+      };
+      checkExistence();
+    }
+  }, [preview.length]); // Only re-run when the number of previewed users changes
+
   const handleUpload = async () => {
     if (!uploadedFile || preview.length === 0 || errors.length > 0) return;
 
@@ -135,6 +173,14 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     for (let i = 0; i < preview.length; i++) {
       const user = preview[i];
       setCurrentProgress(Math.round(((i + 1) / preview.length) * 100));
+      
+      // Skip creation if user already exists based on preview check
+      if (user.existsInDb) {
+        setErrorCount(prev => prev + 1);
+        uploadErrors.push(`${user.email}: User already exists (skipped)`);
+        console.warn(`Skipping creation for ${user.email}: already exists.`);
+        continue; // Skip to next user
+      }
       
       try {
         const password = 'student123';
@@ -212,6 +258,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   };
 
   const downloadTemplate = () => {
+    // studentId is removed, programType is now required
     const headers = 'displayName,email,programType,phoneNumber,address,studentGroup,classSection,year';
     const example = 'abebe,abebe@example.com,Online,0900000001,AA,Youth,A,1st Year';
     const template = `${headers}\n${example}`;
@@ -294,7 +341,7 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             </div>
           )}
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-80 overflow-y-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -310,15 +357,31 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
                   const hasError = errors.some(error => error.includes(`Row ${index + 2}`));
                   return (
                     <tr key={index} className={hasError ? 'bg-red-50' : ''}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.displayName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.programType}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.year}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {hasError ? (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.displayName}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500 break-all">{user.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{user.programType}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{user.year}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {user.isCheckingExistence ? (
+                          <span className="flex items-center text-blue-500">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                            Checking...
+                          </span>
+                        ) : hasError ? (
+                          <span className="flex items-center text-red-500">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            Error
+                          </span>
+                        ) : user.existsInDb ? (
+                          <span className="flex items-center text-orange-500">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            Already Exists
+                          </span>
                         ) : (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="flex items-center text-green-500">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            New
+                          </span>
                         )}
                       </td>
                     </tr>

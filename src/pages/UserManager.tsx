@@ -408,8 +408,51 @@ const UserManager = () => {
 
   const handleUpdateUser = async () => {
     if (!editingUser) return;
+
     try {
       setIsUpdatingUser(true);
+
+      // --- Start of added/modified validation logic ---
+      if (editingUser.role === 'student' && editingUser.studentId) {
+        const originalUser = users.find(u => u.id === editingUser.id);
+        const isStudentIdChanged = originalUser?.studentId !== editingUser.studentId;
+
+        // Only perform a real-time check if the student ID has actually changed
+        if (isStudentIdChanged) {
+          // Perform a blocking real-time check for uniqueness to ensure data integrity
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student-id/check`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentId: editingUser.studentId }),
+          });
+          const data = await response.json();
+
+          if (data.exists) {
+            // Update state for UI feedback and prevent save
+            setIsIdUnique(false);
+            setIdCheckMessage('This Student ID already exists.');
+            alert("Cannot save: The student ID you entered is already in use. Please use a different one.");
+            setIsUpdatingUser(false); // Reset loading state
+            return; // Stop the update process
+          } else {
+            // If the real-time check passes, ensure UI state reflects this
+            setIsIdUnique(true);
+            setIdCheckMessage('ID is unique.');
+          }
+        }
+      }
+      // --- End of added/modified validation logic ---
+
+      // If we reach here, either it's not a student, or the student ID hasn't changed,
+      // or it passed the real-time uniqueness check.
+      // Also, explicitly check the isIdUnique state one last time, in case the debounced
+      // check failed earlier and the user somehow bypassed the disabled button.
+      if (!isIdUnique && editingUser.role === 'student') {
+        alert("Cannot save: Student ID already exists. Please use a different ID.");
+        setIsUpdatingUser(false); // Reset loading state
+        return;
+      }
+
       const updateData: any = {
         displayName: editingUser.displayName,
         email: editingUser.email,
@@ -432,10 +475,11 @@ const UserManager = () => {
       setIsEditUserOpen(false);
       setEditingUser(null);
       fetchUsers(); // Refresh the user list
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user:', error);
+      alert(`Error updating user: ${error.message || 'An unexpected error occurred.'}`);
     } finally {
-      setIsUpdatingUser(false);
+      // setIsUpdatingUser(false); // Reset is handled inside try/catch for specific returns
     }
   };
 

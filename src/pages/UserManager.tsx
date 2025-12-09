@@ -484,22 +484,35 @@ const UserManager = () => {
   };
 
   const exportUsers = () => {
+    const csvHeaders = [
+      'Name', 'Email', 'Phone Number', 'Address', 'Role', 'Status', 'Created At', 
+      'Student ID', 'Student Group', 'Program Type', 'Class Section', 'Year'
+    ];
+    
     const csvContent = [
-      ['Name', 'Email', 'Role', 'Status', 'Created At'],
+      csvHeaders,
       ...filteredUsers.map(user => [
         user.displayName,
         user.email,
+        user.phoneNumber || '',
+        user.address || '',
         user.role,
         user.isActive ? 'Active' : 'Inactive',
-        user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString()
+        user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : user.createdAt.toDate().toLocaleDateString(),
+        // Student specific fields
+        user.role === 'student' ? user.studentId || '' : '',
+        user.role === 'student' ? user.studentGroup || '' : '',
+        user.role === 'student' ? user.programType || '' : '',
+        user.role === 'student' ? user.classSection || '' : '',
+        user.role === 'student' ? user.year || '' : ''
       ])
-    ].map(row => row.join(',')).join('\n');
+    ].map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'users.csv';
+    a.download = 'users_export.csv';
     a.click();
     window.URL.revokeObjectURL(url);
   };

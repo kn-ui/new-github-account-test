@@ -125,40 +125,32 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
     return emailRegex.test(email);
   };
 
-  // Effect to check existence in DB for previewed users
-  useEffect(() => {
-    if (preview.length > 0) {
-      const checkExistence = async () => {
-        // Temporarily mark all users as checking
-        setPreview(prev => prev.map(user => ({ ...user, isCheckingExistence: true, existsInDb: undefined })));
-
-        const updatedPreview = await Promise.all(preview.map(async (user) => {
-          if (!isValidEmail(user.email)) { // Skip check for invalid emails
-            return { ...user, existsInDb: false, isCheckingExistence: false };
-          }
-          
-          try {
-            // Simulate API call to check user existence
-            // In a real app, this would be a call to your backend/Firestore
-            const response = await new Promise(resolve => setTimeout(() => {
-              // Simulate some emails existing (e.g., 'existing' in email) 
-              const exists = user.email.includes('existing'); 
-              resolve({ exists: exists });
-            }, 500 + Math.random() * 500)); // Simulate network delay
-
-            const data = response as { exists: boolean };
-            return { ...user, existsInDb: data.exists, isCheckingExistence: false };
-          } catch (error) {
-            console.error(`Error checking existence for ${user.email}:`, error);
-            return { ...user, existsInDb: false, isCheckingExistence: false }; // Assume not exists on error
-          }
-        }));
-        setPreview(updatedPreview);
-      };
-      checkExistence();
-    }
-  }, [preview.length]); // Only re-run when the number of previewed users changes
-
+    // Effect to check existence in DB for previewed users
+    useEffect(() => {
+      if (preview.length > 0) {
+        const checkExistence = async () => {
+          // Temporarily mark all users as checking
+          setPreview(prev => prev.map(user => ({ ...user, isCheckingExistence: true, existsInDb: undefined })));
+  
+          const updatedPreview = await Promise.all(preview.map(async (user) => {
+            if (!isValidEmail(user.email)) { // Skip check for invalid emails
+              return { ...user, existsInDb: false, isCheckingExistence: false };
+            }
+            
+            try {
+              // Use actual userService to check user existence
+              const exists = await userService.checkUserExistsByEmail(user.email);
+              return { ...user, existsInDb: exists, isCheckingExistence: false };
+            } catch (error) {
+              console.error(`Error checking existence for ${user.email}:`, error);
+              return { ...user, existsInDb: false, isCheckingExistence: false }; // Assume not exists on error
+            }
+          }));
+          setPreview(updatedPreview);
+        };
+        checkExistence();
+      }
+    }, [preview.length]); // Only re-run when the number of previewed users changes
   const handleUpload = async () => {
     if (!uploadedFile || preview.length === 0 || errors.length > 0) return;
 

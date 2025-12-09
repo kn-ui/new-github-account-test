@@ -417,6 +417,11 @@ export const userService = {
     return null;
   },
 
+  async checkUserExistsByEmail(email: string): Promise<boolean> {
+    const user = await this.getUserByEmail(email);
+    return user !== null;
+  },
+
   async getUsersByIds(uids: string[]): Promise<Record<string, FirestoreUser | null>> {
     const result: Record<string, FirestoreUser | null> = {};
     const unique = Array.from(new Set(uids.filter(Boolean)));

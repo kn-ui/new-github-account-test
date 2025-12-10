@@ -50,8 +50,10 @@
         "signingIn": "Signing In...",
         "newHere": "New to our platform?",
         "createAccount": "Create New Account",
-        "login_required": "Please fill in all fields"
-    },
+        "login_required": "Please fill in all fields",
+        "forgot_password_email_prompt": "Please enter your email address to reset your password.",
+        "emailNotFound": "No user found with this email address."
+            },
     "site": {
         "brand": "St. Raguel Church",
         "taglineShort": "Spiritual School"

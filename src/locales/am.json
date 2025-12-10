@@ -50,8 +50,10 @@
         "signingIn": "በመግባት ላይ...",
         "newHere": "አዲስ ነዎት?",
         "createAccount": "አዲስ መለያ ፍጠር",
-        "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ"
-    },
+        "login_required": "እባክዎ ሁሉንም መስኮች ይሙሉ",
+        "forgot_password_email_prompt": "የይለፍ ቃልዎን እንደገና ለማስጀመር እባክዎ የኢሜል አድራሻዎን ያስገቡ።",
+        "emailNotFound": "በዚህ ኢሜይል አድራሻ ተጠቃሚ የለም።"
+            },
     "site": {
         "brand": "ስት. ራጉኤል ቤተክርስቲያን",
         "taglineShort": "መንፈሳዊ ትምህርት ቤት"

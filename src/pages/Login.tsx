@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/contexts/I18nContext';
 import LoginHeroAside from '@/components/LoginHeroAside';
+import { auth } from '@/lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 import logo from '/assets/logo.jpg';
 
@@ -40,6 +42,26 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      toast.error(t('auth.forgot_password_email_prompt') || 'Please enter your email address to reset your password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success(t('auth.forgot_password_success') || 'Password reset email sent. Please check your inbox, including your spam folder.');
+      console.log('Password reset email sent successfully.');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast.error(t('auth.forgot_password_error') || 'Failed to send password reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-600 to-[#13A0E2] flex">
@@ -132,9 +154,13 @@ const Login = () => {
                   {t('auth.rememberMe') || 'Remember me'}
                 </label>
               </div>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 {t('auth.forgotPassword') || 'Forgot password?'}
-              </a>
+              </button>
             </div>
 
             {/* Submit Button */}

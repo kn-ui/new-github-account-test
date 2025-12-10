@@ -52,21 +52,24 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
-      result.success ? toast.success('Message sent!') : toast.error(result.message || 'Failed to send');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      toast.error('Failed to send message. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // try {
+    //   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/email/contact`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(formData),
+    //   });
+    //   if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    //   const result = await response.json();
+    //   result.success ? toast.success('Message sent!') : toast.error(result.message || 'Failed to send');
+    // } catch (error) {
+    //   console.error('Failed to send message:', error);
+    //   toast.error('Failed to send message. Please try again.');
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
+    console.log('Contact form submission attempted (email sending disabled). Data:', formData);
+    toast.success('Message sent! (Simulation)');
+    setIsSubmitting(false);
   };
 
   return (

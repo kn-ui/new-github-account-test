@@ -8,7 +8,7 @@ import eventService from '../services/eventService';
 import forumService from '../services/forumService';
 import hygraphService from '../services/hygraphService';
 import { sendPaginatedResponse, sendServerError, sendSuccess, sendCreated, sendError } from '../utils/response';
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
 
 export class ContentController {
   async upload(req: Request, res: Response): Promise<void> {
@@ -198,35 +198,37 @@ export class ContentController {
   // Support ticket endpoints removed per client request
 
   async sendContactEmail(req: AuthenticatedRequest, res: Response) {
-    try {
-      const { name, email, subject, message } = req.body as any;
-      if (!name || !email || !subject || !message) return sendError(res, 'Missing fields');
+    // try {
+    //   const { name, email, subject, message } = req.body as any;
+    //   if (!name || !email || !subject || !message) return sendError(res, 'Missing fields');
 
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: Boolean(process.env.SMTP_SECURE === 'true'),
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        } : undefined,
-      });
+    //   const transporter = nodemailer.createTransport({
+    //     host: process.env.SMTP_HOST,
+    //     port: Number(process.env.SMTP_PORT || 587),
+    //     secure: Boolean(process.env.SMTP_SECURE === 'true'),
+    //     auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+    //       user: process.env.SMTP_USER,
+    //       pass: process.env.SMTP_PASS,
+    //     } : undefined,
+    //   });
 
-      const to = process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER;
-      if (!to) return sendError(res, 'Email not configured');
+    //   const to = process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER;
+    //   if (!to) return sendError(res, 'Email not configured');
 
-      await transporter.sendMail({
-        from: process.env.CONTACT_FROM_EMAIL || email,
-        to,
-        subject: `[Contact] ${subject}`,
-        text: `From: ${name} <${email}>\n\n${message}`,
-      });
+    //   await transporter.sendMail({
+    //     from: process.env.CONTACT_FROM_EMAIL || email,
+    //     to,
+    //     subject: `[Contact] ${subject}`,
+    //     text: `From: ${name} <${email}>\n\n${message}`,
+    //   });
 
-      sendSuccess(res, 'Message sent');
-    } catch (e) {
-      console.error(e);
-      sendServerError(res, 'Failed to send message');
-    }
+    //   sendSuccess(res, 'Message sent');
+    // } catch (e) {
+    //   console.error(e);
+    //   sendServerError(res, 'Failed to send message');
+    // }
+    console.log('Email sending is disabled for contact form.');
+    sendSuccess(res, 'Message sent (simulation)');
   }
 }
 

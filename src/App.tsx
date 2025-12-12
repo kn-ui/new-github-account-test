@@ -70,10 +70,12 @@ import AdminAttendanceDetails from "./pages/AdminAttendanceDetails";
 import ManageAdmins from "./pages/ManageAdmins";
 import AdminGrades from "./pages/AdminGrades";
 import AdminCourseGrades from "./pages/AdminCourseGrades";
+import CertificateGenerator from "./pages/CertificateGenerator";
 
 // import Catalog from "./pages/Catalog";
 
 const queryClient = new QueryClient();
+
 
 import SuperAdminRoute from "./pages/SuperAdminRoutes";
 
@@ -244,6 +246,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AdminGrades />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/admin-certificate" 
+              element={
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <CertificateGenerator />
                   </DashboardWrapper>
                 </ProtectedRoute>
               } 

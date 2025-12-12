@@ -57,6 +57,7 @@ export interface FirestoreCourse {
   prerequisite?: string;
   credit?: number;
   year?: number;
+  semester?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

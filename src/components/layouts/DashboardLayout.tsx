@@ -104,6 +104,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
           { label: t('nav.courseManagement'), href: '/dashboard/courses', icon: BookOpen },
           { label: t('nav.attendance'), href: '/dashboard/admin-attendance', icon: ClipboardList },
           { label: t('nav.grades'), href: '/dashboard/admin-grades', icon: Award },
+          { label: 'Certificate', href: '/dashboard/admin-certificate', icon: Award },
           { label: t('nav.events'), href: '/dashboard/events', icon: Calendar },
           { label: t('nav.reports'), href: '/dashboard/reports', icon: BarChart3 },
           { label: t('nav.announcements'), href: '/dashboard/admin-announcements', icon: Bell },

@@ -88,14 +88,13 @@ export default function AdminStudentGrades() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
-  const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({
-    '2025': true,
-  });
+  const [expandedYears, setExpandedYears] = useState<{ [key: string]: boolean }>({});
   const [gradeType, setGradeType] = useState<'assignments' | 'courses' | 'exams' | 'others'>('courses');
   const [otherGrades, setOtherGrades] = useState<FirestoreOtherGrade[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
   const [expandedOtherCourses, setExpandedOtherCourses] = useState<{ [key: string]: boolean }>({});
+  const [expandedSemesters, setExpandedSemesters] = useState<{ [key: string]: boolean }>({});
   const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
     const [gradeRanges, setGradeRanges] = useState<any>({});
     const [isPublishing, setIsPublishing] = useState(false);
@@ -369,6 +368,26 @@ export default function AdminStudentGrades() {
     return filtered;
   }, [grades, searchTerm, courseFilter, sortBy]);
 
+  const groupedAssignments = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: GradeWithDetails[] } } = {};
+    filteredAndSortedGrades.forEach(grade => {
+      const course = courses.find(c => c.id === grade.courseId);
+      if (course && course.year && course.semester) {
+        const year = course.year.toString();
+        const semester = course.semester;
+
+        if (!grouped[year]) {
+          grouped[year] = {};
+        }
+        if (!grouped[year][semester]) {
+          grouped[year][semester] = [];
+        }
+        grouped[year][semester].push(grade);
+      }
+    });
+    return grouped;
+  }, [filteredAndSortedGrades, courses]);
+
   const filteredAndSortedExamGrades = useMemo(() => {
     let filtered = examGrades.filter(grade => {
       const matchesSearch = grade.examTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -404,6 +423,26 @@ export default function AdminStudentGrades() {
 
     return filtered;
   }, [examGrades, searchTerm, courseFilter, sortBy]);
+
+  const groupedExams = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: ExamGradeWithDetails[] } } = {};
+    filteredAndSortedExamGrades.forEach(grade => {
+      const course = courses.find(c => c.id === grade.courseId);
+      if (course && course.year && course.semester) {
+        const year = course.year.toString();
+        const semester = course.semester;
+
+        if (!grouped[year]) {
+          grouped[year] = {};
+        }
+        if (!grouped[year][semester]) {
+          grouped[year][semester] = [];
+        }
+        grouped[year][semester].push(grade);
+      }
+    });
+    return grouped;
+  }, [filteredAndSortedExamGrades, courses]);
 
   const filteredAndSortedFinalGrades = useMemo(() => {
     // Get course names for final grades
@@ -446,6 +485,44 @@ export default function AdminStudentGrades() {
 
     return filtered;
   }, [finalGrades, courses, searchTerm, courseFilter, sortBy]);
+
+  const groupedAndFilteredFinalGrades = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: any[] } } = {};
+
+    filteredAndSortedFinalGrades.forEach(grade => {
+      const course = courses.find(c => c.id === grade.courseId);
+      if (course && course.year && course.semester) {
+        const year = course.year.toString();
+        const semester = course.semester;
+
+        if (!grouped[year]) {
+          grouped[year] = {};
+        }
+        if (!grouped[year][semester]) {
+          grouped[year][semester] = [];
+        }
+        grouped[year][semester].push(grade);
+      }
+    });
+
+    return grouped;
+  }, [filteredAndSortedFinalGrades, courses]);
+
+  useEffect(() => {
+    if (Object.keys(groupedAndFilteredFinalGrades).length > 0) {
+      const allSemesterKeys: { [key: string]: boolean } = {};
+      const allYearKeys: { [key: string]: boolean } = {};
+      Object.keys(groupedAndFilteredFinalGrades).forEach(year => {
+        allYearKeys[year] = true;
+        Object.keys(groupedAndFilteredFinalGrades[year]).forEach(semester => {
+          const semesterKey = `${year}-${semester}`;
+          allSemesterKeys[semesterKey] = true;
+        });
+      });
+      setExpandedSemesters(allSemesterKeys);
+      setExpandedYears(allYearKeys);
+    }
+  }, [groupedAndFilteredFinalGrades]);
 
   const calculateLetterGradeWithRanges = (points: number): { letter: string; points: number } => {
     return calculateLetterGrade(points, 100, gradeRanges);
@@ -601,6 +678,26 @@ export default function AdminStudentGrades() {
     return stats;
   }, [groupedFinalGrades, courses, gradeRanges]);
 
+  const groupedOtherGrades = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: FirestoreOtherGrade[] } } = {};
+    otherGrades.forEach(grade => {
+      const course = courses.find(c => c.id === grade.courseId);
+      if (course && course.year && course.semester) {
+        const year = course.year.toString();
+        const semester = course.semester;
+
+        if (!grouped[year]) {
+          grouped[year] = {};
+        }
+        if (!grouped[year][semester]) {
+          grouped[year][semester] = [];
+        }
+        grouped[year][semester].push(grade);
+      }
+    });
+    return grouped;
+  }, [otherGrades, courses]);
+
   const refreshFinalGrades = async () => {
     try {
       const courseIds = courses.map(c => c.id);
@@ -713,6 +810,13 @@ export default function AdminStudentGrades() {
     setExpandedCourses(prev => ({
       ...prev,
       [courseId]: !prev[courseId]
+    }));
+  };
+
+  const toggleSemester = (semesterKey: string) => {
+    setExpandedSemesters(prev => ({
+      ...prev,
+      [semesterKey]: !prev[semesterKey]
     }));
   };
 
@@ -1029,233 +1133,184 @@ export default function AdminStudentGrades() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6">
             {gradeType === 'assignments' ? (
-              // Assignment Grades View - Grouped by Year and Course
-              ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                const yearGrades = filteredAndSortedGrades.filter(grade => 
-                  grade.gradedAt.getFullYear().toString() === year
-                );
-                
-                // Group by course
-                const courseGroups = yearGrades.reduce((acc, grade) => {
-                  if (!acc[grade.courseId]) {
-                    acc[grade.courseId] = {
-                      courseTitle: grade.courseTitle,
-                      grades: []
-                    };
-                  }
-                  acc[grade.courseId].grades.push(grade);
-                  return acc;
-                }, {} as { [key: string]: { courseTitle: string; grades: GradeWithDetails[] } });
-                
-                return (
-                  <div key={year} className="border-b border-gray-200 last:border-b-0">
-                    <button
-                      onClick={() => toggleYear(year)}
-                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        {expandedYears[year] ? (
-                          <ChevronDown size={20} className="text-gray-400" />
-                        ) : (
-                          <ChevronRight size={20} className="text-gray-400" />
-                        )}
-                        <span className="font-semibold text-gray-900">{year}</span>
-                      </div>
-                    </button>
+              Object.keys(groupedAssignments).length > 0 ? (
+                Object.keys(groupedAssignments).sort((a, b) => Number(b) - Number(a)).map((year) => {
+                  const semesters = groupedAssignments[year];
+                  if (Object.keys(semesters).length === 0) return null;
 
-                    {expandedYears[year] && yearGrades.length > 0 && (
-                      <div className="pl-8 pb-4 space-y-6">
-                        <div className="border-l-4 border-blue-500 pl-6">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                          
-                          {Object.entries(courseGroups).map(([courseId, courseData]) => {
-                            const courseTotals = getCourseTotals(courseId, year, 'assignments');
+                  return (
+                    <div key={year} className="border-b border-gray-200 last:border-b-0">
+                      <button onClick={() => toggleYear(year)} className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                        <div className="flex items-center gap-2">
+                          {expandedYears[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                          <span className="font-semibold text-gray-900">{year}</span>
+                        </div>
+                      </button>
+                      {expandedYears[year] && (
+                        <div className="pl-8 pb-4 space-y-6">
+                          {Object.keys(semesters).sort().map(semester => {
+                            const semesterGrades = semesters[semester];
+                            const semesterKey = `${year}-${semester}`;
+                            const courseGroups = semesterGrades.reduce((acc, grade) => {
+                              if (!acc[grade.courseId]) {
+                                acc[grade.courseId] = { courseTitle: grade.courseTitle, grades: [] };
+                              }
+                              acc[grade.courseId].grades.push(grade);
+                              return acc;
+                            }, {} as { [key: string]: { courseTitle: string; grades: GradeWithDetails[] } });
+
                             return (
-                              <div key={courseId} className="mb-6">
-                                <button
-                                  onClick={() => toggleCourse(courseId)}
-                                  className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200"
-                                >
+                              <div key={semesterKey}>
+                                <button onClick={() => toggleSemester(semesterKey)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-100 rounded-lg px-3 transition-colors">
                                   <div className="flex items-center gap-2">
-                                    {expandedCourses[courseId] ? (
-                                      <ChevronDown size={16} className="text-gray-400" />
-                                    ) : (
-                                      <ChevronRight size={16} className="text-gray-400" />
-                                    )}
-                                    <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
-                                    <span className="text-sm text-gray-500">({courseTotals.totalAssignments} assignments)</span>
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    Average: {courseTotals.averageGrade}%
+                                    {expandedSemesters[semesterKey] ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+                                    <span className="font-medium text-gray-700">{semester}</span>
                                   </div>
                                 </button>
-
-                                {expandedCourses[courseId] && (
-                                  <div className="ml-6 mt-3">
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full">
-                                        <thead>
-                                          <tr className="border-b border-gray-200">
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {courseData.grades.map((grade) => (
-                                            <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                              <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
-                                              <td className="py-3 px-4 text-center">
-                                                <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                                  {grade.grade}/{grade.maxScore}
-                                                </span>
-                                              </td>
-                                              <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                        <tfoot>
-                                          <tr className="bg-gray-50 font-semibold">
-                                            <td className="py-3 px-4 text-gray-800">Total</td>
-                                            <td className="py-3 px-4 text-center">
-                                              <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
-                                                {courseTotals.totalPoints}/{courseTotals.maxPoints}
-                                              </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
-                                          </tr>
-                                        </tfoot>
-                                      </table>
-                                    </div>
+                                {expandedSemesters[semesterKey] && (
+                                  <div className="pl-6 space-y-4 mt-2">
+                                    {Object.entries(courseGroups).map(([courseId, courseData]) => {
+                                      const totalPoints = courseData.grades.reduce((sum, g) => sum + g.grade, 0);
+                                      const maxPoints = courseData.grades.reduce((sum, g) => sum + g.maxScore, 0);
+                                      const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+                                      return (
+                                        <div key={courseId}>
+                                          <button onClick={() => toggleCourse(courseId)} className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200">
+                                            <div className="flex items-center gap-2">
+                                              {expandedCourses[courseId] ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+                                              <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
+                                              <span className="text-sm text-gray-500">({courseData.grades.length} assignments)</span>
+                                            </div>
+                                            <div className="text-sm text-gray-600">Average: {averageGrade.toFixed(1)}%</div>
+                                          </button>
+                                          {expandedCourses[courseId] && (
+                                            <div className="ml-6 mt-3">
+                                              <table className="w-full">
+                                                <thead>
+                                                  <tr className="border-b border-gray-200"><th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th><th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th><th className="text-center py-3 px-4 font-medium text-gray-700">Date</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                  {courseData.grades.map((grade) => (
+                                                    <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
+                                                      <td className="py-3 px-4 text-center"><span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>{grade.grade}/{grade.maxScore}</span></td>
+                                                      <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                                <tfoot>
+                                                  <tr className="bg-gray-50 font-semibold">
+                                                    <td className="py-3 px-4 text-gray-800">Total</td>
+                                                    <td className="py-3 px-4 text-center"><span className={`font-semibold ${getGradeColor(totalPoints, maxPoints)}`}>{totalPoints}/{maxPoints}</span></td>
+                                                    <td className="py-3 px-4 text-center text-gray-600">Average: {averageGrade.toFixed(1)}%</td>
+                                                  </tr>
+                                                </tfoot>
+                                              </table>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
                             );
                           })}
                         </div>
-                      </div>
-                    )}
-
-                    {expandedYears[year] && yearGrades.length === 0 && (
-                      <div className="pl-8 pb-4">
-                        <p className="text-gray-500 italic">No grades available for this year</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : gradeType === 'exams' ? (
-              // Exam Grades View - Grouped by Year and Course
-              filteredAndSortedExamGrades.length > 0 ? (
-                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                  const yearGrades = filteredAndSortedExamGrades.filter(grade => 
-                    grade.gradedAt.getFullYear().toString() === year
+                      )}
+                    </div>
                   );
-                  
-                  // Group by course
-                  const courseGroups = yearGrades.reduce((acc, grade) => {
-                    if (!acc[grade.courseId]) {
-                      acc[grade.courseId] = {
-                        courseTitle: grade.courseTitle,
-                        grades: []
-                      };
-                    }
-                    acc[grade.courseId].grades.push(grade);
-                    return acc;
-                  }, {} as { [key: string]: { courseTitle: string; grades: ExamGradeWithDetails[] } });
-                  
+                })
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Assignment Grades Yet</h3>
+                  <p className="text-gray-400">Assignment grades will appear here once they're graded by instructors.</p>
+                </div>
+              )
+            ) : gradeType === 'exams' ? (
+              Object.keys(groupedExams).length > 0 ? (
+                Object.keys(groupedExams).sort((a, b) => Number(b) - Number(a)).map((year) => {
+                  const semesters = groupedExams[year];
+                  if (Object.keys(semesters).length === 0) return null;
                   return (
                     <div key={year} className="border-b border-gray-200 last:border-b-0">
-                      <button
-                        onClick={() => toggleYear(year)}
-                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                      >
+                      <button onClick={() => toggleYear(year)} className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
                         <div className="flex items-center gap-2">
-                          {expandedYears[year] ? (
-                            <ChevronDown size={20} className="text-gray-400" />
-                          ) : (
-                            <ChevronRight size={20} className="text-gray-400" />
-                          )}
+                          {expandedYears[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
                           <span className="font-semibold text-gray-900">{year}</span>
                         </div>
                       </button>
-
-                      {expandedYears[year] && yearGrades.length > 0 && (
+                      {expandedYears[year] && (
                         <div className="pl-8 pb-4 space-y-6">
-                          <div className="border-l-4 border-blue-500 pl-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                            
-                            {Object.entries(courseGroups).map(([courseId, courseData]) => {
-                              const courseTotals = getCourseTotals(courseId, year, 'exams');
-                              return (
-                                <div key={courseId} className="mb-6">
-                                  <button
-                                    onClick={() => toggleCourse(courseId)}
-                                    className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      {expandedCourses[courseId] ? (
-                                        <ChevronDown size={16} className="text-gray-400" />
-                                      ) : (
-                                        <ChevronRight size={16} className="text-gray-400" />
-                                      )}
-                                      <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
-                                      <span className="text-sm text-gray-500">({courseTotals.totalExams} exams)</span>
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                      Average: {courseTotals.averageGrade}%
-                                    </div>
-                                  </button>
+                          {Object.keys(semesters).sort().map(semester => {
+                            const semesterGrades = semesters[semester];
+                            const semesterKey = `${year}-${semester}`;
+                            const courseGroups = semesterGrades.reduce((acc, grade) => {
+                              if (!acc[grade.courseId]) {
+                                acc[grade.courseId] = { courseTitle: grade.courseTitle, grades: [] };
+                              }
+                              acc[grade.courseId].grades.push(grade);
+                              return acc;
+                            }, {} as { [key: string]: { courseTitle: string; grades: ExamGradeWithDetails[] } });
 
-                                  {expandedCourses[courseId] && (
-                                    <div className="ml-6 mt-3">
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                          <thead>
-                                            <tr className="border-b border-gray-200">
-                                              <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
-                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {courseData.grades.map((grade) => (
-                                              <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                                <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
-                                                <td className="py-3 px-4 text-center">
-                                                  <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                                    {grade.grade}/{grade.maxScore}
-                                                  </span>
-                                                </td>
-                                                <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                          <tfoot>
-                                            <tr className="bg-gray-50 font-semibold">
-                                              <td className="py-3 px-4 text-gray-800">Total</td>
-                                              <td className="py-3 px-4 text-center">
-                                                <span className={`font-semibold ${getGradeColor(courseTotals.totalPoints, courseTotals.maxPoints)}`}>
-                                                  {courseTotals.totalPoints}/{courseTotals.maxPoints}
-                                                </span>
-                                              </td>
-                                              <td className="py-3 px-4 text-center text-gray-600">Average: {courseTotals.averageGrade}%</td>
-                                            </tr>
-                                          </tfoot>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {expandedYears[year] && yearGrades.length === 0 && (
-                        <div className="pl-8 pb-4">
-                          <p className="text-gray-500 italic">No exam grades available for this year</p>
+                            return (
+                              <div key={semesterKey}>
+                                <button onClick={() => toggleSemester(semesterKey)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-100 rounded-lg px-3 transition-colors">
+                                  <div className="flex items-center gap-2">
+                                    {expandedSemesters[semesterKey] ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+                                    <span className="font-medium text-gray-700">{semester}</span>
+                                  </div>
+                                </button>
+                                {expandedSemesters[semesterKey] && (
+                                  <div className="pl-6 space-y-4 mt-2">
+                                    {Object.entries(courseGroups).map(([courseId, courseData]) => {
+                                      const totalPoints = courseData.grades.reduce((sum, g) => sum + g.grade, 0);
+                                      const maxPoints = courseData.grades.reduce((sum, g) => sum + g.maxScore, 0);
+                                      const averageGrade = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+                                      return (
+                                        <div key={courseId}>
+                                          <button onClick={() => toggleCourse(courseId)} className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200">
+                                            <div className="flex items-center gap-2">
+                                              {expandedCourses[courseId] ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+                                              <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
+                                              <span className="text-sm text-gray-500">({courseData.grades.length} exams)</span>
+                                            </div>
+                                            <div className="text-sm text-gray-600">Average: {averageGrade.toFixed(1)}%</div>
+                                          </button>
+                                          {expandedCourses[courseId] && (
+                                            <div className="ml-6 mt-3">
+                                              <table className="w-full">
+                                                <thead>
+                                                  <tr className="border-b border-gray-200"><th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th><th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th><th className="text-center py-3 px-4 font-medium text-gray-700">Date</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                  {courseData.grades.map((grade) => (
+                                                    <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
+                                                      <td className="py-3 px-4 text-center"><span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>{grade.grade}/{grade.maxScore}</span></td>
+                                                      <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                                <tfoot>
+                                                  <tr className="bg-gray-50 font-semibold">
+                                                    <td className="py-3 px-4 text-gray-800">Total</td>
+                                                    <td className="py-3 px-4 text-center"><span className={`font-semibold ${getGradeColor(totalPoints, maxPoints)}`}>{totalPoints}/{maxPoints}</span></td>
+                                                    <td className="py-3 px-4 text-center text-gray-600">Average: {averageGrade.toFixed(1)}%</td>
+                                                  </tr>
+                                                </tfoot>
+                                              </table>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1269,16 +1324,104 @@ export default function AdminStudentGrades() {
                 </div>
               )
             ) : gradeType === 'others' ? (
-              // Other Grades view
-              <div className="space-y-6">
-                {['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                  const yearOthers = otherGrades.filter(g => (g as any).createdAt?.toDate ? (g as any).createdAt.toDate().getFullYear().toString() === year : true);
-                  // Group by course
-                  const courseGroups = yearOthers.reduce((acc: any, og) => {
-                    if (!acc[og.courseId]) acc[og.courseId] = [] as FirestoreOtherGrade[];
-                    acc[og.courseId].push(og);
-                    return acc;
-                  }, {} as Record<string, FirestoreOtherGrade[]>);
+              Object.keys(groupedOtherGrades).length > 0 ? (
+                Object.keys(groupedOtherGrades).sort((a, b) => Number(b) - Number(a)).map((year) => {
+                  const semesters = groupedOtherGrades[year];
+                  if (Object.keys(semesters).length === 0) return null;
+                  return (
+                    <div key={year} className="border-b border-gray-200 last:border-b-0">
+                      <button onClick={() => toggleYear(year)} className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                        <div className="flex items-center gap-2">
+                          {expandedYears[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                          <span className="font-semibold text-gray-900">{year}</span>
+                        </div>
+                      </button>
+                      {expandedYears[year] && (
+                        <div className="pl-8 pb-4 space-y-6">
+                          {Object.keys(semesters).sort().map(semester => {
+                            const semesterGrades = semesters[semester];
+                            const semesterKey = `${year}-${semester}`;
+                            const courseGroups = semesterGrades.reduce((acc, grade) => {
+                              if (!acc[grade.courseId]) {
+                                const course = courses.find(c => c.id === grade.courseId);
+                                acc[grade.courseId] = { courseTitle: course?.title || 'Unknown Course', grades: [] };
+                              }
+                              acc[grade.courseId].grades.push(grade);
+                              return acc;
+                            }, {} as { [key: string]: { courseTitle: string; grades: FirestoreOtherGrade[] } });
+
+                            return (
+                              <div key={semesterKey}>
+                                <button onClick={() => toggleSemester(semesterKey)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-100 rounded-lg px-3 transition-colors">
+                                  <div className="flex items-center gap-2">
+                                    {expandedSemesters[semesterKey] ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+                                    <span className="font-medium text-gray-700">{semester}</span>
+                                  </div>
+                                </button>
+                                {expandedSemesters[semesterKey] && (
+                                  <div className="pl-6 space-y-4 mt-2">
+                                    {Object.entries(courseGroups).map(([courseId, courseData]) => {
+                                      const totalPoints = courseData.grades.reduce((sum, g) => sum + (g.points || 0), 0);
+                                      return (
+                                        <div key={courseId}>
+                                          <button onClick={() => toggleCourse(courseId)} className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50 rounded-lg px-3 transition-colors border border-gray-200">
+                                            <div className="flex items-center gap-2">
+                                              {expandedCourses[courseId] ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+                                              <span className="font-medium text-gray-800">{courseData.courseTitle}</span>
+                                              <span className="text-sm text-gray-500">({courseData.grades.length} entries)</span>
+                                            </div>
+                                            <Badge variant="secondary">Total: {totalPoints} points</Badge>
+                                          </button>
+                                          {expandedCourses[courseId] && (
+                                            <div className="ml-6 mt-3">
+                                              <table className="w-full">
+                                                <thead>
+                                                  <tr className="border-b border-gray-200"><th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th><th className="text-center py-3 px-4 font-medium text-gray-700">Points</th><th className="text-center py-3 px-4 font-medium text-gray-700">Date</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                  {courseData.grades.map((og) => (
+                                                    <tr key={og.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[260px]">{og.reason}</td>
+                                                      <td className="py-3 px-4 text-center text-gray-900 font-semibold">+{og.points}</td>
+                                                      <td className="py-3 px-4 text-center text-gray-600">{(og as any).createdAt?.toDate ? (og as any).createdAt.toDate().toLocaleDateString() : ''}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                                <tfoot>
+                                                  <tr className="bg-gray-50 font-semibold"><td className="py-3 px-4 text-gray-800">Total</td><td className="py-3 px-4 text-center">+{totalPoints}</td><td></td></tr>
+                                                </tfoot>
+                                              </table>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Other Grades Yet</h3>
+                  <p className="text-gray-400">Bonus points and other adjustments will appear here.</p>
+                </div>
+              )
+            ) : (
+              // Final Course Grades View - Grouped by Year and Semester
+              Object.keys(groupedAndFilteredFinalGrades).length > 0 ? (
+                Object.keys(groupedAndFilteredFinalGrades).sort((a, b) => Number(b) - Number(a)).map((year) => {
+                  const semesters = groupedAndFilteredFinalGrades[year];
+                  const yearGrades = Object.values(semesters).flat();
+
+                  if (yearGrades.length === 0) return null;
+
                   return (
                     <div key={year} className="border-b border-gray-200 last:border-b-0">
                       <button
@@ -1295,166 +1438,82 @@ export default function AdminStudentGrades() {
                         </div>
                       </button>
 
-                      {expandedYears[year] && yearOthers.length > 0 && (
+                      {expandedYears[year] && (
                         <div className="pl-8 pb-4 space-y-6">
                           <div className="border-l-4 border-blue-500 pl-6">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                            {Object.entries(courseGroups).map(([courseId, entries]) => {
-                              const course = courses.find(c => c.id === courseId);
-                              const courseKey = `${year}_${courseId}`;
-                              const totalPoints = entries.reduce((sum, e) => sum + (e.points || 0), 0);
-                              
+                            
+                            {Object.keys(semesters).sort().map(semester => {
+                              const semesterGrades = semesters[semester];
+                              const semesterKey = `${year}-${semester}`;
                               return (
-                                <div key={courseId} className="mb-6">
+                                <div key={semesterKey} className="mb-4">
                                   <button
-                                    onClick={() => setExpandedOtherCourses(prev => ({ ...prev, [courseKey]: !prev[courseKey] }))}
-                                    className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3 border border-gray-200 hover:bg-gray-50 transition-colors"
+                                    onClick={() => toggleSemester(semesterKey)}
+                                    className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-100 rounded-lg px-3 transition-colors"
                                   >
                                     <div className="flex items-center gap-2">
-                                      {expandedOtherCourses[courseKey] ? (
-                                        <ChevronDown size={16} className="text-gray-400" />
+                                      {expandedSemesters[semesterKey] ? (
+                                        <ChevronDown size={16} className="text-gray-500" />
                                       ) : (
-                                        <ChevronRight size={16} className="text-gray-400" />
+                                        <ChevronRight size={16} className="text-gray-500" />
                                       )}
-                                      <span className="font-medium text-gray-800">{course?.title || courseId}</span>
-                                      <span className="text-sm text-gray-500">({entries.length} entries)</span>
+                                      <span className="font-medium text-gray-700">{semester}</span>
                                     </div>
-                                    <Badge variant="secondary">
-                                      Total: {totalPoints} points
-                                    </Badge>
                                   </button>
-                                  {expandedOtherCourses[courseKey] && (
-                                    <div className="ml-6 mt-3">
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                          <thead>
-                                            <tr className="border-b border-gray-200">
-                                              <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
-                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
-                                              <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                  {expandedSemesters[semesterKey] && (
+                                    <div className="overflow-x-auto mt-2">
+                                      <table className="w-full">
+                                        <thead>
+                                          <tr className="border-b border-gray-200">
+                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
+                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {entries.map((og) => (
-                                            <tr key={og.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                              <td className="py-3 px-4 text-gray-800 truncate max-w-[260px]">{og.reason}</td>
-                                              <td className="py-3 px-4 text-center text-gray-900 font-semibold">+{og.points}</td>
-                                              <td className="py-3 px-4 text-center text-gray-600">{(og as any).createdAt?.toDate ? (og as any).createdAt.toDate().toLocaleDateString() : ''}</td>
-                                            </tr>
-                                          ))}
+                                          {semesterGrades.map((grade) => {
+                                            const letterGrade = grade.letterGrade || '';
+                                            return (
+                                              <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
+                                                <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                  <span className={`font-semibold ${getGradeColor(grade.finalGrade, grade.assignmentsMax + grade.examsMax)}`}>
+                                                    {grade.finalGrade}
+                                                  </span>
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                  <Badge variant={letterGrade && letterGrade.startsWith('A') ? 'default' : letterGrade && letterGrade.startsWith('B') ? 'secondary' : letterGrade && letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
+                                                    {letterGrade}
+                                                  </Badge>
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
+                                                  {grade.calculationMethod.replace('_', ' ')}
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                  <Badge variant={grade.isPublished ? 'default' : 'secondary'}>
+                                                    {grade.isPublished ? 'Published' : 'Draft'}
+                                                  </Badge>
+                                                </td>
+                                                <td className="py-3 px-4 text-center text-gray-600 text-sm">
+                                                  {grade.calculatedAt.toDate().toLocaleDateString()}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
                                         </tbody>
-                                        <tfoot>
-                                          <tr className="bg-gray-50 font-semibold">
-                                            <td className="py-3 px-4 text-gray-800">Total</td>
-                                            <td className="py-3 px-4 text-center">
-                                              +{entries.reduce((sum, og) => sum + (og.points || 0), 0)}
-                                            </td>
-                                            <td></td>
-                                          </tr>
-                                        </tfoot>
                                       </table>
                                     </div>
-                                  </div>
                                   )}
                                 </div>
                               );
                             })}
                           </div>
-                        </div>
-                      )}
-
-                      {expandedYears[year] && yearOthers.length === 0 && (
-                        <div className="pl-8 pb-4">
-                          <p className="text-gray-500 italic">No other grades available for this year</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              // Final Course Grades View - Grouped by Year
-              filteredAndSortedFinalGrades.length > 0 ? (
-                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                  const yearGrades = filteredAndSortedFinalGrades.filter(grade => 
-                    grade.calculatedAt.toDate().getFullYear().toString() === year
-                  );
-                  
-                  return (
-                    <div key={year} className="border-b border-gray-200 last:border-b-0">
-                      <button
-                        onClick={() => toggleYear(year)}
-                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          {expandedYears[year] ? (
-                            <ChevronDown size={20} className="text-gray-400" />
-                          ) : (
-                            <ChevronRight size={20} className="text-gray-400" />
-                          )}
-                          <span className="font-semibold text-gray-900">{year}</span>
-                        </div>
-                      </button>
-
-                      {expandedYears[year] && yearGrades.length > 0 && (
-                        <div className="pl-8 pb-4 space-y-6">
-                          <div className="border-l-4 border-blue-500 pl-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                            
-                            <div className="overflow-x-auto">
-                              <table className="w-full">
-                                <thead>
-                                  <tr className="border-b border-gray-200">
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Instructor</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Final Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Letter Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Method</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Status</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Calculated</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {yearGrades.map((grade) => {
-                                    const letterGrade = grade.letterGrade || '';
-                                    return (
-                                      <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                        <td className="py-3 px-4 text-gray-800 font-medium">{grade.courseTitle}</td>
-                                        <td className="py-3 px-4 text-gray-600">{grade.instructorName}</td>
-                                        <td className="py-3 px-4 text-center">
-                                          <span className={`font-semibold ${getGradeColor(grade.finalGrade, grade.assignmentsMax + grade.examsMax)}`}>
-                                            {grade.finalGrade}
-                                          </span>
-                                        </td>
-                                        <td className="py-3 px-4 text-center">
-                                          <Badge variant={letterGrade && letterGrade.startsWith('A') ? 'default' : letterGrade && letterGrade.startsWith('B') ? 'secondary' : letterGrade && letterGrade.startsWith('C') ? 'outline' : 'destructive'}>
-                                            {letterGrade}
-                                          </Badge>
-                                        </td>
-                                        <td className="py-3 px-4 text-center text-gray-600 capitalize text-sm">
-                                          {grade.calculationMethod.replace('_', ' ')}
-                                        </td>
-                                        <td className="py-3 px-4 text-center">
-                                          <Badge variant={grade.isPublished ? 'default' : 'secondary'}>
-                                            {grade.isPublished ? 'Published' : 'Draft'}
-                                          </Badge>
-                                        </td>
-                                        <td className="py-3 px-4 text-center text-gray-600 text-sm">
-                                          {grade.calculatedAt.toDate().toLocaleDateString()}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {expandedYears[year] && yearGrades.length === 0 && (
-                        <div className="pl-8 pb-4">
-                          <p className="text-gray-500 italic">No final grades available for this year</p>
                         </div>
                       )}
                     </div>

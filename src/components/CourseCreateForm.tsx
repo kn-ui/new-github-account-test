@@ -29,6 +29,7 @@ const courseSchema = z.object({
   duration: z.number().min(1, 'Duration must be at least 1 week').max(52, 'Duration cannot exceed 52 weeks'),
   maxStudents: z.number().min(1, 'Must allow at least 1 student').max(1000, 'Cannot exceed 1000 students'),
   isActive: z.boolean().default(true),
+  studentsYear: z.number().min(1, 'Students Year must be at least 1').max(10, 'Students Year cannot exceed 10'),
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -79,12 +80,13 @@ const CourseCreateForm = ({ onSuccess, onCancel, defaultIsActive = true }: Cours
       duration: 8,
       maxStudents: 30,
       isActive: defaultIsActive,
+      studentsYear: 1, // Default value for studentsYear
     }
   });
 
   const watchedCategory = watch('category');
   const watchedIsActive = watch('isActive');
-
+  
   const onSubmit = async (data: CourseFormData) => {
     try {
       setIsSubmitting(true);
@@ -239,6 +241,21 @@ const CourseCreateForm = ({ onSuccess, onCancel, defaultIsActive = true }: Cours
               )}
             </div>
 
+            {/* Students Year */}
+            <div>
+              <Label htmlFor="studentsYear">Students Year *</Label>
+              <Input
+                id="studentsYear"
+                type="number"
+                min="1"
+                max="10"
+                {...register('studentsYear', { valueAsNumber: true })}
+                className="mt-1"
+              />
+              {errors.studentsYear && (
+                <p className="text-sm text-destructive mt-1">{errors.studentsYear.message}</p>
+              )}
+            </div>
             {/* Active Status */}
             <div className="flex items-center space-x-2">
               <Switch

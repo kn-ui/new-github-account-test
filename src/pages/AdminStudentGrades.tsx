@@ -24,12 +24,16 @@ import {
   ChevronRight,
   ArrowLeft,
   User,
-  GraduationCap
+  GraduationCap,
+  Download
 } from 'lucide-react';
 import DashboardHero from '@/components/DashboardHero';
 import { useI18n } from '@/contexts/I18nContext';
 import { toEthiopianDate } from '@/lib/ethiopianCalendar';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import TranscriptView from '@/components/TranscriptView';
 
 interface GradeWithDetails {
   id: string;
@@ -93,8 +97,28 @@ export default function AdminStudentGrades() {
   const [expandedCourses, setExpandedCourses] = useState<{ [key: string]: boolean }>({});
   const [expandedOtherCourses, setExpandedOtherCourses] = useState<{ [key: string]: boolean }>({});
   const [selectedCourseForGrade, setSelectedCourseForGrade] = useState<string>('');
-  const [gradeRanges, setGradeRanges] = useState<any>({});
-  const [isPublishing, setIsPublishing] = useState(false);
+    const [gradeRanges, setGradeRanges] = useState<any>({});
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [showTranscript, setShowTranscript] = useState(false);
+    const transcriptRef = React.useRef<HTMLDivElement>(null);
+  
+  const generateTranscriptPdf = () => {
+    setShowTranscript(true);
+  };
+
+  useEffect(() => {
+    if (showTranscript && transcriptRef.current) {
+      html2canvas(transcriptRef.current).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`transcript_${student?.displayName?.replace(' ', '_') || 'student'}.pdf`);
+        setShowTranscript(false);
+      });
+    }
+  }, [showTranscript]);
 
   useEffect(() => {
     if (studentId && (userProfile?.role === 'admin' || userProfile?.role === 'super_admin')) {
@@ -517,6 +541,66 @@ export default function AdminStudentGrades() {
     return { byYearGPA, cumulativeGPA };
   }, [finalGrades, gradeRanges]);
 
+  const groupedFinalGrades = useMemo(() => {
+    const courseMap = new Map(courses.map(c => [c.id, c]));
+    const grouped: { [year: string]: { [semester: string]: any[] } } = {};
+
+    finalGrades.forEach(grade => {
+      const course = courseMap.get(grade.courseId);
+      if (course && course.year && course.semester) {
+        const year = course.year.toString();
+        const semester = course.semester;
+
+        if (!grouped[year]) {
+          grouped[year] = {};
+        }
+        if (!grouped[year][semester]) {
+          grouped[year][semester] = [];
+        }
+        grouped[year][semester].push(grade);
+      }
+    });
+
+    return grouped;
+  }, [finalGrades, courses]);
+
+  const progressiveGpaStats = useMemo(() => {
+    const stats: { [year: string]: { [semester: string]: { semesterGpa: number; cumulativeGpa: number } } } = {};
+    let cumulativePoints = 0;
+    let cumulativeCredits = 0;
+
+    Object.keys(groupedFinalGrades).sort().forEach(year => {
+      stats[year] = {};
+      Object.keys(groupedFinalGrades[year]).sort().forEach(semester => {
+        const semesterGrades = groupedFinalGrades[year][semester];
+        let semesterPoints = 0;
+        let semesterCredits = 0;
+
+        semesterGrades.forEach(grade => {
+          const course = courses.find(c => c.id === grade.courseId);
+          if (course) {
+            const gradePoints = getGradePoints(grade);
+            semesterPoints += gradePoints * (course.credit || 0);
+            semesterCredits += course.credit || 0;
+          }
+        });
+
+        cumulativePoints += semesterPoints;
+        cumulativeCredits += semesterCredits;
+
+        const semesterGpa = semesterCredits > 0 ? semesterPoints / semesterCredits : 0;
+        const cumulativeGpa = cumulativeCredits > 0 ? cumulativePoints / cumulativeCredits : 0;
+
+        stats[year][semester] = {
+          semesterGpa,
+          cumulativeGpa,
+        };
+      });
+    });
+
+    return stats;
+  }, [groupedFinalGrades, courses, gradeRanges]);
+
   const refreshFinalGrades = async () => {
     try {
       const courseIds = courses.map(c => c.id);
@@ -789,6 +873,14 @@ export default function AdminStudentGrades() {
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Users
+            </Button>
+            <Button
+              variant="default"
+              onClick={generateTranscriptPdf}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Transcript
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
@@ -1379,6 +1471,22 @@ export default function AdminStudentGrades() {
           </div>
         </div>
     {/* Grade Ranges configuration dialog removed per requirements */}
+
+    {showTranscript && (
+      <div style={{ position: 'absolute', left: '-9999px' }}>
+        <div ref={transcriptRef}>
+          <TranscriptView
+            student={student}
+            finalGrades={finalGrades}
+            courses={courses}
+            groupedFinalGrades={groupedFinalGrades}
+            classSection={student?.classSection}
+            gpaStats={gpaStats}
+            progressiveGpaStats={progressiveGpaStats}
+          />
+        </div>
+      </div>
+    )}
     </div>
   );
 }

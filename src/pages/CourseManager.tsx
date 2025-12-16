@@ -136,7 +136,7 @@ export default function CourseManager() {
   const handleDeleteCourse = async (courseId: string) => {
     try {
       setDeletingCourseId(courseId);
-      await courseService.deleteCourse(courseId);
+      await courseService.deleteCourseWithDependencies(courseId);
       toast.success('Course deleted');
       loadCourses();
     } catch (error) {
@@ -271,9 +271,8 @@ export default function CourseManager() {
     
     try {
       setEnrollingUserId(studentId);
-      // Optimistically prevent duplicate enroll button spam
-      const already = enrolledStudents.some((e) => e.studentId === studentId);
-      if (already) {
+      // Use the correct state to check for enrollment
+      if (enrolledStudentIds.includes(studentId)) {
         toast.info('This student is already enrolled in this course.');
         return;
       }
@@ -286,26 +285,13 @@ export default function CourseManager() {
       } as any);
       toast.success('Student enrolled successfully');
       
+      // Update the enrolled student IDs for the current dialog
+      setEnrolledStudentIds(prev => [...prev, studentId]);
+
       // Clear search results after successful enrollment
       setFoundStudents([]);
       setStudentQuery('');
-      // Refresh enrolled students list if dialog is open
-      try {
-        if (selectedCourseForEnroll) {
-          const enrollments = await enrollmentService.getEnrollmentsByCourse(selectedCourseForEnroll.id);
-          const studentsWithDetails = await Promise.all(
-            enrollments.map(async (enrollment: any) => {
-              try {
-                const user = await userService.getUserById(enrollment.studentId);
-                return { ...enrollment, user };
-              } catch {
-                return { ...enrollment, user: { displayName: 'Unknown User', email: enrollment.studentId } };
-              }
-            })
-          );
-          setEnrolledStudents(studentsWithDetails);
-        }
-      } catch {}
+      
     } catch (error) {
       console.error('Error enrolling student:', error);
       if (error instanceof Error) {

@@ -803,10 +803,7 @@ export const enrollmentService = {
 
   async deleteEnrollment(enrollmentId: string): Promise<void> {
     const docRef = doc(db, 'enrollments', enrollmentId);
-    await updateDoc(docRef, {
-      isActive: false,
-      lastAccessedAt: Timestamp.now()
-    });
+    await deleteDoc(docRef);
   },
 };
 

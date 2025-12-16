@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X, GraduationCap } from 'lucide-react';
 import { secondaryAuth } from '@/lib/firebaseSecondary';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { userService } from '@/lib/firestore'; // Assuming userService can check existence or we'll mock it
+import { userService, courseService, gradeService } from '@/lib/firestore'; // Assuming userService can check existence or we'll mock it
 
 // studentId is removed, it will be auto-generated
 interface StudentCSVData {
@@ -14,6 +14,8 @@ interface StudentCSVData {
   studentGroup?: string;
   classSection?: string;
   year?: string;
+  courseTitle?: string;
+  finalGrade?: number;
   existsInDb?: boolean; // New field to indicate if user already exists in DB
   isCheckingExistence?: boolean; // New field to indicate if existence check is in progress
 }
@@ -34,6 +36,15 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   const [errorCount, setErrorCount] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchCourses() {
+      const allCourses = await courseService.getAllCourses();
+      setCourses(allCourses);
+    }
+    fetchCourses();
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -100,6 +111,8 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
             studentGroup: values[headers.indexOf('studentgroup')] || '',
             classSection: values[headers.indexOf('classsection')] || '',
             year: values[headers.indexOf('year')] || '',
+            courseTitle: values[headers.indexOf('coursetitle')] || '',
+            finalGrade: values[headers.indexOf('finalgrade')] ? Number(values[headers.indexOf('finalgrade')]) : undefined,
             isCheckingExistence: false, // Initialize
             existsInDb: undefined, // Initialize
           };
@@ -204,6 +217,23 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
           classSection: user.classSection,
           year: user.year
         });
+
+        if (user.courseTitle && user.finalGrade) {
+            const course = courses.find(c => c.title.toLowerCase() === user.courseTitle?.toLowerCase());
+            if (course) {
+              await gradeService.createGrade({
+                studentId: userCredential.user.uid,
+                courseId: course.id,
+                finalGrade: user.finalGrade,
+                letterGrade: '', // Can be extended later
+                gradePoints: 0, // Can be extended later
+                calculatedBy: 'bulk-import',
+                calculationMethod: 'manual',
+              });
+            } else {
+              uploadErrors.push(`Could not find course "${user.courseTitle}" for user ${user.email}. Grade not added.`);
+            }
+          }
         
         await signOut(secondaryAuth);
         setSuccessCount(prev => prev + 1);
@@ -250,9 +280,8 @@ export default function CSVUpload({ onUsersCreated, onError }: CSVUploadProps) {
   };
 
   const downloadTemplate = () => {
-    // studentId is removed, programType is now required
-    const headers = 'displayName,email,programType,phoneNumber,address,studentGroup,classSection,year';
-    const example = 'abebe,abebe@example.com,Online,0900000001,AA,Youth,A,1st Year';
+    const headers = 'displayName,email,programType,phoneNumber,address,studentGroup,classSection,year,courseTitle,finalGrade';
+    const example = 'abebe,abebe@example.com,Online,0900000001,AA,Youth,A,1st Year,Introduction to Theology,85';
     const template = `${headers}\n${example}`;
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);

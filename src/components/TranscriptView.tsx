@@ -49,8 +49,8 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({
         minHeight: "297mm",
         padding: "15mm",
         fontFamily: "AbyssinicaSIL, serif",
-        fontSize: "9pt",
-        lineHeight: "1.2",
+        fontSize: "9.5pt", // Slightly increased font size
+        lineHeight: "1.3",
         color: "#000",
         background: "#fff",
       }}
@@ -65,23 +65,32 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({
         table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9pt;
+          font-size: 9.5pt;
         }
 
         th, td {
           border: 1px solid #000;
-          padding: 2px 4px;
-          height: 18px;
+          padding: 6px 5px; /* INCREASED VERTICAL PADDING (3px -> 6px) */
+          height: auto;
           vertical-align: middle;
         }
 
         th {
           font-weight: bold;
           text-align: center;
+          background-color: #f0f0f0; /* Light background for headers */
         }
 
         .center { text-align: center; }
         .right { text-align: right; }
+
+        .year-block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 12mm;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
 
         .semester-block {
           page-break-inside: avoid;
@@ -89,41 +98,51 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({
           margin-bottom: 6mm;
         }
 
-        .semester-title {
-          font-weight: bold;
-          margin-bottom: 2mm;
-        }
-
         .no-border td {
           border: none;
           padding: 2px 0;
         }
+        
+        /* New style for GPA summary tables */
+        .gpa-summary-table {
+            border: 1px solid #000;
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .gpa-summary-table td {
+            border: none;
+            padding: 6px 6px; /* INCREASED VERTICAL PADDING (4px -> 6px) */
+        }
+        .gpa-summary-table tr:first-child td {
+            border-bottom: 1px dashed #ccc;
+        }
       `}</style>
 
       {/* ================= HEADER ================= */}
-      <div className="center" style={{ marginBottom: "6mm" }}>
+      <div className="center" style={{ marginBottom: "8mm" }}>
         <img
           src={schoolLogo}
           alt="School Logo"
           style={{
-            width: "28mm",
-            height: "28mm",
+            width: "30mm",
+            height: "30mm",
             objectFit: "contain",
             marginBottom: "3mm",
           }}
         />
 
-        <div style={{ fontSize: "13pt", fontWeight: "bold" }}>
-          የደብረ ኃይል ቅዱስ ራጉኤል ሰንበት ትምህርት ቤት
+        <div style={{ fontSize: "20pt", fontWeight: "bold" }}>
+          የደብረ ኃይል ቅዱስ ራጉኤል ቤተ ክርስቲያን አንቀጸ 
         </div>
 
-        <div style={{ fontSize: "10pt", marginTop: "2mm" }}>የትምህርት ዐቢይ ክፍል</div>
+        <div style={{ fontSize: "20pt", fontWeight: "bold"}}>ብርሃን ሰንበት ትምህርት ቤት</div>
 
         <div
           style={{
-            fontSize: "12pt",
+            fontSize: "13pt",
             fontWeight: "bold",
-            marginTop: "4mm",
+            marginTop: "5mm",
             textDecoration: "underline",
           }}
         >
@@ -132,23 +151,22 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({
       </div>
 
       {/* ================= STUDENT INFO ================= */}
-      <table style={{ marginBottom: "8mm" }}>
+      <div style={{ fontWeight: "bold", fontSize: "10pt", marginBottom: "3mm" }}>
+        የተማሪ መረጃ
+      </div>
+      <table style={{ marginBottom: "10mm" }}>
         <tbody>
           <tr>
-            <td>
+            <td style={{ width: "20%" }}>
               <strong>ሙሉ ስም</strong>
             </td>
-            <td>{student?.displayName || "—"}</td>
-            <td>
+            <td style={{ width: "30%" }}>{student?.displayName || "—"}</td>
+            <td style={{ width: "20%" }}>
               <strong>መለያ ቁጥር</strong>
             </td>
-            <td>{student?.studentId || "—"}</td>
+            <td style={{ width: "30%" }}>{student?.studentId || "—"}</td>
           </tr>
           <tr>
-            <td>
-              <strong>ክፍል</strong>
-            </td>
-            <td>{classSection || "—"}</td>
             <td>
               <strong>የትምህርት ዘመን</strong>
             </td>
@@ -157,174 +175,192 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({
         </tbody>
       </table>
 
-      {/* ================= GRADES ================= */}
-      {Object.entries(gpaStats.byYear).sort(([yearA], [yearB]) => Number(yearA) - Number(yearB)).map(([year, yearData]) => (
-        <div key={year} style={{ marginBottom: "8mm" }}>
-          <div style={{ fontWeight: "bold", marginBottom: "3mm" }}>
-            የትምህርት ዘመን፡ {year}
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            {Object.entries(yearData.semesters).sort(([semA], [semB]) => semA.localeCompare(semB)).map(([semester, semesterData]) => {
-              const semesterGrades = finalGrades.filter((grade) => {
-                const course = courses.find((c) => c.id === grade.courseId);
-                return course?.year.toString() === year && course?.semester === semester;
-              });
+      {/* ================= GRADES & PROGRESSIVE GPA ================= */}
+      {Object.entries(gpaStats.byYear).sort(([yearA], [yearB]) => Number(yearA) - Number(yearB)).map(([year, yearData], yearIndex, yearArray) => {
+        const sortedSemesters = Object.entries(yearData.semesters).sort(([semA], [semB]) => semA.localeCompare(semB));
+        
+        // Calculate the cumulative GPA up to the end of the last processed semester
+        let currentCumulativePoints = 0;
+        let currentCumulativeCredits = 0;
 
-              const semesterGPA = semesterData.gpa ? Number(semesterData.gpa).toFixed(2) : "—";
-              // Calculate cumulative GPA up to this semester.
-              // This requires iterating through all previous years and semesters.
-              // This is a simplified approach, a more robust solution might require a separate memoized calculation.
-              let currentCumulativePoints = 0;
-              let currentCumulativeCredits = 0;
-              Object.entries(gpaStats.byYear).sort(([yA], [yB]) => Number(yA) - Number(yB)).forEach(([y, yData]) => {
-                if (Number(y) < Number(year)) {
-                  currentCumulativePoints += yData.totalYearPoints;
-                  currentCumulativeCredits += yData.totalYearCredits;
-                } else if (Number(y) === Number(year)) {
-                  Object.entries(yData.semesters).sort(([sA], [sB]) => sA.localeCompare(sB)).forEach(([s, sData]) => {
-                    if (s <= semester) { // Assuming semester comparison works alphabetically/numerically
-                      const associatedGrades = finalGrades.filter((grade) => {
-                        const course = courses.find((c) => c.id === grade.courseId);
-                        return course?.year.toString() === y && course?.semester === s;
-                      });
-                      const totalPointsForSemester = associatedGrades.reduce((acc, grade) => {
-                        const course = courses.find(c => c.id === grade.courseId);
-                        const credit = Number(course?.credit) || 0;
-                        const normalizedGradePoints = typeof grade.gradePoints === "number" && !isNaN(grade.gradePoints)
-                          ? Math.max(0, Math.min(4, grade.gradePoints))
-                          : letterToDefaultPoints(grade.letterGrade);
-                        return acc + (normalizedGradePoints * credit);
-                      }, 0);
-                      const totalCreditsForSemester = associatedGrades.reduce((acc, grade) => {
-                        const course = courses.find(c => c.id === grade.courseId);
-                        return acc + (Number(course?.credit) || 0);
-                      }, 0);
-                      currentCumulativePoints += totalPointsForSemester;
-                      currentCumulativeCredits += totalCreditsForSemester;
-                    }
-                  });
-                }
-              });
-              const cumulativeGPAForSemester = currentCumulativeCredits > 0 ? currentCumulativePoints / currentCumulativeCredits : 0;
+        return (
+          <div key={year} className="year-block">
+            <div style={{ fontWeight: "bold", fontSize: "11pt", marginBottom: "6mm", paddingBottom: "2px", borderBottom: "2px solid #000" }}>
+              የትምህርት ዘመን፡ {year}
+            </div>
 
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {sortedSemesters.map(([semester, semesterData]) => {
+                const semesterGrades = finalGrades.filter((grade) => {
+                  const course = courses.find((c) => c.id === grade.courseId);
+                  return course?.year.toString() === year && course?.semester === semester;
+                });
 
-              return (
-                <div
-                  key={semester}
-                  className="semester-block"
-                  style={{ width: "48%" }}
-                >
-                  <div className="semester-title">{semester}</div>
+                const semesterGPA = semesterData.gpa ? Number(semesterData.gpa).toFixed(2) : "—";
+                
+                // --- Progressive Cumulative GPA Calculation ---
+                // We recalculate to ensure accuracy for the current semester's cumulative display
+                let cumulativePointsUpToSemester = 0;
+                let cumulativeCreditsUpToSemester = 0;
+                
+                yearArray.forEach(([y, yData]) => {
+                    Object.entries(yData.semesters).sort(([sA], [sB]) => sA.localeCompare(sB)).forEach(([s]) => {
+                        // Check if the semester/year combination is chronologically before or exactly the current one
+                        if (Number(y) < Number(year) || (Number(y) === Number(year) && s <= semester)) {
+                             const associatedGrades = finalGrades.filter((grade) => {
+                                const course = courses.find((c) => c.id === grade.courseId);
+                                return course?.year.toString() === y && course?.semester === s;
+                            });
+                             const totalPointsForSemester = associatedGrades.reduce((acc, grade) => {
+                                const course = courses.find(c => c.id === grade.courseId);
+                                const credit = Number(course?.credit) || 0;
+                                const normalizedGradePoints = typeof grade.gradePoints === "number" && !isNaN(grade.gradePoints)
+                                    ? Math.max(0, Math.min(4, grade.gradePoints))
+                                    : letterToDefaultPoints(grade.letterGrade);
+                                return acc + (normalizedGradePoints * credit);
+                            }, 0);
+                            const totalCreditsForSemester = associatedGrades.reduce((acc, grade) => {
+                                const course = courses.find(c => c.id === grade.courseId);
+                                return acc + (Number(course?.credit) || 0);
+                            }, 0);
+                            cumulativePointsUpToSemester += totalPointsForSemester;
+                            cumulativeCreditsUpToSemester += totalCreditsForSemester;
+                        }
+                    });
+                });
 
-                  <table>
-                    <thead>
-                      <tr>
-                        <th style={{ width: "40%" }}>የትምህርት አይነት</th>
-                        <th style={{ width: "15%" }}>ECTS</th>
-                        <th style={{ width: "15%" }}>Grade</th>
-                        <th style={{ width: "30%" }}>Cr.pts</th>
-                      </tr>
-                    </thead>
+                const cumulativeGPAForSemester = cumulativeCreditsUpToSemester > 0 ? (cumulativePointsUpToSemester / cumulativeCreditsUpToSemester).toFixed(2) : "—";
 
-                    <tbody>
-                      {semesterGrades.length === 0 ? (
+                return (
+                  <div
+                    key={semester}
+                    className="semester-block"
+                    style={{ width: "49%", breakInside: "avoid" }}
+                  >
+                    <div className="semester-title" style={{ fontWeight: "bold", marginBottom: "3mm" }}>
+                      {semester}
+                    </div>
+
+                    <table className="grade-table">
+                      <thead>
                         <tr>
-                          <td colSpan={4} className="center">
-                            ውጤት አልተመዘገበም
-                          </td>
+                          <th style={{ width: "45%" }}>የትምህርት አይነት</th>
+                          <th style={{ width: "15%" }}>ክሬዲት</th>
+                          <th style={{ width: "20%" }}>Grade</th>
+                          <th style={{ width: "20%" }}>Cr.pts</th>
                         </tr>
-                      ) : (
-                        semesterGrades.map((grade: any) => {
-                          const course = courses.find(
-                            (c) => c.id === grade.courseId
-                          );
+                      </thead>
 
-                          // Normalized grade points: prefer stored gradePoints (0-4), otherwise map from letter grade
-                          const normalizedGradePoints =
-                            typeof grade.gradePoints === "number" &&
-                            !isNaN(grade.gradePoints)
-                              ? Math.max(0, Math.min(4, grade.gradePoints))
-                              : letterToDefaultPoints(grade.letterGrade);
+                      <tbody>
+                        {semesterGrades.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="center" style={{ fontStyle: "italic", color: "#666" }}>
+                              ውጤት አልተመዘገበም
+                            </td>
+                          </tr>
+                        ) : (
+                          semesterGrades.map((grade: any) => {
+                            const course = courses.find(
+                              (c) => c.id === grade.courseId
+                            );
 
-                          const credit = Number(course?.credit) || 0;
-                          const creditPoints = credit * normalizedGradePoints;
+                            const normalizedGradePoints =
+                              typeof grade.gradePoints === "number" &&
+                              !isNaN(grade.gradePoints)
+                                ? Math.max(0, Math.min(4, grade.gradePoints))
+                                : letterToDefaultPoints(grade.letterGrade);
 
-                          return (
-                            <tr key={grade.id}>
-                              <td>{course?.title || "—"}</td>
-                              <td className="center">
-                                {credit > 0 ? credit : "—"}
-                              </td>
-                              <td className="center">
-                                {grade.letterGrade || "—"}
-                              </td>
-                              <td className="center">
-                                {isFinite(creditPoints)
-                                  ? creditPoints.toFixed(2)
-                                  : "—"}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
+                            const credit = Number(course?.credit) || 0;
+                            const creditPoints = credit * normalizedGradePoints;
 
-                      {/* Semester Average */}
-                      <tr>
-                        <td style={{ fontWeight: "bold" }} colSpan={3}>
-                          የሴሚስተር GPA
-                        </td>
-                        <td className="center" style={{ fontWeight: "bold" }}>
-                          {semesterGPA}
-                        </td>
-                      </tr>
-                      {/* Cumulative GPA */}
-                      <tr>
-                        <td style={{ fontWeight: "bold" }} colSpan={3}>
-                          የአጠቃላይ GPA
-                        </td>
-                        <td className="center" style={{ fontWeight: "bold" }}>
-                          {cumulativeGPAForSemester.toFixed(2)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })}
+                            return (
+                              <tr key={grade.id}>
+                                <td style={{ paddingLeft: '8px' }}>{course?.title || "—"}</td>
+                                <td className="center">
+                                  {credit > 0 ? credit : "—"}
+                                </td>
+                                <td className="center">
+                                  {grade.letterGrade || "—"}
+                                </td>
+                                <td className="center">
+                                  {isFinite(creditPoints)
+                                    ? creditPoints.toFixed(2)
+                                    : "—"}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                    
+                    {/* NEW: Dedicated GPA Summary Table for the Semester */}
+                    <div style={{ marginTop: '5px', border: '1px solid #000' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }} className="gpa-summary-table">
+                            <tbody>
+                                <tr>
+                                    <td style={{ width: '60%', fontWeight: "bold" }}>
+                                        የሴሚስተር GPA
+                                    </td>
+                                    <td className="center" style={{ width: '40%', fontWeight: "bold" }}>
+                                        {semesterGPA}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ fontWeight: "bold" }}>
+                                        የአጠቃላይ GPA (እስከዚህ ሴሚስተር)
+                                    </td>
+                                    <td className="center" style={{ fontWeight: "bold" }}>
+                                        {cumulativeGPAForSemester}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}}
+        );
+      })}
 
-      {/* ================= FINAL SUMMARY ================= */}
-      <table style={{ marginTop: "6mm" }}>
-        <tbody>
-          <tr>
-            <td>
-              <strong>ጠቅላላ አማካይ</strong>
-            </td>
-            <td>
-              {(gpaStats.cumulativeGpa).toFixed(2)}
-            </td>
-            <td>
-              <strong>ውጤት</strong>
-            </td>
-            <td>{resultStatus}</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* ================= FINAL SUMMARY (Consolidated) ================= */}
+      <div style={{ marginTop: "15mm", borderTop: "2px solid #000", paddingTop: "5mm" }}>
+        <table className="final-summary-table" style={{ width: "50%", border: "none" }}>
+          <tbody>
+            <tr>
+              <td style={{ fontWeight: "bold", width: "60%", border: "none", padding: "6px 0" }}>
+                ጠቅላላ አማካይ (Final Cumulative GPA)
+              </td>
+              <td className="center" style={{ fontWeight: "bold", width: "40%", border: "none", padding: "6px 0" }}>
+                {(gpaStats.cumulativeGpa).toFixed(2)}
+              </td>
+            </tr>
+           {/* <tr>
+                <td style={{ fontWeight: "bold", border: "none", padding: "6px 0" }}>
+                    **ውጤት (Status)**
+                </td>
+                <td className="center" style={{ fontWeight: "bold", border: "none", padding: "6px 0" }}>
+                    {resultStatus}
+                </td>
+            </tr> */}
+          </tbody>
+        </table>
+      </div> 
 
       {/* ================= SIGNATURES ================= */}
-      <table className="no-border" style={{ marginTop: "12mm" }}>
+      <table className="no-border" style={{ marginTop: "12mm", borderTop: "1px solid #ccc", paddingTop: "5mm" }}>
         <tbody>
           <tr>
-            <td>አዘጋጅ፡ ____________________</td>
-            <td className="right">ያፀደቀው፡ ____________________</td>
+            <td style={{ width: "50%" }}>አዘጋጅ፡ ____________________</td>
+            <td className="right" style={{ width: "50%" }}>ያፀደቀው፡ ____________________</td>
           </tr>
           <tr>
-            <td style={{ paddingTop: "6mm" }}>
+            <td style={{ paddingTop: "8mm" }}>
               ቀን፡ {new Date().toLocaleDateString("am-ET")}
             </td>
-            <td className="right" style={{ paddingTop: "6mm" }}>
+            <td className="right" style={{ paddingTop: "8mm" }}>
               ማህተም፡ ____________________
             </td>
           </tr>

@@ -48,7 +48,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import CSVUpload from '@/components/ui/CSVUpload';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardHero from '@/components/DashboardHero';
@@ -56,6 +55,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import AddExistingStudent from '@/components/dashboards/Admin/AddExistingStudent';
 
 interface User {
   id: string;
@@ -81,11 +81,11 @@ const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin' 
+  const [filterRole, setFilterRole] = useState('all'); // 'all', 'student', 'teacher', 'admin', 'super_admin'
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isAddExistingStudentOpen, setIsAddExistingStudentOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
   const [editingUser, setEditingUser] = useState<User | null>(null); // New state for user being edited
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -103,7 +103,6 @@ const UserManager = () => {
     address: '',
     year: ''
   });
-  const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [isCreatingUser, setIsCreatingUser] = useState(false); // Loading state for user creation
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
   const [isGeneratingId, setIsGeneratingId] = useState(false); // New state for ID generation
@@ -115,7 +114,7 @@ const UserManager = () => {
   const [studentFilters, setStudentFilters] = useState({
     year: '',
   });
-
+  
   // Debounced check for student ID uniqueness
   useEffect(() => {
     // Don't run on initial load or if the user object is not yet populated
@@ -188,7 +187,7 @@ const UserManager = () => {
     };
 
     generateStudentId();
-  }, [newUser.deliveryMethod, newUser.programType, newUser.role]);
+  }, [newUser.programType, newUser.role]);
 
   // Calculate stats
   const totalUsers = users.length;
@@ -213,7 +212,7 @@ const UserManager = () => {
       })();
     }
   }, [isAddUserOpen]);
-
+  
   const addCustomMeta = async (kind: 'deliveryMethods' | 'studentGroups' | 'programTypes' | 'classSections') => {
     const mapKeyToInput: Record<typeof kind, keyof typeof customMetaInputs> = {
       deliveryMethods: 'deliveryMethod',
@@ -303,16 +302,7 @@ const UserManager = () => {
         alert('Admins can only create Teachers and Students');
         return;
       }
-      // SOLUTION: Use secondary Firebase auth to prevent admin redirects
-      // 
-      // Problem: When admin creates users with createUserWithEmailAndPassword,
-      // Firebase automatically signs in the new user, triggering onAuthStateChanged
-      // and causing unwanted redirects to the new user's dashboard.
-      //
-      // Solution: Use a separate Firebase app instance (secondaryAuth) for user creation.
-      // This keeps the main app's auth state unchanged, preventing redirects.
       
-      // Set a flag to suppress auth redirects during user creation (extra safety)
       sessionStorage.setItem('suppressAuthRedirect', 'true');
       
       const defaultPasswords = {
@@ -368,15 +358,13 @@ const UserManager = () => {
         classSection: '', 
         phoneNumber: '', 
         address: '',
-        // ⭐️ ADDED MISSING PROPERTIES ⭐️
-        studentId: '', // Default to empty string
-        year: '',      // Default to empty string
-      });  fetchUsers();
+        studentId: '', 
+        year: '',
+      });
+      fetchUsers();
     } catch (error: any) {
-      // Clear the suppress flag on error
       sessionStorage.removeItem('suppressAuthRedirect');
       
-      // Handle specific Firebase auth errors with user-friendly messages
       let errorMessage = 'An error occurred while creating the user.';
       
       if (error.code === 'auth/email-already-in-use') {
@@ -393,7 +381,6 @@ const UserManager = () => {
         errorMessage = error.message;
       }
       
-      // Show user-friendly error message
       alert(errorMessage);
       console.error('Error creating user:', error);
     } finally {
@@ -548,10 +535,9 @@ const UserManager = () => {
             <FileSpreadsheet className="h-5 w-5 mr-2" />
             {t('users.export')}
           </Button>
-          <Dialog open={isAddUserOpen} onOpenChange={(o) => { 
+          <Dialog open={isAddUserOpen} onOpenChange={(o) => {
             if (!isCreatingUser) {
-              setIsAddUserOpen(o); 
-              if (!o) setMode('single'); 
+              setIsAddUserOpen(o);
             }
           }}>
             <DialogTrigger asChild>
@@ -562,182 +548,179 @@ const UserManager = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                <div className="flex items-center justify-between">
-                  <DialogTitle className="flex items-center gap-2">
-                    <UserPlus className="h-5 w-5 text-blue-600" />
-                    {t('users.addMany')}
-                  </DialogTitle>
-                  <div className="flex items-center gap-2 text-sm">
-                    <button className={`px-3 py-1 rounded ${mode==='single' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('single')}>{t('users.mode.single')}</button>
-                    <button className={`px-3 py-1 rounded ${mode==='bulk' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`} onClick={() => setMode('bulk')}>{t('users.mode.bulk')}</button>
-                  </div>
-                </div>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-blue-600" />
+                  Add New User
+                </DialogTitle>
                 <DialogDescription>
-                  {mode==='single' ? t('users.singleDescription') : t('users.bulkDescription')}
+                  Add a new user to the system.
                 </DialogDescription>
               </DialogHeader>
-              {mode==='single' ? (
-                <>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="displayName" className="text-right">{t('users.form.name')}</Label>
-                      <Input
-                        id="displayName"
-                        value={newUser.displayName}
-                        onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
-                        className="col-span-3"
-                        placeholder={t('users.form.name_placeholder')}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">{t('auth.email')}</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newUser.email}
-                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                        className="col-span-3"
-                        placeholder={t('auth.email_placeholder')}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="phoneNumber" className="text-right">Phone Number</Label>
-                      <Input
-                        id="phoneNumber"
-                        value={newUser.phoneNumber}
-                        onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Phone Number"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="address" className="text-right">Address</Label>
-                      <Input
-                        id="address"
-                        value={newUser.address}
-                        onChange={(e) => setNewUser({...newUser, address: e.target.value})}
-                        className="col-span-3"
-                        placeholder="Address"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="role" className="text-right">{t('users.table.role')}</Label>
-                      <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as any})}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">{t('users.roles.student')}</SelectItem>
-                          <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
-                          {userProfile?.role === 'super_admin' && (
-                            <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
-                          )}
-                          {/* Super admin creation is not exposed here to admins */}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-
-
-                    {newUser.role === 'student' && (
-                      <>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">Student Group</Label>
-                          <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.studentGroup} onValueChange={(v)=> setNewUser(prev=>({...prev, studentGroup: v === '__NONE__' ? '' : v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__NONE__">None</SelectItem>
-                                {studentMeta.studentGroups.map(sg => (
-                                  <SelectItem key={sg} value={sg}>{sg}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input placeholder="Add new" value={customMetaInputs.studentGroup} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, studentGroup: e.target.value}))} className="w-40" />
-                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('studentGroups')}>Add</Button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">Program Type</Label>
-                          <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.programType} onValueChange={(v)=> setNewUser(prev=>({...prev, programType: v === '__NONE__' ? '' : v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__NONE__">None</SelectItem>
-                                <SelectItem value="Online">Online</SelectItem>
-                                <SelectItem value="Six Months">Six Months</SelectItem>
-                                {studentMeta.programTypes.map(pt => (
-                                  <SelectItem key={pt} value={pt}>{pt}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input placeholder="Add new" value={customMetaInputs.programType} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, programType: e.target.value}))} className="w-40" />
-                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('programTypes')}>Add</Button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">Class Section</Label>
-                          <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.classSection} onValueChange={(v)=> setNewUser(prev=>({...prev, classSection: v === '__NONE__' ? '' : v}))}>
-                              <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__NONE__">None</SelectItem>
-                                {studentMeta.classSections.map(cs => (
-                                  <SelectItem key={cs} value={cs}>{cs}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input placeholder="Add new" value={customMetaInputs.classSection} onChange={(e)=> setCustomMetaInputs(prev=> ({...prev, classSection: e.target.value}))} className="w-40" />
-                            <Button type="button" variant="outline" onClick={()=> addCustomMeta('classSections')}>Add</Button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="year" className="text-right">Year</Label>
-                          <div className="col-span-3 flex items-center gap-2">
-                            <Select value={newUser.year} onValueChange={(value) => setNewUser({...newUser, year: value === '__NONE__' ? '' : value})}>
-                              <SelectTrigger className="w-56">
-                                <SelectValue placeholder="None" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__NONE__">None</SelectItem>
-                                <SelectItem value="1st Year">1st Year</SelectItem>
-                                <SelectItem value="2nd Year">2nd Year</SelectItem>
-                                <SelectItem value="3rd Year">3rd Year</SelectItem>
-                                <SelectItem value="4th Year">4th Year</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input placeholder="Add new" value={customYearInput} onChange={(e)=> setCustomYearInput(e.target.value)} className="w-40" />
-                            <Button type="button" variant="outline" onClick={()=> {
-                              if (customYearInput.trim()) {
-                                setNewUser(prev => ({...prev, year: customYearInput.trim()}));
-                                setCustomYearInput('');
-                              }
-                            }}>Add</Button>
-                          </div>
-                        </div>
-                      </>
-                    )}
+              <>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="displayName" className="text-right">{t('users.form.name')}</Label>
+                    <Input
+                      id="displayName"
+                      value={newUser.displayName}
+                      onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })}
+                      className="col-span-3"
+                      placeholder={t('users.form.name_placeholder')}
+                    />
                   </div>
-                  <DialogFooter>
-                    <LoadingButton 
-                      type="submit" 
-                      onClick={handleAddUser} 
-                      loading={isCreatingUser}
-                      loadingText="Creating User…"
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {t('users.create')}
-                    </LoadingButton>
-                  </DialogFooter>
-                </>
-              ) : (
-                <div className="py-2">
-                  <CSVUpload 
-                    onUsersCreated={(count) => { setIsAddUserOpen(false); fetchUsers(); }}
-                    onError={(msg) => console.error(msg)}
-                  />
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">{t('auth.email')}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      className="col-span-3"
+                      placeholder={t('auth.email_placeholder')}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="phoneNumber" className="text-right">Phone Number</Label>
+                    <Input
+                      id="phoneNumber"
+                      value={newUser.phoneNumber}
+                      onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+                      className="col-span-3"
+                      placeholder="Phone Number"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="address" className="text-right">Address</Label>
+                    <Input
+                      id="address"
+                      value={newUser.address}
+                      onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+                      className="col-span-3"
+                      placeholder="Address"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role" className="text-right">{t('users.table.role')}</Label>
+                    <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value as any })}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">{t('users.roles.student')}</SelectItem>
+                        <SelectItem value="teacher">{t('users.roles.teacher')}</SelectItem>
+                        {userProfile?.role === 'super_admin' && (
+                          <SelectItem value="admin">{t('users.roles.admin')}</SelectItem>
+                        )}
+                        {/* Super admin creation is not exposed here to admins */}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {newUser.role === 'student' && (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Student Group</Label>
+                        <div className="col-span-3 flex items-center gap-2">
+                          <Select value={newUser.studentGroup} onValueChange={(v) => setNewUser(prev => ({ ...prev, studentGroup: v === '__NONE__' ? '' : v }))}>
+                            <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__NONE__">None</SelectItem>
+                              {studentMeta.studentGroups.map(sg => (
+                                <SelectItem key={sg} value={sg}>{sg}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input placeholder="Add new" value={customMetaInputs.studentGroup} onChange={(e) => setCustomMetaInputs(prev => ({ ...prev, studentGroup: e.target.value }))} className="w-40" />
+                          <Button type="button" variant="outline" onClick={() => addCustomMeta('studentGroups')}>Add</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Program Type</Label>
+                        <div className="col-span-3 flex items-center gap-2">
+                          <Select value={newUser.programType} onValueChange={(v) => setNewUser(prev => ({ ...prev, programType: v === '__NONE__' ? '' : v }))}>
+                            <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__NONE__">None</SelectItem>
+                              <SelectItem value="Online">Online</SelectItem>
+                              <SelectItem value="Six Months">Six Months</SelectItem>
+                              {studentMeta.programTypes.map(pt => (
+                                <SelectItem key={pt} value={pt}>{pt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input placeholder="Add new" value={customMetaInputs.programType} onChange={(e) => setCustomMetaInputs(prev => ({ ...prev, programType: e.target.value }))} className="w-40" />
+                          <Button type="button" variant="outline" onClick={() => addCustomMeta('programTypes')}>Add</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Class Section</Label>
+                        <div className="col-span-3 flex items-center gap-2">
+                          <Select value={newUser.classSection} onValueChange={(v) => setNewUser(prev => ({ ...prev, classSection: v === '__NONE__' ? '' : v }))}>
+                            <SelectTrigger className="w-56"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__NONE__">None</SelectItem>
+                              {studentMeta.classSections.map(cs => (
+                                <SelectItem key={cs} value={cs}>{cs}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input placeholder="Add new" value={customMetaInputs.classSection} onChange={(e) => setCustomMetaInputs(prev => ({ ...prev, classSection: e.target.value }))} className="w-40" />
+                          <Button type="button" variant="outline" onClick={() => addCustomMeta('classSections')}>Add</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="year" className="text-right">Year</Label>
+                        <div className="col-span-3 flex items-center gap-2">
+                          <Select value={newUser.year} onValueChange={(value) => setNewUser({ ...newUser, year: value === '__NONE__' ? '' : value })}>
+                            <SelectTrigger className="w-56">
+                              <SelectValue placeholder="None" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__NONE__">None</SelectItem>
+                              <SelectItem value="1st Year">1st Year</SelectItem>
+                              <SelectItem value="2nd Year">2nd Year</SelectItem>
+                              <SelectItem value="3rd Year">3rd Year</SelectItem>
+                              <SelectItem value="4th Year">4th Year</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input placeholder="Add new" value={customYearInput} onChange={(e) => setCustomYearInput(e.target.value)} className="w-40" />
+                          <Button type="button" variant="outline" onClick={() => {
+                            if (customYearInput.trim()) {
+                              setNewUser(prev => ({ ...prev, year: customYearInput.trim() }));
+                              setCustomYearInput('');
+                            }
+                          }}>Add</Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
+                <DialogFooter>
+                  <LoadingButton
+                    type="submit"
+                    onClick={handleAddUser}
+                    loading={isCreatingUser}
+                    loadingText="Creating User…"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {t('users.create')}
+                  </LoadingButton>
+                </DialogFooter>
+              </>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAddExistingStudentOpen} onOpenChange={setIsAddExistingStudentOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Add Existing Students
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-3xl">
+                <AddExistingStudent onStudentAdded={() => {
+                    setIsAddExistingStudentOpen(false);
+                    fetchUsers();
+                }} />
             </DialogContent>
           </Dialog>
 

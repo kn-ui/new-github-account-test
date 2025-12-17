@@ -85,19 +85,37 @@ export default function StudentOverview() {
           setUpcomingAssignments(uniqueUpcoming);
           
           // Process announcements and ensure uniqueness
-          const withCourseTitles = data.announcements.map((a: any) => ({
+          const { announcementService, enrollmentService } = await import('@/lib/firestore');
+          const allAnnouncements = await announcementService.getAllAnnouncements(50);
+          
+          const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser.uid);
+          const enrolledCourseIds = enrollments.map((e: any) => e.courseId);
+          
+          const filteredAnnouncements = allAnnouncements.filter((a: any) => {
+            const targetAudience = a.targetAudience;
+            const recipientStudentId = a.recipientStudentId;
+            const courseId = a.courseId;
+            
+            if (targetAudience === 'SPECIFIC_STUDENT' && recipientStudentId === currentUser.uid) return true;
+            if (targetAudience === 'COURSE_STUDENTS' && courseId && enrolledCourseIds.includes(courseId)) return true;
+            if (targetAudience === 'ALL_STUDENTS') return true;
+            if (targetAudience === 'GENERAL_ALL' && a.authorRole === 'admin') return true;
+            
+            return false;
+          });
+
+          const announcementsWithDetails = filteredAnnouncements.map((a: any) => ({
             ...a,
-            courseTitle: a.courseId ? (data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course') : t('forum.categories.all')
+            courseTitle: a.courseId ? (data.enrollments.find(e => e.courseId === a.courseId)?.course?.title || 'Course') : t('forum.categories.all'),
           }));
           
-          // Remove duplicates based on announcement ID
-          const uniqueAnnouncements = withCourseTitles.filter((announcement, index, self) => 
+          const uniqueAnnouncements = announcementsWithDetails.filter((announcement, index, self) => 
             index === self.findIndex(a => a.id === announcement.id)
           );
+          
           setAnnouncements(uniqueAnnouncements);
 
           // Log today's activity for attendance (non-blocking)
-          // Log today's activity for attendance silently
           activityLogService.upsertToday(currentUser.uid).catch(() => {});
         }
       } catch (error) {
@@ -293,18 +311,29 @@ export default function StudentOverview() {
               <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('student.announcements.title')}</h2>
               <div className="space-y-2">
                 {announcements.slice(0, 3).map((announcement, index) => (
-                  <div key={`announcement-${announcement.id}-${index}`} className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50`}>
-                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                    <Bell size={16} className="text-blue-600" />
+                  <Link 
+                    to="/dashboard/student-announcements"
+                    key={`announcement-${announcement.id}-${index}`} 
+                    className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-gray-50"
+                  >
+                    {!announcement.isRead && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                    <Bell size={16} className={!announcement.isRead ? 'text-blue-600' : 'text-gray-400'} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 font-medium truncate">
+                      <p className={`text-sm font-medium truncate ${!announcement.isRead ? 'text-gray-800' : 'text-gray-600'}`}>
                         {announcement.title}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{announcement.courseTitle || t('forum.categories.all')}</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {announcement.courseTitle || t('forum.categories.all')}
+                      </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
+              
+              {announcements.length === 0 && (
+                <div className="text-center py-6 text-gray-500">{t('student.announcements.none')}</div>
+              )}
+
               {announcements.length > 3 && (
                 <div className="mt-4">
                   <Button variant="outline" className="w-full" asChild>

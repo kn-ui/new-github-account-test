@@ -50,6 +50,15 @@ export default function StudentAnnouncements() {
     loadAnnouncements();
   }, [currentUser?.uid]);
 
+  useEffect(() => {
+    if (selectedAnnouncement && !selectedAnnouncement.isRead) {
+      const updatedAnnouncements = announcements.map(ann =>
+        ann.id === selectedAnnouncement.id ? { ...ann, isRead: true } : ann
+      );
+      setAnnouncements(updatedAnnouncements);
+    }
+  }, [selectedAnnouncement]);
+
   const loadAnnouncements = async () => {
     if (!currentUser?.uid) return;
     try {
@@ -107,6 +116,7 @@ export default function StudentAnnouncements() {
       
       withDetails.sort((a: any, b: any) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
       setAnnouncements(withDetails);
+      toast.success(t('student.announcements.loadSuccess') || 'Announcements loaded successfully');
     } catch (error) {
       console.error('Failed to load announcements:', error);
       toast.error(t('student.announcements.loadError') || 'Failed to load announcements');
@@ -120,7 +130,7 @@ export default function StudentAnnouncements() {
       const matchesSearch = 
         announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         announcement.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        announcement.course?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+        (announcement.course?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCourse = selectedCourse === 'all' || announcement.courseId === selectedCourse;
       
@@ -218,20 +228,20 @@ export default function StudentAnnouncements() {
                     className={`w-full flex items-center gap-4 p-4 rounded-lg transition-colors text-left ${
                       selectedAnnouncement?.id === announcement.id
                         ? 'bg-blue-100 border border-blue-300'
-                        : announcement.isRead 
-                        ? 'hover:bg-gray-50' 
-                        : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                        : !announcement.isRead 
+                        ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                        : 'hover:bg-gray-50'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      announcement.isRead ? 'bg-gray-100' : 'bg-blue-100'
+                      !announcement.isRead ? 'bg-blue-100' : 'bg-gray-100'
                     }`}>
-                      <Bell size={18} className={announcement.isRead ? 'text-gray-400' : 'text-blue-600'} />
+                      <Bell size={18} className={!announcement.isRead ? 'text-blue-600' : 'text-gray-400'} />
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <p className={`font-medium truncate ${
-                        announcement.isRead ? 'text-gray-700' : 'text-gray-900'
+                        !announcement.isRead ? 'text-gray-900' : 'text-gray-700'
                       }`} title={announcement.title}>
                         {announcement.title}
                       </p>

@@ -130,11 +130,16 @@ export default function AdminCourseGrades() {
   };
 
   useEffect(() => {
-    if (!courseId) return;
-    if (userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin')) {
+    if (courseId) {
       loadAll();
     }
-  }, [courseId, userProfile?.role]);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (courseId) {
+      loadRows();
+    }
+  }, [courseId]);
 
   const loadAll = async () => {
     try {
@@ -242,8 +247,11 @@ export default function AdminCourseGrades() {
         // Percent should be calculated without 'other' points since they're bonus
         const percent = max > 0 ? Math.round(((a.total + e.total) / max) * 100) : 0;
 
-        const letter = finalByStudent.get(sid)?.letterGrade || '';
-        const gradePoints = finalByStudent.get(sid)?.gradePoints ?? 0.0;
+        const { letter: computedLetter, points: computedGradePoints } = calculateLetterGrade(finalPointsToUse, 100, gradeRanges);
+
+        const letter = finalByStudent.get(sid)?.letterGrade || computedLetter;
+        const gradePoints = finalByStudent.get(sid)?.gradePoints ?? computedGradePoints;
+
 
         return {
           studentId: sid,

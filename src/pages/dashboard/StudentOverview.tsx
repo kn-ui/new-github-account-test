@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { studentDataService, activityLogService } from '@/lib/firestore';
+import { activityLogService, studentDataService } from '@/lib/firestore';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

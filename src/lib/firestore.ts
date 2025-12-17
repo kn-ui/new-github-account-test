@@ -698,6 +698,32 @@ export const courseService = {
 
 // Enrollment operations
 export const enrollmentService = {
+  async getEnrollmentsByStudentUnfiltered(studentId: string): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
+    const q = query(
+      collections.enrollments(),
+      where('studentId', '==', studentId),
+      orderBy('enrolledAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const enrollments = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    
+    // Fetch course data for each enrollment
+    const enrollmentsWithCourses = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        try {
+          const course = await courseService.getCourseById(enrollment.courseId);
+          return Object.assign({}, enrollment, { course });
+        } catch (error) {
+          console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
+          return { ...(enrollment as any), course: undefined };
+        }
+      })
+    );
+    
+    return enrollmentsWithCourses.filter(enrollment => enrollment.course);
+  },
+
   async getEnrollmentsByStudent(studentId: string): Promise<(FirestoreEnrollment & { course?: FirestoreCourse })[]> {
     const q = query(
       collections.enrollments(),
@@ -714,10 +740,6 @@ export const enrollmentService = {
       enrollments.map(async (enrollment) => {
         try {
           const course = await courseService.getCourseById(enrollment.courseId);
-          // Filter out inactive courses (isActive = false)
-          if (course && course.isActive === false) {
-            return null; // Return null for inactive courses
-          }
           return Object.assign({}, enrollment, { course });
         } catch (error) {
           console.error(`Failed to fetch course ${enrollment.courseId}:`, error);
@@ -726,7 +748,7 @@ export const enrollmentService = {
       })
     );
     
-    // Filter out enrollments with inactive courses
+    // Filter out enrollments with null courses (i.e., courses that could not be fetched)
     return enrollmentsWithCourses.filter(enrollment => enrollment !== null);
   },
 

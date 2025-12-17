@@ -159,6 +159,8 @@ export default function AdminStudentGrades() {
     }
   }, [studentId, userProfile?.role]);
 
+
+
   const loadStudentData = async () => {
     try {
       setLoading(true);

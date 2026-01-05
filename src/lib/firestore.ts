@@ -683,12 +683,13 @@ export const courseService = {
     );
     
     // Soft delete all related enrollments
-    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+    /* const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
     await Promise.all(
       enrollments.map(enrollment => enrollmentService.deleteEnrollment(enrollment.id))
-    );
+    ); */
     
     // Clear student data cache for all enrolled students
+    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
     const studentIds = enrollments.map(enrollment => enrollment.studentId);
     studentIds.forEach(studentId => {
       studentDataService.clearStudentCache(studentId);
@@ -752,16 +753,21 @@ export const enrollmentService = {
     return enrollmentsWithCourses.filter(enrollment => enrollment !== null);
   },
 
-  async getEnrollmentsByCourse(courseId: string): Promise<FirestoreEnrollment[]> {
+  async getEnrollmentsByCourse(courseId: string, includeInactive = false): Promise<FirestoreEnrollment[]> {
     const q = query(
       collections.enrollments(),
       where('courseId', '==', courseId),
       orderBy('enrolledAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment))
-      .filter(enrollment => enrollment.isActive !== false); // Client-side filter for isActive
+    const enrollments = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEnrollment));
+    
+    if (includeInactive) {
+      return enrollments;
+    }
+    
+    return enrollments.filter(enrollment => enrollment.isActive !== false);
   },
 
   async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
@@ -825,7 +831,10 @@ export const enrollmentService = {
 
   async deleteEnrollment(enrollmentId: string): Promise<void> {
     const docRef = doc(db, 'enrollments', enrollmentId);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      isActive: false,
+      lastAccessedAt: Timestamp.now()
+    });
   },
 };
 

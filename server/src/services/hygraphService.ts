@@ -229,7 +229,7 @@ mutation CreateAssetEntry($fileName: String!) {
     const uploadController = new AbortController();
     const uploadTimeout = setTimeout(() => {
       uploadController.abort();
-    }, 20000); // 20 second timeout
+    }, 500000); // 20 second timeout
 
     const uploadResponse = await fetch(s3UploadUrl, {
       method: 'POST',

@@ -165,7 +165,7 @@ export default function AdminCourseGrades() {
     
     try {
       // Get enrolled students
-      const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+      const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId, true);
       const studentIds = Array.from(new Set(enrollments.map(e => e.studentId)));
 
       if (studentIds.length === 0) {
@@ -270,7 +270,11 @@ export default function AdminCourseGrades() {
         };
       });
 
-      setRows(newRows);
+      if (course && course.isActive === false) {
+        setRows(newRows.filter(row => row.isPublished));
+      } else {
+        setRows(newRows);
+      }
     } catch (error) {
       // Avoid spamming console; show empty state only
       setRows([]);

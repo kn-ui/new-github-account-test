@@ -88,7 +88,7 @@ export default function StudentGrades() {
       setLoading(true);
       
       // Get student's enrollments
-      const enrollments = await enrollmentService.getEnrollmentsByStudent(currentUser!.uid);
+      const enrollments = await enrollmentService.getEnrollmentsByStudentUnfiltered(currentUser!.uid);
       const courseIds = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
       
       if (courseIds.length === 0) {
@@ -205,9 +205,16 @@ export default function StudentGrades() {
       const finalGradesPromises = courseIds.map(async (courseId) => {
         try {
           const finalGrade = await gradeService.getGradeByStudentAndCourse(courseId, currentUser!.uid);
-          // Hide if not published
-          if (finalGrade && (finalGrade as any).isPublished === false) return null;
-          return finalGrade;
+          if (!finalGrade) return null;
+
+          const course = courseMap.get(courseId);
+          // If course is inactive, only show if grade is published
+          if (course && course.isActive === false) {
+            return finalGrade.isPublished ? finalGrade : null;
+          }
+          
+          // If course is active, show the grade (if it's published)
+          return (finalGrade as any).isPublished === false ? null : finalGrade;
         } catch (error) {
           console.error(`Error loading final grade for course ${courseId}:`, error);
           return null;

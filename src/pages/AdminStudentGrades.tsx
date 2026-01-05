@@ -168,7 +168,7 @@ export default function AdminStudentGrades() {
       // Load student information and enrollments in parallel
       const [studentData, enrollments] = await Promise.all([
         userService.getUserById(studentId!),
-        enrollmentService.getEnrollmentsByStudent(studentId!),
+        enrollmentService.getEnrollmentsByStudentUnfiltered(studentId!),
       ]);
 
       if (!studentData) {
@@ -224,9 +224,17 @@ export default function AdminStudentGrades() {
           })(),
         ]);
 
+      const filteredFinalGrades = finalGradesData.filter((grade) => {
+        const course = courseMap.get(grade.courseId);
+        if (course && course.isActive === false) {
+          return grade.isPublished === true;
+        }
+        return true;
+      });
+
       setGrades(assignmentsData);
       setExamGrades(examsData);
-      setFinalGrades(finalGradesData);
+      setFinalGrades(filteredFinalGrades);
       // Keep only this student's other grades for clarity
       setOtherGrades(otherGradesData.filter((g) => g.studentId === studentId));
       try {

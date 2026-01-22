@@ -53,7 +53,7 @@ import {
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getAuthToken } from '@/lib/api';
-import { uploadToHygraph } from '@/lib/hygraphUpload';
+import { uploadToHygraph, uploadMultipleToHygraph } from '@/lib/hygraphUpload';
 
 export default function TeacherCourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -74,7 +74,7 @@ export default function TeacherCourseDetail() {
   const [materialForm, setMaterialForm] = useState<{ title: string; description: string; type: 'document' | 'video' | 'link' | 'other'; fileUrl: string; externalLink: string; }>(
     { title: '', description: '', type: 'document', fileUrl: '', externalLink: '' }
   );
-  const [materialFile, setMaterialFile] = useState<File | null>(null);
+  const [materialFiles, setMaterialFiles] = useState<File[]>([]);
   const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
   const [savingMaterial, setSavingMaterial] = useState(false);
 
@@ -91,7 +91,7 @@ export default function TeacherCourseDetail() {
   const [assignmentForm, setAssignmentForm] = useState<{ title: string; description: string; dueDate: string; dueTime: string; maxScore: number; instructions: string; linkTitle: string; linkUrl: string }>(
     { title: '', description: '', dueDate: new Date().toISOString().slice(0,10), dueTime: '', maxScore: 100, instructions: '', linkTitle: '', linkUrl: '' }
   );
-  const [fileObj, setFileObj] = useState<File | null>(null);
+  const [fileObjs, setFileObjs] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
@@ -458,7 +458,7 @@ export default function TeacherCourseDetail() {
                       linkTitle: '', 
                       linkUrl: '' 
                     }); 
-                    setFileObj(null);
+                    setFileObjs([]);
                     setAssignmentDialogOpen(true); 
                   }}>Create Assignment</Button>
                 </div>
@@ -504,7 +504,7 @@ export default function TeacherCourseDetail() {
                                   linkTitle: a.attachments?.find((att: any) => att.type === 'link')?.title || '',
                                   linkUrl: a.attachments?.find((att: any) => att.type === 'link')?.url || '',
                                 }); 
-                                setFileObj(a.attachments?.find((att: any) => att.type === 'file') ? new File([], a.attachments?.find((att: any) => att.type === 'file').title) : null); // Placeholder for file
+                                setFileObjs([]);
                                 setAssignmentDialogOpen(true); 
                               }}>Edit</Button>
                               <Button variant="destructive" size="sm" onClick={async () => {
@@ -1210,12 +1210,18 @@ export default function TeacherCourseDetail() {
             </div>
             {materialForm.type === 'document' && (
               <div className="space-y-2">
-                <Label htmlFor="m-file-upload">Upload File (PDF/DOC)</Label>
-                <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setMaterialFile(e.target.files?.[0] || null)} />
-                {materialFile && isUploadingMaterial && (
-                  <div className="text-xs text-blue-700 mt-1">Uploading {materialFile.name}…</div>
+                <Label htmlFor="m-file-upload">Upload File(s) (PDF/DOC)</Label>
+                <Input id="m-file-upload" type="file" accept=".pdf,.doc,.docx" multiple onChange={(e) => setMaterialFiles(Array.from(e.target.files || []))} />
+                {materialFiles.length > 0 && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    {materialFiles.length} file(s) selected. 
+                    {materialFiles.length > 1 && " Note: Title and description will be ignored, and filenames will be used as titles."}
+                  </div>
                 )}
-                <div className="text-xs text-gray-500">Or paste a direct URL:</div>
+                {isUploadingMaterial && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {materialFiles.length} file(s)...</div>
+                )}
+                <div className="text-xs text-gray-500">Or paste a direct URL (for a single file):</div>
                 <Input id="m-file" value={materialForm.fileUrl} onChange={(e) => setMaterialForm({ ...materialForm, fileUrl: e.target.value })} placeholder="https://example.com/file.pdf" />
               </div>
             )}
@@ -1229,55 +1235,87 @@ export default function TeacherCourseDetail() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setMaterialDialogOpen(false)}>Cancel</Button>
             <LoadingButton loading={savingMaterial} loadingText="Saving..." onClick={async () => {
-              if (!materialForm.title.trim()) {
+              if (!editingMaterial && materialFiles.length === 0 && !materialForm.fileUrl && materialForm.type === 'document') {
+                toast.error('Please select a file or provide a URL for the document.');
+                return;
+              }
+              if (materialFiles.length <= 1 && !materialForm.title.trim()) {
                 toast.error('Material title is required.');
                 return;
               }
-              if (!materialForm.description.trim()) {
-                toast.error('Material description is required.');
-                return;
-              }
+              
               try {
                 setSavingMaterial(true);
-                const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
-                if (materialForm.type === 'document') {
-                  let url = materialForm.fileUrl || '';
-                  let assetId: string | undefined = undefined;
-                  if (materialFile) {
-                    setIsUploadingMaterial(true);
-                    const uploadResult = await uploadToHygraph(materialFile);
-                    if (!uploadResult.success) {
-                      throw new Error(uploadResult.error || 'Upload failed');
-                    }
-                    url = uploadResult.url || '';
-                    assetId = uploadResult.id;
-                    if (!url) {
-                      throw new Error('No URL returned from upload');
-                    }
-                    if (uploadResult.warning) {
-                      toast.warning(uploadResult.warning);
-                    }
+                setIsUploadingMaterial(true);
+
+                if (materialFiles.length > 1) {
+                  // Bulk upload logic
+                  const uploadResults = await uploadMultipleToHygraph(materialFiles);
+                  const successfulUploads = uploadResults.filter(r => r.success);
+                  
+                  if (successfulUploads.length === 0) {
+                    throw new Error('All file uploads failed.');
                   }
-                  payload.fileUrl = url;
-                  if (assetId) {
+
+                  const materialPromises = successfulUploads.map(uploadResult => {
+                    const payload = {
+                      title: uploadResult.filename || 'Untitled Material',
+                      description: '',
+                      courseId: course.id,
+                      type: 'document' as const,
+                      fileUrl: uploadResult.url || '',
+                      fileAssetId: uploadResult.id || undefined,
+                    };
+                    return courseMaterialService.createCourseMaterial(payload);
+                  });
+
+                  await Promise.all(materialPromises);
+                  toast.success(`${successfulUploads.length} material(s) added successfully.`);
+
+                } else {
+                  // Single material logic (create or update)
+                  const payload: any = { title: materialForm.title, description: materialForm.description, courseId: course.id, type: materialForm.type };
+                  
+                  if (materialForm.type === 'document') {
+                    let url = materialForm.fileUrl || (editingMaterial?.fileUrl || '');
+                    let assetId: string | undefined = editingMaterial?.fileAssetId;
+
+                    if (materialFiles.length === 1) {
+                      const uploadResult = await uploadToHygraph(materialFiles[0]);
+                      if (!uploadResult.success) throw new Error(uploadResult.error || 'Upload failed');
+                      url = uploadResult.url || '';
+                      assetId = uploadResult.id;
+                      if (!url) throw new Error('No URL returned from upload');
+                      if (uploadResult.warning) toast.warning(uploadResult.warning);
+                    }
+                    payload.fileUrl = url;
                     payload.fileAssetId = assetId;
                   }
+                  
+                  if (materialForm.type === 'video' || materialForm.type === 'link') {
+                    payload.externalLink = materialForm.externalLink || '';
+                  }
+
+                  if (editingMaterial) {
+                    await courseMaterialService.updateCourseMaterial(editingMaterial.id, payload);
+                    toast.success('Material updated');
+                  } else {
+                    await courseMaterialService.createCourseMaterial(payload);
+                    toast.success('Material added');
+                  }
                 }
-                if (materialForm.type === 'video' || materialForm.type === 'link') payload.externalLink = materialForm.externalLink || '';
-                if (editingMaterial) {
-                  await (await import('@/lib/firestore')).courseMaterialService.updateCourseMaterial(editingMaterial.id, payload);
-                  toast.success('Material updated');
-                } else {
-                  await (await import('@/lib/firestore')).courseMaterialService.createCourseMaterial(payload);
-                  toast.success('Material added');
-                }
-                const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id, 1000);
+
+                const latest = await courseMaterialService.getCourseMaterialsByCourse(course.id, 1000);
                 setMaterials(latest);
                 setMaterialDialogOpen(false);
                 setEditingMaterial(null);
-                setMaterialFile(null);
-              } catch (e) { toast.error('Failed to save material'); }
-              finally { setIsUploadingMaterial(false); setSavingMaterial(false); }
+                setMaterialFiles([]);
+              } catch (e: any) { 
+                toast.error(`Failed to save material: ${e.message}`); 
+              } finally { 
+                setIsUploadingMaterial(false); 
+                setSavingMaterial(false); 
+              }
             }}>Save</LoadingButton>
           </DialogFooter>
         </DialogContent>
@@ -1331,28 +1369,33 @@ export default function TeacherCourseDetail() {
                     }
       
                     const attachments: { type: 'file' | 'link'; url: string; title?: string; assetId?: string }[] = [];
-                    if (fileObj) {
+                    if (fileObjs.length > 0) {
                       try {
                         setIsUploading(true);
-                        const uploadResult = await uploadToHygraph(fileObj);
-                        if (!uploadResult.success) {
-                          throw new Error(uploadResult.error || 'Upload failed');
+                        const uploadResults = await uploadMultipleToHygraph(fileObjs);
+                        const successfulUploads = uploadResults.filter(r => r.success);
+
+                        if (uploadResults.some(r => !r.success)) {
+                          const failedFiles = uploadResults.filter(r => !r.success).map(r => r.filename).join(', ');
+                          toast.error(`Failed to upload some files: ${failedFiles}`);
                         }
-                        if (!uploadResult.url) {
-                          throw new Error('No URL returned from upload');
+
+                        if (successfulUploads.length === 0 && fileObjs.length > 0) {
+                            throw new Error('All file uploads failed.');
                         }
-                        attachments.push({ 
-                          type: 'file', 
-                          url: uploadResult.url, 
-                          title: fileObj.name,
-                          ...(uploadResult.id ? { assetId: uploadResult.id } : {})
+
+                        successfulUploads.forEach(uploadResult => {
+                            attachments.push({
+                                type: 'file',
+                                url: uploadResult.url!,
+                                title: uploadResult.filename,
+                                assetId: uploadResult.id,
+                            });
                         });
-                        if (uploadResult.warning) {
-                          toast.warning(uploadResult.warning);
-                        }
+                        
                       } catch (err) {
                         console.error('Attachment upload failed', err);
-                        toast.error(`Failed to upload attachment: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                        toast.error(`Failed to upload attachments: ${err instanceof Error ? err.message : 'Unknown error'}`);
                         // Don't continue if upload failed
                         setIsUploading(false);
                         setSavingAssignment(false);
@@ -1457,16 +1500,20 @@ export default function TeacherCourseDetail() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="file">Attachment (optional)</Label>
+                      <Label htmlFor="file">Attachments (optional)</Label>
                       <div className="flex items-center gap-2">
-                        <Input id="file" type="file" onChange={(e) => setFileObj(e.target.files?.[0] || null)} className="flex-1" />
-                        {fileObj && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">{fileObj.name}</span>
-                            <Button variant="ghost" size="sm" onClick={() => setFileObj(null)}>X</Button>
-                          </div>
-                        )}
+                        <Input id="file" type="file" multiple onChange={(e) => setFileObjs(Array.from(e.target.files || []))} className="flex-1" />
                       </div>
+                      {fileObjs.length > 0 && (
+                        <div className="flex flex-col gap-2 mt-2">
+                          {fileObjs.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between text-sm text-gray-500">
+                              <span>{file.name}</span>
+                              <Button variant="ghost" size="sm" onClick={() => setFileObjs(prev => prev.filter((_, i) => i !== index))}>X</Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
       

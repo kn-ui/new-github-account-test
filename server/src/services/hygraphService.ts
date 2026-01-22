@@ -3,6 +3,16 @@ import fetch, { RequestInit, Response } from 'node-fetch';
 import { FormData, Blob } from 'formdata-node';
 import { Readable } from 'stream';
 
+const sanitizeFilename = (filename: string): string => {
+  // Replace non-ASCII characters with a fallback
+  // Replace spaces and special characters with underscores
+  // Allow letters, numbers, dots, hyphens, and underscores
+  return filename
+    .replace(/[^\x00-\x7F]/g, '_') // Non-ASCII to underscore
+    .replace(/[\s&?#%[\]]/g, '_')      // Spaces and special chars to underscore
+    .replace(/__+/g, '_');         // Multiple underscores to single
+};
+
 export interface HygraphAsset {
   id: string;
   fileName: string;
@@ -87,9 +97,9 @@ class HygraphService {
       console.warn(`Warning: File has potentially problematic MIME type: ${file.mimetype}`);
     }
 
-    // Add overall timeout for the entire upload process (90 seconds)
+    // Add overall timeout for the entire upload process (5 minutes)
     const uploadTimeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Upload process timed out after 90 seconds')), 90000);
+      setTimeout(() => reject(new Error('Upload process timed out after 5 minutes')), 300000);
     });
 
     try {
@@ -109,8 +119,28 @@ class HygraphService {
       };
     }
   }
+  async uploadMultipleFiles(files: Express.Multer.File[]): Promise<HygraphUploadResponse[]> {
+    if (!this.endpoint || !this.token) {
+      throw new Error('Hygraph not configured');
+    }
+
+    const uploadPromises = files.map(file => this.uploadFile(file));
+    
+    try {
+      const results = await Promise.all(uploadPromises);
+      return results;
+    } catch (error) {
+      console.error('Bulk upload failed:', error);
+      // If Promise.all fails, it rejects with a single error. 
+      // We might want to return information about which files failed.
+      // For now, we'll rethrow the error.
+      throw error;
+    }
+  }
+
 
   private async doUpload(file: Express.Multer.File): Promise<HygraphUploadResponse> {
+    const sanitizedFilename = sanitizeFilename(file.originalname);
     // Step 1: Create asset entry in Hygraph and request POST upload data.
     // FIX: Cleaned up leading whitespace to prevent GraphQL parser errors like "unexpected '<Invalid>'"
     const createAssetMutation = `
@@ -149,7 +179,7 @@ mutation CreateAssetEntry($fileName: String!) {
       body: JSON.stringify({
         query: createAssetMutation,
         variables: {
-          fileName: file.originalname,
+          fileName: sanitizedFilename,
         },
       }),
     });
@@ -219,9 +249,9 @@ mutation CreateAssetEntry($fileName: String!) {
     // Important: "file" field must be last for S3 upload request
     // Create a File-like object from the buffer for formdata-node
     const fileBlob = new Blob([file.buffer], { type: file.mimetype });
-    form.append('file', fileBlob, file.originalname);
+    form.append('file', fileBlob, sanitizedFilename);
 
-    console.log(`Form data prepared with ${s3Fields.length} fields and file: ${file.originalname} (${file.size} bytes)`);
+    console.log(`Form data prepared with ${s3Fields.length} fields and file: ${sanitizedFilename} (${file.size} bytes)`);
 
     const encoder = new FormDataEncoder(form);
 
@@ -229,7 +259,7 @@ mutation CreateAssetEntry($fileName: String!) {
     const uploadController = new AbortController();
     const uploadTimeout = setTimeout(() => {
       uploadController.abort();
-    }, 500000); // 20 second timeout
+    }, 600000); // 10 minute timeout
 
     const uploadResponse = await fetch(s3UploadUrl, {
       method: 'POST',
@@ -245,7 +275,7 @@ mutation CreateAssetEntry($fileName: String!) {
       const errorText = await uploadResponse.text();
       console.error('S3 file upload failed:', uploadResponse.status, errorText);
       console.error('Upload URL:', s3UploadUrl);
-      console.error('File details:', { name: file.originalname, size: file.size, type: file.mimetype });
+      console.error('File details:', { name: sanitizedFilename, size: file.size, type: file.mimetype });
       throw new Error(`Failed to upload file to S3: ${uploadResponse.status} ${uploadResponse.statusText}. Response: ${errorText.substring(0, 200)}`);
     }
 
@@ -266,7 +296,7 @@ mutation CreateAssetEntry($fileName: String!) {
 
 
     console.log(`File uploaded successfully to: ${s3UploadUrl}`);
-    console.log(`File details: ${file.originalname}, ${file.size} bytes, ${file.mimetype}`);
+    console.log(`File details: ${sanitizedFilename}, ${file.size} bytes, ${file.mimetype}`);
     
     // For debugging 34KB file issue
     if (file.size === 34816) { // 34KB in bytes

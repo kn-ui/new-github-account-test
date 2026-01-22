@@ -7,7 +7,7 @@ import { truncateTitle, truncateText } from '@/lib/utils';
 import { courseMaterialService, courseService, FirestoreCourseMaterial } from '@/lib/firestore';
 // Hygraph upload via backend
 import { api, getAuthToken } from '@/lib/api';
-import { uploadToHygraph } from '@/lib/hygraphUpload';
+import { uploadToHygraph, uploadMultipleToHygraph } from '@/lib/hygraphUpload';
 import { Button } from '@/components/ui/button';
 import LoadingButton from '@/components/ui/loading-button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +77,7 @@ export default function TeacherCourseMaterials() {
     fileUrl: '',
     externalLink: ''
   });
-  const [fileObj, setFileObj] = useState<File | null>(null);
+  const [fileObjs, setFileObjs] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -113,77 +113,114 @@ export default function TeacherCourseMaterials() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description || !formData.courseId) {
-      toast.error('Please fill in all required fields');
-      return;
+    // For single material creation with form data
+    if (fileObjs.length <= 1) { // If one file or no files selected, regular form validation applies
+        if (!formData.title || !formData.description || !formData.courseId) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
+        if (formData.type === 'document' && fileObjs.length === 0 && !formData.fileUrl) {
+            toast.error('Please upload a file or provide a file URL for documents');
+            return;
+        }
+
+        if ((formData.type === 'link' || formData.type === 'video') && !formData.externalLink) {
+            toast.error('Please provide an external link for link/video materials');
+            return;
+        }
+    } else { // Multiple files selected, title/description from form are ignored
+        if (!formData.courseId) {
+            toast.error('Please select a course for the materials');
+            return;
+        }
     }
 
-    // For document type, either file upload or direct URL
-    if (formData.type === 'document' && !fileObj && !formData.fileUrl) {
-      toast.error('Please upload a file or provide a file URL for documents');
-      return;
-    }
-
-    if (formData.type === 'link' && !formData.externalLink) {
-      toast.error('Please provide an external link for link materials');
-      return;
-    }
 
     try {
       setSaving(true);
-      let uploadedUrl: string | undefined = undefined;
-      let uploadedAssetId: string | undefined = undefined;
-      if (formData.type === 'document' && fileObj) {
-        setIsUploading(true);
-        const uploadResult = await uploadToHygraph(fileObj);
-        if (!uploadResult.success) {
-          throw new Error(uploadResult.error || 'Upload failed');
-        }
-        uploadedUrl = uploadResult.url;
-        uploadedAssetId = uploadResult.id;
-        if (!uploadedUrl) {
-          throw new Error('No URL returned from upload');
-        }
-        if (uploadResult.warning) {
-          toast.warning(uploadResult.warning);
-        }
-      }
+      setIsUploading(true);
 
-      const materialData: any = {
-        title: formData.title,
-        description: formData.description,
-        courseId: formData.courseId,
-        type: formData.type,
-      };
-      if (formData.type === 'document') {
-        materialData.fileUrl = uploadedUrl || formData.fileUrl || '';
-        if (uploadedAssetId) {
-          materialData.fileAssetId = uploadedAssetId;
+      if (fileObjs.length > 1) {
+        // Bulk upload logic
+        const uploadResults = await uploadMultipleToHygraph(fileObjs);
+        const successfulUploads = uploadResults.filter(r => r.success);
+        
+        if (successfulUploads.length === 0) {
+          throw new Error('All file uploads failed.');
         }
-      }
-      if (formData.type === 'link' || formData.type === 'video') {
-        materialData.externalLink = formData.externalLink || '';
-      };
 
-      if (editingMaterial) {
-        const updates: any = { title: materialData.title, description: materialData.description, courseId: materialData.courseId, type: materialData.type };
-        if (materialData.fileUrl !== undefined) updates.fileUrl = materialData.fileUrl;
-        if (materialData.fileAssetId !== undefined) updates.fileAssetId = materialData.fileAssetId;
-        if (materialData.externalLink !== undefined) updates.externalLink = materialData.externalLink;
-        await courseMaterialService.updateCourseMaterial(editingMaterial.id, updates);
-        toast.success('Material updated successfully');
+        const materialPromises = successfulUploads.map(uploadResult => {
+          const payload = {
+            title: uploadResult.filename || 'Untitled Material',
+            description: '', // Description is empty for bulk uploads
+            courseId: formData.courseId,
+            type: 'document' as const, // Assuming all bulk uploads are documents
+            fileUrl: uploadResult.url || '',
+            fileAssetId: uploadResult.id || undefined,
+          };
+          return courseMaterialService.createCourseMaterial(payload);
+        });
+
+        await Promise.all(materialPromises);
+        toast.success(`${successfulUploads.length} material(s) added successfully.`);
+
       } else {
-        await courseMaterialService.createCourseMaterial(materialData);
-        toast.success('Material created successfully');
+        // Single material logic (create or update, including single file or URL)
+        let uploadedUrl: string | undefined = undefined;
+        let uploadedAssetId: string | undefined = undefined;
+
+        if (formData.type === 'document' && fileObjs.length === 1) {
+          const uploadResult = await uploadToHygraph(fileObjs[0]);
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Upload failed');
+          }
+          uploadedUrl = uploadResult.url;
+          uploadedAssetId = uploadResult.id;
+          if (!uploadedUrl) {
+            throw new Error('No URL returned from upload');
+          }
+          if (uploadResult.warning) {
+            toast.warning(uploadResult.warning);
+          }
+        }
+
+        const materialData: any = {
+          title: formData.title,
+          description: formData.description,
+          courseId: formData.courseId,
+          type: formData.type,
+        };
+        if (formData.type === 'document') {
+          materialData.fileUrl = uploadedUrl || formData.fileUrl || '';
+          if (uploadedAssetId) {
+            materialData.fileAssetId = uploadedAssetId;
+          }
+        }
+        if (formData.type === 'link' || formData.type === 'video') {
+          materialData.externalLink = formData.externalLink || '';
+        };
+
+        if (editingMaterial) {
+          const updates: any = { title: materialData.title, description: materialData.description, courseId: materialData.courseId, type: materialData.type };
+          if (materialData.fileUrl !== undefined) updates.fileUrl = materialData.fileUrl;
+          if (materialData.fileAssetId !== undefined) updates.fileAssetId = materialData.fileAssetId;
+          if (materialData.externalLink !== undefined) updates.externalLink = materialData.externalLink;
+          await courseMaterialService.updateCourseMaterial(editingMaterial.id, updates);
+          toast.success('Material updated successfully');
+        } else {
+          await courseMaterialService.createCourseMaterial(materialData);
+          toast.success('Material created successfully');
+        }
       }
 
       setShowCreateDialog(false);
       setEditingMaterial(null);
       resetForm();
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving material:', error);
-      toast.error('Failed to save material');
+      toast.error(`Failed to save material: ${error.message}`);
     }
     finally {
       setIsUploading(false);
@@ -229,7 +266,7 @@ export default function TeacherCourseMaterials() {
       fileUrl: '',
       externalLink: ''
     });
-    setFileObj(null);
+    setFileObjs([]);
   };
 
   const openCreateDialog = () => {
@@ -682,12 +719,18 @@ export default function TeacherCourseMaterials() {
 
             {formData.type === 'document' && (
               <div>
-                <Label htmlFor="file">Upload File (PDF/Doc)</Label>
-                <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFileObj(e.target.files?.[0] || null)} />
-                {fileObj && isUploading && (
-                  <div className="text-xs text-blue-700 mt-1">Uploading {fileObj.name}…</div>
+                <Label htmlFor="file">Upload File(s) (PDF/Doc)</Label>
+                <Input id="file" type="file" accept=".pdf,.doc,.docx" multiple onChange={(e) => setFileObjs(Array.from(e.target.files || []))} />
+                {fileObjs.length > 0 && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    {fileObjs.length} file(s) selected. 
+                    {fileObjs.length > 1 && " Note: Title and description will be ignored, and filenames will be used as titles."}
+                  </div>
                 )}
-                <div className="text-xs text-gray-500 mt-1">Or paste a direct URL:</div>
+                {isUploading && (
+                  <div className="text-xs text-blue-700 mt-1">Uploading {fileObjs.length} file(s)...</div>
+                )}
+                <div className="text-xs text-gray-500 mt-1">Or paste a direct URL (for a single file):</div>
                 <Input id="fileUrl" value={formData.fileUrl} onChange={(e) => setFormData(prev => ({ ...prev, fileUrl: e.target.value }))} placeholder="https://example.com/file.pdf" type="url" />
               </div>
             )}

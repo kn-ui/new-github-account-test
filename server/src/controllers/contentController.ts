@@ -90,6 +90,47 @@ export class ContentController {
     }
   }
 
+  async uploadMultiple(req: Request, res: Response): Promise<void> {
+    try {
+      const files = (req as any).files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        res.status(400).json({ success: false, message: 'No files uploaded' });
+        return;
+      }
+
+      const results = await hygraphService.uploadMultipleFiles(files);
+      
+      const responseData = results.map((result, index) => {
+        if (result.success && result.asset) {
+          return {
+            url: result.asset.url,
+            filename: result.asset.fileName,
+            size: result.asset.size,
+            mimeType: result.asset.mimeType,
+            id: result.asset.id,
+          };
+        } else {
+          return {
+            filename: files[index].originalname,
+            error: result.error || 'Unknown error',
+          };
+        }
+      });
+
+      res.status(200).json({
+        success: true,
+        data: responseData,
+      });
+
+    } catch (error) {
+      console.error('Bulk upload error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'An unexpected error occurred during bulk upload' 
+      });
+    }
+  }
+
   async deleteAsset(req: Request, res: Response): Promise<void> {
     try {
       const { assetId } = req.body;

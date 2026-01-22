@@ -76,6 +76,12 @@ interface User {
 const UserManager = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
+  
+  const truncateText = (text: string | undefined | null, maxLength: number) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
   const [isNavigating, setIsNavigating] = useState(false);
   const { createUser, userProfile } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -171,15 +177,16 @@ const UserManager = () => {
             }),
           });
           if (!response.ok) {
-            throw new Error('API Error');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'API Error');
           }
           const data = await response.json();
           if (data.studentId) {
             setNewUser(prev => ({ ...prev, studentId: data.studentId }));
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error generating student ID:', error);
-          setNewUser(prev => ({ ...prev, studentId: 'Error generating ID' }));
+          setNewUser(prev => ({ ...prev, studentId: error.message || 'Error generating ID' }));
         } finally {
           setIsGeneratingId(false);
         }
@@ -466,7 +473,7 @@ const UserManager = () => {
       console.error('Error updating user:', error);
       alert(`Error updating user: ${error.message || 'An unexpected error occurred.'}`);
     } finally {
-      // setIsUpdatingUser(false); // Reset is handled inside try/catch for specific returns
+      setIsUpdatingUser(false); // Reset is handled inside try/catch for specific returns
     }
   };
 
@@ -1011,9 +1018,9 @@ const UserManager = () => {
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="font-semibold text-gray-900 truncate">{user.displayName}</div>
-                          <div className="text-sm text-gray-500 truncate">{user.email}</div>
-                          <div className="text-sm text-gray-500 truncate">{user.phoneNumber}</div>
-                          <div className="text-sm text-gray-500 truncate">{user.address}</div>
+                          <div className="text-sm text-gray-500 truncate">{truncateText(user.email, 25)}</div>
+                          <div className="text-sm text-gray-500 truncate">{truncateText(user.phoneNumber, 25)}</div>
+                          <div className="text-sm text-gray-500 truncate">{truncateText(user.address, 25)}</div>
                         </div>
                       </div>
                     </TableCell>

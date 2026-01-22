@@ -92,6 +92,50 @@ export async function uploadToHygraph(file: File): Promise<UploadResult> {
   }
 }
 
+export async function uploadMultipleToHygraph(files: File[]): Promise<UploadResult[]> {
+  try {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    const token = getAuthToken();
+    const response = await fetch('/api/content/upload-multiple', {
+      method: 'POST',
+      body: formData,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Bulk upload failed');
+    }
+
+    const result = await response.json();
+    if (result.success) {
+      return result.data.map((item: any) => ({
+        success: !item.error,
+        url: item.url,
+        filename: item.filename,
+        size: item.size,
+        mimeType: item.mimeType,
+        id: item.id,
+        error: item.error,
+      }));
+    } else {
+      throw new Error(result.message || 'Bulk upload failed');
+    }
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+    // If the upload fails, return an array of error results
+    return files.map(file => ({
+      success: false,
+      filename: file.name,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    }));
+  }
+}
+
 export function isHygraphUrl(url: string): boolean {
   return url.includes('hygraph.com') || 
          url.includes('hygraph.io') || 

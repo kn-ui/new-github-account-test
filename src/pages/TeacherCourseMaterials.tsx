@@ -647,7 +647,11 @@ export default function TeacherCourseMaterials() {
       </div>
 
       {/* Create/Edit Material Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        // Prevent closing if an upload is in progress
+        if (isUploading) return;
+        setShowCreateDialog(open);
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>

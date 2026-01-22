@@ -77,6 +77,8 @@ export default function TeacherCourseDetail() {
   const [materialFiles, setMaterialFiles] = useState<File[]>([]);
   const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
   const [savingMaterial, setSavingMaterial] = useState(false);
+  const [deleteMaterialDialogOpen, setDeleteMaterialDialogOpen] = useState(false);
+  const [materialToDelete, setMaterialToDelete] = useState<FirestoreCourseMaterial | null>(null);
 
   const [savingAssignment, setSavingAssignment] = useState(false);
   const [deletingAssignment, setDeletingAssignment] = useState(false);
@@ -250,6 +252,22 @@ export default function TeacherCourseDetail() {
     return Math.round((sum / finalGrades.length) * 10) / 10;
   }, [finalGrades]);
 
+  const confirmMaterialDelete = async () => {
+    if (!materialToDelete) return;
+    
+    try {
+      await courseMaterialService.deleteCourseMaterial(materialToDelete.id);
+      toast.success('Material deleted');
+      const latest = await courseMaterialService.getCourseMaterialsByCourse(course!.id, 1000);
+      setMaterials(latest);
+      setMaterialToDelete(null);
+    } catch (e) {
+      toast.error('Failed to delete');
+    } finally {
+      setDeleteMaterialDialogOpen(false);
+    }
+  };
+
   // Final grade calculation and grade ranges are handled by Admins in AdminStudentGrades
 
   if (!userProfile || (userProfile.role !== 'teacher' && userProfile.role !== 'admin' && userProfile.role !== 'super_admin')) {
@@ -409,17 +427,10 @@ export default function TeacherCourseDetail() {
                               </Button>
                             )}
                             <Button variant="outline" size="sm" onClick={() => { setEditingMaterial(m); setMaterialForm({ title: m.title, description: m.description, type: m.type, fileUrl: m.fileUrl || '', externalLink: m.externalLink || '' }); setMaterialDialogOpen(true); }}>Edit</Button>
-                            <Button variant="destructive" size="sm" onClick={async () => {
-                                try {
-                                  await (await import('@/lib/firestore')).courseMaterialService.deleteCourseMaterial(m.id);
-                                  toast.success('Material deleted');
-                                  const latest = await (await import('@/lib/firestore')).courseMaterialService.getCourseMaterialsByCourse(course.id);
-                                  setMaterials(latest);
-                                } catch (e) {
-                                  toast.error('Failed to delete');
-                                }
-                              }}
-                            >
+                            <Button variant="destructive" size="sm" onClick={() => {
+                              setMaterialToDelete(m);
+                              setDeleteMaterialDialogOpen(true);
+                            }}>
                               Delete
                             </Button>
                           </div>
@@ -1182,7 +1193,11 @@ export default function TeacherCourseDetail() {
       </Dialog>
 
       {/* Material Dialog */}
-      <Dialog open={materialDialogOpen} onOpenChange={setMaterialDialogOpen}>
+      <Dialog open={materialDialogOpen} onOpenChange={(open) => {
+        // Prevent closing if an upload is in progress
+        if (isUploadingMaterial) return;
+        setMaterialDialogOpen(open);
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingMaterial ? 'Edit Material' : 'Add Material'}</DialogTitle>
@@ -1322,7 +1337,11 @@ export default function TeacherCourseDetail() {
       </Dialog>
 
       {/* Assignment Dialog */}
-            <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+            <Dialog open={assignmentDialogOpen} onOpenChange={(open) => {
+              // Prevent closing if an upload is in progress
+              if (isUploading) return;
+              setAssignmentDialogOpen(open);
+            }}>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -1859,7 +1878,19 @@ export default function TeacherCourseDetail() {
         </DialogContent>
       </Dialog>
 
+
       {/* Final grade calculation controls removed; handled by admins */}
+
+      {/* Delete Material Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteMaterialDialogOpen}
+        onOpenChange={setDeleteMaterialDialogOpen}
+        onConfirm={confirmMaterialDelete}
+        title={`Delete "${materialToDelete?.title}"?`}
+        description="Are you sure you want to delete this course material? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }

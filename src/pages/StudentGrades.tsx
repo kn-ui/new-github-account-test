@@ -134,11 +134,13 @@ export default function StudentGrades() {
       const allGrades = gradedSubmissions.map(submission => {
         const assignment = assignmentById.get(submission.assignmentId);
         if (!assignment) return null;
+        const course = courseMap.get(assignment.courseId);
         return {
           id: submission.id,
           assignmentId: submission.assignmentId,
           assignmentTitle: assignment.title,
           courseId: assignment.courseId,
+          course: course,
           courseTitle: (assignment as any).courseTitle,
           instructorName: (assignment as any).instructorName,
           submittedAt: submission.submittedAt.toDate(),
@@ -170,6 +172,7 @@ export default function StudentGrades() {
                   examId: exam.id,
                   examTitle: exam.title,
                   courseId: courseId,
+                  course: course,
                   courseTitle: course?.title || 'Unknown Course',
                   instructorName: course?.instructorName || 'Unknown Instructor',
                   submittedAt: attempt.submittedAt?.toDate() || new Date(),
@@ -236,7 +239,11 @@ export default function StudentGrades() {
         const otherPromises = courseIds.map((cid) => otherGradeService.getByStudentInCourse(cid, currentUser!.uid));
         const otherArrays = await Promise.all(otherPromises);
         const allOtherGrades = otherArrays.flat();
-        const uniqueOtherGrades = Array.from(new Map(allOtherGrades.map(og => [og.id, og])).values());
+        const allOtherGradesWithCourse = allOtherGrades.map(og => {
+            const course = courseMap.get(og.courseId);
+            return { ...og, course };
+        });
+        const uniqueOtherGrades = Array.from(new Map(allOtherGradesWithCourse.map(og => [og.id, og])).values());
         setOtherGrades(uniqueOtherGrades);
       } catch (e) {
         // Silently ignore
@@ -393,6 +400,81 @@ export default function StudentGrades() {
 
     return sortedGrouped;
   }, [filteredAndSortedFinalGrades]);
+
+  const groupedAssignmentGrades = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: any[] } } = {};
+    filteredAndSortedGrades.forEach(grade => {
+        const course = (grade as any).course;
+        const academicYear = course?.year?.toString() || 'Uncategorized';
+        const semester = course?.semester || 'Uncategorized';
+
+        if (!grouped[academicYear]) {
+            grouped[academicYear] = {};
+        }
+        if (!grouped[academicYear][semester]) {
+            grouped[academicYear][semester] = [];
+        }
+        grouped[academicYear][semester].push(grade);
+    });
+    return Object.keys(grouped).sort((a, b) => {
+        if (a === 'Uncategorized') return 1;
+        if (b === 'Uncategorized') return -1;
+        return Number(b) - Number(a);
+    }).reduce((obj, key) => {
+        obj[key] = grouped[key];
+        return obj;
+    }, {} as { [year: string]: { [semester: string]: any[] } });
+  }, [filteredAndSortedGrades]);
+
+  const groupedExamGrades = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: any[] } } = {};
+    filteredAndSortedExamGrades.forEach(grade => {
+        const course = (grade as any).course;
+        const academicYear = course?.year?.toString() || 'Uncategorized';
+        const semester = course?.semester || 'Uncategorized';
+
+        if (!grouped[academicYear]) {
+            grouped[academicYear] = {};
+        }
+        if (!grouped[academicYear][semester]) {
+            grouped[academicYear][semester] = [];
+        }
+        grouped[academicYear][semester].push(grade);
+    });
+    return Object.keys(grouped).sort((a, b) => {
+        if (a === 'Uncategorized') return 1;
+        if (b === 'Uncategorized') return -1;
+        return Number(b) - Number(a);
+    }).reduce((obj, key) => {
+        obj[key] = grouped[key];
+        return obj;
+    }, {} as { [year: string]: { [semester: string]: any[] } });
+  }, [filteredAndSortedExamGrades]);
+
+  const groupedOtherGrades = useMemo(() => {
+    const grouped: { [year: string]: { [semester: string]: any[] } } = {};
+    otherGrades.forEach(grade => {
+        const course = (grade as any).course;
+        const academicYear = course?.year?.toString() || 'Uncategorized';
+        const semester = course?.semester || 'Uncategorized';
+
+        if (!grouped[academicYear]) {
+            grouped[academicYear] = {};
+        }
+        if (!grouped[academicYear][semester]) {
+            grouped[academicYear][semester] = [];
+        }
+        grouped[academicYear][semester].push(grade);
+    });
+    return Object.keys(grouped).sort((a, b) => {
+        if (a === 'Uncategorized') return 1;
+        if (b === 'Uncategorized') return -1;
+        return Number(b) - Number(a);
+    }).reduce((obj, key) => {
+        obj[key] = grouped[key];
+        return obj;
+    }, {} as { [year: string]: { [semester: string]: any[] } });
+  }, [otherGrades]);
 
   const getGradeColor = (grade: number, maxScore: number) => {
     const percentage = (grade / maxScore) * 100;
@@ -587,141 +669,137 @@ export default function StudentGrades() {
           <div className="p-6">
             {gradeType === 'assignments' ? (
               // Assignment Grades View
-              ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                const yearGrades = filteredAndSortedGrades.filter(grade => 
-                  grade.gradedAt.getFullYear().toString() === year
-                );
-                
-                return (
+              Object.keys(groupedAssignmentGrades).length > 0 ? (
+                Object.entries(groupedAssignmentGrades).map(([year, semesters]) => (
                   <div key={year} className="border-b border-gray-200 last:border-b-0">
                     <button
                       onClick={() => toggleItem(year)}
                       className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        {expandedItems[year] ? (
-                          <ChevronDown size={20} className="text-gray-400" />
-                        ) : (
-                          <ChevronRight size={20} className="text-gray-400" />
-                        )}
+                        {expandedItems[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
                         <span className="font-semibold text-gray-900">{year}</span>
                       </div>
                     </button>
 
-                    {expandedItems[year] && yearGrades.length > 0 && (
-                      <div className="pl-8 pb-4 space-y-6">
-                        <div className="border-l-4 border-blue-500 pl-6">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                          
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
-                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {yearGrades.map((grade) => (
-                                  <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                    <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
-                                    <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
-                                    <td className="py-3 px-4 text-center">
-                                      <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                        {grade.grade}/{grade.maxScore}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                    <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                    {expandedItems[year] && (
+                      <div className="pl-8 pb-4 space-y-4">
+                        {Object.entries(semesters).map(([semester, semesterGrades]) => (
+                          <div key={semester}>
+                            <button onClick={() => toggleItem(`${year}-${semester}`)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                              <div className="flex items-center gap-2">
+                                {expandedItems[`${year}-${semester}`] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                <h3 className="text-lg font-semibold text-gray-800">{semester}</h3>
+                              </div>
+                            </button>
+                            {expandedItems[`${year}-${semester}`] && (
+                              <div className="border-l-4 border-blue-500 pl-6 mt-2">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-4 font-medium text-gray-700">Assignment</th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(semesterGrades as any[]).map((grade) => (
+                                        <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                          <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.assignmentTitle}</td>
+                                          <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
+                                          <td className="py-3 px-4 text-center">
+                                            <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                              {grade.grade}/{grade.maxScore}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                          <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {expandedItems[year] && yearGrades.length === 0 && (
-                      <div className="pl-8 pb-4">
-                        <p className="text-gray-500 italic">No grades available for this year</p>
+                        ))}
                       </div>
                     )}
                   </div>
-                );
-              })
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Assignment Grades Yet</h3>
+                  <p className="text-gray-400">Your assignment grades will appear here once they're graded.</p>
+                </div>
+              )
             ) : gradeType === 'exams' ? (
-              // Exam Grades View - Grouped by Year
-              filteredAndSortedExamGrades.length > 0 ? (
-                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                  const yearGrades = filteredAndSortedExamGrades.filter(grade => 
-                    grade.gradedAt.getFullYear().toString() === year
-                  );
-                  
-                  return (
-                    <div key={year} className="border-b border-gray-200 last:border-b-0">
-                      <button
-                        onClick={() => toggleItem(year)}
-                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          {expandedItems[year] ? (
-                            <ChevronDown size={20} className="text-gray-400" />
-                          ) : (
-                            <ChevronRight size={20} className="text-gray-400" />
-                          )}
-                          <span className="font-semibold text-gray-900">{year}</span>
-                        </div>
-                      </button>
+              // Exam Grades View - Grouped by Year and Semester
+              Object.keys(groupedExamGrades).length > 0 ? (
+                Object.entries(groupedExamGrades).map(([year, semesters]) => (
+                  <div key={year} className="border-b border-gray-200 last:border-b-0">
+                    <button
+                      onClick={() => toggleItem(year)}
+                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedItems[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                        <span className="font-semibold text-gray-900">{year}</span>
+                      </div>
+                    </button>
 
-                      {expandedItems[year] && yearGrades.length > 0 && (
-                        <div className="pl-8 pb-4 space-y-6">
-                          <div className="border-l-4 border-blue-500 pl-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                            
-                            <div className="overflow-x-auto">
-                              <table className="w-full">
-                                <thead>
-                                  <tr className="border-b border-gray-200">
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
-                                    <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {yearGrades.map((grade) => (
-                                    <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                      <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
-                                      <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
-                                      <td className="py-3 px-4 text-center">
-                                        <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
-                                          {grade.grade}/{grade.maxScore}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
-                                      <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
+                    {expandedItems[year] && (
+                      <div className="pl-8 pb-4 space-y-4">
+                        {Object.entries(semesters).map(([semester, semesterGrades]) => (
+                          <div key={semester}>
+                            <button onClick={() => toggleItem(`${year}-${semester}`)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                              <div className="flex items-center gap-2">
+                                {expandedItems[`${year}-${semester}`] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                <h3 className="text-lg font-semibold text-gray-800">{semester}</h3>
+                              </div>
+                            </button>
+                            {expandedItems[`${year}-${semester}`] && (
+                              <div className="border-l-4 border-blue-500 pl-6 mt-2">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-4 font-medium text-gray-700">Exam</th>
+                                        <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Grade</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Max Score</th>
+                                        <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(semesterGrades as any[]).map((grade) => (
+                                        <tr key={grade.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                          <td className="py-3 px-4 text-gray-800 truncate max-w-[200px]">{grade.examTitle}</td>
+                                          <td className="py-3 px-4 text-gray-600 truncate max-w-[150px]">{grade.courseTitle}</td>
+                                          <td className="py-3 px-4 text-center">
+                                            <span className={`font-semibold ${getGradeColor(grade.grade, grade.maxScore)}`}>
+                                              {grade.grade}/{grade.maxScore}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-4 text-center text-gray-600">{grade.maxScore}</td>
+                                          <td className="py-3 px-4 text-center text-gray-600">{grade.gradedAt.toLocaleDateString()}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
-
-                      {expandedItems[year] && yearGrades.length === 0 && (
-                        <div className="pl-8 pb-4">
-                          <p className="text-gray-500 italic">No exam grades available for this year</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
               ) : (
                 <div className="text-center py-12 text-gray-500">
                   <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -730,92 +808,92 @@ export default function StudentGrades() {
                 </div>
               )
             ) : gradeType === 'others' ? (
-              // Other Grades View - Grouped by Year and Course
-              otherGrades.length > 0 ? (
-                ['2025', '2024', '2023', '2022', '2021'].map((year) => {
-                  const yearOthers = otherGrades.filter(g => (g as any).createdAt?.toDate ? (g as any).createdAt.toDate().getFullYear().toString() === year : true);
-                  // Group by course
-                  const courseGroups = yearOthers.reduce((acc: any, og) => {
-                    if (!acc[og.courseId]) acc[og.courseId] = [] as FirestoreOtherGrade[];
-                    acc[og.courseId].push(og);
-                    return acc;
-                  }, {} as Record<string, FirestoreOtherGrade[]>);
-                  return (
-                    <div key={year} className="border-b border-gray-200 last:border-b-0">
-                      <button
-                        onClick={() => toggleItem(year)}
-                        className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          {expandedItems[year] ? (
-                            <ChevronDown size={20} className="text-gray-400" />
-                          ) : (
-                            <ChevronRight size={20} className="text-gray-400" />
-                          )}
-                          <span className="font-semibold text-gray-900">{year}</span>
-                        </div>
-                      </button>
+              // Other Grades View - Grouped by Year, Semester, and Course
+              Object.keys(groupedOtherGrades).length > 0 ? (
+                Object.entries(groupedOtherGrades).map(([year, semesters]) => (
+                  <div key={year} className="border-b border-gray-200 last:border-b-0">
+                    <button
+                      onClick={() => toggleItem(year)}
+                      className="w-full flex items-center justify-between py-4 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedItems[year] ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                        <span className="font-semibold text-gray-900">{year}</span>
+                      </div>
+                    </button>
 
-                      {expandedItems[year] && yearOthers.length > 0 && (
-                        <div className="pl-8 pb-4 space-y-6">
-                          <div className="border-l-4 border-blue-500 pl-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Academic Year {year}</h3>
-                            {Object.entries(courseGroups).map(([courseId, entries]) => {
-                              const course = courses.find(c => c.id === courseId);
-                              return (
-                                <div key={courseId} className="mb-6">
-                                  <div className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3 border border-gray-200">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium text-gray-800">{course?.title || courseId}</span>
-                                      <span className="text-sm text-gray-500">({entries.length} entries)</span>
-                                    </div>
-                                  </div>
-                                  <div className="ml-6 mt-3">
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full">
-                                        <thead>
-                                          <tr className="border-b border-gray-200">
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {entries.map((og) => (
-                                            <tr key={og.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                              <td className="py-3 px-4 text-gray-800 truncate max-w-[260px]">{og.reason}</td>
-                                              <td className="py-3 px-4 text-center text-gray-900 font-semibold">+{og.points}</td>
-                                              <td className="py-3 px-4 text-center text-gray-600">{(og as any).createdAt?.toDate ? (og as any).createdAt.toDate().toLocaleDateString() : ''}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                        <tfoot>
-                                          <tr className="bg-gray-50 font-semibold">
-                                            <td className="py-3 px-4 text-gray-800">Total</td>
-                                            <td className="py-3 px-4 text-center">
-                                              +{entries.reduce((sum, og) => sum + (og.points || 0), 0)}
-                                            </td>
-                                            <td></td>
-                                          </tr>
-                                        </tfoot>
-                                      </table>
-                                    </div>
-                                  </div>
+                    {expandedItems[year] && (
+                      <div className="pl-8 pb-4 space-y-4">
+                        {Object.entries(semesters).map(([semester, semesterGrades]) => {
+                          const courseGroups = (semesterGrades as any[]).reduce((acc, og) => {
+                            if (!acc[og.courseId]) acc[og.courseId] = [];
+                            acc[og.courseId].push(og);
+                            return acc;
+                          }, {} as Record<string, any[]>);
+
+                          return (
+                            <div key={semester}>
+                              <button onClick={() => toggleItem(`${year}-${semester}`)} className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors">
+                                <div className="flex items-center gap-2">
+                                  {expandedItems[`${year}-${semester}`] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                  <h3 className="text-lg font-semibold text-gray-800">{semester}</h3>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {expandedItems[year] && yearOthers.length === 0 && (
-                        <div className="pl-8 pb-4">
-                          <p className="text-gray-500 italic">No other grades available for this year</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                              </button>
+                              {expandedItems[`${year}-${semester}`] && (
+                                <div className="pl-6 mt-2 space-y-4">
+                                  {Object.entries(courseGroups).map(([courseId, entries]) => {
+                                    const course = courses.find(c => c.id === courseId);
+                                    return (
+                                      <div key={courseId} className="border-l-4 border-blue-500 pl-6">
+                                        <div className="w-full flex items-center justify-between py-3 text-left rounded-lg px-3">
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium text-gray-800">{course?.title || courseId}</span>
+                                            <span className="text-sm text-gray-500">({entries.length} entries)</span>
+                                          </div>
+                                        </div>
+                                        <div className="ml-6 mt-3">
+                                          <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                              <thead>
+                                                <tr className="border-b border-gray-200">
+                                                  <th className="text-left py-3 px-4 font-medium text-gray-700">Reason</th>
+                                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Points</th>
+                                                  <th className="text-center py-3 px-4 font-medium text-gray-700">Date</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {entries.map((og) => (
+                                                  <tr key={og.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                    <td className="py-3 px-4 text-gray-800 truncate max-w-[260px]">{og.reason}</td>
+                                                    <td className="py-3 px-4 text-center text-gray-900 font-semibold">+{og.points}</td>
+                                                    <td className="py-3 px-4 text-center text-gray-600">{(og as any).createdAt?.toDate ? (og as any).createdAt.toDate().toLocaleDateString() : ''}</td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                              <tfoot>
+                                                <tr className="bg-gray-50 font-semibold">
+                                                  <td className="py-3 px-4 text-gray-800">Total</td>
+                                                  <td className="py-3 px-4 text-center">
+                                                    +{entries.reduce((sum, og) => sum + (og.points || 0), 0)}
+                                                  </td>
+                                                  <td></td>
+                                                </tr>
+                                              </tfoot>
+                                            </table>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
               ) : (
                 <div className="text-center py-12 text-gray-500">
                   <Award className="h-16 w-16 mx-auto mb-4 opacity-50" />

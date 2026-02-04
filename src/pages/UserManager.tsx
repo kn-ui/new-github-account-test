@@ -55,7 +55,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import AddExistingStudent from '@/components/dashboards/Admin/AddExistingStudent';
+import Papa from 'papaparse';
 
 interface User {
   id: string;
@@ -71,6 +71,20 @@ interface User {
   phoneNumber?: string;
   address?: string;
   year?: string;
+}
+
+interface ParsedStudent {
+  displayName: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  studentGroup?: string;
+  programType?: string;
+  classSection?: string;
+  year?: string;
+  status: 'Ready to import' | 'User already exists' | 'Imported' | 'Error';
+  studentId?: string;
+  error?: string;
 }
 
 const UserManager = () => {
@@ -91,7 +105,9 @@ const UserManager = () => {
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [isAddExistingStudentOpen, setIsAddExistingStudentOpen] = useState(false);
+  const [addUserView, setAddUserView] = useState('single'); // 'single' or 'bulk'
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [parsedStudents, setParsedStudents] = useState<ParsedStudent[]>([]);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false); // New state for edit dialog
   const [editingUser, setEditingUser] = useState<User | null>(null); // New state for user being edited
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -298,6 +314,143 @@ const UserManager = () => {
       console.error(t('users.errors.deleteFailed'), error);
     }
   };
+
+  const handleBulkAdd = () => {
+    if (!bulkFile) {
+      alert('Please select a CSV file.');
+      return;
+    }
+
+    Papa.parse(bulkFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const students = results.data as any[];
+        const parsed: ParsedStudent[] = [];
+
+        for (const student of students) {
+          const email = student.email?.trim();
+          if (!email) continue;
+
+          const existingUser = users.find((u) => u.email === email);
+          parsed.push({
+            ...student,
+            status: existingUser ? 'User already exists' : 'Ready to import',
+          });
+        }
+        setParsedStudents(parsed);
+      },
+      error: (error) => {
+        console.error('Error parsing CSV:', error);
+        alert('Error parsing CSV file. Please check the format.');
+      },
+    });
+  };
+
+  const downloadStudentTemplate = () => {
+    const headers = "displayName,email,phoneNumber,address,studentGroup,programType,classSection,year";
+    const csv = `${headers}\n`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "student_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const startBulkImport = async () => {
+    setIsCreatingUser(true);
+    const studentsToImport = parsedStudents.filter(
+      (student) => student.status === 'Ready to import'
+    );
+
+    const updatedStudents = [...parsedStudents];
+
+    try {
+      for (const student of studentsToImport) {
+        try {
+          const { displayName, email, phoneNumber, address, studentGroup, programType, classSection, year } = student;
+
+          if (!displayName || !email) {
+            student.status = 'Error';
+            student.error = 'Missing name or email';
+            continue;
+          }
+
+          // Generate student ID
+          let studentId = '';
+          if (programType) {
+            try {
+              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student-id/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  programType: programType,
+                }),
+              });
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'API Error');
+              }
+              const data = await response.json();
+              if (data.studentId) {
+                studentId = data.studentId;
+              }
+            } catch (error: any) {
+              console.error('Error generating student ID:', error);
+              studentId = 'Error generating ID';
+            }
+          }
+
+          const password = 'student123'; // Default password for bulk added students
+
+          sessionStorage.setItem('suppressAuthRedirect', 'true');
+          const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+          await signOut(secondaryAuth);
+          sessionStorage.removeItem('suppressAuthRedirect');
+
+          await userService.createUser({
+            displayName,
+            email,
+            role: 'student',
+            isActive: true,
+            uid: userCredential.user.uid,
+            passwordChanged: false,
+            studentId,
+            phoneNumber,
+            address,
+            studentGroup,
+            programType,
+            classSection,
+            year,
+          });
+
+          student.status = 'Imported';
+        } catch (error: any) {
+          student.status = 'Error';
+          student.error = error.message;
+          console.error('Error creating student:', student.email, error);
+        }
+      }
+    } finally {
+      setParsedStudents(updatedStudents);
+      setIsCreatingUser(false);
+      fetchUsers();
+      
+      const successCount = updatedStudents.filter(s => s.status === 'Imported').length;
+      const errorCount = updatedStudents.filter(s => s.status === 'Error').length;
+      
+      if (errorCount > 0) {
+        alert(`Bulk import partially complete. ${successCount} students imported, ${errorCount} failed. Please check the table for details.`);
+      } else {
+        alert(`Bulk import complete! ${successCount} students imported successfully.`);
+      }
+    }
+  };
+
+
 
   const handleAddUser = async () => {
     setIsCreatingUser(true); // Start loading
@@ -560,9 +713,14 @@ const UserManager = () => {
                   Add New User
                 </DialogTitle>
                 <DialogDescription>
-                  Add a new user to the system.
+                  Add a new user to the system. You can add a single user or bulk-upload a CSV file.
                 </DialogDescription>
               </DialogHeader>
+              <div className="flex justify-end gap-2 mb-4">
+                <Button variant={addUserView === 'single' ? 'default' : 'outline'} onClick={() => setAddUserView('single')}>Single User</Button>
+                <Button variant={addUserView === 'bulk' ? 'default' : 'outline'} onClick={() => setAddUserView('bulk')}>Bulk Add Students</Button>
+              </div>
+              {addUserView === 'single' ? (
               <>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -713,21 +871,88 @@ const UserManager = () => {
                   </LoadingButton>
                 </DialogFooter>
               </>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isAddExistingStudentOpen} onOpenChange={setIsAddExistingStudentOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300">
-                <UserPlus className="h-5 w-5 mr-2" />
-                Add Existing Students
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl">
-                <AddExistingStudent onStudentAdded={() => {
-                    setIsAddExistingStudentOpen(false);
-                    fetchUsers();
-                }} />
+              ) : (
+                <div className="py-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="bulk-student-file">Upload CSV File</Label>
+                    <Input
+                      id="bulk-student-file"
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => {
+                        setBulkFile(e.target.files ? e.target.files[0] : null);
+                        setParsedStudents([]);
+                      }}
+                    />
+                    <p className="text-sm text-gray-500">
+                      CSV format: displayName, email, phoneNumber, address, studentGroup, programType, classSection, year
+                    </p>
+                    <Button onClick={downloadStudentTemplate} variant="outline" size="sm">
+                      Download Template
+                    </Button>
+                  </div>
+                  {parsedStudents.length > 0 ? (
+                    <div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {parsedStudents.map((student, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{student.displayName}</TableCell>
+                              <TableCell>{student.email}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    student.status === 'Ready to import'
+                                      ? 'default'
+                                      : student.status === 'User already exists'
+                                      ? 'secondary'
+                                      : student.status === 'Imported'
+                                      ? 'default'
+                                      : 'destructive'
+                                  }
+                                >
+                                  {student.status}
+                                </Badge>
+                                {student.error && <p className="text-red-500 text-xs">{student.error}</p>}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <DialogFooter className="mt-4">
+                        <LoadingButton
+                          onClick={startBulkImport}
+                          loading={isCreatingUser}
+                          loadingText="Adding Students..."
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={parsedStudents.filter(p => p.status === 'Ready to import').length === 0}
+                        >
+                          Import Students
+                        </LoadingButton>
+                      </DialogFooter>
+                    </div>
+                  ) : (
+                    <DialogFooter className="mt-4">
+                      <LoadingButton
+                        onClick={handleBulkAdd}
+                        loading={isCreatingUser}
+                        loadingText="Processing..."
+                        className="bg-blue-600 hover:bg-blue-700"
+                        disabled={!bulkFile}
+                      >
+                        Process File
+                      </LoadingButton>
+                    </DialogFooter>
+                  )}
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 

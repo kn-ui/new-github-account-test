@@ -19,10 +19,12 @@
   "author": "St. Raguel Church School",
   "license": "ISC",
   "dependencies": {
+    "@types/papaparse": "^5.5.2",
     "bcryptjs": "^3.0.2",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
+    "ethiopian-date": "^0.0.6",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "firebase": "^12.4.0",
@@ -36,7 +38,7 @@
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
-    "ethiopian-date": "^0.0.6"
+    "papaparse": "^5.5.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

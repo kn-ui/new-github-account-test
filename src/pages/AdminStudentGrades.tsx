@@ -9,6 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -49,6 +59,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import Papa from "papaparse";
 
 interface GradeWithDetails {
   id: string;
@@ -126,6 +137,107 @@ export default function AdminStudentGrades() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
   const transcriptRef = React.useRef<HTMLDivElement>(null);
+  const [gradeFile, setGradeFile] = useState<File | null>(null);
+
+  const handleGradeFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setGradeFile(event.target.files[0]);
+    }
+  };
+
+  const processGradeFile = async () => {
+    if (!gradeFile) {
+      toast.error("Please select a file to import.");
+      return;
+    }
+
+    const allCourses = await courseService.getAllCourses();
+
+    Papa.parse(gradeFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const gradeData = results.data as { course_name: string; final_grade: string }[];
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const row of gradeData) {
+          const course = allCourses.find((c) => c.title === row.course_name);
+          if (course) {
+            const finalGrade = parseFloat(row.final_grade);
+            if (!isNaN(finalGrade)) {
+              try {
+                const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGrade);
+                const existingGrade = await gradeService.getGradeByStudentAndCourse(course.id, studentId!);
+
+                if (existingGrade) {
+                  await gradeService.updateGrade(existingGrade.id, {
+                    finalGrade,
+                    letterGrade,
+                    gradePoints,
+                    isPublished: false,
+                    updatedAt: new Date(),
+                  });
+                } else {
+                  await gradeService.createGrade({
+                    courseId: course.id,
+                    studentId: studentId!,
+                    finalGrade,
+                    letterGrade,
+                    gradePoints,
+                    isPublished: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  });
+                }
+                successCount++;
+              } catch (error) {
+                console.error(`Error processing grade for course ${row.course_name}:`, error);
+                errorCount++;
+              }
+            } else {
+              console.warn(`Invalid grade format for course ${row.course_name}`);
+              errorCount++;
+            }
+          } else {
+            console.warn(`Course with name ${row.course_name} not found.`);
+            errorCount++;
+          }
+        }
+
+        toast.success(`Grades imported: ${successCount} successful, ${errorCount} errors.`);
+        loadStudentData(); // Refresh data
+        setGradeFile(null); // Reset file input
+      },
+      error: (error: any) => {
+        toast.error(`Error parsing CSV file: ${error.message}`);
+      },
+    });
+  };
+
+  const downloadGradeTemplate = async () => {
+    try {
+      const allCourses = await courseService.getAllCourses();
+      const templateData = allCourses.map((course) => ({
+        course_name: course.title,
+        final_grade: "",
+      }));
+
+      const csv = Papa.unparse(templateData);
+      const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "grades_template.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading grade template:", error);
+      toast.error("Failed to download grade template.");
+    }
+  };
+
 
   const generateTranscriptPdf = () => {
     setShowTranscript(true);
@@ -165,10 +277,10 @@ export default function AdminStudentGrades() {
     try {
       setLoading(true);
 
-      // Load student information and enrollments in parallel
-      const [studentData, enrollments] = await Promise.all([
+      // Load student information and all courses in parallel
+      const [studentData, allCourses] = await Promise.all([
         userService.getUserById(studentId!),
-        enrollmentService.getEnrollmentsByStudentUnfiltered(studentId!),
+        courseService.getAllCourses(),
       ]);
 
       if (!studentData) {
@@ -176,46 +288,30 @@ export default function AdminStudentGrades() {
         return;
       }
       setStudent(studentData);
+      setCourses(allCourses);
 
-      // Dedupe course IDs to avoid duplicate entries and duplicate React keys
-      const uniqueCourseIds = Array.from(
-        new Set(enrollments.map((enrollment) => enrollment.courseId))
-      );
+      const enrollments = await enrollmentService.getEnrollmentsByStudentUnfiltered(studentId!);
+      const enrolledCourseIds = Array.from(new Set(enrollments.map((e) => e.courseId)));
 
-      if (uniqueCourseIds.length === 0) {
+      if (enrolledCourseIds.length === 0) {
         setGrades([]);
         setFinalGrades([]);
-        setCourses([]);
         setLoading(false);
         return;
       }
 
-      // Fetch all course details at once and cache them
-      const coursesData = await Promise.all(
-        uniqueCourseIds.map((id) => courseService.getCourseById(id))
-      );
-      const validCourses = coursesData.filter((c) => c !== null) as any[];
-      // Ensure uniqueness by ID in case the service returns duplicates
-      const uniqueCourses = Array.from(
-        new Map(validCourses.map((c: any) => [c.id, c])).values()
-      );
-      setCourses(uniqueCourses);
-
-      // Create course lookup map for faster access
-      const courseMap = new Map(
-        (validCourses as any[]).map((course) => [course.id, course])
-      );
+      const courseMap = new Map(allCourses.map((c) => [c.id, c]));
 
       // Load all data in parallel: assignments, exams, other grades, and final grades
       const [assignmentsData, examsData, finalGradesData, otherGradesData] =
         await Promise.all([
-          loadAssignmentGrades(uniqueCourseIds, courseMap),
-          loadExamGrades(uniqueCourseIds, courseMap),
-          loadFinalGrades(uniqueCourseIds),
+          loadAssignmentGrades(enrolledCourseIds, courseMap),
+          loadExamGrades(enrolledCourseIds, courseMap),
+          loadFinalGrades(enrolledCourseIds),
           (async () => {
             try {
               const list = await Promise.all(
-                uniqueCourseIds.map((cid) => otherGradeService.getByCourse(cid))
+                enrolledCourseIds.map((cid) => otherGradeService.getByCourse(cid))
               );
               return list.flat();
             } catch {
@@ -1057,6 +1153,30 @@ export default function AdminStudentGrades() {
             <Download className="h-4 w-4" />
             Export Transcript
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Add Existing Grades</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Existing Grades</DialogTitle>
+                <DialogDescription>
+                  Upload a CSV file with existing grades. The CSV should have two columns: 'course_name' and 'final_grade'.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <Input type="file" accept=".csv" onChange={handleGradeFileUpload} />
+                <Button onClick={downloadGradeTemplate} variant="outline" size="sm">
+                  Download Template
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button onClick={processGradeFile} disabled={!gradeFile}>
+                  Import Grades
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <GraduationCap className="h-8 w-8 text-blue-600" />

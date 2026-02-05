@@ -770,6 +770,18 @@ export const enrollmentService = {
     return enrollments.filter(enrollment => enrollment.isActive !== false);
   },
 
+  async isStudentEnrolled(studentId: string, courseId: string): Promise<boolean> {
+    const q = query(
+      collections.enrollments(),
+      where('studentId', '==', studentId),
+      where('courseId', '==', courseId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  },
+
   async createEnrollment(enrollmentData: Omit<FirestoreEnrollment, 'id' | 'enrolledAt' | 'lastAccessedAt' | 'isActive'>): Promise<string> {
     // Prevent duplicate active enrollments for the same course and student
     const existingQuery = query(

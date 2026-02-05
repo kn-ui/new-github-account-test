@@ -260,6 +260,29 @@ export default function AdminStudentGrades() {
               console.log(`Created grade for course '${course.title}' (ID: ${course.id})`);
             }
             successCount++;
+
+            // After successfully adding/updating a grade, ensure the student is enrolled in the course
+            try {
+              const isEnrolled = await enrollmentService.isStudentEnrolled(studentId!, course.id);
+              if (!isEnrolled) {
+                await enrollmentService.createEnrollment({
+                  studentId: studentId!,
+                  courseId: course.id,
+                  enrollmentDate: new Date(),
+                  status: "active",
+                });
+                toast.success(`Student enrolled in course '${course.title}' (ID: ${course.id}).`);
+                console.log(`Student enrolled in course '${course.title}' (ID: ${course.id}).`);
+              }
+            } catch (enrollmentError: any) {
+              // Handle specific error for duplicate enrollment gracefully
+              if (enrollmentError.message === 'Student already enrolled') {
+                console.info(`Student is already actively enrolled in course '${course.title}' (ID: ${course.id}).`);
+              } else {
+                console.error(`Error enrolling student in course '${course.title}':`, enrollmentError);
+                toast.error(`Failed to enroll student in course '${course.title}'.`);
+              }
+            }
           } catch (error) {
             console.error(`Error processing grade for course ${row.course_name}:`, error);
             errorCount++;

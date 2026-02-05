@@ -789,10 +789,14 @@ export default function AdminStudentGrades() {
 
     const semesterGpas = Object.entries(groupedBySemester).map(([key, grades]) => {
       const totalPoints = grades.reduce((acc, grade) => {
-        return acc + (getGradePoints(grade) * (grade.course.credit || 0));
+        // Ensure grade.course.credit is treated as a number
+        const credit = Number(grade.course.credit) || 0; 
+        return acc + (getGradePoints(grade) * credit);
       }, 0);
       const totalCredits = grades.reduce((acc, grade) => {
-        return acc + (grade.course.credit || 0);
+        // Ensure grade.course.credit is treated as a number
+        const credit = Number(grade.course.credit) || 0; 
+        return acc + credit;
       }, 0);
       const semesterGpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
       const [year, semester] = key.split('_');
@@ -804,15 +808,21 @@ export default function AdminStudentGrades() {
       };
     });
 
-    const cumulativeGpa = (() => {
-      const totalPoints = semesterGpas.reduce((acc, { semesterGpa, totalCredits }) => {
-        return acc + (semesterGpa * totalCredits);
-      }, 0);
-      const totalCredits = semesterGpas.reduce((acc, { totalCredits }) => {
-        return acc + totalCredits;
-      }, 0);
-      return totalCredits > 0 ? totalPoints / totalCredits : 0;
-    })();
+    const cumulativeTotals = finalGrades.reduce((acc, grade) => {
+      const course = courses.find(c => c.id === grade.courseId);
+      if (course && course.credit !== undefined && course.credit > 0) { // Only include if course and credit are valid and positive
+        const gradePoints = getGradePoints(grade);
+        acc.totalCumulativePoints += gradePoints * Number(course.credit);
+        acc.totalCumulativeCredits += Number(course.credit);
+      }
+      return acc;
+    }, { totalCumulativePoints: 0, totalCumulativeCredits: 0 });
+
+    const cumulativeGpa = cumulativeTotals.totalCumulativeCredits > 0
+      ? cumulativeTotals.totalCumulativePoints / cumulativeTotals.totalCumulativeCredits
+      : 0;
+    
+    const totalCreditsOverall = cumulativeTotals.totalCumulativeCredits;
 
     const byYear = semesterGpas.reduce((acc, { year, semester, semesterGpa, totalCredits }) => {
       if (!acc[year]) {
@@ -847,7 +857,7 @@ export default function AdminStudentGrades() {
     return {
       byYear,
       cumulativeGpa: parseFloat(cumulativeGpa.toFixed(2)),
-      totalCredits: semesterGpas.reduce((acc, { totalCredits }) => acc + totalCredits, 0),
+      totalCredits: totalCreditsOverall,
     };
   }, [finalGrades, courses, gradeRanges]);
 

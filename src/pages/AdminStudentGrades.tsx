@@ -138,10 +138,52 @@ export default function AdminStudentGrades() {
   const [showTranscript, setShowTranscript] = useState(false);
   const transcriptRef = React.useRef<HTMLDivElement>(null);
   const [gradeFile, setGradeFile] = useState<File | null>(null);
+  const [uploadedGradesPreview, setUploadedGradesPreview] = useState<
+    { course_name: string; final_grade: string; originalCourseTitle?: string }[]
+  >([]);
 
   const handleGradeFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setGradeFile(event.target.files[0]);
+    if (event.target.files && student) {
+      const file = event.target.files[0];
+      setGradeFile(file);
+      setUploadedGradesPreview([]); // Clear previous preview
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result;
+        if (typeof text === "string") {
+          Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            encoding: "UTF-8",
+            complete: async (results) => {
+              const parsedData = results.data as { course_id: string; final_grade: string }[];
+              const allCourses = await courseService.getAllCourses(); // Fetch all courses for mapping
+
+              console.log("Parsed CSV Data (before filter/map):", parsedData); // Debugging line
+              console.log("All Courses (in handleGradeFileUpload):", allCourses); // Debugging line
+
+              const gradesToPreview = parsedData.filter(row => {
+                const finalGrade = parseFloat(row.final_grade);
+                // Ensure course_id exists and final_grade is valid
+                return !isNaN(finalGrade) && row.course_id; 
+              }).map(row => {
+                const course = allCourses.find((c) => c.id === row.course_id);
+                return {
+                  ...row,
+                  // Display course title if found, otherwise display the ID from CSV
+                  originalCourseTitle: course?.title || `ID: ${row.course_id}`,
+                };
+              });
+              setUploadedGradesPreview(gradesToPreview);
+            },
+            error: (error: any) => {
+              toast.error(`Error parsing CSV for preview: ${error.message}`);
+            },
+          });
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -156,51 +198,70 @@ export default function AdminStudentGrades() {
     Papa.parse(gradeFile, {
       header: true,
       skipEmptyLines: true,
+      encoding: "UTF-8", // Specify UTF-8 encoding for proper character handling
       complete: async (results) => {
-        const gradeData = results.data as { course_name: string; final_grade: string }[];
+        const gradeData = results.data as { course_id: string; final_grade: string }[];
         let successCount = 0;
         let errorCount = 0;
 
         for (const row of gradeData) {
-          const course = allCourses.find((c) => c.title === row.course_name);
-          if (course) {
-            const finalGrade = parseFloat(row.final_grade);
-            if (!isNaN(finalGrade)) {
-              try {
-                const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGrade);
-                const existingGrade = await gradeService.getGradeByStudentAndCourse(course.id, studentId!);
+          console.log("Processing row:", row); // Log the current row being processed
+          const course = allCourses.find((c) => c.id === row.course_id);
+          
+          if (!course) {
+            toast.error(`Course with ID '${row.course_id}' not found. Skipping grade import for this row.`);
+            console.warn(`Course with ID '${row.course_id}' not found. Skipping grade import for this row.`);
+            errorCount++;
+            continue; // Skip to next row if course not found
+          }
 
-                if (existingGrade) {
-                  await gradeService.updateGrade(existingGrade.id, {
-                    finalGrade,
-                    letterGrade,
-                    gradePoints,
-                    isPublished: false,
-                    updatedAt: new Date(),
-                  });
-                } else {
-                  await gradeService.createGrade({
-                    courseId: course.id,
-                    studentId: studentId!,
-                    finalGrade,
-                    letterGrade,
-                    gradePoints,
-                    isPublished: false,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                  });
-                }
-                successCount++;
-              } catch (error) {
-                console.error(`Error processing grade for course ${row.course_name}:`, error);
-                errorCount++;
-              }
+          console.log("Found course:", course); // Log the found course
+
+          const finalGrade = parseFloat(row.final_grade);
+          
+          if (isNaN(finalGrade)) {
+            console.warn(`Invalid grade format for course '${row.course_name}': '${row.final_grade}'. Skipping grade import for this row.`);
+            errorCount++;
+            continue; // Skip to next row if final grade is invalid
+          }
+
+          console.log("Parsed final grade:", finalGrade); // Log the parsed final grade
+
+          console.log(`Processing grade for course ID '${row.course_id}': finalGrade = ${finalGrade}`); // Added log
+          console.log("Current gradeRanges:", gradeRanges); // Added log
+
+          try {
+            const { letter: letterGrade, points: gradePoints } = calculateLetterGradeWithRanges(finalGrade);
+            console.log("Calculated letter grade and points:", { letterGrade, gradePoints });
+
+            const existingGrade = await gradeService.getGradeByStudentAndCourse(course.id, studentId!);
+            console.log("Existing grade found:", existingGrade);
+
+            if (existingGrade) {
+              await gradeService.updateGrade(existingGrade.id, {
+                finalGrade,
+                letterGrade,
+                gradePoints,
+                isPublished: true,
+                updatedAt: new Date(),
+              });
+              console.log(`Updated grade for course '${course.title}' (ID: ${course.id})`);
             } else {
-              console.warn(`Invalid grade format for course ${row.course_name}`);
-              errorCount++;
+              await gradeService.createGrade({
+                courseId: course.id,
+                studentId: studentId!,
+                finalGrade,
+                letterGrade,
+                gradePoints,
+                isPublished: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+              console.log(`Created grade for course '${course.title}' (ID: ${course.id})`);
             }
-          } else {
-            console.warn(`Course with name ${row.course_name} not found.`);
+            successCount++;
+          } catch (error) {
+            console.error(`Error processing grade for course ${row.course_name}:`, error);
             errorCount++;
           }
         }
@@ -219,7 +280,8 @@ export default function AdminStudentGrades() {
     try {
       const allCourses = await courseService.getAllCourses();
       const templateData = allCourses.map((course) => ({
-        course_name: course.title,
+        course_id: course.id,
+        course_name: course.title, // Added course name for user readability
         final_grade: "",
       }));
 
@@ -282,6 +344,8 @@ export default function AdminStudentGrades() {
         userService.getUserById(studentId!),
         courseService.getAllCourses(),
       ]);
+
+      console.log("All Courses from Firestore:", allCourses); // Debugging line
 
       if (!studentData) {
         console.error("Student not found");
@@ -1157,11 +1221,11 @@ export default function AdminStudentGrades() {
             <DialogTrigger asChild>
               <Button variant="outline">Add Existing Grades</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>Add Existing Grades</DialogTitle>
                 <DialogDescription>
-                  Upload a CSV file with existing grades. The CSV should have two columns: 'course_name' and 'final_grade'.
+                  Upload a CSV file with existing grades. The CSV should have two columns: 'course_id' and 'final_grade'.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -1169,9 +1233,50 @@ export default function AdminStudentGrades() {
                 <Button onClick={downloadGradeTemplate} variant="outline" size="sm">
                   Download Template
                 </Button>
+
+                {uploadedGradesPreview.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-semibold mb-2">Grade Preview</h3>
+                    <div className="max-h-60 overflow-y-auto border rounded-md">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course ID / Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final Grade</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {uploadedGradesPreview.map((grade, index) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {grade.originalCourseTitle}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {grade.final_grade}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="mt-4 w-full"
+                      onClick={() => {
+                        setGradeFile(null);
+                        setUploadedGradesPreview([]);
+                        // Reset file input value
+                        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                        if (fileInput) fileInput.value = "";
+                      }}
+                    >
+                      Clear Preview / Clear File
+                    </Button>
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button onClick={processGradeFile} disabled={!gradeFile}>
+                <Button onClick={processGradeFile} disabled={!gradeFile || uploadedGradesPreview.length === 0}>
                   Import Grades
                 </Button>
               </DialogFooter>

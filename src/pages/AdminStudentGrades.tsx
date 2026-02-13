@@ -302,7 +302,8 @@ export default function AdminStudentGrades() {
   const downloadGradeTemplate = async () => {
     try {
       const allCourses = await courseService.getAllCourses();
-      const templateData = allCourses.map((course) => ({
+      // console.log("All Courses for template:", allCourses.filter(c => c.isActive === true)); // Debugging line
+      const templateData = allCourses.filter(c => c.isActive === true).map((course) => ({
         course_id: course.id,
         course_name: course.title, // Added course name for user readability
         final_grade: "",

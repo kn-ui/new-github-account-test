@@ -65,7 +65,7 @@ export default function CourseManager() {
     duration: 8,
     maxStudents: 30 as any,
     syllabus: '',
-    isActive: userProfile?.role === 'admin',
+    isActive: true,
     year: toEthiopianDate(new Date()).year,
     semester: '',
     studentsYear: '',
@@ -432,7 +432,6 @@ export default function CourseManager() {
         duration: editForm.duration,
         maxStudents: editForm.maxStudents,
         syllabus: editForm.syllabus,
-        isActive: editForm.isActive,
         instructor: editForm.instructor,
         instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
         prerequisite: editForm.prerequisite,
@@ -476,7 +475,7 @@ export default function CourseManager() {
 
   const startCreate = () => {
     setCreateForm({
-      title: '', description: '', category: '', duration: 8 as any, maxStudents: 30 as any, syllabus: '', isActive: userProfile?.role === 'admin', year: toEthiopianDate(new Date()).year, semester: ''
+      title: '', description: '', category: '', duration: 8 as any, maxStudents: 30 as any, syllabus: '', isActive: true, year: toEthiopianDate(new Date()).year, semester: ''
     });
     setSelectedInstructor('');
     setCreateStep(1);
@@ -556,7 +555,6 @@ export default function CourseManager() {
         duration: Number(createForm.duration || 1),
         maxStudents: Number(createForm.maxStudents || 1),
         syllabus: String(createForm.syllabus || ''),
-        isActive: !!createForm.isActive,
         instructor: selectedInstructor,
         instructorName: selectedTeacher.displayName || selectedTeacher.email || 'Instructor',
         prerequisite: String(createForm.prerequisite || ''),
@@ -752,9 +750,9 @@ export default function CourseManager() {
                   <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
                     <Badge 
                       variant="outline" 
-                      className={`px-3 py-1 text-sm font-medium ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
+                      className={`px-3 py-1 text-sm font-medium ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-green-100 text-green-800'}`}
                     >
-                      {course.isActive ? 'Active' : 'Pending Approval'}
+                      {'Active'}
                     </Badge>
                     
                     <div className="flex items-center gap-2">
@@ -807,7 +805,7 @@ export default function CourseManager() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Course</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{course.title}"? This action cannot be undone.
+                                Are you sure you want to delete "{course.title}"? This will permanently delete the course and all of its content. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -1077,21 +1075,6 @@ export default function CourseManager() {
                       {teacher.displayName || teacher.email}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="isActive">Status</Label>
-              <Select 
-                value={String(editForm.isActive || false)} 
-                onValueChange={(value) => setEditForm({ ...editForm, isActive: value === 'true' })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>

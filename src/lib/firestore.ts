@@ -633,7 +633,7 @@ export const courseService = {
     const now = Timestamp.now();
     const docRef = await addDoc(collections.courses(), {
       ...courseData,
-      isActive: courseData.isActive !== undefined ? courseData.isActive : true,
+      isActive: true, // Always set isActive to true
       createdAt: now,
       updatedAt: now,
     });
@@ -645,6 +645,7 @@ export const courseService = {
     const docRef = doc(db, 'courses', courseId);
     await updateDoc(docRef, {
       ...updates,
+      isActive: true, // Always set isActive to true
       updatedAt: Timestamp.now(),
     });
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.update', targetType: 'course', targetId: courseId, details: updates }); } catch {}
@@ -652,10 +653,7 @@ export const courseService = {
 
   async deleteCourse(courseId: string): Promise<void> {
     const docRef = doc(db, 'courses', courseId);
-    await updateDoc(docRef, {
-      isActive: false,
-      updatedAt: Timestamp.now()
-    });
+    await deleteDoc(docRef);
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.delete', targetType: 'course', targetId: courseId }); } catch {}
     
     // Clear student data cache for all enrolled students
@@ -667,29 +665,28 @@ export const courseService = {
   },
 
   async deleteCourseWithDependencies(courseId: string): Promise<void> {
-    // Soft delete the course
+    // Permanently delete the course
     await this.deleteCourse(courseId);
     
-    // Soft delete all related assignments
+    // Permanently delete all related assignments
     const assignments = await assignmentService.getAssignmentsByCourse(courseId);
     await Promise.all(
       assignments.map(assignment => assignmentService.deleteAssignment(assignment.id))
     );
     
-    // Soft delete all related course materials
+    // Permanently delete all related course materials
     const materials = await courseMaterialService.getCourseMaterialsByCourse(courseId);
     await Promise.all(
       materials.map(material => courseMaterialService.deleteCourseMaterial(material.id))
     );
     
-    // Soft delete all related enrollments
-    /* const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
+    // Permanently delete all related enrollments
+    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
     await Promise.all(
-      enrollments.map(enrollment => enrollmentService.deleteEnrollment(enrollment.id))
-    ); */
+      enrollments.map(enrollment => enrollmentService.deleteEnrollment(enrollment.id, true))
+    );
     
     // Clear student data cache for all enrolled students
-    const enrollments = await enrollmentService.getEnrollmentsByCourse(courseId);
     const studentIds = enrollments.map(enrollment => enrollment.studentId);
     studentIds.forEach(studentId => {
       studentDataService.clearStudentCache(studentId);
@@ -841,12 +838,16 @@ export const enrollmentService = {
     });
   },
 
-  async deleteEnrollment(enrollmentId: string): Promise<void> {
+  async deleteEnrollment(enrollmentId: string, permanent = false): Promise<void> {
     const docRef = doc(db, 'enrollments', enrollmentId);
-    await updateDoc(docRef, {
-      isActive: false,
-      lastAccessedAt: Timestamp.now()
-    });
+    if (permanent) {
+      await deleteDoc(docRef);
+    } else {
+      await updateDoc(docRef, {
+        isActive: false,
+        lastAccessedAt: Timestamp.now()
+      });
+    }
   },
 };
 

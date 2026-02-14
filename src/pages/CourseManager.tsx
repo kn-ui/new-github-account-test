@@ -126,7 +126,7 @@ export default function CourseManager() {
   const loadTeachers = async () => {
     try {
       const teachersList = await userService.getTeachers();
-      setTeachers(teachersList);
+      setTeachers(teachersList.filter((teacher: any) => teacher.isActive));
     } catch (error) {
       console.error('Error loading teachers:', error);
       toast.error('Failed to load teachers');

@@ -58,6 +58,7 @@ export interface FirestoreCourse {
   credit?: number;
   year?: number;
   semester?: string;
+  status: 'active' | 'finished';
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -634,6 +635,7 @@ export const courseService = {
     const docRef = await addDoc(collections.courses(), {
       ...courseData,
       isActive: true, // Always set isActive to true
+      status: 'active',
       createdAt: now,
       updatedAt: now,
     });
@@ -645,7 +647,6 @@ export const courseService = {
     const docRef = doc(db, 'courses', courseId);
     await updateDoc(docRef, {
       ...updates,
-      isActive: true, // Always set isActive to true
       updatedAt: Timestamp.now(),
     });
     try { await adminActionService.log({ userId: auth.currentUser?.uid || 'unknown', action: 'course.update', targetType: 'course', targetId: courseId, details: updates }); } catch {}

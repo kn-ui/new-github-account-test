@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload } from 'lucide-react';
+import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload, Check } from 'lucide-react';
 import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
 import { Button } from '@/components/ui/button';
 import LoadingButton from '@/components/ui/loading-button';
@@ -83,11 +83,12 @@ export default function CourseManager() {
   const [importingCsv, setImportingCsv] = useState(false);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
   const [enrolledStudentIds, setEnrolledStudentIds] = useState<string[]>([]);
 
   // Calculate stats
   const totalCourses = courses.length;
-  const activeCourses = courses.filter(c => c.isActive).length;
+  const activeCourses = courses.filter(c => c.status === 'active').length;
   const totalStudents = totalEnrolledStudents;
 
   const navigate = useNavigate();
@@ -142,6 +143,21 @@ export default function CourseManager() {
       toast.error('Failed to delete course');
     } finally {
       setDeletingCourseId(null);
+    }
+  };
+
+  const handleToggleCourseStatus = async (courseId: string, currentStatus: 'active' | 'finished') => {
+    try {
+      setUpdatingCourseId(courseId);
+      const newStatus = currentStatus === 'active' ? 'finished' : 'active';
+      await courseService.updateCourse(courseId, { status: newStatus });
+      toast.success(`Course marked as ${newStatus}`);
+      loadCourses(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating course status:', error);
+      toast.error('Failed to update course status.');
+    } finally {
+      setUpdatingCourseId(null);
     }
   };
 
@@ -575,8 +591,12 @@ export default function CourseManager() {
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' ||
+                        (statusFilter === 'active' && course.status === 'active') ||
+                        (statusFilter === 'finished' && course.status === 'finished');
 
-    return matchesSearch;
+    return matchesSearch && matchesStatus;
   });
 
   // Access control - only admins and super_admins can access
@@ -689,6 +709,8 @@ export default function CourseManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="finished">Finished</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -701,13 +723,13 @@ export default function CourseManager() {
         <div className="grid gap-6">
           {filteredCourses.map((course) => (
 
-            <Card key={course.id} className="shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <Card key={course.id} className={`shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${course.status === 'finished' ? 'bg-gray-100' : ''}`}>
               <CardContent className="p-6 h-full">
 
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${course.status === 'finished' ? 'from-gray-400 to-gray-600' : 'from-green-400 to-green-600'} rounded-xl flex items-center justify-center shadow-md flex-shrink-0`}>
                         <BookOpen className="h-8 w-8 text-white" />
                       </div>
 
@@ -740,12 +762,22 @@ export default function CourseManager() {
                   <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
                     <Badge 
                       variant="outline" 
-                      className={`px-3 py-1 text-sm font-medium ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-green-100 text-green-800'}`}
+                      className={`px-3 py-1 text-sm font-medium ${course.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
                     >
-                      {'Active'}
+                      {course.status === 'active' ? 'Active' : 'Finished'}
                     </Badge>
                     
                     <div className="flex items-center gap-2">
+                      <LoadingButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleCourseStatus(course.id, course.status)}
+                        loading={updatingCourseId === course.id}
+                        disabled={userProfile?.role !== 'admin'}
+                      >
+                        {course.status === 'active' ? <XCircle className="h-4 w-4 mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                        {course.status === 'active' ? 'Finish' : 'Activate'}
+                      </LoadingButton>
                       <Button
                         variant="outline"
                         size="sm"
@@ -779,7 +811,7 @@ export default function CourseManager() {
                       
                       
                       
-                      {course.isActive && (
+                      
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -810,7 +842,7 @@ export default function CourseManager() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                      )}
+                      
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, CheckCircle, XCircle, Eye, Search, Trash2, Plus, Target, Clock, Users, TrendingUp, Pencil, UserPlus, UserMinus, Upload } from 'lucide-react';
 import { courseService, FirestoreCourse, enrollmentService, userService } from '@/lib/firestore';
@@ -54,7 +54,7 @@ export default function CourseManager() {
   const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
   const [createStep, setCreateStep] = useState<number>(1);
   const [totalEnrolledStudents, setTotalEnrolledStudents] = useState<number>(0);
-  const [showArchived, setShowArchived] = useState(false);
+
   const { currentUser } = useAuth();
 
   const [editForm, setEditForm] = useState<Partial<FirestoreCourse>>({});
@@ -95,15 +95,13 @@ export default function CourseManager() {
   useEffect(() => {
     loadCourses();
     loadTeachers();
-  }, [showArchived]);
+  }, []);
 
   const loadCourses = async () => {
     try {
       setLoading(true);
 
-      const courses = showArchived 
-        ? await courseService.getAllCourses(1000)
-        : await courseService.getCourses(1000);
+      const courses = await courseService.getCourses(1000);
       setCourses(courses); // Added this line
       // compute total unique enrolled students across all courses
       try {
@@ -694,15 +692,7 @@ export default function CourseManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end">
-                <Button
-                  variant={showArchived ? "default" : "outline"}
-                  onClick={() => setShowArchived(!showArchived)}
-                  className="whitespace-nowrap"
-                >
-                  {showArchived ? "Hide Archived" : "Show Archived"}
-                </Button>
-              </div>
+              
             </div>
           </CardContent>
         </Card>

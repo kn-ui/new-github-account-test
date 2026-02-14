@@ -39,6 +39,8 @@ export default function CourseManager() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [instructorFilter, setInstructorFilter] = useState<string>('all');
+  const [yearFilterForCourse, setYearFilterForCourse] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<CourseWithApproval | null>(null);
   const [showCourseDialog, setShowCourseDialog] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -47,7 +49,7 @@ export default function CourseManager() {
   const [enrollTab, setEnrollTab] = useState<'manual'|'csv'>('manual');
   const [selectedCourseForEnroll, setSelectedCourseForEnroll] = useState<CourseWithApproval | null>(null);
   const [studentQuery, setStudentQuery] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
+
   const [foundStudents, setFoundStudents] = useState<any[]>([]);
   const [csvText, setCsvText] = useState('');
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
@@ -255,9 +257,8 @@ export default function CourseManager() {
         const matchesSearch = (u.displayName||'').toLowerCase().includes(q) || 
                              (u.email||'').toLowerCase().includes(q) || 
                              (u.id||'').toLowerCase().includes(q);
-        const matchesYear = yearFilter ? u.year === yearFilter : true;
         
-        return isStudent && isNotCurrentUser && matchesSearch && matchesYear;
+        return isStudent && isNotCurrentUser && matchesSearch;
       }).slice(0, 10);
       
       setFoundStudents(studentsOnly);
@@ -588,15 +589,21 @@ export default function CourseManager() {
     }
   };
 
+  const uniqueInstructors = Array.from(new Set(courses.map(course => course.instructorName)));
+  const uniqueYears = Array.from(new Set(courses.map(course => course.year)));
+
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' ||
-                        (statusFilter === 'active' && course.status === 'active') ||
-                        (statusFilter === 'finished' && course.status === 'finished');
+    const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesInstructor = instructorFilter === 'all' || course.instructorName === instructorFilter;
+
+    const matchesYear = yearFilterForCourse === 'all' || 
+                        (course.year !== undefined && String(course.year) === yearFilterForCourse);
+
+    return matchesSearch && matchesStatus && matchesInstructor && matchesYear;
   });
 
   // Access control - only admins and super_admins can access
@@ -711,6 +718,34 @@ export default function CourseManager() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="finished">Finished</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:w-48">
+                <Label htmlFor="instructor" className="text-sm font-medium text-gray-700 mb-2 block">Instructor</Label>
+                <Select value={instructorFilter} onValueChange={setInstructorFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Instructors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Instructors</SelectItem>
+                    {uniqueInstructors.map(instructor => (
+                      <SelectItem key={instructor} value={instructor}>{instructor}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:w-48">
+                <Label htmlFor="year" className="text-sm font-medium text-gray-700 mb-2 block">Year</Label>
+                <Select value={yearFilterForCourse} onValueChange={setYearFilterForCourse}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Years" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {uniqueYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1147,18 +1182,7 @@ export default function CourseManager() {
                   <Label>Search student (name/email/id)</Label>
                   <div className="flex gap-2">
                     <Input value={studentQuery} onChange={(e) => setStudentQuery(e.target.value)} placeholder="john@school.edu or user id" />
-                    <Select value={yearFilter} onValueChange={(value) => setYearFilter(value === '__ALL__' ? '' : value)}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__ALL__">All Years</SelectItem>
-                        <SelectItem value="1st Year">1st Year</SelectItem>
-                        <SelectItem value="2nd Year">2nd Year</SelectItem>
-                        <SelectItem value="3rd Year">3rd Year</SelectItem>
-                        <SelectItem value="4th Year">4th Year</SelectItem>
-                      </SelectContent>
-                    </Select>
+
                     <Button onClick={searchStudents}>Search</Button>
                   </div>
                   <div className="space-y-2 max-h-80 overflow-auto">
